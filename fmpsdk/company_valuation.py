@@ -921,7 +921,12 @@ def sec_filings(
 
 
 def press_releases(
-    apikey: str, symbol: str, limit: int = DEFAULT_LIMIT
+    apikey: str,
+    symbol: str,
+    from_date: str = None,
+    to_date: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
 ) -> typing.Optional[typing.List[typing.Dict]]:
     """
     Query FMP /press-releases/ API.
@@ -932,7 +937,7 @@ def press_releases(
     :return: A list of dictionaries.
     """
     path = f"press-releases/{symbol}"
-    query_vars = {"apikey": apikey, "limit": limit}
+    query_vars = {"apikey": apikey, "limit": limit, "from": from_date, "to": to_date, "page": page}
     return __return_json_v3(path=path, query_vars=query_vars)
 
 
