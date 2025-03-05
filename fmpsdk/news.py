@@ -22,7 +22,11 @@ def fmp_articles(
 
 
 def general_news(
-    apikey: str, page: int = 0
+    apikey: str,
+    from_date: str = None,
+    to_date: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
 ) -> typing.Optional[typing.List[typing.Dict]]:
     """
     Query FMP /general_news/ API
@@ -32,7 +36,7 @@ def general_news(
     :return: A list of dictionaries.
     """
     path = f"general_news"
-    query_vars = {"apikey": apikey, "page": page}
+    query_vars = {"apikey": apikey, "page": page, "limit": limit, "from": from_date, "to": to_date}
     return __return_json_v4(path=path, query_vars=query_vars)
 
 
