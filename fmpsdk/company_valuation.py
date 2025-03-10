@@ -17,6 +17,7 @@ from .settings import (
 from .url_methods import (
     __return_json_v3,
     __return_json_v4,
+    __return_json_stable,
     __validate_industry,
     __validate_period,
     __validate_sector,
@@ -750,7 +751,7 @@ def stock_screener(
     :param limit: Number of rows to return.
     :return: A list of dicitonaries.
     """
-    path = f"stock-screener"
+    path = f"company-screener"
     query_vars = {"apikey": apikey, "limit": limit}
     if market_cap_more_than:
         query_vars["marketCapMoreThan"] = market_cap_more_than
@@ -789,7 +790,7 @@ def stock_screener(
             query_vars["exchange"] = ",".join(exchange)
         else:
             query_vars["exchange"] = exchange
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def delisted_companies(

@@ -1,7 +1,7 @@
 import typing
 
 from .settings import DEFAULT_LINE_PARAMETER
-from .url_methods import __return_json_v3, __validate_series_type, __validate_time_delta
+from .url_methods import __return_json_v3, __validate_series_type, __validate_time_delta, __return_json_stable
 
 
 def __quotes(apikey: str, value: str) -> typing.Optional[typing.List[typing.Dict]]:
@@ -13,9 +13,9 @@ def __quotes(apikey: str, value: str) -> typing.Optional[typing.List[typing.Dict
     :param value: The Ticker(s), Index(es), Commodity(ies), etc. symbol to query for.
     :return: A list of dictionaries.
     """
-    path = f"quotes/{value}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    path = "quote"
+    query_vars = {"apikey": apikey, "symbol": value}
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def quote(
