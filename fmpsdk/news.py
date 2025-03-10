@@ -2,7 +2,7 @@ import typing
 import logging
 
 from .settings import DEFAULT_LIMIT
-from .url_methods import __return_json_v3, __return_json_v4
+from .url_methods import __return_json_v3, __return_json_v4, __return_json_stable
 
 
 def fmp_articles(
@@ -38,6 +38,71 @@ def general_news(
     path = f"general_news"
     query_vars = {"apikey": apikey, "page": page, "limit": limit, "from": from_date, "to": to_date}
     return __return_json_v4(path=path, query_vars=query_vars)
+
+def company_news(
+    apikey: str,
+    symbols: typing.Union[str, typing.List] = "",
+    from_date: str = None,
+    to_date: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> typing.Optional[typing.List[typing.Dict]]:
+    """
+    Query FMP /news/stock/ API.
+
+    :param apikey: Your API key.
+    :param symbols: List of ticker symbols.
+    :param from_date: The starting time for the API ("yyyy-mm-dd").
+    :param to_date: The ending time for the API ("yyyy-mm-dd")
+    :param page: Page number.
+    :param limit: Number of rows to return.
+    :return: A list of dictionaries.
+    """
+    path = f"news/stock"
+    query_vars = {"apikey": apikey, "limit": limit, "page": page}
+    if symbols:
+        if type(symbols) is list:
+            symbols = ",".join(symbols)
+        query_vars["symbols"] = symbols
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+def company_press_releases(
+    apikey: str,
+    symbols: typing.Union[str, typing.List] = "",
+    from_date: str = None,
+    to_date: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> typing.Optional[typing.List[typing.Dict]]:
+    """
+    Query FMP /news/press-releases/ API.
+
+    :param apikey: Your API key.
+    :param symbols: List of ticker symbols.
+    :param from_date: The starting time for the API ("yyyy-mm-dd").
+    :param to_date: The ending time for the API ("yyyy-mm-dd")
+    :param page: Page number.
+    :param limit: Number of rows to return.
+    :return: A list of dictionaries.
+    """
+    path = f"news/press-releases"
+    query_vars = {"apikey": apikey, "limit": limit, "page": page}
+    if symbols:
+        if type(symbols) is list:
+            symbols = ",".join(symbols)
+        query_vars["symbols"] = symbols
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def news_sentiment_rss(

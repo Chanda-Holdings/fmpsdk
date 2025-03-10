@@ -113,6 +113,8 @@ from .mutual_funds import available_mutual_funds, mutual_fund_list
 from .news import (
     fmp_articles,
     general_news,
+    company_news,
+    company_press_releases,
     news_sentiment_rss,
     sentiment_change,
     trending_sentiment,
@@ -275,6 +277,8 @@ __all__ = [
     "shares_float",
     "fmp_articles",
     "general_news",
+    "company_news",
+    "company_press_releases",
     "news_sentiment_rss",
     "sentiment_change",
     "trending_sentiment",
