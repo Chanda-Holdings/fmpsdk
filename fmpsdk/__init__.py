@@ -150,6 +150,7 @@ from .stock_time_series import (
 from .technical_indicators import technical_indicators
 from .tsx import available_tsx, tsx_list
 from .economic_indicators import economic_indicator, treasury_rates
+from .utils import iterate_over_pages
 
 attribution: str = "Data provided by Financial Modeling Prep"
 logging.info(attribution)
@@ -298,4 +299,5 @@ __all__ = [
     "treasury_rates",
     "scores_bulk",
     "upgrades_downgrades_consensus_bulk",
+    "iterate_over_pages",
 ]
