@@ -18,6 +18,11 @@ def iterate_over_pages(func, args, page_limit=100):
 
         page += 1
         if page >= page_limit:
+            print(f"ERROR: Reached FMP page limit: {page}")
             break
 
-    return data_list, data_dict
+    if len(data_list) == 0:
+        return data_dict
+    else:
+        return data_list
+
