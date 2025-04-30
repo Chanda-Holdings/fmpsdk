@@ -16,10 +16,11 @@ def iterate_over_pages(func, args, page_limit=100):
         else:
             raise ValueError(f"Unexpected response type: {type(response)}")
 
-        page += 1
         if page >= page_limit:
             print(f"ERROR: Reached FMP page limit: {page}")
             break
+
+        page += 1
 
     if len(data_list) == 0:
         return data_dict
