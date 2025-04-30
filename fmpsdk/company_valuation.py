@@ -144,15 +144,15 @@ def income_statement(
     :param filename: Name of saved file.
     :return: A list of dictionaries.
     """
-    path = f"income-statement/{symbol}"
-    query_vars = {"apikey": apikey, "limit": limit, "period": __validate_period(period)}
+    path = f"income-statement"
+    query_vars = {"apikey": apikey, "limit": limit, "period": __validate_period(period), "symbol": symbol}
     if download:
         query_vars["datatype"] = "csv"  # Only CSV is supported.
         response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
         open(filename, "wb").write(response.content)
         logging.info(f"Saving {symbol} financial statement as {filename}.")
     else:
-        return __return_json_v3(path=path, query_vars=query_vars)
+        return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def balance_sheet_statement(
@@ -175,15 +175,15 @@ def balance_sheet_statement(
     :param filename: Name of saved file.
     :return: A list of dictionaries.
     """
-    path = f"balance-sheet-statement/{symbol}"
-    query_vars = {"apikey": apikey, "limit": limit, "period": __validate_period(period)}
+    path = f"balance-sheet-statement"
+    query_vars = {"apikey": apikey, "limit": limit, "period": __validate_period(period), "symbol": symbol}
     if download:
         query_vars["datatype"] = "csv"  # Only CSV is supported.
         response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
         open(filename, "wb").write(response.content)
         logging.info(f"Saving {symbol} financial statement as {filename}.")
     else:
-        return __return_json_v3(path=path, query_vars=query_vars)
+        return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def cash_flow_statement(
@@ -235,6 +235,7 @@ def financial_statement_symbol_lists(
 def income_statement_growth(
     apikey: str,
     symbol: str,
+    period: str = "annual",
     limit: int = DEFAULT_LIMIT,
 ) -> typing.Optional[typing.List[typing.Dict]]:
     """
@@ -246,12 +247,14 @@ def income_statement_growth(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"income-statement-growth/{symbol}"
+    path = f"income-statement-growth"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
+        "symbol": symbol,
+        "period": __validate_period(period),
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def balance_sheet_statement_growth(
@@ -448,13 +451,14 @@ def financial_ratios(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"ratios/{symbol}"
+    path = f"ratios"
     query_vars = {
         "apikey": apikey,
+        "symbol": symbol,
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def enterprise_values(
@@ -472,13 +476,14 @@ def enterprise_values(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"enterprise-values/{symbol}"
+    path = f"enterprise-values"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
+        "symbol": symbol,
         "period": __validate_period(value=period),
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def key_metrics_ttm(

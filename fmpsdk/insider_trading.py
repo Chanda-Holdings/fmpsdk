@@ -2,17 +2,20 @@ import logging
 import typing
 
 from .settings import DEFAULT_LIMIT
-from .url_methods import __return_json_v3, __return_json_v4
+from .url_methods import __return_json_v3, __return_json_v4, __return_json_stable
 
 
 def insider_trading(
     apikey: str,
     symbol: str = None,
-    reporting_name: str = None,
+    reportingCik: str = None,
+    companyCik: str = None,
+    transactionType: str = None,
+    page: int = 0,
     limit: int = DEFAULT_LIMIT,
 ) -> typing.Optional[typing.List[typing.Dict]]:
     """
-    Query FMP /insider-trading/ API.
+    Query FMP /insider-trading/search/ API.
 
     :param apikey: Your API key.
     :param symbol: Company ticker.
@@ -20,13 +23,18 @@ def insider_trading(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"insider-trading"
-    query_vars = {"apikey": apikey, "limit": limit}
+    path = f"insider-trading/search"
+    query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if symbol:
         query_vars["symbol"] = symbol
-    if reporting_name:
-        query_vars["reportingName"] = reporting_name
-    return __return_json_v3(path=path, query_vars=query_vars)
+    if reportingCik:
+        query_vars["reportingCik"] = reportingCik
+    if companyCik:
+        query_vars["companyCik"] = companyCik
+    if transactionType:
+        query_vars["transactionType"] = transactionType
+        
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
 def insider_trade_statistics(
