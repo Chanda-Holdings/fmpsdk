@@ -71,6 +71,32 @@ def company_news(
 
     return __return_json_stable(path=path, query_vars=query_vars)
 
+def company_news_latest(
+    apikey: str,
+    from_date: str = None,
+    to_date: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> typing.Optional[typing.List[typing.Dict]]:
+    """
+    Query FMP /news/stock-latest/ API.
+
+    :param apikey: Your API key.
+    :param from_date: The starting time for the API ("yyyy-mm-dd").
+    :param to_date: The ending time for the API ("yyyy-mm-dd")
+    :param page: Page number.
+    :param limit: Number of rows to return.
+    :return: A list of dictionaries.
+    """
+    path = f"news/stock-latest"
+    query_vars = {"apikey": apikey, "limit": limit, "page": page}
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+
+    return __return_json_stable(path=path, query_vars=query_vars)
+
 
 def company_press_releases(
     apikey: str,
@@ -97,6 +123,32 @@ def company_press_releases(
         if type(symbols) is list:
             symbols = ",".join(symbols)
         query_vars["symbols"] = symbols
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+def company_press_releases_latest(
+    apikey: str,
+    from_date: str = None,
+    to_date: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> typing.Optional[typing.List[typing.Dict]]:
+    """
+    Query FMP /news/press-releases-latest/ API.
+
+    :param apikey: Your API key.
+    :param from_date: The starting time for the API ("yyyy-mm-dd").
+    :param to_date: The ending time for the API ("yyyy-mm-dd")
+    :param page: Page number.
+    :param limit: Number of rows to return.
+    :return: A list of dictionaries.
+    """
+    path = f"news/press-releases-latest"
+    query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if from_date:
         query_vars["from"] = from_date
     if to_date:
