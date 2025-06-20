@@ -1,0 +1,103 @@
+name: Run Tests
+
+on:
+  # Run tests when pushing to main/master branch
+  push:
+    branches: [ main, master ]
+  
+  # Run tests on pull requests
+  pull_request:
+    branches: [ main, master ]
+  
+  # Run tests daily at 6 AM UTC
+  schedule:
+    - cron: '0 6 * * *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        # Install test dependencies
+        pip install pytest pytest-cov pytest-mock
+    
+    - name: Install package in development mode
+      run: |
+        pip install -e .
+    
+    - name: Run unit tests
+      run: |
+        pytest tests/test_utils.py tests/test_models.py -v --cov=fmpsdk --cov-report=xml --cov-report=term
+    
+    - name: Run integration tests (with API key)
+      env:
+        FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+      run: |
+        # Only run integration tests if API key is available
+        if [ -n "$FMP_API_KEY" ]; then
+          echo "Running integration tests with API key"
+          pytest tests/test_calendar.py tests/test_company_valuation.py tests/test_insider_trading.py tests/test_shares_float.py tests/test_stock_time_series.py tests/test_cryptocurrencies.py tests/test_etf.py -v --maxfail=5
+        else
+          echo "Skipping integration tests - no API key available"
+        fi
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8 mypy
+        pip install -r requirements.txt
+    
+    - name: Check code formatting with black
+      run: |
+        black --check --diff fmpsdk/ tests/
+    
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff fmpsdk/ tests/
+    
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 fmpsdk/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 fmpsdk/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Type check with mypy
+      run: |
+        mypy fmpsdk/ --ignore-missing-imports --no-strict-optional

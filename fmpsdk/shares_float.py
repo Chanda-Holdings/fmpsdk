@@ -1,27 +1,29 @@
-"""
-   https://site.financialmodelingprep.com/developer/docs#share-float
-"""
-
+from .url_methods import __return_json_stable
+from .utils import parse_response
+from .models import *
 import typing
 
-from .url_methods import __return_json_v4
 
-
-def shares_float(
-    apikey: str, symbol: str, all: bool = False
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def shares_float(apikey: str, symbol: str) -> RootModel[typing.List[FMPShareFloat]]:
     """
-    Query FMP /shares_float/ API.
-
-    Provides the total number of shares that are publicly traded for a given company.
+    Query FMP /shares-float endpoint.
     :param apikey: Your API key.
-    :param symbol: Ticker of Company.
-    :param all: Optional boolean attribute. If True, changes the API url to the "all" endpoint.
-    :return: A list of dictionaries.
+    :param symbol: Ticker symbol.
+    :return: List of shares float data.
     """
-    if all:
-        path = "shares_float/all"
-    else:
-        path = f"shares_float?symbol={symbol}"
+    path = f"shares-float/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def shares_float_all(apikey: str) -> RootModel[typing.List[FMPAllShareFloat]]:
+    """
+    Query FMP /shares-float-all endpoint.
+    :param apikey: Your API key.
+    :return: List of shares float data for all companies.
+    """
+    path = "shares-float-all"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path=path, query_vars=query_vars)

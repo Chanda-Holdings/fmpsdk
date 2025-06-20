@@ -1,81 +1,219 @@
+from .url_methods import __return_json_stable
+from .utils import parse_response
+from .models import *
 import typing
 
-from .url_methods import __return_json_v4
 
 
+@parse_response
+def commitment_of_traders_report(
+    apikey: str, symbol: str, from_date: str = None, to_date: str = None
+) -> RootModel[typing.List[FMPCommitmentOfTradersReport]]:
+    """
+    Get Commitment of Traders report for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'ES').
+    from_date : str, optional
+        Start date (YYYY-MM-DD)
+    to_date : str, optional
+        End date (YYYY-MM-DD)
+
+    Returns
+    -------
+    FmpCommitmentOfTradersReportResponse
+        Commitment of Traders report data as a Pydantic model.
+    """
+    path = f"/commitment-of-traders-report/{symbol}"
+    query_vars = {"apikey": apikey}
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def commitment_of_traders_report_analysis(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPCommitmentOfTradersAnalysis]]:
+    """
+    Get Commitment of Traders report analysis for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'ES').
+
+    Returns
+    -------
+    FmpCommitmentOfTradersAnalysisResponse
+        Commitment of Traders report analysis data as a Pydantic model.
+    """
+    path = f"/commitment-of-traders-analysis/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
 def commitment_of_traders_report_list(
     apikey: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
-    Query FMP /commitment_of_traders_report/list API.
+    Get a list of available Commitment of Traders reports.
 
-    List of symbols for COT.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
 
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Returns
+    -------
+    FmpCommitmentOfTradersListResponse
+        List of available Commitment of Traders reports as a Pydantic model.
     """
-    path = f"commitment_of_traders_report/list"
+    path = f"/commitment-of-traders-list"
     query_vars = {"apikey": apikey}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars)
 
 
-def commitment_of_traders_report(
+@parse_response
+def crowdfunding_offerings_latest(
     apikey: str,
-    symbol: str,
-    from_date: str,
-    to_date: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPCrowdfundingCampaign]]:
     """
-    Query FMP /commitment_of_traders_report API.
+    Get latest crowdfunding offerings.
 
-    The Commodity Futures Trading Commission (Commission or CFTC) publishes the Commitments of Traders (COT)
-    reports to help the public understand market dynamics. Specifically, the COT reports provide a breakdown of
-    each Tuesday’s open interest for futures and options on futures markets in which 20 or more traders hold
-    positions equal to or above the reporting levels established by the CFTC.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
 
-    Generally, the data in the COT reports is from Tuesday and released Friday. The CFTC receives the data from the
-    reporting firms on Wednesday morning and then corrects and verifies the data for release by Friday afternoon.
-
-    :param apikey: Your API key.
-    :param symbol: COT symbol.
-    :param from_date: YYYY-MM-DD string.
-    :param to_date: YYYY-MM-DD string.
-    :return: A list of dictionaries.
+    Returns
+    -------
+    FmpCrowdfundingOfferingsResponse
+        Latest crowdfunding offerings as a Pydantic model.
     """
-    path = f"commitment_of_traders_report"
+    path = f"/crowdfunding-offerings-latest"
     query_vars = {"apikey": apikey}
-    if symbol:
-        path = f"{path}/{symbol}"
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars)
 
 
-def commitment_of_traders_report_analysis(
+@parse_response
+def crowdfunding_offerings_search(
+    apikey: str, query: str
+) -> RootModel[typing.List[FMPCrowdfundingSearch]]:
+    """
+    Search crowdfunding offerings by query string.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    query : str
+        Search query string.
+
+    Returns
+    -------
+    FmpCrowdfundingOfferingsResponse
+        Crowdfunding offerings matching the query as a Pydantic model.
+    """
+    path = f"/crowdfunding-offerings-search/{query}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def crowdfunding_offerings(
     apikey: str,
-    symbol: str,
-    from_date: str,
-    to_date: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPCrowdfundingCampaign]]:
     """
-    Query FMP /commitment_of_traders_report_analysis API.
+    Get all crowdfunding offerings.
 
-    Analysis of reports for time period or symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
 
-    :param apikey: Your API key.
-    :param symbol: trading symbol.
-    :param from_date: YYYY-MM-DD string.
-    :param to_date: YYYY-MM-DD string.
-    :return: A list of dictionaries.
+    Returns
+    -------
+    FmpCrowdfundingOfferingsResponse
+        All crowdfunding offerings as a Pydantic model.
     """
-    path = f"commitment_of_traders_report_analysis"
+    path = f"/crowdfunding-offerings"
     query_vars = {"apikey": apikey}
-    if symbol:
-        path = f"{path}/{symbol}"
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def fundraising_latest(
+    apikey: str,
+) -> RootModel[typing.List[FMPEquityOffering]]:
+    """
+    Get latest fundraising data.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    FmpFundraisingResponse
+        Latest fundraising data as a Pydantic model.
+    """
+    path = f"/fundraising-latest"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def fundraising_search(
+    apikey: str, query: str
+) -> RootModel[typing.List[FMPEquityOfferingSearch]]:
+    """
+    Search fundraising data by query string.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    query : str
+        Search query string.
+
+    Returns
+    -------
+    FmpFundraisingResponse
+        Fundraising data matching the query as a Pydantic model.
+    """
+    path = f"/fundraising-search/{query}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def fundraising(
+    apikey: str,
+) -> RootModel[typing.List[FMPEquityOffering]]:
+    """
+    Get all fundraising data.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    FmpFundraisingResponse
+        All fundraising data as a Pydantic model.
+    """
+    path = f"/fundraising"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)

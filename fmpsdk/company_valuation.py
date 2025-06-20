@@ -1,251 +1,401 @@
 import logging
 import typing
-
 import requests
-
-from .settings import (
-    BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
-    BALANCE_SHEET_STATEMENT_FILENAME,
-    CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
-    CASH_FLOW_STATEMENT_FILENAME,
-    DEFAULT_LIMIT,
-    FINANCIAL_STATEMENT_FILENAME,
-    INCOME_STATEMENT_AS_REPORTED_FILENAME,
-    INCOME_STATEMENT_FILENAME,
-    BASE_URL_v3,
-)
-from .url_methods import (
-    __return_json_v3,
-    __return_json_v4,
-    __return_json_stable,
-    __validate_industry,
-    __validate_period,
-    __validate_sector,
-)
+from .settings import (BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
+                       CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
+                       DEFAULT_LIMIT,
+                       FINANCIAL_STATEMENT_FILENAME,
+                       INCOME_STATEMENT_AS_REPORTED_FILENAME)
+from .url_methods import (__validate_industry,
+                          __validate_period, __validate_sector, __return_json_stable)
+from .utils import parse_response
+from .models import *
 
 
-def company_profile(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def company_profile(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanyProfile]]:
     """
-    Query FMP /profile/ API.
+    Retrieve the company profile for a given symbol.
 
-    Gather this company's information.
-    :param apikey: Your API key.
-    :param symbol: Ticker of Company.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+
+    Returns
+    -------
+    FmpCompanyNameSearchResponse
+        Company profile data as a Pydantic model.
     """
-    path = f"profile/{symbol}"
+    path = f"/profile/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars)
 
 
-def key_executives(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def company_profile_cik(apikey: str, cik: str) -> RootModel[typing.List[FMPCompanyProfile]]:
     """
-    Query FMP /key-executives/ API.
+    Retrieve the company profile by Central Index Key (CIK).
 
-    Gather info about company's key executives.
-    :param apikey: Your API Key.
-    :param symbol: Ticker of company.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        Central Index Key (CIK).
+
+    Returns
+    -------
+    FmpCikSearchResponse
+        Company profile data as a Pydantic model.
     """
-    path = f"key-executives/{symbol}"
+    path = f"/profile-cik/{cik}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars)
 
 
-def search(
-    apikey: str, query: str = "", limit: int = DEFAULT_LIMIT, exchange: str = ""
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def stock_peers(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockPeer]]:
     """
-    Query FMP /search/ API.
+    Retrieve peer companies for a given symbol.
 
-    Search via ticker and company name.
-    :param apikey: Your API key.
-    :param query: Whole or fragment of Ticker or Name of company.
-    :param limit: Number of rows to return.
-    :param exchange: Stock exchange to search.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+
+    Returns
+    -------
+    FmpCompanySymbolsListResponse
+        List of peer companies as a Pydantic model.
     """
-    path = f"search/"
-    query_vars = {
-        "apikey": apikey,
-        "limit": limit,
-        "query": query,
-        "exchange": exchange,
-    }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    path = f"/stock-peers"
+    query_vars = {"symbol": symbol, "apikey": apikey}
+    return __return_json_stable(path, query_vars)
 
 
-def search_ticker(
-    apikey: str, query: str = "", limit: int = DEFAULT_LIMIT, exchange: str = ""
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def delisted_companies(apikey: str, limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPDelistedCompany]]:
     """
-    Query FMP /search-ticker/ API.
+    Retrieve a list of delisted companies.
 
-    Search only via ticker.
-    :param apikey: Your API key.
-    :param query: Whole or fragment of Ticker.
-    :param limit: Number of rows to return.
-    :param exchange:Stock exchange to search.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    limit : int, optional
+        Number of results to return.
+
+    Returns
+    -------
+    FmpCompanySymbolsListResponse
+        List of delisted companies as a Pydantic model.
     """
-    path = f"search-ticker/"
-    query_vars = {
-        "apikey": apikey,
-        "limit": limit,
-        "query": query,
-        "exchange": exchange,
-    }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    path = f"/delisted-companies"
+    query_vars = {"apikey": apikey, "limit": limit}
+    return __return_json_stable(path, query_vars)
 
 
-def financial_statement(
-    apikey: str, symbol: str, filename: str = FINANCIAL_STATEMENT_FILENAME
-) -> None:
+@parse_response
+def employee_count(apikey: str, symbol: str) -> RootModel[typing.List[FMPEmployeeCount]]:
     """
-    Query FMP /financial-statements/ API.
+    Retrieve employee count for a given symbol.
 
-    Download company's financial statement.
-    :param apikey: Your API key.
-    :param symbol: Ticker of company.
-    :param filename: Name of saved file.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        Employee count data as a Pydantic model.
     """
-    path = f"financial-statements/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "datatype": "zip",  # Only ZIP format is supported.
-    }
-    response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-    open(filename, "wb").write(response.content)
-    logging.info(f"Saving {symbol} financial statement as {filename}.")
+    path = f"/employee-count/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
 
 
-def income_statement(
+@parse_response
+def historical_employee_count(apikey: str, symbol: str) -> RootModel[typing.List[FMPHistoricalEmployeeCount]]:
+    """
+    Retrieve historical employee count for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        Historical employee count data as a Pydantic model.
+    """
+    path = f"/historical-employee-count/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+@parse_response
+def income_statement(apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPFinancialStatement]]:
+    """
+    Retrieve the income statement for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    period : str, optional
+        The period for the income statement ('annual' or 'quarter').
+    limit : int, optional
+        The number of results to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of income statement data as a Pydantic model.
+    """
+    path = f"/income-statement/{symbol}"
+    query_vars = {"apikey": apikey, "period": period, "limit": limit}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def balance_sheet_statement(apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPFinancialStatement]]:
+    """
+    Retrieve the balance sheet statement for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    period : str, optional
+        The period for the balance sheet statement ('annual' or 'quarter').
+    limit : int, optional
+        The number of results to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of balance sheet statement data as a Pydantic model.
+    """
+    path = f"/balance-sheet-statement/{symbol}"
+    query_vars = {"apikey": apikey, "period": period, "limit": limit}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def cash_flow_statement(apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPFinancialStatement]]:
+    """
+    Retrieve the cash flow statement for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    period : str, optional
+        The period for the cash flow statement ('annual' or 'quarter').
+    limit : int, optional
+        The number of results to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of cash flow statement data as a Pydantic model.
+    """
+    path = f"/cash-flow-statement/{symbol}"
+    query_vars = {"apikey": apikey, "period": period, "limit": limit}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def income_statement_as_reported(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-    download: bool = False,
-    filename: str = INCOME_STATEMENT_FILENAME,
-) -> typing.Union[typing.List[typing.Dict], None]:
+    filename: str = INCOME_STATEMENT_AS_REPORTED_FILENAME,
+) -> typing.Union[RootModel[typing.List[FMPAsReportedIncomeStatement]], None]:
     """
-    Query FMP /income-statement/ API.
+    Retrieve the as-reported income statement for a given symbol, or download as CSV.
 
-    Display or download company's income statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'quarter' or 'annual'.
-    :param limit: Number of rows to return.
-    :param download: True/False
-    :param filename: Name of saved file.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    period : str, optional
+        The period for the as-reported income statement ('annual' or 'quarter').
+    limit : int, optional
+        The number of results to return.
+    filename : str, optional
+        The name of the file to save the data (default: INCOME_STATEMENT_AS_REPORTED_FILENAME).
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse or None
+        List of as-reported income statement data as a Pydantic model, or None if downloaded.
     """
-    path = f"income-statement"
-    query_vars = {"apikey": apikey, "limit": limit, "period": __validate_period(period), "symbol": symbol}
-    if download:
-        query_vars["datatype"] = "csv"  # Only CSV is supported.
-        response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-        open(filename, "wb").write(response.content)
-        logging.info(f"Saving {symbol} financial statement as {filename}.")
-    else:
-        return __return_json_stable(path=path, query_vars=query_vars)
+    path = f"/income-statement-as-reported/{symbol}"
+    query_vars = {"apikey": apikey, "period": period, "limit": limit}
+    return __return_json_stable(path, query_vars)
 
 
-def balance_sheet_statement(
+@parse_response
+def balance_sheet_statement_as_reported(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-    download: bool = False,
-    filename: str = BALANCE_SHEET_STATEMENT_FILENAME,
-) -> typing.Union[typing.List[typing.Dict], None]:
+    filename: str = BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
+) -> typing.Union[RootModel[typing.List[FMPAsReportedBalanceSheet]], None]:
     """
-    Query FMP /balance-sheet-statement/ API.
+    Retrieve the as-reported balance sheet statement for a given symbol, or download as CSV.
 
-    Display or download company's balance sheet statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'quarter' or 'annual'.
-    :param limit: Number of rows to return.
-    :param download: True/False
-    :param filename: Name of saved file.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    period : str, optional
+        The period for the as-reported balance sheet statement ('annual' or 'quarter').
+    limit : int, optional
+        The number of results to return.
+    filename : str, optional
+        The name of the file to save the data (default: BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME).
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse or None
+        List of as-reported balance sheet statement data as a Pydantic model, or None if downloaded.
     """
-    path = f"balance-sheet-statement"
-    query_vars = {"apikey": apikey, "limit": limit, "period": __validate_period(period), "symbol": symbol}
-    if download:
-        query_vars["datatype"] = "csv"  # Only CSV is supported.
-        response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-        open(filename, "wb").write(response.content)
-        logging.info(f"Saving {symbol} financial statement as {filename}.")
-    else:
-        return __return_json_stable(path=path, query_vars=query_vars)
+    path = f"/balance-sheet-statement-as-reported/{symbol}"
+    query_vars = {"apikey": apikey, "period": period, "limit": limit}
+    return __return_json_stable(path, query_vars)
 
 
-def cash_flow_statement(
+@parse_response
+def cash_flow_statement_as_reported(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-    download: bool = False,
-    filename: str = CASH_FLOW_STATEMENT_FILENAME,
-) -> typing.Union[typing.List[typing.Dict], None]:
+    filename: str = CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
+) -> typing.Union[RootModel[typing.List[FMPAsReportedCashFlowStatement]], None]:
     """
-    Query FMP /cash-flow-statement/ API.
+    Retrieve the as-reported cash flow statement for a given symbol, or download as CSV.
 
-    Display or download company's cash flow statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'quarter' or 'annual'.
-    :param limit: Number of rows to return.
-    :param download: True/False
-    :param filename: Name of saved file.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    period : str, optional
+        The period for the as-reported cash flow statement ('annual' or 'quarter').
+    limit : int, optional
+        The number of results to return.
+    filename : str, optional
+        The name of the file to save the data (default: CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME).
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse or None
+        List of as-reported cash flow statement data as a Pydantic model, or None if downloaded.
     """
-    path = f"cash-flow-statement/{symbol}"
-    query_vars = {"apikey": apikey, "limit": limit, "period": __validate_period(period)}
-    if download:
-        query_vars["datatype"] = "csv"  # Only CSV is supported.
-        response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-        open(filename, "wb").write(response.content)
-        logging.info(f"Saving {symbol} financial statement as {filename}.")
-    else:
-        return __return_json_v3(path=path, query_vars=query_vars)
+    path = f"/cash-flow-statement-as-reported/{symbol}"
+    query_vars = {"apikey": apikey, "period": period, "limit": limit}
+    return __return_json_stable(path, query_vars)
 
 
-def financial_statement_symbol_lists(
+@parse_response
+def financial_statement_full_as_reported(
     apikey: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+    symbol: str,
+    period: str = "annual",
+) -> RootModel[typing.List[FMPAsReportedFullStatement]]:
     """
-    Query FMP /financial-statement-symbol-lists/ API.
+    Retrieve the full as-reported financial statement for a given symbol.
 
-    List of symbols that have financial statements.
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    period : str, optional
+        The period for the full as-reported financial statement ('annual' or 'quarter').
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of full as-reported financial statement data as a Pydantic model.
+    """
+    path = f"/financial-statement-full-as-reported/{symbol}"
+    query_vars = {"apikey": apikey, "period": period}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def financial_statement_symbol_lists(apikey: str) -> RootModel[typing.List[FMPFinancialStatementSymbolList]]:
+    """
+    Retrieve the list of symbols that have financial statements.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of symbols as a Pydantic model.
     """
     path = f"financial-statement-symbol-lists"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def income_statement_growth(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
     """
-    Query FMP /income-statement-growth/ API.
+    Retrieve income statement growth statistics for a company.
 
-    Growth stats for company's income statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    period : str, optional
+        'annual' or 'quarter'.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of income statement growth data as a Pydantic model.
     """
     path = f"income-statement-growth"
     query_vars = {
@@ -257,199 +407,113 @@ def income_statement_growth(
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def balance_sheet_statement_growth(
     apikey: str, symbol: str, limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
     """
-    Query FMP /balance-sheet-statement-growth/ API.
+    Retrieve balance sheet statement growth statistics for a company.
 
-    Growth stats for company's balance sheet statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of balance sheet statement growth data as a Pydantic model.
     """
     path = f"balance-sheet-statement-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def cash_flow_statement_growth(
     apikey: str, symbol: str, limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
     """
-    Query FMP /cash-flow-statement-growth/ API.
+    Retrieve cash flow statement growth statistics for a company.
 
-    Growth stats for company's cash flow statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of cash flow statement growth data as a Pydantic model.
     """
     path = f"cash-flow-statement-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def income_statement_as_reported(
-    apikey: str,
-    symbol: str,
-    period: str = "annual",
-    limit: int = DEFAULT_LIMIT,
-    download: bool = False,
-    filename: str = INCOME_STATEMENT_AS_REPORTED_FILENAME,
-) -> typing.Union[typing.List[typing.Dict], None]:
-    """
-    Query FMP /income-statement-as-reported/ API.
-
-    Company's "as reported" income statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :param download: True/False
-    :param filename: Name of saved file.
-    :return: A list of dictionaries.
-    """
-    path = f"income-statement-as-reported/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "limit": limit,
-        "period": __validate_period(value=period),
-    }
-    if download:
-        query_vars["datatype"] = "csv"  # Only CSV is supported.
-        response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-        open(filename, "wb").write(response.content)
-        logging.info(f"Saving {symbol} financial statement as {filename}.")
-    else:
-        return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def balance_sheet_statement_as_reported(
-    apikey: str,
-    symbol: str,
-    period: str = "annual",
-    limit: int = DEFAULT_LIMIT,
-    download: bool = False,
-    filename: str = BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
-) -> typing.Union[typing.List[typing.Dict], None]:
-    """
-    Query FMP /balance-sheet-statement-as-reported/ API.
-
-    Company's "as reported" balance sheet statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :param download: True/False
-    :param filename: Name of saved file.
-    :return: A list of dictionaries.
-    """
-    path = f"balance-sheet-statement-as-reported/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "limit": limit,
-        "period": __validate_period(value=period),
-    }
-    if download:
-        query_vars["datatype"] = "csv"  # Only CSV is supported.
-        response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-        open(filename, "wb").write(response.content)
-        logging.info(f"Saving {symbol} financial statement as {filename}.")
-    else:
-        return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def cash_flow_statement_as_reported(
-    apikey: str,
-    symbol: str,
-    period: str = "annual",
-    limit: int = DEFAULT_LIMIT,
-    download: bool = False,
-    filename: str = CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
-) -> typing.Union[typing.List[typing.Dict], None]:
-    """
-    Query FMP /cash-flow-statement-as-reported/ API.
-
-    Company's "as reported" cash flow statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :param download: True/False
-    :param filename: Name of saved file.
-    :return: A list of dictionaries.
-    """
-    path = f"cash-flow-statement-as-reported/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "limit": limit,
-        "period": __validate_period(value=period),
-    }
-    if download:
-        query_vars["datatype"] = "csv"  # Only CSV is supported.
-        response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-        open(filename, "wb").write(response.content)
-        logging.info(f"Saving {symbol} financial statement as {filename}.")
-    else:
-        return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def financial_statement_full_as_reported(
-    apikey: str,
-    symbol: str,
-    period: str = "annual",
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /financial-statement-full-as-reported/ API.
-
-    Company's "as reported" full income statement.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :return: A list of dictionaries.
-    """
-    path = f"financial-statement-full-as-reported/{symbol}"
-    query_vars = {"apikey": apikey, "period": __validate_period(value=period)}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
+@parse_response
 def financial_ratios_ttm(
     apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPFinancialRatios]]:
     """
-    Query FmP /ratios-ttm/ API.
+    Retrieve trailing twelve months (TTM) financial ratios for a company.
 
-    :param apikey: Your API key
-    :param symbol: Company ticker
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of TTM financial ratios as a Pydantic model.
     """
     path = f"ratios-ttm/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def financial_ratios(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPFinancialRatios]]:
     """
-    Query FmP /ratios/ API.
+    Retrieve financial ratios for a company.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    period : str, optional
+        'annual' or 'quarter'.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of financial ratios as a Pydantic model.
     """
     path = f"ratios"
     query_vars = {
@@ -461,20 +525,31 @@ def financial_ratios(
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def enterprise_values(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[Any]]:
     """
-    Query FMP /enterprise-values/ API.
+    Retrieve enterprise values for a company.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    period : str, optional
+        'annual' or 'quarter'.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of enterprise values as a Pydantic model.
     """
     path = f"enterprise-values"
     query_vars = {
@@ -486,38 +561,59 @@ def enterprise_values(
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def key_metrics_ttm(
     apikey: str,
     symbol: str,
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPKeyMetrics]]:
     """
-    Query FMP /key-metrics-ttm/ API
+    Retrieve trailing twelve months (TTM) key metrics for a company.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of TTM key metrics as a Pydantic model.
     """
     path = f"key-metrics-ttm/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def key_metrics(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPKeyMetrics]]:
     """
-    Query FMP /key-metrics/ API
+    Retrieve key metrics for a company.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    period : str, optional
+        'annual' or 'quarter'.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of key metrics as a Pydantic model.
     """
     path = f"key-metrics/{symbol}"
     query_vars = {
@@ -525,23 +621,34 @@ def key_metrics(
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def financial_growth(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[Any]]:
     """
-    Query FMP /financial-growth/ API.
+    Retrieve financial growth statistics for a company.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    period : str, optional
+        'annual' or 'quarter'.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of financial growth data as a Pydantic model.
     """
     path = f"financial-growth/{symbol}"
     query_vars = {
@@ -549,69 +656,172 @@ def financial_growth(
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def rating(apikey: str, symbol: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def rating(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockGrade]]:
     """
-    Query FMP /rating/ API.
+    Retrieve company rating for a given symbol.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of company rating data as a Pydantic model.
     """
     path = f"rating/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars=query_vars)
 
 
+@parse_response
 def historical_rating(
     apikey: str,
     symbol: str,
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPHistoricalStockGrade]]:
     """
-    Query FMP /historical-rating/ API.
+    Retrieve historical company rating for a given symbol.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialStatementSymbolsListResponse
+        List of historical company rating data as a Pydantic model.
     """
     path = f"historical-rating/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars=query_vars)
 
 
-def discounted_cash_flow(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
     """
-    Query FMP /discounted-cash-flow/ API.
+    Retrieve discounted cash flow (DCF) for a given symbol.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        List of discounted cash flow data as a Pydantic model.
     """
-    path = f"discounted-cash-flow/{symbol}"
+    path = f"/discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars)
 
 
+@parse_response
+def levered_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
+    """
+    Retrieve levered discounted cash flow for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        List of levered discounted cash flow data as a Pydantic model.
+    """
+    path = f"/levered-discounted-cash-flow/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def custom_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
+    """
+    Retrieve custom discounted cash flow for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        List of custom discounted cash flow data as a Pydantic model.
+    """
+    path = f"/custom-discounted-cash-flow/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def custom_levered_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
+    """
+    Retrieve custom levered discounted cash flow for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        List of custom levered discounted cash flow data as a Pydantic model.
+    """
+    path = f"/custom-levered-discounted-cash-flow/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
 def historical_discounted_cash_flow(
     apikey: str,
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPDcfValuation]]:
     """
-    Query FMP /historical-discounted-cash-flow/ API.
+    Retrieve historical discounted cash flow (DCF) for a given symbol.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    period : str, optional
+        'annual' or 'quarter'.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        List of historical discounted cash flow data as a Pydantic model.
     """
     path = f"historical-discounted-cash-flow/{symbol}"
     query_vars = {
@@ -619,96 +829,150 @@ def historical_discounted_cash_flow(
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def historical_daily_discounted_cash_flow(
-    apikey: str, symbol: str, limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
+    apikey: str,
+    symbol: str,
+    limit: int = DEFAULT_LIMIT,
+) -> RootModel[typing.List[FMPDcfValuation]]:
     """
-    Query FMP /historical-daily-discounted-cash-flow/ API.
+    Retrieve daily historical discounted cash flow (DCF) for a given symbol.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Company ticker.
+    limit : int, optional
+        Number of rows to return.
+
+    Returns
+    -------
+    FmpFinancialEstimatesResponse
+        List of daily historical discounted cash flow data as a Pydantic model.
     """
     path = f"historical-daily-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def market_capitalization(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def market_capitalization(apikey: str, symbol: str) -> RootModel[typing.List[FMPMarketCap]]:
     """
-    Query FMP /market-capitalization/ API.
+    Retrieve the market capitalization for a given symbol.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+
+    Returns
+    -------
+    FmpMarketCapitalizationResponse
+        List of market capitalization data as a Pydantic model.
     """
     path = f"market-capitalization/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def historical_market_capitalization(
     apikey: str, symbol: str, limit: int = DEFAULT_LIMIT, from_date: str = None, to_date: str = None
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPHistoricalMarketCap]]:
     """
-    Query FMP /historical-market-capitalization/ API.
+    Retrieve historical market capitalization for a given symbol.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    limit : int, optional
+        Number of rows to return.
+    from_date : str, optional
+        Start date (YYYY-MM-DD).
+    to_date : str, optional
+        End date (YYYY-MM-DD).
+
+    Returns
+    -------
+    FmpMarketCapitalizationResponse
+        List of historical market capitalization data as a Pydantic model.
     """
     path = f"historical-market-capitalization/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit, "from": from_date, "to": to_date}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def symbols_list(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def symbols_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
-    Query FMP /stock/list/ API
+    Retrieve the list of all stock symbols.
 
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    FmpCompanySymbolsListResponse
+        List of all stock symbols as a Pydantic model.
     """
     path = f"stock/list"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def etf_list(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def etf_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
-    Query FMP /etf/list/ API
+    Retrieve the list of all ETF symbols.
 
-    All ETF symbols
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
 
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Returns
+    -------
+    FmpCompanySymbolsListResponse
+        List of all ETF symbols as a Pydantic model.
     """
     path = f"etf/list"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def available_traded_list(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def available_traded_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
-    Query FMP /available-traded/list/ API
+    Retrieve the list of all available traded symbols.
 
-    All tradable symbols
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
 
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Returns
+    -------
+    FmpCompanySymbolsListResponse
+        List of all available traded symbols as a Pydantic model.
     """
     path = f"available-traded/list"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def stock_screener(
     apikey: str,
     market_cap_more_than: typing.Union[float, int] = None,
@@ -729,7 +993,7 @@ def stock_screener(
     country: str = None,
     exchange: typing.Union[str, typing.List[str]] = None,
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPStockScreenerResult]]:
     """
     Query FMP /stock-screener/ API.
 
@@ -798,21 +1062,7 @@ def stock_screener(
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def delisted_companies(
-    apikey: str, limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /delisted-companies/ API.
-
-    :param apikey: Your API key.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
-    """
-    path = f"delisted-companies"
-    query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
+@parse_response
 def stock_news(
     apikey: str,
     tickers: typing.Union[str, typing.List] = "",
@@ -820,7 +1070,7 @@ def stock_news(
     to_date: str = None,
     page: int = 0,
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPPressRelease]]:
     """
     Query FMP /stock_news/ API.
 
@@ -843,12 +1093,11 @@ def stock_news(
     if to_date:
         query_vars["to"] = to_date
 
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def earnings_surprises(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def earnings_surprises(apikey: str, symbol: str) -> RootModel[typing.List[FMPBulkEarningsSurprise]]:
     """
     Query FMP /earnings-surprises/ API.
 
@@ -858,12 +1107,11 @@ def earnings_surprises(
     """
     path = f"earnings-surprises/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def earning_call_transcript(
-    apikey: str, symbol: str, year: int, quarter: int
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def earning_call_transcript(apikey: str, symbol: str, year: int, quarter: int) -> RootModel[typing.List[FMPEarningsTranscript]]:
     """
     Query FMP /earning_call_transcript/ API.
 
@@ -875,12 +1123,11 @@ def earning_call_transcript(
     """
     path = f"earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def batch_earning_call_transcript(
-    apikey: str, symbol: str, year: int
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def batch_earning_call_transcript(apikey: str, symbol: str, year: int) -> RootModel[typing.List[FMPEarningsTranscript]]:
     """
     Query FMP /batch_earning_call_transcript/ API.
 
@@ -891,12 +1138,11 @@ def batch_earning_call_transcript(
     """
     path = f"batch_earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def earning_call_transcripts_available_dates(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.List]]:
+@parse_response
+def earning_call_transcripts_available_dates(apikey: str, symbol: str) -> RootModel[typing.List[FMPEarningsTranscriptDate]]:
     """
     Query FMP /earning_call_transcript/ API.
 
@@ -906,12 +1152,11 @@ def earning_call_transcripts_available_dates(
     """
     path = f"earning_call_transcript"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def sec_filings(
-    apikey: str, symbol: str, filing_type: str = "", limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def sec_filings(apikey: str, symbol: str, filing_type: str = "", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPCompanySECFilings]]:
     """
     Query FMP /sec_filings/ API.
 
@@ -923,9 +1168,10 @@ def sec_filings(
     """
     path = f"sec_filings/{symbol}"
     query_vars = {"apikey": apikey, "type": filing_type, "limit": limit}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def press_releases(
     apikey: str,
     symbol: str,
@@ -933,7 +1179,7 @@ def press_releases(
     to_date: str = None,
     page: int = 0,
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPPressRelease]]:
     """
     Query FMP /press-releases/ API.
 
@@ -943,13 +1189,18 @@ def press_releases(
     :return: A list of dictionaries.
     """
     path = f"press-releases/{symbol}"
-    query_vars = {"apikey": apikey, "limit": limit, "from": from_date, "to": to_date, "page": page}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    query_vars = {
+        "apikey": apikey,
+        "limit": limit,
+        "from": from_date,
+        "to": to_date,
+        "page": page,
+    }
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def social_sentiments(
-    apikey: str, symbol: str, page: int = 0
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def social_sentiments(apikey: str, symbol: str, page: int = 0) -> RootModel[typing.List[Any]]:
     """
     Query FMP /historical/social-sentiment/ API
 
@@ -960,125 +1211,142 @@ def social_sentiments(
     """
     path = f"historical/social-sentiment"
     query_vars = {"apikey": apikey, "symbol": symbol, "page": page}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def stock_peers(apikey: str, symbol: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def analyst_estimates(apikey: str, symbol: str, period: str = "annual", limit: int = None) -> RootModel[typing.List[FMPAnalystEstimates]]:
     """
-    Query FMP /stock_peers/ API
-    :param apikey: Your API key
-    :param symbol: Company ticker
-    :return: A list of dictionaries
+    Get analyst estimates using the /stable/analyst-estimates endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get analyst estimates for.
+        period (str): The period for estimates ('annual' or 'quarter').
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with analyst estimates.
     """
-    path = f"stock_peers"
+    path = "analyst-estimates"
+    query_vars = {"apikey": apikey, "symbol": symbol, "period": period}
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def ratings_snapshot(apikey: str, symbol: str, date: str = None) -> RootModel[typing.List[FMPRatingSnapshot]]:
+    """
+    Get ratings snapshot using the /stable/ratings-snapshot endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get ratings for.
+        date (str, optional): Filter by date (YYYY-MM-DD).
+    Returns:
+        List of dictionaries with ratings snapshot.
+    """
+    path = "ratings-snapshot"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    if date:
+        query_vars["date"] = date
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def analyst_estimates(
-    apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def ratings_historical(apikey: str, symbol: str, from_date: str = None, to_date: str = None) -> RootModel[typing.List[FMPHistoricalRating]]:
     """
-    Query FMP /analyst-estimates/ API.
+    Get historical ratings using the /stable/ratings-historical endpoint.
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param period: 'annual' or 'quarter'
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get historical ratings for.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+    Returns:
+        List of dictionaries with historical ratings.
     """
-    path = f"/analyst-estimates/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "symbol": symbol,
-        "period": __validate_period(value=period),
-        "limit": limit,
-    }
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-def analyst_recommendations(
-    apikey: str, symbol: str, limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /analyst-stock-recommendations/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
-    """
-    path = f"/analyst-stock-recommendations/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "limit": limit,
-    }
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-def upgrades_downgrades(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /upgrades-downgrades/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"/upgrades-downgrades"
-    query_vars = {
-        "apikey": apikey,
-        "symbol": symbol
-    }
-    return __return_json_v4(path=path, query_vars=query_vars)
-
-def price_target(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /price-target/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"/price-target"
-    query_vars = {
-        "apikey": apikey,
-        "symbol": symbol
-    }
-    return __return_json_v4(path=path, query_vars=query_vars)
-
-def price_target_consensus(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /price-target-consensus/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"/price-target-consensus"
-    query_vars = {
-        "apikey": apikey,
-        "symbol": symbol
-    }
-    return __return_json_v4(path=path, query_vars=query_vars)
-
-
-
-def historical_employee_count(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    historical_employee_count
-    """
-    path = f"historical/employee_count"
+    path = "ratings-historical"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def available_industries(apikey: str) -> typing.Optional[typing.List[str]]:
+@parse_response
+def price_target_summary(apikey: str, symbol: str) -> RootModel[typing.List[FMPPriceTargetSummary]]:
+    """
+    Get price target summary using the /stable/price-target-summary endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get price target summary for.
+    Returns:
+        List of dictionaries with price target summary.
+    """
+    path = "price-target-summary"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def price_target_consensus(apikey: str, symbol: str) -> RootModel[typing.List[FMPPriceTargetConsensus]]:
+    """
+    Get price target consensus using the /stable/price-target-consensus endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get price target consensus for.
+    Returns:
+        List of dictionaries with price target consensus.
+    """
+    path = "price-target-consensus"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def price_target_news(apikey: str, symbol: str, limit: int = None) -> RootModel[typing.List[FMPPriceTargetNews]]:
+    """
+    Get price target news using the /stable/price-target-news endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get price target news for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with price target news.
+    """
+    path = "price-target-news"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def price_target_latest_news(apikey: str, symbol: str, limit: int = None) -> RootModel[typing.List[FMPPressRelease]]:
+    """
+    Get latest price target news using the /stable/price-target-latest-news endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get latest price target news for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with latest price target news.
+    """
+    path = "price-target-latest-news"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def available_industries(apikey: str) -> RootModel[typing.List[FMPIndustry]]:
     """
     Query FMP /available-industries/ API.
 
@@ -1088,12 +1356,11 @@ def available_industries(apikey: str) -> typing.Optional[typing.List[str]]:
     """
     path = "available-industries"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def upgrades_downgrades_consensus(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def upgrades_downgrades_consensus(apikey: str, symbol: str) -> RootModel[typing.List[FMPBulkUpgradeDowngradeConsensus]]:
     """
     Query FMP /upgrades-downgrades-consensus/ API.
 
@@ -1117,9 +1384,126 @@ def upgrades_downgrades_consensus(
              - text: Additional commentary or notes
     """
     if not symbol:
-        logging.warning("No symbol provided for upgrades & downgrades consensus request.")
+        logging.warning(
+            "No symbol provided for upgrades & downgrades consensus request."
+        )
         return None
-    
+
     path = "upgrades-downgrades-consensus"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def esg_disclosures(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGFiling]]:
+    """
+    Get ESG disclosures for a given symbol.
+
+    Parameters
+    ----------
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    apikey : str
+        Your FMP API key.
+    kwargs : dict
+        Additional query parameters.
+
+    Returns
+    -------
+    list
+        List of ESG disclosures.
+    """
+    path = f"/esg-disclosures/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def esg_ratings(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGRating]]:
+    """
+    Get ESG ratings for a given symbol.
+
+    Parameters
+    ----------
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    apikey : str
+        Your FMP API key.
+    kwargs : dict
+        Additional query parameters.
+
+    Returns
+    -------
+    list
+        List of ESG ratings.
+    """
+    path = f"/esg-ratings/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def esg_benchmark(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGBenchmark]]:
+    """
+    Get ESG benchmark data for a given symbol.
+
+    Parameters
+    ----------
+    symbol : str
+        The ticker symbol (e.g., 'AAPL').
+    apikey : str
+        Your FMP API key.
+    kwargs : dict
+        Additional query parameters.
+
+    Returns
+    -------
+    list
+        List of ESG benchmark data.
+    """
+    path = f"/esg-benchmark/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def earnings(apikey: str, symbol: str = None, limit: int = 100) -> RootModel[typing.List[FMPEarningsReport]]:
+    """
+    Query FMP /earnings endpoint.
+
+    :param apikey: Your API key.
+    :param symbol: Optional ticker symbol to filter earnings (if supported by API).
+    :param limit: Number of records to return (default 100).
+    :return: A list of dictionaries with earnings data.
+    """
+    path = "earnings"
+    query_vars = {"apikey": apikey, "limit": limit}
+    if symbol:
+        query_vars["symbol"] = symbol
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def company_notes(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanyNote]]:
+    """
+    Query FMP /company-notes endpoint.
+    :param apikey: Your API key.
+    :param symbol: Ticker symbol.
+    :return: List of company notes.
+    """
+    path = f"company-notes/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+@parse_response
+def market_capitalization_batch(apikey: str, symbols: typing.List[str]) -> RootModel[typing.List[FMPMarketCap]]:
+    """
+    Query FMP /market-capitalization-batch endpoint.
+    :param apikey: Your API key.
+    :param symbols: List of ticker symbols.
+    :return: List of market capitalization data for the batch.
+    """
+    symbols_str = ",".join(symbols)
+    path = f"market-capitalization-batch/{symbols_str}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path=path, query_vars=query_vars)

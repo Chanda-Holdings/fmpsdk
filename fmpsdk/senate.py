@@ -1,65 +1,142 @@
-"""
-   https://site.financialmodelingprep.com/developer/docs/#Senate-trading
-"""
-
 import typing
-
-from .url_methods import __return_json_v4
-
-
-def senate_trading_rss(
-    apikey: str, page: int = 0
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP API for recently reported Senate trades.
-
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
-    """
-    path = f"senate-trading-rss-feed"
-    query_vars = {"apikey": apikey, "page": page}
-    return __return_json_v4(path=path, query_vars=query_vars)
+from .url_methods import __return_json_stable
+from .utils import parse_response
+from .models import *
 
 
-def senate_trading_symbol(
+@parse_response
+def senate_latest(
     apikey: str,
-    symbol: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
     """
-    Query FMP API for recently reported Senate trades filtered by symbol.
+    Get latest Senate trading disclosures.
 
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    list
+        List of latest Senate trading disclosures.
     """
-    path = f"senate-trading"
-    query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    path = f"/senate-latest"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
 
 
-def senate_disclosure_rss(
-    apikey: str, page: int = 0
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP API for recently filed Senate disclosures.
-
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
-    """
-    path = f"senate-disclosure-rss-feed"
-    query_vars = {"apikey": apikey, "page": page}
-    return __return_json_v4(path=path, query_vars=query_vars)
-
-
-def senate_disclosure_symbol(
+@parse_response
+def house_latest(
     apikey: str,
-    symbol: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
     """
-    Query FMP API for recently filed Senate disclosures filtered by symbol.
+    Get latest House trading disclosures.
 
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    list
+        List of latest House trading disclosures.
     """
-    path = f"senate-disclosure"
-    query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    path = f"/house-latest"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def senate_trades(
+    apikey: str,
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
+    """
+    Get all Senate trades.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    list
+        List of all Senate trades.
+    """
+    path = f"/senate-trades"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def senate_trades_by_name(
+    apikey: str,
+    name: str,
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
+    """
+    Get Senate trades by name.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    name : str
+        Name of the Senator.
+
+    Returns
+    -------
+    list
+        List of Senate trades for the given name.
+    """
+    path = f"/senate-trades-by-name/{name}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def house_trades(
+    apikey: str,
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
+    """
+    Get all House trades.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+
+    Returns
+    -------
+    list
+        List of all House trades.
+    """
+    path = f"/house-trades"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def house_trades_by_name(
+    apikey: str,
+    name: str,
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
+    """
+    Get House trades by name.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    name : str
+        Name of the House member.
+
+    Returns
+    -------
+    list
+        List of House trades for the given name.
+    """
+    path = f"/house-trades-by-name/{name}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)

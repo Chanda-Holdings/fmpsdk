@@ -1,27 +1,77 @@
 import typing
+from .url_methods import __return_json_stable
+from .utils import parse_response
+from .models import *
 
-from .general import __quotes
-from .url_methods import __return_json_v3
 
-
-def available_commodities(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def commodities_quote(
+    apikey: str,
+    symbol: str,
+) -> RootModel[typing.List[FMPQuoteFull]]:
     """
-    Query FMP /symbol/available-commodities/ API
-
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Get commodity quote for a given symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Commodity symbol (e.g., 'GCUSD').
+    Returns
+    -------
+    list
+        List of commodity quote data.
     """
-    path = f"symbol/available-commodities"
+    path = f"/commodities-quote/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path, query_vars)
 
 
-def commodities_list(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def commodities_quote_short(
+    apikey: str,
+    symbol: str,
+) -> RootModel[typing.List[FMPQuoteShort]]:
     """
-    Query FMP /quotes/commodity/ API
-
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
+    Get short commodity quote for a given symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Commodity symbol (e.g., 'GCUSD').
+    Returns
+    -------
+    list
+        List of short commodity quote data.
     """
-    path = f"commodity"
-    return __quotes(apikey=apikey, value=path)
+    path = f"/commodities-quote-short/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def batch_commodity_quotes(
+    apikey: str,
+    symbols: typing.Optional[typing.List[str]] = None,
+) -> RootModel[typing.List[FMPBulkEOD]]:
+    """
+    Get batch commodity quotes for a list of symbols.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbols : list, optional
+        List of commodity symbols (e.g., ['GCUSD', 'SIUSD']). If None, returns all.
+    Returns
+    -------
+    list
+        List of batch commodity quote data.
+    """
+    if symbols:
+        symbols_str = ",".join(symbols)
+        path = f"/batch-commodity-quotes/{symbols_str}"
+    else:
+        path = f"/batch-commodity-quotes"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)

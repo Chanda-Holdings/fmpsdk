@@ -1,11 +1,13 @@
 import typing
-
 from .general import __quotes
 from .settings import DEFAULT_LIMIT
-from .url_methods import __return_json_v3, __return_json_v4
+from .url_methods import __return_json_stable
+from .utils import parse_response
+from .models import *
 
 
-def forex(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def forex(apikey: str) -> RootModel[typing.List[FMPForexPair]]:
     """
     Query FMP /fx/ API
 
@@ -14,10 +16,11 @@ def forex(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
     """
     path = f"fx"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def forex_list(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def forex_list(apikey: str) -> RootModel[typing.List[FMPQuoteFull]]:
     """
     Query FMP /quotes/forex/ API
 
@@ -28,7 +31,8 @@ def forex_list(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
     return __quotes(apikey=apikey, value=path)
 
 
-def available_forex(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def available_forex(apikey: str) -> RootModel[typing.List[FMPForexPair]]:
     """
     Query FMP /symbol/available-forex-currency-pairs/ API
 
@@ -37,9 +41,10 @@ def available_forex(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
     """
     path = f"symbol/available-forex-currency-pairs"
     query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
+@parse_response
 def forex_news(
     apikey: str,
     symbol: str = None,
@@ -47,7 +52,7 @@ def forex_news(
     to_date: str = None,
     page: int = 0,
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPPressRelease]]:
     """
     Query FMP /stock_news/ API.
 
@@ -68,4 +73,87 @@ def forex_news(
     if to_date:
         query_vars["to"] = to_date
 
-    return __return_json_v4(path=path, query_vars=query_vars)
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def forex_quote(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteFull]]:
+    """
+    Get forex quote for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Forex symbol (e.g., 'EURUSD').
+
+    Returns
+    -------
+    list
+        List of forex quote data.
+    """
+    path = f"/forex-quote/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def forex_quote_short(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteShort]]:
+    """
+    Get short forex quote for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Forex symbol (e.g., 'EURUSD').
+
+    Returns
+    -------
+    list
+        List of short forex quote data.
+    """
+    path = f"/forex-quote-short/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def batch_forex_quotes(apikey: str, symbols: list = None) -> RootModel[typing.List[FMPBulkEOD]]:
+    """
+    Get batch forex quotes for a list of symbols.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbols : list, optional
+        List of forex symbols (e.g., ['EURUSD', 'GBPUSD']). If None, returns all.
+
+    Returns
+    -------
+    list
+        List of batch forex quote data.
+    """
+    if symbols:
+        symbols_str = ",".join(symbols)
+        path = f"/batch-forex-quotes/{symbols_str}"
+    else:
+        path = f"/batch-forex-quotes"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+__all__ = [
+    "forex",
+    "forex_list",
+    "available_forex",
+    "forex_news",
+    "forex_quote",
+    "forex_quote_short",
+    "batch_forex_quotes"
+]
+
+# All function return types should be updated to match ENDPOINT_MODEL_MAP from model_registry.py

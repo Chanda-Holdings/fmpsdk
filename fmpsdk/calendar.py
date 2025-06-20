@@ -1,228 +1,238 @@
+from .url_methods import (  # Correct import for stable request function
+    __return_json_stable)
+from .utils import parse_response
+from .models import *
 import typing
-import logging
-
-from .settings import DEFAULT_LIMIT
-from .url_methods import __return_json_v3, __return_json_v4
 
 
-def earning_calendar(
-    apikey: str, from_date: str = None, to_date: str = None
-) -> typing.Optional[typing.List[typing.Dict]]:
+
+@parse_response
+def dividends(
+    apikey: str,
+    symbol: str = None,
+    from_date: str = None,
+    to_date: str = None,
+    limit: int = None,
+) -> RootModel[typing.List[FMPDividend]]:
     """
-    Query FMP /earning_calendar/ API.
+    Get dividends using the /stable/dividends endpoint.
 
-    Note: Between the "from" and "to" parameters the maximum time interval can be 3 months.
-    :param apikey: Your API key.
-    :param from_date: 'YYYY:MM:DD'
-    :param to_date: 'YYYY:MM:DD'
-    :return: A list of dictionaries.
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str, optional): The symbol to get dividends for.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with dividends.
     """
-    path = f"earning_calendar"
-    query_vars = {
-        "apikey": apikey,
-    }
+    path = "dividends"
+    query_vars = {"apikey": apikey}
+    if symbol:
+        query_vars["symbol"] = symbol
     if from_date:
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json_v3(path=path, query_vars=query_vars)
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def historical_earning_calendar(
-    apikey: str, symbol: str, limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /historical/earning_calendar/ API.
-
-    Note: Between the "from" and "to" parameters the maximum time interval can be 3 months.
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
-    """
-    path = f"historical/earning_calendar/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "symbol": symbol,
-        "limit": limit,
-    }
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def ipo_calendar(
-    apikey: str, from_date: str = None, to_date: str = None
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /ipo_calendar/ API.
-
-    Note: Between the "from" and "to" parameters the maximum time interval can be 3 months.
-    :param apikey: Your API key.
-    :param from_date: 'YYYY:MM:DD'
-    :param to_date: 'YYYY:MM:DD'
-    :return: A list of dictionaries.
-    """
-    path = f"ipo_calendar"
-    query_vars = {
-        "apikey": apikey,
-    }
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def stock_split_calendar(
-    apikey: str, from_date: str = None, to_date: str = None
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /stock_split_calendar/ API.
-
-    Note: Between the "from" and "to" parameters the maximum time interval can be 3 months.
-    :param apikey: Your API key.
-    :param from_date: 'YYYY:MM:DD'
-    :param to_date: 'YYYY:MM:DD'
-    :return: A list of dictionaries.
-    """
-    path = f"stock_split_calendar"
-    query_vars = {
-        "apikey": apikey,
-    }
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def dividend_calendar(
-    apikey: str, from_date: str = None, to_date: str = None
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /stock_dividend_calendar/ API.
-
-    Note: Between the "from" and "to" parameters the maximum time interval can be 3 months.
-    :param apikey: Your API key.
-    :param from_date: 'YYYY:MM:DD'
-    :param to_date: 'YYYY:MM:DD'
-    :return: A list of dictionaries.
-    """
-    path = f"stock_dividend_calendar"
-    query_vars = {
-        "apikey": apikey,
-    }
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def economic_calendar(
-    apikey: str, from_date: str = None, to_date: str = None
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /economic_calendar/ API.
-
-    Note: Between the "from" and "to" parameters the maximum time interval can be 3 months.
-    :param apikey: Your API key.
-    :param from_date: 'YYYY:MM:DD'
-    :param to_date: 'YYYY:MM:DD'
-    :return: A list of dictionaries.
-    """
-    path = f"economic_calendar"
-    query_vars = {
-        "apikey": apikey,
-    }
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def earning_calendar_confirmed(
+@parse_response
+def dividends_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-    limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+    limit: int = None,
+) -> RootModel[typing.List[FMPDividendCalendarEvent]]:
     """
-    Query FMP /earning-calendar-confirmed API.
+    Get dividends calendar using the /stable/dividends-calendar endpoint.
 
-    Get confirmed earnings announcement dates for companies.
-
-    https://site.financialmodelingprep.com/developer/docs#earnings-calendar-confirmed
-
-    Endpoint:
-        https://financialmodelingprep.com/api/v4/earning-calendar-confirmed
-
-    :param apikey: Your API key.
-    :param from_date: The start date in "YYYY-MM-DD" format.
-    :param to_date: The end date in "YYYY-MM-DD" format.
-    :param limit: Number of records to return.
-    :return: A list of dictionaries containing confirmed earnings data with fields:
-             - symbol: The stock symbol
-             - date: The confirmed earnings date
-             - time: The time of the earnings announcement
-             - exchange: The stock exchange
-             - beforeAfterMarket: Whether the announcement is before/after market
-             - currency: The currency of the financials
-             - reportedEPS: The reported earnings per share
-             - estimatedEPS: The estimated earnings per share
-             - revenueEstimated: The estimated revenue
-             - numberOfEstimates: Number of analyst estimates
-             - EPSAveragePrediction: Average EPS prediction
+    Parameters:
+        apikey (str): Your API key.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with dividends calendar.
     """
-    path = "earning-calendar-confirmed"
-    query_vars = {"apikey": apikey, "limit": limit}
-    
+    path = "dividends-calendar"
+    query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    
-    return __return_json_v4(path=path, query_vars=query_vars)
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def ipo_calendar_confirmed(
+@parse_response
+def earnings_calendar(
     apikey: str,
-    from_date: str,
-    to_date: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+    from_date: str = None,
+    to_date: str = None,
+    limit: int = None,
+) -> RootModel[typing.List[FMPEarningsCalendarEvent]]:
     """
-    Query FMP /ipo-calendar-confirmed API.
+    Get earnings calendar using the /stable/earnings-calendar endpoint.
 
-    Get confirmed IPO dates for companies.
-
-    https://site.financialmodelingprep.com/developer/docs#ipo-calendar-confirmed
-
-    Endpoint:
-        https://financialmodelingprep.com/api/v4/ipo-calendar-confirmed
-
-    :param apikey: Your API key.
-    :param from_date: The start date in "YYYY-MM-DD" format (required).
-    :param to_date: The end date in "YYYY-MM-DD" format (required).
-    :return: A list of dictionaries containing confirmed IPO data with fields:
-             - symbol: The stock symbol
-             - date: The confirmed IPO date
-             - exchange: The stock exchange
-             - name: The company name
-             - currency: The currency of the IPO
-             - price: The IPO price
-             - shares: Number of shares offered
-             - marketCap: Market capitalization at IPO
-             - sector: Company sector
-             - industry: Company industry
+    Parameters:
+        apikey (str): Your API key.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with earnings calendar.
     """
-    if not from_date or not to_date:
-        logging.warning("Both from_date and to_date are required for IPO calendar confirmed request.")
-        return None
-    
-    path = "ipo-calendar-confirmed"
-    query_vars = {
-        "apikey": apikey,
-        "from": from_date,
-        "to": to_date
-    }
-    return __return_json_v4(path=path, query_vars=query_vars)
+    path = "earnings-calendar"
+    query_vars = {"apikey": apikey}
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def ipos_calendar(
+    apikey: str,
+    from_date: str = None,
+    to_date: str = None,
+    limit: int = None,
+) -> RootModel[typing.List[FMPUpcomingIPO]]:
+    """
+    Get IPOs calendar using the /stable/ipos-calendar endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with IPOs calendar.
+    """
+    path = "ipos-calendar"
+    query_vars = {"apikey": apikey}
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def ipos_disclosure(
+    apikey: str,
+    symbol: str = None,
+    limit: int = None,
+) -> RootModel[typing.List[FMPDisclosureFiling]]:
+    """
+    Get IPOs disclosure using the /stable/ipos-disclosure endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str, optional): The symbol to get IPO disclosure for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with IPOs disclosure.
+    """
+    path = "ipos-disclosure"
+    query_vars = {"apikey": apikey}
+    if symbol:
+        query_vars["symbol"] = symbol
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def ipos_prospectus(
+    apikey: str,
+    symbol: str = None,
+    limit: int = None,
+) -> RootModel[typing.List[FMPProspectusFiling]]:
+    """
+    Get IPOs prospectus using the /stable/ipos-prospectus endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str, optional): The symbol to get IPO prospectus for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with IPOs prospectus.
+    """
+    path = "ipos-prospectus"
+    query_vars = {"apikey": apikey}
+    if symbol:
+        query_vars["symbol"] = symbol
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def splits(
+    apikey: str,
+    symbol: str = None,
+    from_date: str = None,
+    to_date: str = None,
+    limit: int = None,
+) -> RootModel[typing.List[FMPStockSplit]]:
+    """
+    Get stock splits using the /stable/splits endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str, optional): The symbol to get splits for.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with splits.
+    """
+    path = "splits"
+    query_vars = {"apikey": apikey}
+    if symbol:
+        query_vars["symbol"] = symbol
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def splits_calendar(
+    apikey: str,
+    from_date: str = None,
+    to_date: str = None,
+    limit: int = None,
+) -> RootModel[typing.List[FMPStockSplitCalendarEvent]]:
+    """
+    Get splits calendar using the /stable/splits-calendar endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with splits calendar.
+    """
+    path = "splits-calendar"
+    query_vars = {"apikey": apikey}
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+    if limit:
+        query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)

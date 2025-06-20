@@ -1,10 +1,11 @@
-import logging
+from .settings import DEFAULT_LIMIT
+from .url_methods import __return_json_stable
+from .utils import parse_response
+from .models import *
 import typing
 
-from .settings import DEFAULT_LIMIT
-from .url_methods import __return_json_v3, __return_json_v4, __return_json_stable
 
-
+@parse_response
 def insider_trading(
     apikey: str,
     symbol: str = None,
@@ -13,7 +14,7 @@ def insider_trading(
     transactionType: str = None,
     page: int = 0,
     limit: int = DEFAULT_LIMIT,
-) -> typing.Optional[typing.List[typing.Dict]]:
+) -> RootModel[typing.List[FMPInsiderTrade]]:
     """
     Query FMP /insider-trading/search/ API.
 
@@ -33,98 +34,133 @@ def insider_trading(
         query_vars["companyCik"] = companyCik
     if transactionType:
         query_vars["transactionType"] = transactionType
-        
+
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def insider_trade_statistics(
+@parse_response
+def insider_trading_latest(
     apikey: str,
-    symbol: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> RootModel[typing.List[FMPInsiderTrade]]:
     """
-    Query FMP /insider-roaster-statistic API.
+    Get latest insider trading data.
 
-    Get insider trading statistics for a specific company.
-
-    https://site.financialmodelingprep.com/developer/docs#insider-trade-statistics
-
-    Endpoint:
-        https://financialmodelingprep.com/api/v4/insider-roaster-statistic?symbol=AAPL
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker symbol.
-    :return: A list of dictionaries containing insider trading statistics with fields:
-             - symbol: The stock symbol
-             - name: Name of the insider
-             - position: Position in the company
-             - totalBuy: Total number of buy transactions
-             - totalBuyAmount: Total amount spent on buys
-             - totalSell: Total number of sell transactions
-             - totalSellAmount: Total amount from sells
-             - totalTransactions: Total number of transactions
-             - lastDate: Date of last transaction
-             - lastPrice: Price of last transaction
-             - lastAmount: Amount of last transaction
-             - lastType: Type of last transaction (buy/sell)
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    page : int
+        Page number for pagination.
+    limit : int
+        Number of records to return.
+    Returns
+    -------
+    list
+        List of latest insider trading data.
     """
-    if not symbol:
-        logging.warning("Symbol is required for insider trade statistics request.")
-        return None
-    
-    path = "insider-roaster-statistic"
-    query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    path = f"/insider-trading/latest"
+    query_vars = {"apikey": apikey, "page": page, "limit": limit}
+    return __return_json_stable(path, query_vars)
 
 
-def mapper_cik_name(
+@parse_response
+def insider_trading_reporting_name(
     apikey: str,
     name: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> RootModel[typing.Any]:
     """
-    Query FMP /mapper-cik-name/ API.
+    Get insider trading data by reporting name.
 
-    List with names and their CIK
-
-    :param apikey: Your API key.
-    :param name: String of name.
-    :return: A list of dictionaries.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    name : str
+        Reporting name.
+    page : int
+        Page number for pagination.
+    limit : int
+        Number of records to return.
+    Returns
+    -------
+    list
+        Insider trading data for the reporting name.
     """
-    path = f"mapper-cik-name/"
-    query_vars = {"apikey": apikey}
-    if name:
-        query_vars["name"] = name
-    return __return_json_v4(path=path, query_vars=query_vars)
+    path = f"/insider-trading/reporting-name/{name}"
+    query_vars = {"apikey": apikey, "page": page, "limit": limit}
+    return __return_json_stable(path, query_vars)
 
 
-def mapper_cik_company(
+@parse_response
+def insider_trading_transaction_type(
     apikey: str,
-    ticker: str,
-) -> typing.Optional[typing.List[typing.Dict]]:
+    transaction_type: str,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> RootModel[typing.List[FMPInsiderTransactionType]]:
     """
-    Query FMP /mapper-cik-company/ API.
+    Get insider trading data by transaction type.
 
-    Company CIK mapper
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    transaction_type : str
+        Transaction type.
+    page : int
+        Page number for pagination.
+    limit : int
+        Number of records to return.
+    Returns
+    -------
+    list
+        Insider trading data for the transaction type.
+    """
+    path = f"/insider-trading-transaction-type/{transaction_type}"
+    query_vars = {"apikey": apikey, "page": page, "limit": limit}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def insider_trading_statistics(
+    apikey: str, symbol: str = None
+) -> RootModel[typing.List[FMPInsiderTradeStatistics]]:
+    """
+    Query FMP /insider-trading/statistics endpoint.
 
     :param apikey: Your API key.
-    :param ticker: String of name.
-    :return: A list of dictionaries.
+    :param symbol: Optional ticker symbol to filter statistics.
+    :return: List of insider trading statistics.
     """
-    path = f"mapper-cik-company/{ticker}"
+    path = "insider-trading/statistics"
     query_vars = {"apikey": apikey}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    if symbol:
+        query_vars["symbol"] = symbol
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def insider_trading_rss_feed(
-    apikey: str, limit: int = DEFAULT_LIMIT
-) -> typing.Optional[typing.List[typing.Dict]]:
+@parse_response
+def acquisition_ownership(
+    apikey: str,
+    symbol: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> RootModel[typing.List[FMPAcquisitionOwnership]]:
     """
-    Query FMP /insider-trading-rss-feed/ API.
+    Query FMP /acquisition-ownership/search API.
 
-    Complete list of all institutional investment managers by cik
     :param apikey: Your API key.
-    :param limit: Number of records to return.
+    :param symbol: Company ticker.
+    :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"insider-trading-rss-feed"
-    query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_v4(path=path, query_vars=query_vars)
+    path = f"acquisition-ownership/search"
+    query_vars = {"apikey": apikey, "limit": limit, "page": page}
+    if symbol:
+        query_vars["symbol"] = symbol
+
+    return __return_json_stable(path=path, query_vars=query_vars)

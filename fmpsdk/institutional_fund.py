@@ -3,87 +3,16 @@ import typing
 
 import requests
 
-from .settings import DEFAULT_LIMIT, SEC_RSS_FEEDS_FILENAME, BASE_URL_v3
-from .url_methods import __return_json_v3, __return_json_v4
+from .settings import DEFAULT_LIMIT, SEC_RSS_FEEDS_FILENAME
+from .utils import parse_response
+from .url_methods import __return_json_stable
+from .models import *
 
 
-def institutional_holders(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /institutional-holder/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"institutional-holder/{symbol}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def mutual_fund_holders(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /mutual-fund-holder/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"mutual-fund-holder/{symbol}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def etf_holders(apikey: str, symbol: str) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /etf-holder/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"etf-holder/{symbol}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def etf_sector_weightings(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /etf-sector-weightings/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"etf-sector-weightings/{symbol}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def etf_country_weightings(
-    apikey: str, symbol: str
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /etf-country-weightings/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :return: A list of dictionaries.
-    """
-    path = f"etf-country-weightings/{symbol}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
+@parse_response
 def sec_rss_feeds(
     apikey: str,
     limit: int = DEFAULT_LIMIT,
-    download: bool = False,
     filename: str = SEC_RSS_FEEDS_FILENAME,
 ) -> typing.Union[typing.List[typing.Dict], None]:
     """
@@ -91,117 +20,295 @@ def sec_rss_feeds(
 
     :param apikey: Your API key.
     :param limit: Number of rows to return.
-    :param download: True/False
     :param filename: Name of saved file.
     :return: A list of dictionaries.
     """
     path = f"rss_feed"
     query_vars = {"apikey": apikey}
-    if download:
-        query_vars["datatype"] = "csv"  # Only CSV is supported.
-        response = requests.get(f"{BASE_URL_v3}{path}", params=query_vars)
-        open(filename, "wb").write(response.content)
-        logging.info(f"Saving SEC RSS Feeds as {filename}.")
-    else:
-        query_vars["limit"] = limit
-        return __return_json_v3(path=path, query_vars=query_vars)
+    query_vars["limit"] = limit
+    return __return_json_stable(path=path, query_vars=query_vars)
 
 
-def cik_list(apikey: str) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /cik_list/ API.
-
-    Complete list of all institutional investment managers by cik
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
-    """
-    path = f"cik_list"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def cik_search(apikey: str, name: str) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /cik-search/ API.
-
-    FORM 13F cik search by name
-    :param apikey: Your API key.
-    :param name: Name
-    :return: A list of dictionaries.
-    """
-    path = f"cik-search/{name}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def cik(apikey: str, cik_id: str) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /cik/ API.
-
-    FORM 13F get company name by cik
-    :param apikey: Your API key.
-    :param cik_id: CIK value
-    :return: A list of dictionaries.
-    """
-    path = f"cik/{cik_id}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def form_13f(
-    apikey: str, cik_id: str, date: str = None
-) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /form-thirteen/ API.
-
-    FORM 13F statements provides position-level report of all institutional investment managers with more than $100m
-    in assets under management.
-    :param apikey: Your API key.
-    :param cik_id: CIK value
-    :param date: 'YYYY-MM-DD'
-    :return: A list of dictionaries.
-    """
-    path = f"form-thirteen/{cik_id}"
-    query_vars = {"apikey": apikey}
-    if date:
-        query_vars["date"] = date
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def cusip(apikey: str, cik_id: str) -> typing.Optional[typing.List[typing.Dict]]:
-    """
-    Query FMP /cusip/ API.
-
-    Cusip mapper
-    :param apikey: Your API key.
-    :param cik_id: CIK value
-    :return: A list of dictionaries.
-    """
-    path = f"cusip/{cik_id}"
-    query_vars = {"apikey": apikey}
-    return __return_json_v3(path=path, query_vars=query_vars)
-
-
-def institutional_symbol_ownership(
+@parse_response
+def institutional_ownership_latest(
     apikey: str,
-    symbol: str,
-    limit: int,
-    includeCurrentQuarter: bool = False,
-) -> typing.Optional[typing.List[typing.Dict]]:
+    page: int = 0,
+    limit: int = 100,
+) -> RootModel[typing.List[FMPForm13FFiling]]:
     """
-    Query FMP /institutional-ownership/symbol-ownership API.
+    Get latest institutional ownership filings.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    page : int
+        Page number for pagination.
+    limit : int
+        Number of results per page.
+    Returns
+    -------
+    list
+        List of latest institutional ownership filings.
+    """
+    path = "/stable/institutional-ownership/latest"
+    query_vars = {"apikey": apikey, "page": page, "limit": limit}
+    return __return_json_stable(path, query_vars)
 
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: up to how many quarterly reports to return.
-    :param includeCurrentQuarter: Whether to include any available data in the current quarter.
-    :return: A list of dictionaries.
+
+@parse_response
+def institutional_ownership_extract(
+    apikey: str,
+    cik: str,
+    year: int,
+    quarter: int,
+) -> RootModel[typing.List[FMPForm13FExtract]]:
     """
-    path = f"institutional-ownership/symbol-ownership"
-    query_vars = {
-        "symbol": symbol,
-        "apikey": apikey,
-        "includeCurrentQuarter": includeCurrentQuarter,
-        "limit": limit,
-    }
-    return __return_json_v4(path=path, query_vars=query_vars)
+    Extract detailed data from Form 13F filings.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional investor.
+    year : int
+        Year of the filing.
+    quarter : int
+        Quarter of the filing (1, 2, 3, or 4).
+    Returns
+    -------
+    list
+        Extracted data from Form 13F filings.
+    """
+    path = "/stable/institutional-ownership/extract"
+    query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_dates(apikey: str, cik: str) -> RootModel[typing.List[FMPForm13FDate]]:
+    """
+    Get available institutional ownership dates for a CIK.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional investor.
+    Returns
+    -------
+    list
+        List of available institutional ownership dates.
+    """
+    path = f"/institutional-ownership/dates"
+    query_vars = {"apikey": apikey, "cik": cik}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_holder_industry_breakdown(apikey: str, cik: str, year: int, quarter: int) -> RootModel[typing.List[FMPHolderIndustryBreakdown]]:
+    """
+    Get institutional ownership holder industry breakdown for a CIK, year, and quarter.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional holder.
+    year : int
+        Year of the filing period.
+    quarter : int
+        Quarter of the filing period (1, 2, 3, or 4).
+    Returns
+    -------
+    list
+        List of holder industry breakdown data.
+    """
+    path = f"/institutional-ownership/holder-industry-breakdown"
+    query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_industry_summary(apikey: str, year: int, quarter: int) -> RootModel[typing.List[FMPIndustryPerformanceSummary]]:
+    """
+    Get institutional ownership industry summary for a year and quarter.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    year : int
+        Year of the filing period.
+    quarter : int
+        Quarter of the filing period (1, 2, 3, or 4).
+    Returns
+    -------
+    list
+        List of industry summary data.
+    """
+    path = f"/institutional-ownership/industry-summary"
+    query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_filings_8k(apikey: str, symbol: str) -> RootModel[typing.List[Any]]:
+    """
+    Get SEC 8-K filings for a given symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Ticker symbol (e.g., 'AAPL').
+    Returns
+    -------
+    list
+        List of SEC 8-K filings.
+    """
+    path = f"/sec-filings-8k/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_filings_financials(apikey: str, symbol: str) -> RootModel[typing.List[Any]]:
+    """
+    Get SEC financial filings for a given symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Ticker symbol (e.g., 'AAPL').
+    Returns
+    -------
+    list
+        List of SEC financial filings.
+    """
+    path = f"/sec-filings-financials/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_filings_search_form_type(apikey: str, form_type: str) -> RootModel[typing.List[Any]]:
+    """
+    Search SEC filings by form type.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    form_type : str
+        SEC form type (e.g., '10-K').
+    Returns
+    -------
+    list
+        List of SEC filings for the form type.
+    """
+    path = f"/sec-filings-search/form-type/{form_type}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_filings_search_symbol(apikey: str, symbol: str) -> RootModel[typing.List[Any]]:
+    """
+    Search SEC filings by symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Ticker symbol (e.g., 'AAPL').
+    Returns
+    -------
+    list
+        List of SEC filings for the symbol.
+    """
+    path = f"/sec-filings-search/symbol/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_filings_company_search_name(apikey: str, name: str) -> RootModel[typing.List[FMPCompanySECFilings]]:
+    """
+    Search SEC filings by company name.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    name : str
+        Company name.
+    Returns
+    -------
+    list
+        List of SEC filings for the company name.
+    """
+    path = f"/sec-filings-company-search/name/{name}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_filings_company_search_symbol(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanySECFilings]]:
+    """
+    Search SEC filings by company symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Ticker symbol (e.g., 'AAPL').
+    Returns
+    -------
+    list
+        List of SEC filings for the company symbol.
+    """
+    path = f"/sec-filings-company-search/symbol/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_filings_company_search_cik(apikey: str, cik: str) -> RootModel[typing.List[FMPCompanySECFilings]]:
+    """
+    Search SEC filings by company CIK.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        Company CIK.
+    Returns
+    -------
+    list
+        List of SEC filings for the company CIK.
+    """
+    path = f"/sec-filings-company-search/cik/{cik}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def sec_profile(apikey: str, symbol: str = None, cik: str = None) -> RootModel[typing.List[FMPCompanyProfile]]:
+    """
+    Get SEC profile for a given symbol or CIK.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str, optional
+        Ticker symbol (e.g., 'AAPL').
+    cik : str, optional
+        Central Index Key (CIK).
+    Returns
+    -------
+    list
+        SEC profile data.
+    """
+    path = f"/sec-profile/{symbol}" if symbol else f"/sec-profile"
+    query_vars = {"apikey": apikey}
+    if cik:
+        query_vars["cik"] = cik
+    return __return_json_stable(path, query_vars)

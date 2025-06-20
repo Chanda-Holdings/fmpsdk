@@ -1,7 +1,6 @@
 import typing
 
-BASE_URL_v3: str = "https://financialmodelingprep.com/api/v3/"
-BASE_URL_v4: str = "https://financialmodelingprep.com/api/v4/"
+FMP_ENDPOINT: str = "https://financialmodelingprep.com/"
 BASE_URL_STABLE: str = "https://financialmodelingprep.com/stable/"
 DEFAULT_LINE_PARAMETER = "line"
 DEFAULT_LIMIT: int = 0
@@ -348,5 +347,5 @@ ECONOMIC_INDICATOR_VALUES: typing.List = [
     "3MonthOr90DayRatesAndYieldsCertificatesOfDeposit",
     "commercialBankInterestRateOnCreditCardPlansAllAccounts",
     "30YearFixedRateMortgageAverage",
-    "15YearFixedRateMortgageAverage"
+    "15YearFixedRateMortgageAverage",
 ]
