@@ -16,7 +16,7 @@ load_dotenv()
 # Test configuration
 API_KEY = os.getenv("FMP_API_KEY")
 RATE_LIMIT_DELAY = 0.1  # Delay between API calls to respect rate limits
-RETRY_DELAY = 2.0  # Delay before retrying after rate limit error
+RETRY_DELAY = 30.0  # Delay before retrying after rate limit error
 MAX_RETRIES = 3  # Maximum number of retries for rate limit errors
 
 # Common test symbols for different categories
