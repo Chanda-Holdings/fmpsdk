@@ -7,14 +7,17 @@ import os
 
 import pytest
 
-from fmpsdk.alternative_data import (commitment_of_traders_report,
-                                     commitment_of_traders_report_analysis,
-                                     commitment_of_traders_report_list,
-                                     crowdfunding_offerings,
-                                     crowdfunding_offerings_latest,
-                                     crowdfunding_offerings_search,
-                                     fundraising, fundraising_latest,
-                                     fundraising_search)
+from fmpsdk.alternative_data import (
+    commitment_of_traders_report,
+    commitment_of_traders_report_analysis,
+    commitment_of_traders_report_list,
+    crowdfunding_offerings,
+    crowdfunding_offerings_latest,
+    crowdfunding_offerings_search,
+    fundraising,
+    fundraising_latest,
+    fundraising_search,
+)
 
 API_KEY = os.getenv("FMP_API_KEY")
 

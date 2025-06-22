@@ -3,8 +3,9 @@ import typing
 from pydantic import RootModel
 
 from .models import *
-from .url_methods import \
-    __return_json_stable  # Correct import for stable request function
+from .url_methods import (  # Correct import for stable request function
+    __return_json_stable,
+)
 from .utils import parse_response
 
 

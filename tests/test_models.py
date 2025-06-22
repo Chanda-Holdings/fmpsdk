@@ -7,9 +7,14 @@ from typing import List
 import pytest
 from pydantic import ValidationError
 
-from fmpsdk.models import (FMPCompanyCIKSearch, FMPCompanyNameSearch,
-                           FMPCusipSearch, FMPIsinSearch,
-                           FMPStockScreenerResult, FMPSymbolSearch)
+from fmpsdk.models import (
+    FMPCompanyCIKSearch,
+    FMPCompanyNameSearch,
+    FMPCusipSearch,
+    FMPIsinSearch,
+    FMPStockScreenerResult,
+    FMPSymbolSearch,
+)
 
 
 class TestStockSymbolSearchModels:

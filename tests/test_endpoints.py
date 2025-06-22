@@ -17,6 +17,7 @@ import fmpsdk.cryptocurrencies as cryptocurrencies_module
 import fmpsdk.economic_indicators as economic_indicators_module
 import fmpsdk.etf as etf_module
 import fmpsdk.forex as forex_module
+
 # Import modules for module checking test
 import fmpsdk.general as general_module
 import fmpsdk.insider_trading as insider_trading_module
@@ -24,11 +25,11 @@ import fmpsdk.news as news_module
 import fmpsdk.stock_time_series as stock_time_series_module
 from fmpsdk.calendar_module import earnings_calendar, ipos_calendar
 from fmpsdk.company_valuation import company_profile, income_statement
-from fmpsdk.cryptocurrencies import (available_cryptocurrencies,
-                                     cryptocurrency_quote)
+from fmpsdk.cryptocurrencies import available_cryptocurrencies, cryptocurrency_quote
 from fmpsdk.economic_indicators import treasury_rates
 from fmpsdk.etf import available_etfs, etf_info
 from fmpsdk.forex import available_forex, forex_quote
+
 # Import specific functions to avoid namespace conflicts
 from fmpsdk.general import available_indexes, quote
 from fmpsdk.insider_trading import insider_trading, insider_trading_latest

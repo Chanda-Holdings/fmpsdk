@@ -7,10 +7,16 @@ import os
 
 import pytest
 
-from fmpsdk.calendar_module import (dividends, dividends_calendar,
-                                    earnings_calendar, ipos_calendar,
-                                    ipos_disclosure, ipos_prospectus, splits,
-                                    splits_calendar)
+from fmpsdk.calendar_module import (
+    dividends,
+    dividends_calendar,
+    earnings_calendar,
+    ipos_calendar,
+    ipos_disclosure,
+    ipos_prospectus,
+    splits,
+    splits_calendar,
+)
 
 API_KEY = os.getenv("FMP_API_KEY")
 

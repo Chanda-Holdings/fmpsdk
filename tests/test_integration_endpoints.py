@@ -18,6 +18,7 @@ import fmpsdk.economic_indicators as economic
 import fmpsdk.etf as etf
 import fmpsdk.euronext as euronext
 import fmpsdk.forex as forex
+
 # Import all modules
 import fmpsdk.general as general
 import fmpsdk.insider_trading as insider
