@@ -1,7 +1,5 @@
 import typing
-from typing import Any, Callable, TypeVar, cast
-
-# from pydantic import BaseModel
+from typing import Any, Callable, TypeVar
 
 T = TypeVar("T")
 

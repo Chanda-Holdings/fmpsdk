@@ -2,7 +2,7 @@ import typing
 
 from pydantic import RootModel
 
-from .models import *
+from .models import FMPEconomicIndicator, FMPTreasuryRates
 from .url_methods import __return_json_stable
 from .utils import parse_response
 

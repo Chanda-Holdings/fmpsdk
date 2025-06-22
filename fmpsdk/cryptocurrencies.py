@@ -4,7 +4,7 @@ import typing
 from pydantic import RootModel
 
 from .general import __quotes
-from .models import *
+from .models import FMPBulkEOD, FMPQuoteFull, FMPQuoteShort, FMPSymbolAndNameList
 from .url_methods import __return_json_stable
 from .utils import parse_response
 
@@ -60,7 +60,7 @@ def last_crypto_price(apikey: str, symbol: str) -> typing.Optional[typing.Dict]:
         logging.warning("No symbol provided for last crypto price request.")
         return None
 
-    path = "crypto/last/{symbol}"
+    path = f"crypto/last/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -84,7 +84,7 @@ def cryptocurrency_quote(
     list
         List of cryptocurrency quote data.
     """
-    path = "/cryptocurrency-quote/{symbol}"
+    path = f"/cryptocurrency-quote/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -108,7 +108,7 @@ def cryptocurrency_quote_short(
     list
         List of short cryptocurrency quote data.
     """
-    path = "/cryptocurrency-quote-short/{symbol}"
+    path = f"/cryptocurrency-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 

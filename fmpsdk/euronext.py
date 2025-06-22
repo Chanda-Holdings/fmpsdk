@@ -3,7 +3,7 @@ import typing
 from pydantic import RootModel
 
 from .general import __quotes
-from .models import *
+from .models import FMPSymbolAndNameList
 
 
 def euronext_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:

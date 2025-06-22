@@ -4,7 +4,16 @@ import typing
 from pydantic import RootModel
 
 from .general import __quotes
-from .models import *
+from .models import (
+    FMPBulkEOD,
+    FMPDividend,
+    FMPHistoricalDataPointFull,
+    FMPHistoricalDataPointLight,
+    FMPIntradayDataPoint,
+    FMPQuoteFull,
+    FMPQuoteShort,
+    FMPStockSplit,
+)
 from .url_methods import __return_json_stable
 from .utils import parse_response
 
@@ -18,7 +27,7 @@ def quote_short(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteShort
     :param symbol: Company ticker.
     :return: A list of dictionaries.
     """
-    path = "quote-short/{symbol}"
+    path = f"quote-short/{symbol}"
     query_vars = {
         "apikey": apikey,
     }
@@ -50,7 +59,7 @@ def historical_stock_dividend(
     :param symbol: Company ticker.
     :return: A list of dictionaries.
     """
-    path = "historical-price-full/stock_dividend/{symbol}"
+    path = f"historical-price-full/stock_dividend/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -66,7 +75,7 @@ def historical_stock_split(
     :param symbol: Company ticker.
     :return: A list of dictionaries.
     """
-    path = "historical-price-full/stock_split/{symbol}"
+    path = f"historical-price-full/stock_split/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -83,7 +92,7 @@ def historical_survivorship_bias_free_eod(
     :param date: str YYYY-MM-DD
     :return: A list of dictionaries.
     """
-    path = "historical-price-full/{symbol}/{date}"
+    path = f"historical-price-full/{symbol}/{date}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -116,7 +125,7 @@ def live_full_price(apikey: str, symbol: str) -> typing.Optional[typing.Dict]:
         logging.warning("No symbol provided for live full price request.")
         return None
 
-    path = "live-full-price/{symbol}"
+    path = f"live-full-price/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -133,7 +142,7 @@ def historical_price_eod_light(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: FmpHistoricalPriceEodLightResponse.
     """
-    path = "historical-price-eod/light/{symbol}"
+    path = f"historical-price-eod/light/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -154,7 +163,7 @@ def historical_price_eod_full(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: FmpHistoricalPriceEodFullResponse.
     """
-    path = "historical-price-eod/full/{symbol}"
+    path = f"historical-price-eod/full/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -175,7 +184,7 @@ def historical_price_eod_non_split_adjusted(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of historical EOD prices (non-split-adjusted).
     """
-    path = "historical-price-eod/non-split-adjusted/{symbol}"
+    path = f"historical-price-eod/non-split-adjusted/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -196,7 +205,7 @@ def historical_price_eod_dividend_adjusted(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of historical EOD prices (dividend-adjusted).
     """
-    path = "historical-price-eod/dividend-adjusted/{symbol}"
+    path = f"historical-price-eod/dividend-adjusted/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -231,7 +240,7 @@ def historical_chart(
         raise ValueError(
             f"Invalid interval: {interval}. Must be one of {valid_intervals}."
         )
-    path = "/historical-chart/{interval}/{symbol}"
+    path = f"/historical-chart/{interval}/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -248,7 +257,7 @@ def historical_chart_1min(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of 1min historical chart data.
     """
-    path = "historical-chart/1min/{symbol}"
+    path = f"historical-chart/1min/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -269,7 +278,7 @@ def historical_chart_5min(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of 5min historical chart data.
     """
-    path = "historical-chart/5min/{symbol}"
+    path = f"historical-chart/5min/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -290,7 +299,7 @@ def historical_chart_15min(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of 15min historical chart data.
     """
-    path = "historical-chart/15min/{symbol}"
+    path = f"historical-chart/15min/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -311,7 +320,7 @@ def historical_chart_30min(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of 30min historical chart data.
     """
-    path = "historical-chart/30min/{symbol}"
+    path = f"historical-chart/30min/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -332,7 +341,7 @@ def historical_chart_1hour(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of 1hour historical chart data.
     """
-    path = "historical-chart/1hour/{symbol}"
+    path = f"historical-chart/1hour/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -353,7 +362,7 @@ def historical_chart_4hour(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of 4hour historical chart data.
     """
-    path = "historical-chart/4hour/{symbol}"
+    path = f"historical-chart/4hour/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date

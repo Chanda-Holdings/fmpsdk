@@ -3,7 +3,13 @@ import typing
 from pydantic import RootModel
 
 from .general import __quotes
-from .models import *
+from .models import (
+    FMPBulkEOD,
+    FMPForexPair,
+    FMPPressRelease,
+    FMPQuoteFull,
+    FMPQuoteShort,
+)
 from .settings import DEFAULT_LIMIT
 from .url_methods import __return_json_stable
 from .utils import parse_response
@@ -96,7 +102,7 @@ def forex_quote(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteFull]
     list
         List of forex quote data.
     """
-    path = "/forex-quote/{symbol}"
+    path = f"/forex-quote/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -120,7 +126,7 @@ def forex_quote_short(
     list
         List of short forex quote data.
     """
-    path = "/forex-quote-short/{symbol}"
+    path = f"/forex-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 

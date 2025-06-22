@@ -3,7 +3,14 @@ import typing
 from pydantic import RootModel
 
 from .general import __quotes
-from .models import *
+from .models import (
+    FMPBulkEOD,
+    FMPFundAssetExposure,
+    FMPFundHolding,
+    FMPFundInfo,
+    FMPFundSectorWeighting,
+    FMPSymbolAndNameList,
+)
 from .url_methods import __return_json_stable
 from .utils import parse_response
 
@@ -71,7 +78,7 @@ def etf_holdings(
     list
         List of ETF holdings.
     """
-    path = "/etf/holdings/{symbol}"
+    path = f"/etf/holdings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -96,7 +103,7 @@ def etf_asset_exposure(
     list
         List of ETF asset exposure data.
     """
-    path = "/etf/asset-exposure/{symbol}"
+    path = f"/etf/asset-exposure/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -112,6 +119,6 @@ def etf_sector_weightings(
     :param symbol: ETF ticker symbol.
     :return: List of sector weightings for the ETF.
     """
-    path = "etf/sector-weightings/{symbol}"
+    path = f"etf/sector-weightings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)

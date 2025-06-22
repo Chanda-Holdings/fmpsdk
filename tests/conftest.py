@@ -16,8 +16,8 @@ load_dotenv()
 # Test configuration
 API_KEY = os.getenv("FMP_API_KEY")
 RATE_LIMIT_DELAY = 0.1  # Delay between API calls to respect rate limits
-RETRY_DELAY = 30.0  # Delay before retrying after rate limit error
-MAX_RETRIES = 3  # Maximum number of retries for rate limit errors
+RETRY_DELAY = 30.0  # Delay before retrying after rate limit error (30 seconds)
+MAX_RETRIES = 3  # Maximum number of retries for rate limit errors (only 3 retries)
 
 # Common test symbols for different categories
 TEST_SYMBOLS = {
@@ -151,16 +151,16 @@ def pytest_configure(config):
 
 
 def pytest_runtest_makereport(item, call):
-    """Custom hook to analyze test failures and determine if they're rate limit related."""
+    """Custom hook to analyze test failures and provide information about rate limits."""
     if call.when == "call":
         if hasattr(call, "excinfo") and call.excinfo is not None:
             exception = call.excinfo.value
 
-            # Check if this is a rate limit error
+            # Check if this is a rate limit error - just log it, don't add retry markers
             if is_rate_limit_error(exception):
-                # Mark this test for retry
-                item.add_marker(pytest.mark.flaky(reruns=2, reruns_delay=3))
-                print(f"\n🔄 Rate limit detected in {item.name}, will retry...")
+                print(f"\n🔄 Rate limit detected in {item.name}")
+            else:
+                print(f"\n❌ Non-rate-limit error in {item.name}")
 
 
 def pytest_exception_interact(node, call, report):
@@ -170,13 +170,17 @@ def pytest_exception_interact(node, call, report):
 
         if is_rate_limit_error(exception):
             print(f"\n⚠️  Rate limit error detected in {node.name}")
-            print("💡 Consider running tests with: pytest --reruns 3 --reruns-delay 2")
+            print(
+                "💡 Use @retry_on_rate_limit decorator for automatic retry with 30 second delay"
+            )
+        else:
+            print(f"\n❌ Non-rate-limit error in {node.name} - will not retry")
 
 
-# Helper function to run tests with automatic retry
+# Helper function to run tests with automatic retry on rate limits only
 def run_tests_with_retry():
     """
-    Run tests with automatic retry on rate limit errors.
+    Run tests with automatic retry ONLY on rate limit errors.
     Usage: python -c "from tests.conftest import run_tests_with_retry; run_tests_with_retry()"
     """
     import subprocess
@@ -187,14 +191,18 @@ def run_tests_with_retry():
         "-m",
         "pytest",
         "--reruns",
-        "3",
+        "1",  # Only 1 retry
         "--reruns-delay",
-        "2",
+        "30",  # 30 second delay
+        "--only-rerun",
+        "rate.limit|limit.reach|quota.exceeded|too.many.requests|upgrade.your.plan",  # Only rerun on rate limit patterns
         "--tb=short",
         "-v",
     ]
 
-    print("🚀 Running tests with automatic retry on rate limit errors...")
+    print(
+        "🚀 Running tests with automatic retry ONLY on rate limit errors (30s delay)..."
+    )
     result = subprocess.run(cmd)
     return result.returncode
 
@@ -208,16 +216,44 @@ def is_rate_limit_error(exception):
             for phrase in [
                 "limit reach",
                 "rate limit",
+                "rate limited",
                 "quota exceeded",
                 "too many requests",
                 "upgrade your plan",
+                "api limit exceeded",
+                "requests per minute exceeded",
             ]
         )
-    return False
+    # Also check for HTTP exceptions that might indicate rate limiting
+    if hasattr(exception, "response"):
+        if hasattr(exception.response, "status_code"):
+            return exception.response.status_code == 429  # HTTP 429 Too Many Requests
+
+    # Check for common rate limit error messages in the exception string
+    error_str = str(exception).lower()
+    return any(
+        phrase in error_str
+        for phrase in [
+            "limit reach",
+            "rate limit",
+            "rate limited",
+            "quota exceeded",
+            "too many requests",
+            "upgrade your plan",
+            "api limit exceeded",
+            "requests per minute exceeded",
+        ]
+    )
 
 
-def retry_on_rate_limit(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
-    """Decorator to retry function calls when rate limit errors occur."""
+def retry_on_rate_limit(max_retries=1, delay=30.0):
+    """
+    Decorator to retry function calls ONLY when rate limit errors occur.
+
+    Args:
+        max_retries (int): Number of retries for rate limit errors only (default: 1)
+        delay (float): Delay in seconds before retrying rate limit errors (default: 30.0)
+    """
 
     def decorator(func):
         @functools.wraps(func)
@@ -230,17 +266,20 @@ def retry_on_rate_limit(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
                 except Exception as e:
                     last_exception = e
 
+                    # Only retry if it's a rate limit error AND we haven't exhausted retries
                     if is_rate_limit_error(e) and attempt < max_retries:
                         print(
-                            f"\nRate limit hit in {func.__name__}, retrying in {delay}s... (attempt {attempt + 1}/{max_retries})"
+                            f"\n⚠️  Rate limit detected in {func.__name__}!"
+                            f"\n💤 Sleeping for {delay} seconds before retry... (attempt {attempt + 1}/{max_retries})"
                         )
                         time.sleep(delay)
                         continue
                     else:
-                        # Re-raise if it's not a rate limit error or we've exhausted retries
+                        # Re-raise immediately if it's not a rate limit error
+                        # or if we've exhausted retries for rate limit errors
                         raise e
 
-            # If we get here, we've exhausted all retries
+            # If we get here, we've exhausted all retries for rate limit errors
             raise last_exception
 
         return wrapper
@@ -248,15 +287,17 @@ def retry_on_rate_limit(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
     return decorator
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def add_retry_to_tests(request):
-    """Automatically add retry logic to tests that might hit rate limits."""
+    """
+    Manually add retry logic to tests that might hit rate limits.
+    Only retries on rate limit errors with 30 second delay.
+    Use this fixture explicitly in tests that need rate limit retry protection.
+    """
     # Get the test function
     test_func = request.function
 
-    # Check if test is marked as potentially rate limited
-    if request.node.get_closest_marker("rate_limited"):
-        # Wrap the test function with retry logic
-        wrapped_func = retry_on_rate_limit()(test_func)
-        # Replace the original function
-        request.function = wrapped_func
+    # Wrap the test function with retry logic (1 retry, 30 second delay)
+    wrapped_func = retry_on_rate_limit(max_retries=1, delay=30.0)(test_func)
+    # Replace the original function
+    request.function = wrapped_func

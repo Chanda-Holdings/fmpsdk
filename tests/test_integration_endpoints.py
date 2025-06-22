@@ -6,22 +6,47 @@ Requires a valid FMP API key set as the environment variable FMP_API_KEY.
 
 import os
 import time
-from datetime import datetime, timedelta
-
-import pytest
 
 import fmpsdk.calendar_module as calendar
 import fmpsdk.commodities as commodities
 import fmpsdk.company_valuation as cv
 import fmpsdk.cryptocurrencies as crypto
-import fmpsdk.economic_indicators as economic
 import fmpsdk.etf as etf
 import fmpsdk.euronext as euronext
-import fmpsdk.forex as forex
+import fmpsdk.tsx as tsx
+
+
+# For modules that have function name conflicts, create mock modules
+class ModuleMock:
+    """Mock module to work around namespace conflicts."""
+
+    pass
+
+
+# Import and setup economic indicators
+from fmpsdk.economic_indicators import economic_indicators, treasury_rates
+
+economic = ModuleMock()
+economic.treasury_rates = treasury_rates
+economic.economic_indicators = economic_indicators
+
+# Import and setup forex
+from fmpsdk.forex import available_forex, forex, forex_news
+
+forex_mod = ModuleMock()
+forex_mod.forex = forex
+forex_mod.available_forex = available_forex
+forex_mod.forex_news = forex_news
+
+# Import and setup insider trading
+from fmpsdk.insider_trading import insider_trading, insider_trading_statistics
+
+insider_mod = ModuleMock()
+insider_mod.insider_trading = insider_trading
+insider_mod.insider_trading_statistics = insider_trading_statistics
 
 # Import all modules
 import fmpsdk.general as general
-import fmpsdk.insider_trading as insider
 import fmpsdk.institutional_fund as institutional
 import fmpsdk.market_indexes as market_idx
 import fmpsdk.mutual_funds as mutual_funds
@@ -171,15 +196,15 @@ class TestSpecializedEndpoints:
     def test_forex_endpoints(self):
         """Test forex-related endpoints."""
         # Get forex list
-        forex_list = forex.forex(apikey=API_KEY)
+        forex_list = forex_mod.forex(apikey=API_KEY)
         assert forex_list is not None
 
         # Get available forex pairs
-        available = forex.available_forex(apikey=API_KEY)
+        available = forex_mod.available_forex(apikey=API_KEY)
         assert available is not None
 
         # Get forex news
-        forex_news = forex.forex_news(apikey=API_KEY, limit=5)
+        forex_news = forex_mod.forex_news(apikey=API_KEY, limit=5)
         assert forex_news is not None
 
     def test_commodity_endpoints(self):
@@ -211,11 +236,11 @@ class TestSpecializedEndpoints:
     def test_insider_trading_endpoints(self):
         """Test insider trading endpoints."""
         # Get latest insider trading
-        trading = insider.insider_trading(apikey=API_KEY, symbol="AAPL", limit=10)
+        trading = insider_mod.insider_trading(apikey=API_KEY, symbol="AAPL", limit=10)
         assert trading is not None
 
         # Get insider trading statistics
-        stats = insider.insider_trading_statistics(apikey=API_KEY, symbol="AAPL")
+        stats = insider_mod.insider_trading_statistics(apikey=API_KEY, symbol="AAPL")
         assert stats is not None
 
     def test_economic_indicators(self):
@@ -237,16 +262,6 @@ class TestSpecializedEndpoints:
         # Test Euronext
         euronext_list = euronext.euronext_list(apikey=API_KEY)
         assert euronext_list is not None
-
-    def test_market_performance(self):
-        """Test market performance endpoints."""
-        # These endpoints are not available (stock_market module does not exist)
-        # gainers = stock_market.biggest_gainers(apikey=API_KEY)
-        # assert gainers is not None
-        # losers = stock_market.biggest_losers(apikey=API_KEY)
-        # assert losers is not None
-        # actives = stock_market.most_actives(apikey=API_KEY)
-        # assert actives is not None
 
 
 class TestBulkOperations:

@@ -2,7 +2,15 @@ import typing
 
 from pydantic import RootModel
 
-from .models import *
+from .models import (
+    FMPCommitmentOfTradersAnalysis,
+    FMPCommitmentOfTradersReport,
+    FMPCrowdfundingCampaign,
+    FMPCrowdfundingSearch,
+    FMPEquityOffering,
+    FMPEquityOfferingSearch,
+    FMPSymbolAndNameList,
+)
 from .url_methods import __return_json_stable
 from .utils import parse_response
 
@@ -30,7 +38,7 @@ def commitment_of_traders_report(
     FmpCommitmentOfTradersReportResponse
         Commitment of Traders report data as a Pydantic model.
     """
-    path = "/commitment-of-traders-report/{symbol}"
+    path = f"/commitment-of-traders-report/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -58,7 +66,7 @@ def commitment_of_traders_report_analysis(
     FmpCommitmentOfTradersAnalysisResponse
         Commitment of Traders report analysis data as a Pydantic model.
     """
-    path = "/commitment-of-traders-analysis/{symbol}"
+    path = f"/commitment-of-traders-analysis/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -126,7 +134,7 @@ def crowdfunding_offerings_search(
     FmpCrowdfundingOfferingsResponse
         Crowdfunding offerings matching the query as a Pydantic model.
     """
-    path = "/crowdfunding-offerings-search/{query}"
+    path = f"/crowdfunding-offerings-search/{query}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -194,7 +202,7 @@ def fundraising_search(
     FmpFundraisingResponse
         Fundraising data matching the query as a Pydantic model.
     """
-    path = "/fundraising-search/{query}"
+    path = f"/fundraising-search/{query}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 

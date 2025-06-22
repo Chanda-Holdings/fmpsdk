@@ -1,9 +1,18 @@
 import typing
+from typing import Any
 
 from pydantic import RootModel
 
-from .models import *
-from .settings import DEFAULT_LIMIT, SEC_RSS_FEEDS_FILENAME
+from .models import (
+    FMPCompanyProfile,
+    FMPCompanySECFilings,
+    FMPForm13FDate,
+    FMPForm13FExtract,
+    FMPForm13FFiling,
+    FMPHolderIndustryBreakdown,
+    FMPIndustryPerformanceSummary,
+)
+from .settings import DEFAULT_LIMIT
 from .url_methods import __return_json_stable
 from .utils import parse_response
 
@@ -12,14 +21,14 @@ from .utils import parse_response
 def sec_rss_feeds(
     apikey: str,
     limit: int = DEFAULT_LIMIT,
-    filename: str = SEC_RSS_FEEDS_FILENAME,
+    filename: str = None,
 ) -> typing.Union[typing.List[typing.Dict], None]:
     """
     Query FMP /rss_feed/ API.
 
     :param apikey: Your API key.
     :param limit: Number of rows to return.
-    :param filename: Name of saved file.
+    :param filename: Optional filename parameter (for compatibility).
     :return: A list of dictionaries.
     """
     path = "rss_feed"
@@ -389,7 +398,7 @@ def sec_filings_8k(apikey: str, symbol: str) -> RootModel[typing.List[Any]]:
     list
         List of SEC 8-K filings.
     """
-    path = "/sec-filings-8k/{symbol}"
+    path = f"/sec-filings-8k/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -409,7 +418,7 @@ def sec_filings_financials(apikey: str, symbol: str) -> RootModel[typing.List[An
     list
         List of SEC financial filings.
     """
-    path = "/sec-filings-financials/{symbol}"
+    path = f"/sec-filings-financials/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -431,7 +440,7 @@ def sec_filings_search_form_type(
     list
         List of SEC filings for the form type.
     """
-    path = "/sec-filings-search/form-type/{form_type}"
+    path = f"/sec-filings-search/form-type/{form_type}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -451,7 +460,7 @@ def sec_filings_search_symbol(apikey: str, symbol: str) -> RootModel[typing.List
     list
         List of SEC filings for the symbol.
     """
-    path = "/sec-filings-search/symbol/{symbol}"
+    path = f"/sec-filings-search/symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -473,7 +482,7 @@ def sec_filings_company_search_name(
     list
         List of SEC filings for the company name.
     """
-    path = "/sec-filings-company-search/name/{name}"
+    path = f"/sec-filings-company-search/name/{name}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -495,7 +504,7 @@ def sec_filings_company_search_symbol(
     list
         List of SEC filings for the company symbol.
     """
-    path = "/sec-filings-company-search/symbol/{symbol}"
+    path = f"/sec-filings-company-search/symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -517,7 +526,7 @@ def sec_filings_company_search_cik(
     list
         List of SEC filings for the company CIK.
     """
-    path = "/sec-filings-company-search/cik/{cik}"
+    path = f"/sec-filings-company-search/cik/{cik}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -541,7 +550,7 @@ def sec_profile(
     list
         SEC profile data.
     """
-    path = "/sec-profile/{symbol}" if symbol else "/sec-profile"
+    path = f"/sec-profile/{symbol}" if symbol else "/sec-profile"
     query_vars = {"apikey": apikey}
     if cik:
         query_vars["cik"] = cik

@@ -79,6 +79,52 @@ def __return_json_stable(
     return return_var
 
 
+def __return_binary_stable(
+    path: str, query_vars: typing.Dict
+) -> typing.Optional[bytes]:
+    """
+    Query URL for binary response for stable version of FMP API.
+    Used for downloading files like XLSX, PDF, etc.
+
+    :param path: Path after TLD of URL
+    :param query_vars: Dictionary of query values (after "?" of URL)
+    :return: Binary response content
+    """
+    url = f"{BASE_URL_STABLE}{path}"
+    return_var = None
+    try:
+        response = requests.get(
+            url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
+        )
+        response.raise_for_status()  # Raise an exception for bad status codes
+
+        if len(response.content) > 0:
+            return_var = response.content
+        else:
+            logging.warning("Response appears to have no data.")
+            return_var = b""
+
+    except requests.Timeout:
+        logging.error(f"Connection to {url} timed out.")
+    except requests.ConnectionError:
+        logging.error(
+            f"Connection to {url} failed: DNS failure, refused connection or some other connection related "
+            f"issue."
+        )
+    except requests.TooManyRedirects:
+        logging.error(
+            f"Request to {url} exceeds the maximum number of predefined redirections."
+        )
+    except requests.HTTPError as e:
+        logging.error(f"HTTP error occurred: {e}")
+    except Exception as e:
+        logging.error(
+            f"A requests exception has occurred that we have not yet detailed an 'except' clause for. "
+            f"Error: {e}"
+        )
+    return return_var
+
+
 def __validate_period(value: str) -> str:
     """
     Check to see if passed string is in the list of possible time periods.

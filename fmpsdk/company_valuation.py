@@ -1,16 +1,57 @@
 import logging
 import typing
+from typing import Any
 
 from pydantic import RootModel
 
-from .models import *
+from .models import (
+    FMPAnalystEstimates,
+    FMPAsReportedBalanceSheet,
+    FMPAsReportedCashFlowStatement,
+    FMPAsReportedFullStatement,
+    FMPAsReportedIncomeStatement,
+    FMPBulkEarningsSurprise,
+    FMPBulkUpgradeDowngradeConsensus,
+    FMPCompanyNote,
+    FMPCompanyProfile,
+    FMPCompanySECFilings,
+    FMPDcfValuation,
+    FMPDelistedCompany,
+    FMPEarningsReport,
+    FMPEarningsTranscript,
+    FMPEarningsTranscriptDate,
+    FMPEmployeeCount,
+    FMPESGBenchmark,
+    FMPESGFiling,
+    FMPESGRating,
+    FMPFinancialRatios,
+    FMPFinancialStatement,
+    FMPFinancialStatementGrowth,
+    FMPFinancialStatementSymbolList,
+    FMPHistoricalEmployeeCount,
+    FMPHistoricalMarketCap,
+    FMPHistoricalRating,
+    FMPHistoricalStockGrade,
+    FMPIndustry,
+    FMPKeyMetrics,
+    FMPMarketCap,
+    FMPPressRelease,
+    FMPPriceTargetConsensus,
+    FMPPriceTargetNews,
+    FMPPriceTargetSummary,
+    FMPRatingSnapshot,
+    FMPStockGrade,
+    FMPStockGradeNews,
+    FMPStockGradeSummary,
+    FMPStockPeer,
+    FMPStockScreenerResult,
+    FMPSymbolAndNameList,
+)
 from .settings import (
-    BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
-    CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
     DEFAULT_LIMIT,
-    INCOME_STATEMENT_AS_REPORTED_FILENAME,
 )
 from .url_methods import (
+    __return_binary_stable,
     __return_json_stable,
     __validate_industry,
     __validate_period,
@@ -38,7 +79,7 @@ def company_profile(
     FmpCompanyNameSearchResponse
         Company profile data as a Pydantic model.
     """
-    path = "/profile/{symbol}"
+    path = f"/profile/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -62,7 +103,7 @@ def company_profile_cik(
     FmpCikSearchResponse
         Company profile data as a Pydantic model.
     """
-    path = "/profile-cik/{cik}"
+    path = f"/profile-cik/{cik}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -132,7 +173,7 @@ def employee_count(
     FmpFinancialEstimatesResponse
         Employee count data as a Pydantic model.
     """
-    path = "/employee-count/{symbol}"
+    path = f"/employee-count/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -156,7 +197,7 @@ def historical_employee_count(
     FmpFinancialEstimatesResponse
         Historical employee count data as a Pydantic model.
     """
-    path = "/historical-employee-count/{symbol}"
+    path = f"/historical-employee-count/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -184,7 +225,7 @@ def income_statement(
     FmpFinancialStatementSymbolsListResponse
         List of income statement data as a Pydantic model.
     """
-    path = "/income-statement/{symbol}"
+    path = f"/income-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -212,7 +253,7 @@ def balance_sheet_statement(
     FmpFinancialStatementSymbolsListResponse
         List of balance sheet statement data as a Pydantic model.
     """
-    path = "/balance-sheet-statement/{symbol}"
+    path = f"/balance-sheet-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -240,7 +281,7 @@ def cash_flow_statement(
     FmpFinancialStatementSymbolsListResponse
         List of cash flow statement data as a Pydantic model.
     """
-    path = "/cash-flow-statement/{symbol}"
+    path = f"/cash-flow-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -251,7 +292,6 @@ def income_statement_as_reported(
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-    filename: str = INCOME_STATEMENT_AS_REPORTED_FILENAME,
 ) -> typing.Union[RootModel[typing.List[FMPAsReportedIncomeStatement]], None]:
     """
     Retrieve the as-reported income statement for a given symbol, or download as CSV.
@@ -266,15 +306,13 @@ def income_statement_as_reported(
         The period for the as-reported income statement ('annual' or 'quarter').
     limit : int, optional
         The number of results to return.
-    filename : str, optional
-        The name of the file to save the data (default: INCOME_STATEMENT_AS_REPORTED_FILENAME).
 
     Returns
     -------
     FmpFinancialStatementSymbolsListResponse or None
         List of as-reported income statement data as a Pydantic model, or None if downloaded.
     """
-    path = "/income-statement-as-reported/{symbol}"
+    path = f"/income-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -285,7 +323,6 @@ def balance_sheet_statement_as_reported(
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-    filename: str = BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
 ) -> typing.Union[RootModel[typing.List[FMPAsReportedBalanceSheet]], None]:
     """
     Retrieve the as-reported balance sheet statement for a given symbol, or download as CSV.
@@ -300,15 +337,13 @@ def balance_sheet_statement_as_reported(
         The period for the as-reported balance sheet statement ('annual' or 'quarter').
     limit : int, optional
         The number of results to return.
-    filename : str, optional
-        The name of the file to save the data (default: BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME).
 
     Returns
     -------
     FmpFinancialStatementSymbolsListResponse or None
         List of as-reported balance sheet statement data as a Pydantic model, or None if downloaded.
     """
-    path = "/balance-sheet-statement-as-reported/{symbol}"
+    path = f"/balance-sheet-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -319,7 +354,6 @@ def cash_flow_statement_as_reported(
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-    filename: str = CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
 ) -> typing.Union[RootModel[typing.List[FMPAsReportedCashFlowStatement]], None]:
     """
     Retrieve the as-reported cash flow statement for a given symbol, or download as CSV.
@@ -334,15 +368,13 @@ def cash_flow_statement_as_reported(
         The period for the as-reported cash flow statement ('annual' or 'quarter').
     limit : int, optional
         The number of results to return.
-    filename : str, optional
-        The name of the file to save the data (default: CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME).
 
     Returns
     -------
     FmpFinancialStatementSymbolsListResponse or None
         List of as-reported cash flow statement data as a Pydantic model, or None if downloaded.
     """
-    path = "/cash-flow-statement-as-reported/{symbol}"
+    path = f"/cash-flow-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -370,7 +402,7 @@ def financial_statement_full_as_reported(
     FmpFinancialStatementSymbolsListResponse
         List of full as-reported financial statement data as a Pydantic model.
     """
-    path = "/financial-statement-full-as-reported/{symbol}"
+    path = f"/financial-statement-full-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period}
     return __return_json_stable(path, query_vars)
 
@@ -454,7 +486,7 @@ def balance_sheet_statement_growth(
     FmpFinancialStatementSymbolsListResponse
         List of balance sheet statement growth data as a Pydantic model.
     """
-    path = "balance-sheet-statement-growth/{symbol}"
+    path = f"balance-sheet-statement-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -483,7 +515,7 @@ def cash_flow_statement_growth(
     FmpFinancialStatementSymbolsListResponse
         List of cash flow statement growth data as a Pydantic model.
     """
-    path = "cash-flow-statement-growth/{symbol}"
+    path = f"cash-flow-statement-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -510,7 +542,7 @@ def financial_ratios_ttm(
     FmpFinancialStatementSymbolsListResponse
         List of TTM financial ratios as a Pydantic model.
     """
-    path = "ratios-ttm/{symbol}"
+    path = f"ratios-ttm/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -610,7 +642,7 @@ def key_metrics_ttm(
     FmpFinancialStatementSymbolsListResponse
         List of TTM key metrics as a Pydantic model.
     """
-    path = "key-metrics-ttm/{symbol}"
+    path = f"key-metrics-ttm/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -641,7 +673,7 @@ def key_metrics(
     FmpFinancialStatementSymbolsListResponse
         List of key metrics as a Pydantic model.
     """
-    path = "key-metrics/{symbol}"
+    path = f"key-metrics/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -656,7 +688,7 @@ def financial_growth(
     symbol: str,
     period: str = "annual",
     limit: int = DEFAULT_LIMIT,
-) -> RootModel[typing.List[Any]]:
+) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
     """
     Retrieve financial growth statistics for a company.
 
@@ -676,7 +708,7 @@ def financial_growth(
     FmpFinancialStatementSymbolsListResponse
         List of financial growth data as a Pydantic model.
     """
-    path = "financial-growth/{symbol}"
+    path = f"financial-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -702,7 +734,7 @@ def rating(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockGrade]]:
     FmpFinancialStatementSymbolsListResponse
         List of company rating data as a Pydantic model.
     """
-    path = "rating/{symbol}"
+    path = f"rating/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars=query_vars)
 
@@ -730,7 +762,7 @@ def historical_rating(
     FmpFinancialStatementSymbolsListResponse
         List of historical company rating data as a Pydantic model.
     """
-    path = "historical-rating/{symbol}"
+    path = f"historical-rating/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
     return __return_json_stable(path, query_vars=query_vars)
 
@@ -754,7 +786,7 @@ def discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of discounted cash flow data as a Pydantic model.
     """
-    path = "/discounted-cash-flow/{symbol}"
+    path = f"/discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -778,7 +810,7 @@ def levered_discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of levered discounted cash flow data as a Pydantic model.
     """
-    path = "/levered-discounted-cash-flow/{symbol}"
+    path = f"/levered-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -802,7 +834,7 @@ def custom_discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of custom discounted cash flow data as a Pydantic model.
     """
-    path = "/custom-discounted-cash-flow/{symbol}"
+    path = f"/custom-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -826,7 +858,7 @@ def custom_levered_discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of custom levered discounted cash flow data as a Pydantic model.
     """
-    path = "/custom-levered-discounted-cash-flow/{symbol}"
+    path = f"/custom-levered-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -857,7 +889,7 @@ def historical_discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of historical discounted cash flow data as a Pydantic model.
     """
-    path = "historical-discounted-cash-flow/{symbol}"
+    path = f"historical-discounted-cash-flow/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -889,7 +921,7 @@ def historical_daily_discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of daily historical discounted cash flow data as a Pydantic model.
     """
-    path = "historical-daily-discounted-cash-flow/{symbol}"
+    path = f"historical-daily-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -913,7 +945,7 @@ def market_capitalization(
     FmpMarketCapitalizationResponse
         List of market capitalization data as a Pydantic model.
     """
-    path = "market-capitalization/{symbol}"
+    path = f"market-capitalization/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -947,7 +979,7 @@ def historical_market_capitalization(
     FmpMarketCapitalizationResponse
         List of historical market capitalization data as a Pydantic model.
     """
-    path = "historical-market-capitalization/{symbol}"
+    path = f"historical-market-capitalization/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit, "from": from_date, "to": to_date}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1147,7 +1179,7 @@ def earnings_surprises(
     :param symbol: Company ticker.
     :return: A list of dictionaries.
     """
-    path = "earnings-surprises/{symbol}"
+    path = f"earnings-surprises/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1165,7 +1197,7 @@ def earning_call_transcript(
     :param quarter: Quarter of the transcripts
     :return: A list of dictionaries.
     """
-    path = "earning_call_transcript/{symbol}"
+    path = f"earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1182,7 +1214,7 @@ def batch_earning_call_transcript(
     :param year: Year of the transcripts
     :return: A list of dictionaries.
     """
-    path = "batch_earning_call_transcript/{symbol}"
+    path = f"batch_earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1216,7 +1248,7 @@ def sec_filings(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = "sec_filings/{symbol}"
+    path = f"sec_filings/{symbol}"
     query_vars = {"apikey": apikey, "type": filing_type, "limit": limit}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1238,7 +1270,7 @@ def press_releases(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = "press-releases/{symbol}"
+    path = f"press-releases/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -1481,7 +1513,7 @@ def esg_disclosures(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGFil
     list
         List of ESG disclosures.
     """
-    path = "/esg-disclosures/{symbol}"
+    path = f"/esg-disclosures/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -1505,7 +1537,7 @@ def esg_ratings(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGRating]
     list
         List of ESG ratings.
     """
-    path = "/esg-ratings/{symbol}"
+    path = f"/esg-ratings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -1529,7 +1561,7 @@ def esg_benchmark(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGBench
     list
         List of ESG benchmark data.
     """
-    path = "/esg-benchmark/{symbol}"
+    path = f"/esg-benchmark/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -1561,7 +1593,7 @@ def company_notes(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanyN
     :param symbol: Ticker symbol.
     :return: List of company notes.
     """
-    path = "company-notes/{symbol}"
+    path = f"company-notes/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1579,3 +1611,128 @@ def market_capitalization_batch(
     path = f"market-capitalization-batch/{','.join(symbols)}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def stock_grades(
+    apikey: str, symbol: str, limit: int = None
+) -> RootModel[typing.List[FMPStockGrade]]:
+    """
+    Get stock grades using the /stable/grades endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get stock grades for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with stock grades.
+    """
+    path = "grades"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if limit:
+        query_vars["limit"] = str(limit)
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def historical_stock_grades(
+    apikey: str, symbol: str, limit: int = None
+) -> RootModel[typing.List[FMPHistoricalStockGrade]]:
+    """
+    Get historical stock grades using the /stable/grades-historical endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get historical stock grades for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with historical stock grades.
+    """
+    path = "grades-historical"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if limit:
+        query_vars["limit"] = str(limit)
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def stock_grades_summary(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPStockGradeSummary]]:
+    """
+    Get stock grades summary using the /stable/grades-consensus endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get stock grades summary for.
+    Returns:
+        List of dictionaries with stock grades summary.
+    """
+    path = "grades-consensus"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def stock_grade_news(
+    apikey: str, symbol: str, limit: int = None
+) -> RootModel[typing.List[FMPStockGradeNews]]:
+    """
+    Get stock grade news using the /stable/grades-news endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get stock grade news for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with stock grade news.
+    """
+    path = "grades-news"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if limit:
+        query_vars["limit"] = str(limit)
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+@parse_response
+def stock_grade_latest_news(
+    apikey: str, limit: int = None
+) -> RootModel[typing.List[FMPStockGradeNews]]:
+    """
+    Get latest stock grade news using the /stable/grades-latest-news endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with latest stock grade news.
+    """
+    path = "grades-latest-news"
+    query_vars = {"apikey": apikey}
+    if limit:
+        query_vars["limit"] = str(limit)
+    return __return_json_stable(path=path, query_vars=query_vars)
+
+
+def financial_reports_xlsx(
+    apikey: str, symbol: str, year: int, period: str = "FY"
+) -> bytes:
+    """
+    Get financial reports in XLSX format using the /stable/financial-reports-xlsx endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get financial reports for.
+        year (int): The year for the financial report.
+        period (str): The period for the report (default "FY").
+    Returns:
+        Binary XLSX file content that can be saved to a file or processed.
+    """
+    path = "financial-reports-xlsx"
+    query_vars = {
+        "apikey": apikey,
+        "symbol": symbol,
+        "year": str(year),
+        "period": period,
+    }
+    return __return_binary_stable(path=path, query_vars=query_vars)

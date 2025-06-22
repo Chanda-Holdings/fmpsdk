@@ -17,6 +17,7 @@ from fmpsdk.calendar_module import (
     splits,
     splits_calendar,
 )
+from fmpsdk.company_valuation import earnings
 
 API_KEY = os.getenv("FMP_API_KEY")
 
@@ -28,6 +29,7 @@ API_KEY = os.getenv("FMP_API_KEY")
         (dividends, {}),  # Test without symbol to get all dividends
         (dividends_calendar, {"from_date": "2024-01-01", "to_date": "2024-01-31"}),
         (dividends_calendar, {}),  # Test without date range
+        (earnings, {"symbol": "AAPL"}),
         (earnings_calendar, {"from_date": "2024-01-01", "to_date": "2024-01-31"}),
         (earnings_calendar, {}),  # Test without date range
         (ipos_calendar, {"from_date": "2024-01-01", "to_date": "2024-12-31"}),

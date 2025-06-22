@@ -2,7 +2,7 @@ import os
 import sys
 from typing import Any, List, Optional
 
-from pydantic import BaseModel  # , RootModel
+from pydantic import BaseModel
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -2018,18 +2018,18 @@ class FMPBulkDCF(BaseModel):
     dcfPercentDiff: str
 
 
-class FMPBulkFinancialScores(BaseModel):
+class FMPFinancialScores(BaseModel):
     symbol: str
     reportedCurrency: str
-    altmanZScore: str
-    piotroskiScore: str
-    workingCapital: str
-    totalAssets: str
-    retainedEarnings: str
-    ebit: str
-    marketCap: str
-    totalLiabilities: str
-    revenue: str
+    altmanZScore: float
+    piotroskiScore: int
+    workingCapital: float
+    totalAssets: float
+    retainedEarnings: float
+    ebit: float
+    marketCap: float
+    totalLiabilities: float
+    revenue: float
 
 
 class FMPBulkPriceTargetSummary(BaseModel):
@@ -2372,10 +2372,10 @@ class FMPFinancialStatement(BaseModel):
     shortTermInvestments: Optional[int] = None
     cashAndShortTermInvestments: Optional[int] = None
     netReceivables: Optional[int] = None
-    accountsReceivables: Optional[str] = None  # Can be empty string
-    otherReceivables: Optional[str] = None  # Can be empty string
+    accountsReceivables: Optional[str] = None
+    otherReceivables: Optional[str] = None
     inventory: Optional[int] = None
-    prepaids: Optional[str] = None  # Can be empty string
+    prepaids: Optional[str] = None
     otherCurrentAssets: Optional[int] = None
     totalCurrentAssets: Optional[int] = None
     propertyPlantEquipmentNet: Optional[int] = None
@@ -2388,30 +2388,30 @@ class FMPFinancialStatement(BaseModel):
     totalNonCurrentAssets: Optional[int] = None
     otherAssets: Optional[int] = None
     totalAssets: Optional[int] = None
-    totalPayables: Optional[str] = None  # Can be empty string
-    accountPayables: Optional[str] = None  # Can be empty string
-    otherPayables: Optional[str] = None  # Can be empty string
-    accruedExpenses: Optional[str] = None  # Can be empty string
+    totalPayables: Optional[str] = None
+    accountPayables: Optional[str] = None
+    otherPayables: Optional[str] = None
+    accruedExpenses: Optional[str] = None
     shortTermDebt: Optional[int] = None
-    capitalLeaseObligationsCurrent: Optional[str] = None  # Can be empty string
-    taxPayables: Optional[str] = None  # Can be empty string
+    capitalLeaseObligationsCurrent: Optional[str] = None
+    taxPayables: Optional[str] = None
     deferredRevenue: Optional[int] = None
     otherCurrentLiabilities: Optional[int] = None
     totalCurrentLiabilities: Optional[int] = None
     longTermDebt: Optional[int] = None
-    capitalLeaseObligationsNonCurrent: Optional[str] = None  # Can be empty string
+    capitalLeaseObligationsNonCurrent: Optional[str] = None
     deferredRevenueNonCurrent: Optional[int] = None
     deferredTaxLiabilitiesNonCurrent: Optional[int] = None
     otherNonCurrentLiabilities: Optional[int] = None
     totalNonCurrentLiabilities: Optional[int] = None
     otherLiabilities: Optional[int] = None
-    capitalLeaseObligations: Optional[str] = None  # Can be empty string
+    capitalLeaseObligations: Optional[str] = None
     totalLiabilities: Optional[int] = None
-    treasuryStock: Optional[str] = None  # Can be empty string
+    treasuryStock: Optional[str] = None
     preferredStock: Optional[int] = None
     commonStock: Optional[int] = None
     retainedEarnings: Optional[int] = None
-    additionalPaidInCapital: Optional[str] = None  # Can be empty string
+    additionalPaidInCapital: Optional[str] = None
     accumulatedOtherComprehensiveIncomeLoss: Optional[int] = None
     otherTotalStockholdersEquity: Optional[int] = None
     totalStockholdersEquity: Optional[int] = None
@@ -2433,17 +2433,17 @@ class FMPFinancialStatement(BaseModel):
     salesMaturitiesOfInvestments: Optional[int] = None
     otherInvestingActivities: Optional[int] = None
     netCashProvidedByInvestingActivities: Optional[int] = None
-    netDebtIssuance: Optional[str] = None  # Can be empty string
-    longTermNetDebtIssuance: Optional[str] = None  # Can be empty string
-    shortTermNetDebtIssuance: Optional[str] = None  # Can be empty string
-    netStockIssuance: Optional[str] = None  # Can be empty string
-    netCommonStockIssuance: Optional[str] = None  # Can be empty string
+    netDebtIssuance: Optional[str] = None
+    longTermNetDebtIssuance: Optional[str] = None
+    shortTermNetDebtIssuance: Optional[str] = None
+    netStockIssuance: Optional[str] = None
+    netCommonStockIssuance: Optional[str] = None
     commonStockIssuance: Optional[int] = None
     commonStockRepurchased: Optional[int] = None
-    netPreferredStockIssuance: Optional[str] = None  # Can be empty string
+    netPreferredStockIssuance: Optional[str] = None
     netDividendsPaid: Optional[int] = None
-    commonDividendsPaid: Optional[str] = None  # Can be empty string
-    preferredDividendsPaid: Optional[str] = None  # Can be empty string
+    commonDividendsPaid: Optional[str] = None
+    preferredDividendsPaid: Optional[str] = None
     otherFinancingActivities: Optional[int] = None
     netCashProvidedByFinancingActivities: Optional[int] = None
     effectOfForexChangesOnCash: Optional[int] = None
@@ -2453,8 +2453,8 @@ class FMPFinancialStatement(BaseModel):
     operatingCashFlow: Optional[int] = None
     capitalExpenditure: Optional[int] = None
     freeCashFlow: Optional[int] = None
-    incomeTaxesPaid: Optional[str] = None  # Can be empty string
-    interestPaid: Optional[str] = None  # Can be empty string
+    incomeTaxesPaid: Optional[str] = None
+    interestPaid: Optional[str] = None
 
 
 class FMPFinancialStatementTTM(BaseModel):
@@ -2554,8 +2554,6 @@ class FMPFinancialStatementTTM(BaseModel):
     deferredIncomeTax: Optional[int] = None
     stockBasedCompensation: Optional[int] = None
     changeInWorkingCapital: Optional[int] = None
-    # accountsReceivables: Optional[int] = None  # Duplicate - defined above in Balance Sheet Fields
-    # inventory: Optional[int] = None  # Duplicate - defined above in Balance Sheet Fields
     accountsPayables: Optional[int] = None
     otherWorkingCapital: Optional[int] = None
     otherNonCashItems: Optional[int] = None
@@ -2588,6 +2586,14 @@ class FMPFinancialStatementTTM(BaseModel):
     freeCashFlow: Optional[int] = None
     incomeTaxesPaid: Optional[int] = None
     interestPaid: Optional[int] = None
+
+
+class FMPLatestFinancialStatement(BaseModel):
+    symbol: str
+    calendarYear: int
+    period: str
+    date: str
+    dateAdded: str
 
 
 class FMPKeyMetrics(BaseModel):
@@ -2752,6 +2758,65 @@ class FMPFinancialStatementGrowth(BaseModel):
     tenYBottomLineNetIncomeGrowthPerShare: Optional[float] = None
     fiveYBottomLineNetIncomeGrowthPerShare: Optional[float] = None
     threeYBottomLineNetIncomeGrowthPerShare: Optional[float] = None
+
+
+# Market Performance Models
+class FMPSectorPerformanceSnapshot(BaseModel):
+    sector: str
+    changesPercentage: str
+
+
+class FMPIndustryPerformanceSnapshot(BaseModel):
+    industry: str
+    changesPercentage: str
+    marketCap: float
+    numberOfSymbols: int
+
+
+class FMPHistoricalSectorPerformance(BaseModel):
+    date: str
+    sector: str
+    changesPercentage: float
+
+
+class FMPHistoricalIndustryPerformance(BaseModel):
+    date: str
+    industry: str
+    changesPercentage: float
+
+
+class FMPSectorPESnapshot(BaseModel):
+    sector: str
+    pe: float
+    marketCap: int
+
+
+class FMPIndustryPESnapshot(BaseModel):
+    industry: str
+    pe: float
+    marketCap: int
+
+
+class FMPHistoricalSectorPE(BaseModel):
+    date: str
+    sector: str
+    pe: float
+    marketCap: int
+
+
+class FMPHistoricalIndustryPE(BaseModel):
+    date: str
+    industry: str
+    pe: float
+    marketCap: int
+
+
+class FMPMarketMover(BaseModel):
+    symbol: str
+    name: str
+    change: float
+    price: float
+    changesPercentage: float
 
 
 class Error(BaseModel):

@@ -15,9 +15,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-# Automatically retry tests that fail with rate limit errors
-addopts = "--reruns 3 --reruns-delay 30"
-# Only rerun on specific error patterns
+# No automatic retries - only retry rate limit errors manually with custom logic
+addopts = "--tb=short -v"
 testpaths = ["tests"]
 markers = [
     "rate_limited: mark test as potentially rate limited",

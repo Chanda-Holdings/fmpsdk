@@ -2,9 +2,6 @@
 Integration tests for fmpsdk utility functions.
 """
 
-from typing import Any, Dict, List
-
-import pytest
 from pydantic import RootModel
 
 from fmpsdk.utils import parse_response

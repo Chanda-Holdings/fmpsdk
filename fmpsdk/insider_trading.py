@@ -2,7 +2,12 @@ import typing
 
 from pydantic import RootModel
 
-from .models import *
+from .models import (
+    FMPAcquisitionOwnership,
+    FMPInsiderTrade,
+    FMPInsiderTradeStatistics,
+    FMPInsiderTransactionType,
+)
 from .settings import DEFAULT_LIMIT
 from .url_methods import __return_json_stable
 from .utils import parse_response
@@ -93,7 +98,7 @@ def insider_trading_reporting_name(
     list
         Insider trading data for the reporting name.
     """
-    path = "/insider-trading/reporting-name/{name}"
+    path = f"/insider-trading/reporting-name/{name}"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -123,7 +128,7 @@ def insider_trading_transaction_type(
     list
         Insider trading data for the transaction type.
     """
-    path = "/insider-trading-transaction-type/{transaction_type}"
+    path = f"/insider-trading-transaction-type/{transaction_type}"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
     return __return_json_stable(path, query_vars)
 

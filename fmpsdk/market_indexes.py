@@ -3,7 +3,7 @@ import typing
 from pydantic import RootModel
 
 # from .general import __quotes
-from .models import *
+from .models import FMPExchangeInfo, FMPQuoteShort, FMPSector, FMPSymbolAndNameList
 
 # from .settings import (
 #     DEFAULT_LIMIT,
@@ -101,6 +101,6 @@ def index_quote_short(
     list
         Short quote data for the index.
     """
-    path = "/index-quote-short/{symbol}"
+    path = f"/index-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

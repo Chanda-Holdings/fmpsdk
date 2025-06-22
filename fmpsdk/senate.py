@@ -2,7 +2,7 @@ import typing
 
 from pydantic import RootModel
 
-from .models import *
+from .models import FMPPoliticalTrade
 from .url_methods import __return_json_stable
 from .utils import parse_response
 
@@ -93,7 +93,7 @@ def senate_trades_by_name(
     list
         List of Senate trades for the given name.
     """
-    path = "/senate-trades-by-name/{name}"
+    path = f"/senate-trades-by-name/{name}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -140,7 +140,7 @@ def house_trades_by_name(
     list
         List of House trades for the given name.
     """
-    path = "/house-trades-by-name/{name}"
+    path = f"/house-trades-by-name/{name}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -165,7 +165,7 @@ def senate_trades_by_symbol(
     list
         List of Senate trades for the given symbol.
     """
-    path = "/senate-trades-by-symbol/{symbol}"
+    path = f"/senate-trades-by-symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -190,6 +190,6 @@ def house_trades_by_symbol(
     list
         List of House trades for the given symbol.
     """
-    path = "/house-trades-by-symbol/{symbol}"
+    path = f"/house-trades-by-symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

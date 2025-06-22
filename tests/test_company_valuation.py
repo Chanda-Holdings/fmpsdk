@@ -59,6 +59,12 @@ API_KEY = os.getenv("FMP_API_KEY")
         (cv.earnings, {"symbol": "AAPL"}),
         (cv.company_notes, {"symbol": "AAPL"}),
         (cv.market_capitalization_batch, {"symbols": "AAPL,MSFT"}),
+        (cv.stock_grades, {"symbol": "AAPL"}),
+        (cv.historical_stock_grades, {"symbol": "AAPL"}),
+        (cv.stock_grades_summary, {"symbol": "AAPL"}),
+        (cv.stock_grade_news, {"symbol": "AAPL"}),
+        (cv.stock_grade_latest_news, {}),
+        (cv.financial_reports_xlsx, {"symbol": "AAPL", "year": 2023}),
     ],
 )
 def test_company_valuation_endpoints(func, kwargs):

@@ -3,7 +3,12 @@ import typing
 from pydantic import RootModel
 
 from .general import __quotes
-from .models import *
+from .models import (
+    FMPFundDisclosure,
+    FMPFundDisclosureDate,
+    FMPFundHolder,
+    FMPSymbolAndNameList,
+)
 from .url_methods import __return_json_stable
 from .utils import parse_response
 
@@ -38,7 +43,7 @@ def funds_disclosure_holders_latest(
     list
         List of latest fund disclosure holders.
     """
-    path = "/funds/disclosure-holders-latest/{symbol}"
+    path = f"/funds/disclosure-holders-latest/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -62,7 +67,7 @@ def funds_disclosure(
     list
         List of fund disclosure data.
     """
-    path = "/funds/disclosure/{symbol}"
+    path = f"/funds/disclosure/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -86,7 +91,7 @@ def funds_disclosure_holders_search(
     list
         List of fund disclosure holders search results.
     """
-    path = "/funds/disclosure-holders-search/{symbol}"
+    path = f"/funds/disclosure-holders-search/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -110,7 +115,7 @@ def funds_disclosure_dates(
     list
         List of fund disclosure dates.
     """
-    path = "/funds/disclosure-dates/{symbol}"
+    path = f"/funds/disclosure-dates/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -134,6 +139,6 @@ def mutual_fund_holdings(
     list
         List of mutual fund holdings.
     """
-    path = "/mutual-fund-holdings/{symbol}"
+    path = f"/mutual-fund-holdings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
