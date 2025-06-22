@@ -4,18 +4,11 @@ import typing
 from pydantic import RootModel
 
 from .models import *
-from .settings import (
-    BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
-    CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
-    DEFAULT_LIMIT,
-    INCOME_STATEMENT_AS_REPORTED_FILENAME,
-)
-from .url_methods import (
-    __return_json_stable,
-    __validate_industry,
-    __validate_period,
-    __validate_sector,
-)
+from .settings import (BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
+                       CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME, DEFAULT_LIMIT,
+                       INCOME_STATEMENT_AS_REPORTED_FILENAME)
+from .url_methods import (__return_json_stable, __validate_industry,
+                          __validate_period, __validate_sector)
 from .utils import parse_response
 
 

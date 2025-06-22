@@ -1,24 +1,18 @@
 import logging
 
 # Import specific functions from cryptocurrencies for backward compatibility
-from .cryptocurrencies import (
-    available_cryptocurrencies,
-    cryptocurrencies_list,
-    cryptocurrency_list,
-    last_crypto_price,
-)
-
+from .cryptocurrencies import (available_cryptocurrencies,
+                               cryptocurrencies_list, cryptocurrency_list,
+                               last_crypto_price)
 # Import technical indicator functions for test compatibility
-from .technical_indicators import (
-    technical_indicators,
-    technical_indicators_adx,
-    technical_indicators_dema,
-    technical_indicators_ema,
-    technical_indicators_rsi,
-    technical_indicators_sma,
-    technical_indicators_standarddeviation,
-    technical_indicators_williams,
-)
+from .technical_indicators import (technical_indicators,
+                                   technical_indicators_adx,
+                                   technical_indicators_dema,
+                                   technical_indicators_ema,
+                                   technical_indicators_rsi,
+                                   technical_indicators_sma,
+                                   technical_indicators_standarddeviation,
+                                   technical_indicators_williams)
 
 attribution: str = "Data provided by Financial Modeling Prep"
 logging.info(attribution)

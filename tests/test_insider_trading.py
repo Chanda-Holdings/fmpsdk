@@ -9,13 +9,10 @@ from datetime import datetime, timedelta
 import pytest
 from pydantic import BaseModel
 
-from fmpsdk.insider_trading import (
-    insider_trading,
-    insider_trading_latest,
-    insider_trading_reporting_name,
-    insider_trading_statistics,
-    insider_trading_transaction_type,
-)
+from fmpsdk.insider_trading import (insider_trading, insider_trading_latest,
+                                    insider_trading_reporting_name,
+                                    insider_trading_statistics,
+                                    insider_trading_transaction_type)
 
 API_KEY = os.getenv("FMP_API_KEY")
 

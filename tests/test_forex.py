@@ -7,14 +7,8 @@ import os
 
 import pytest
 
-from fmpsdk.forex import (
-    available_forex,
-    batch_forex_quotes,
-    forex,
-    forex_news,
-    forex_quote,
-    forex_quote_short,
-)
+from fmpsdk.forex import (available_forex, batch_forex_quotes, forex,
+                          forex_news, forex_quote, forex_quote_short)
 
 API_KEY = os.getenv("FMP_API_KEY")
 

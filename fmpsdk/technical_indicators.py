@@ -4,9 +4,7 @@ from pydantic import RootModel
 
 from .models import *
 from .url_methods import (  # __validate_technical_indicators_time_delta,
-    __return_json_stable,
-    __validate_statistics_type,
-)
+    __return_json_stable, __validate_statistics_type)
 from .utils import parse_response
 
 
