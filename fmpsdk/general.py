@@ -1,9 +1,10 @@
 import typing
 
-from .settings import DEFAULT_LINE_PARAMETER
-from .url_methods import (__return_json_stable)
-from .utils import parse_response
+from pydantic import RootModel
+
 from .models import *
+from .url_methods import __return_json_stable
+from .utils import parse_response
 
 
 def __quotes(apikey: str, value: str) -> typing.Optional[typing.List[typing.Dict]]:

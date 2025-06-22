@@ -1,8 +1,11 @@
+import typing
+
+from pydantic import RootModel
+
+from .models import *
 from .settings import DEFAULT_LIMIT
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
-import typing
 
 
 @parse_response
@@ -24,7 +27,7 @@ def insider_trading(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"insider-trading/search"
+    path = "insider-trading/search"
     query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if symbol:
         query_vars["symbol"] = symbol
@@ -60,7 +63,7 @@ def insider_trading_latest(
     list
         List of latest insider trading data.
     """
-    path = f"/insider-trading/latest"
+    path = "/insider-trading/latest"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -90,7 +93,7 @@ def insider_trading_reporting_name(
     list
         Insider trading data for the reporting name.
     """
-    path = f"/insider-trading/reporting-name/{name}"
+    path = "/insider-trading/reporting-name/{name}"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -120,7 +123,7 @@ def insider_trading_transaction_type(
     list
         Insider trading data for the transaction type.
     """
-    path = f"/insider-trading-transaction-type/{transaction_type}"
+    path = "/insider-trading-transaction-type/{transaction_type}"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -158,7 +161,7 @@ def acquisition_ownership(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"acquisition-ownership/search"
+    path = "acquisition-ownership/search"
     query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if symbol:
         query_vars["symbol"] = symbol

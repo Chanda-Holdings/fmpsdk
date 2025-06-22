@@ -1,9 +1,11 @@
-from .general import __quotes
-from .url_methods import __return_json_stable
-from .utils import parse_response
-from .models import *
 import typing
 
+from pydantic import RootModel
+
+from .general import __quotes
+from .models import *
+from .url_methods import __return_json_stable
+from .utils import parse_response
 
 
 def mutual_fund_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
@@ -13,12 +15,14 @@ def mutual_fund_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"mutual_fund"
+    path = "mutual_fund"
     return __quotes(apikey=apikey, value=path)
 
 
 @parse_response
-def funds_disclosure_holders_latest(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundHolder]]:
+def funds_disclosure_holders_latest(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPFundHolder]]:
     """
     Get latest fund disclosure holders for a given symbol.
 
@@ -34,13 +38,15 @@ def funds_disclosure_holders_latest(apikey: str, symbol: str) -> RootModel[typin
     list
         List of latest fund disclosure holders.
     """
-    path = f"/funds/disclosure-holders-latest/{symbol}"
+    path = "/funds/disclosure-holders-latest/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def funds_disclosure(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundDisclosure]]:
+def funds_disclosure(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPFundDisclosure]]:
     """
     Get fund disclosure for a given symbol.
 
@@ -56,13 +62,15 @@ def funds_disclosure(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundD
     list
         List of fund disclosure data.
     """
-    path = f"/funds/disclosure/{symbol}"
+    path = "/funds/disclosure/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def funds_disclosure_holders_search(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundHolder]]:
+def funds_disclosure_holders_search(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPFundHolder]]:
     """
     Search fund disclosure holders for a given symbol.
 
@@ -78,13 +86,15 @@ def funds_disclosure_holders_search(apikey: str, symbol: str) -> RootModel[typin
     list
         List of fund disclosure holders search results.
     """
-    path = f"/funds/disclosure-holders-search/{symbol}"
+    path = "/funds/disclosure-holders-search/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def funds_disclosure_dates(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundDisclosureDate]]:
+def funds_disclosure_dates(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPFundDisclosureDate]]:
     """
     Get fund disclosure dates for a given symbol.
 
@@ -100,13 +110,15 @@ def funds_disclosure_dates(apikey: str, symbol: str) -> RootModel[typing.List[FM
     list
         List of fund disclosure dates.
     """
-    path = f"/funds/disclosure-dates/{symbol}"
+    path = "/funds/disclosure-dates/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def mutual_fund_holdings(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundHolder]]:
+def mutual_fund_holdings(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPFundHolder]]:
     """
     Get mutual fund holdings for a given symbol.
 
@@ -122,6 +134,6 @@ def mutual_fund_holdings(apikey: str, symbol: str) -> RootModel[typing.List[FMPF
     list
         List of mutual fund holdings.
     """
-    path = f"/mutual-fund-holdings/{symbol}"
+    path = "/mutual-fund-holdings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

@@ -2,7 +2,7 @@ import os
 import sys
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, RootModel
+from pydantic import BaseModel  # , RootModel
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -14,12 +14,14 @@ class FMPSymbolSearch(BaseModel):
     exchangeFullName: str
     exchange: str
 
+
 class FMPCompanyNameSearch(BaseModel):
     symbol: str
     name: str
     currency: str
     exchangeFullName: str
     exchange: str
+
 
 class FMPCompanyCIKSearch(BaseModel):
     symbol: str
@@ -29,17 +31,20 @@ class FMPCompanyCIKSearch(BaseModel):
     exchange: str
     currency: str
 
+
 class FMPCusipSearch(BaseModel):
     symbol: str
     companyName: str
     cusip: str
     marketCap: int
 
+
 class FMPIsinSearch(BaseModel):
     symbol: str
     name: str
     isin: str
     marketCap: int
+
 
 class FMPStockScreenerResult(BaseModel):
     symbol: str
@@ -57,6 +62,7 @@ class FMPStockScreenerResult(BaseModel):
     isEtf: bool
     isFund: bool
     isActivelyTrading: bool
+
 
 class FMPCompanyProfile(BaseModel):
     symbol: str
@@ -96,13 +102,16 @@ class FMPCompanyProfile(BaseModel):
     isAdr: Optional[bool] = None
     isFund: Optional[bool] = None
 
+
 class FMPSymbolAndCompanyNameList(BaseModel):
     symbol: str
     companyName: str
 
+
 class FMPSymbolAndNameList(BaseModel):
     symbol: str
     name: str
+
 
 class FMPFinancialStatementSymbolList(BaseModel):
     symbol: str
@@ -110,9 +119,11 @@ class FMPFinancialStatementSymbolList(BaseModel):
     tradingCurrency: str
     reportingCurrency: str
 
+
 class FMPSymbolAndCIKList(BaseModel):
     cik: str
     companyName: str
+
 
 class FMPSymbolChange(BaseModel):
     date: str
@@ -120,10 +131,12 @@ class FMPSymbolChange(BaseModel):
     oldSymbol: str
     newSymbol: str
 
+
 class FMPEarningsTranscriptList(BaseModel):
     symbol: str
     companyName: str
     noOfTranscripts: str
+
 
 class FMPExchangeInfo(BaseModel):
     exchange: str
@@ -133,14 +146,18 @@ class FMPExchangeInfo(BaseModel):
     symbolSuffix: str
     delay: Optional[str] = None
 
+
 class FMPSector(BaseModel):
     sector: str
+
 
 class FMPIndustry(BaseModel):
     industry: str
 
+
 class FMPCountry(BaseModel):
     country: str
+
 
 class FMPAnalystEstimates(BaseModel):
     symbol: str
@@ -166,6 +183,7 @@ class FMPAnalystEstimates(BaseModel):
     numAnalystsRevenue: int
     numAnalystsEps: int
 
+
 class FMPRatingSnapshot(BaseModel):
     symbol: str
     rating: str
@@ -176,6 +194,7 @@ class FMPRatingSnapshot(BaseModel):
     debtToEquityScore: int
     priceToEarningsScore: int
     priceToBookScore: int
+
 
 class FMPHistoricalRating(BaseModel):
     symbol: str
@@ -189,6 +208,7 @@ class FMPHistoricalRating(BaseModel):
     priceToEarningsScore: int
     priceToBookScore: int
 
+
 class FMPPriceTargetSummary(BaseModel):
     symbol: str
     lastMonthCount: int
@@ -201,12 +221,14 @@ class FMPPriceTargetSummary(BaseModel):
     allTimeAvgPriceTarget: float
     publishers: str
 
+
 class FMPPriceTargetConsensus(BaseModel):
     symbol: str
     targetHigh: int
     targetLow: int
     targetConsensus: float
     targetMedian: int
+
 
 class FMPPriceTargetNews(BaseModel):
     symbol: str
@@ -221,6 +243,7 @@ class FMPPriceTargetNews(BaseModel):
     newsBaseURL: str
     analystCompany: str
 
+
 class FMPStockGrade(BaseModel):
     symbol: str
     date: str
@@ -228,6 +251,7 @@ class FMPStockGrade(BaseModel):
     previousGrade: str
     newGrade: str
     action: str
+
 
 class FMPHistoricalStockGrade(BaseModel):
     symbol: str
@@ -238,6 +262,7 @@ class FMPHistoricalStockGrade(BaseModel):
     analystRatingsSell: int
     analystRatingsStrongSell: int
 
+
 class FMPStockGradeSummary(BaseModel):
     symbol: str
     strongBuy: int
@@ -246,6 +271,7 @@ class FMPStockGradeSummary(BaseModel):
     sell: int
     strongSell: int
     consensus: str
+
 
 class FMPStockGradeNews(BaseModel):
     symbol: str
@@ -260,6 +286,7 @@ class FMPStockGradeNews(BaseModel):
     action: str
     priceWhenPosted: float
 
+
 class FMPDividend(BaseModel):
     symbol: str
     date: str
@@ -270,6 +297,7 @@ class FMPDividend(BaseModel):
     dividend: float
     yield_: Optional[float] = None
     frequency: str
+
 
 class FMPDividendCalendarEvent(BaseModel):
     symbol: str
@@ -282,6 +310,7 @@ class FMPDividendCalendarEvent(BaseModel):
     yield_: Optional[float] = None
     frequency: str
 
+
 class FMPEarningsReport(BaseModel):
     symbol: str
     date: str
@@ -291,6 +320,7 @@ class FMPEarningsReport(BaseModel):
     revenueEstimated: Optional[float] = None
     lastUpdated: str
 
+
 class FMPEarningsCalendarEvent(BaseModel):
     symbol: str
     date: str
@@ -299,6 +329,7 @@ class FMPEarningsCalendarEvent(BaseModel):
     revenueActual: Optional[float] = None
     revenueEstimated: Optional[float] = None
     lastUpdated: str
+
 
 class FMPUpcomingIPO(BaseModel):
     symbol: str
@@ -311,6 +342,7 @@ class FMPUpcomingIPO(BaseModel):
     priceRange: Optional[str] = None
     marketCap: Optional[int] = None
 
+
 class FMPDisclosureFiling(BaseModel):
     symbol: str
     filingDate: str
@@ -319,6 +351,7 @@ class FMPDisclosureFiling(BaseModel):
     cik: str
     form: str
     url: str
+
 
 class FMPProspectusFiling(BaseModel):
     symbol: str
@@ -335,11 +368,13 @@ class FMPProspectusFiling(BaseModel):
     form: str
     url: str
 
+
 class FMPStockSplit(BaseModel):
     symbol: str
     date: str
     numerator: int
     denominator: int
+
 
 class FMPStockSplitCalendarEvent(BaseModel):
     symbol: str
@@ -347,11 +382,13 @@ class FMPStockSplitCalendarEvent(BaseModel):
     numerator: int
     denominator: int
 
+
 class FMPHistoricalDataPointLight(BaseModel):
     symbol: str
     date: str
     price: float
     volume: int
+
 
 class FMPHistoricalDataPointFull(BaseModel):
     symbol: str
@@ -365,6 +402,7 @@ class FMPHistoricalDataPointFull(BaseModel):
     changePercent: float
     vwap: float
 
+
 class FMPIntradayDataPoint(BaseModel):
     date: str
     open: float
@@ -373,11 +411,13 @@ class FMPIntradayDataPoint(BaseModel):
     close: float
     volume: int
 
+
 class FMPCompanyNote(BaseModel):
     cik: str
     symbol: str
     title: str
     exchange: str
+
 
 class FMPStockPeer(BaseModel):
     symbol: str
@@ -385,12 +425,14 @@ class FMPStockPeer(BaseModel):
     price: float
     mktCap: int
 
+
 class FMPDelistedCompany(BaseModel):
     symbol: str
     companyName: str
     exchange: str
     ipoDate: str
     delistedDate: str
+
 
 class FMPEmployeeCount(BaseModel):
     symbol: str
@@ -403,6 +445,7 @@ class FMPEmployeeCount(BaseModel):
     employeeCount: int
     source: str
 
+
 class FMPHistoricalEmployeeCount(BaseModel):
     symbol: str
     cik: str
@@ -414,15 +457,18 @@ class FMPHistoricalEmployeeCount(BaseModel):
     employeeCount: int
     source: str
 
+
 class FMPMarketCap(BaseModel):
     symbol: str
     date: str
     marketCap: int
 
+
 class FMPHistoricalMarketCap(BaseModel):
     symbol: str
     date: str
     marketCap: int
+
 
 class FMPShareFloat(BaseModel):
     symbol: str
@@ -432,12 +478,14 @@ class FMPShareFloat(BaseModel):
     outstandingShares: int
     source: str
 
+
 class FMPAllShareFloat(BaseModel):
     symbol: str
     date: Optional[str] = None
     freeFloat: float
     floatShares: int
     outstandingShares: int
+
 
 class FMPMergerAcquisition(BaseModel):
     symbol: str
@@ -450,6 +498,7 @@ class FMPMergerAcquisition(BaseModel):
     acceptedDate: str
     link: str
 
+
 class FMPExecutiveProfile(BaseModel):
     title: str
     name: str
@@ -458,6 +507,7 @@ class FMPExecutiveProfile(BaseModel):
     gender: str
     yearBorn: Optional[int] = None
     active: Optional[bool] = None
+
 
 class FMPExecutiveCompensation(BaseModel):
     cik: str
@@ -476,10 +526,12 @@ class FMPExecutiveCompensation(BaseModel):
     total: int
     link: str
 
+
 class FMPExecutiveCompensationBenchmark(BaseModel):
     industryTitle: str
     year: int
     averageCompensation: float
+
 
 class FMPCommitmentOfTradersReport(BaseModel):
     symbol: str
@@ -611,6 +663,7 @@ class FMPCommitmentOfTradersReport(BaseModel):
     concNetLe8TdrShortOther: int
     contractUnits: str
 
+
 class FMPCommitmentOfTradersAnalysis(BaseModel):
     symbol: str
     date: str
@@ -629,11 +682,13 @@ class FMPCommitmentOfTradersAnalysis(BaseModel):
     marketSentiment: str
     reversalTrend: bool
 
+
 class FMPDcfValuation(BaseModel):
     symbol: str
     date: str
     dcf: float
     Stock_Price: float
+
 
 class FMPTreasuryRates(BaseModel):
     date: str
@@ -650,10 +705,12 @@ class FMPTreasuryRates(BaseModel):
     year20: float
     year30: float
 
+
 class FMPEconomicIndicator(BaseModel):
     name: str
     date: str
     value: float
+
 
 class FMPEconomicCalendarEvent(BaseModel):
     date: str
@@ -668,11 +725,13 @@ class FMPEconomicCalendarEvent(BaseModel):
     changePercentage: Optional[float] = None
     unit: Optional[str] = None
 
+
 class FMPMarketRiskPremium(BaseModel):
     country: str
     continent: str
     countryRiskPremium: float
     totalEquityRiskPremium: float
+
 
 class FMPESGFiling(BaseModel):
     date: str
@@ -687,6 +746,7 @@ class FMPESGFiling(BaseModel):
     ESGScore: float
     url: str
 
+
 class FMPESGRating(BaseModel):
     symbol: str
     cik: str
@@ -696,6 +756,7 @@ class FMPESGRating(BaseModel):
     ESGRiskRating: str
     industryRank: str
 
+
 class FMPESGBenchmark(BaseModel):
     fiscalYear: int
     sector: str
@@ -703,6 +764,7 @@ class FMPESGBenchmark(BaseModel):
     socialScore: float
     governanceScore: float
     ESGScore: float
+
 
 class FMPFundHolding(BaseModel):
     symbol: str
@@ -716,9 +778,11 @@ class FMPFundHolding(BaseModel):
     updatedAt: str
     updated: str
 
+
 class FMPFundInfoSectorsListItem(BaseModel):
     industry: str
     exposure: float
+
 
 class FMPFundInfo(BaseModel):
     symbol: str
@@ -740,9 +804,11 @@ class FMPFundInfo(BaseModel):
     updatedAt: str
     sectorsList: List[FMPFundInfoSectorsListItem]
 
+
 class FMPFundCountryAllocation(BaseModel):
     country: str
     weightPercentage: str
+
 
 class FMPFundAssetExposure(BaseModel):
     symbol: str
@@ -751,10 +817,12 @@ class FMPFundAssetExposure(BaseModel):
     weightPercentage: float
     marketValue: int
 
+
 class FMPFundSectorWeighting(BaseModel):
     symbol: str
     sector: str
     weightPercentage: float
+
 
 class FMPFundHolder(BaseModel):
     cik: str
@@ -763,6 +831,7 @@ class FMPFundHolder(BaseModel):
     dateReported: str
     change: int
     weightPercent: float
+
 
 class FMPFundDisclosure(BaseModel):
     cik: str
@@ -789,6 +858,7 @@ class FMPFundDisclosure(BaseModel):
     isNonCashCollateral: str
     isLoanByFund: str
 
+
 class FMPFundDisclosureNameSearch(BaseModel):
     symbol: str
     cik: str
@@ -804,10 +874,12 @@ class FMPFundDisclosureNameSearch(BaseModel):
     zipCode: str
     state: str
 
+
 class FMPFundDisclosureDate(BaseModel):
     date: str
     year: int
     quarter: int
+
 
 class FMPCrowdfundingCampaign(BaseModel):
     cik: str
@@ -859,10 +931,12 @@ class FMPCrowdfundingCampaign(BaseModel):
     netIncomeMostRecentFiscalYear: float
     netIncomePriorFiscalYear: float
 
+
 class FMPCrowdfundingSearch(BaseModel):
     cik: str
     name: str
     date: str
+
 
 class FMPEquityOffering(BaseModel):
     cik: str
@@ -909,10 +983,12 @@ class FMPEquityOffering(BaseModel):
     findersFees: int
     grossProceedsUsed: int
 
+
 class FMPEquityOfferingSearch(BaseModel):
     cik: str
     name: str
     date: str
+
 
 class FMPForexPair(BaseModel):
     symbol: str
@@ -921,12 +997,14 @@ class FMPForexPair(BaseModel):
     fromName: str
     toName: str
 
+
 class FMPFinancialReportDate(BaseModel):
     symbol: str
     fiscalYear: int
     period: str
     linkJson: str
     linkXlsx: str
+
 
 class FMPFullFinancialReport(BaseModel):
     symbol: str
@@ -988,12 +1066,14 @@ class FMPFullFinancialReport(BaseModel):
     Summary_of_Significant_Accoun_4: List[Any]
     Summary_of_Significant_Accoun_5: List[Any]
 
+
 class FMPRevenueSegmentationData(BaseModel):
     Mac: int
     Service: int
     Wearables__Home_and_Accessories: int
     iPad: int
     iPhone: int
+
 
 class FMPRevenueSegmentation(BaseModel):
     symbol: str
@@ -1002,6 +1082,7 @@ class FMPRevenueSegmentation(BaseModel):
     reportedCurrency: Optional[str] = None
     date: str
     data: FMPRevenueSegmentationData
+
 
 class FMPAsReportedIncomeStatementData(BaseModel):
     revenuefromcontractwithcustomerexcludingassessedtax: int
@@ -1012,22 +1093,37 @@ class FMPAsReportedIncomeStatementData(BaseModel):
     operatingexpenses: int
     operatingincomeloss: int
     nonoperatingincomeexpense: int
-    incomelossfromcontinuingoperationsbeforeincometaxesextraordinaryitemsnoncontrollinginterest: int
+    incomelossfromcontinuingoperationsbeforeincometaxesextraordinaryitemsnoncontrollinginterest: (
+        int
+    )
     incometaxexpensebenefit: int
     netincomeloss: int
     earningspersharebasic: float
     earningspersharediluted: float
     weightedaveragenumberofsharesoutstandingbasic: int
     weightedaveragenumberofdilutedsharesoutstanding: int
-    othercomprehensiveincomelossforeigncurrencytransactionandtranslationadjustmentnetoftax: int
-    othercomprehensiveincomelossderivativeinstrumentgainlossbeforereclassificationaftertax: int
-    othercomprehensiveincomelossderivativeinstrumentgainlossreclassificationaftertax: int
-    othercomprehensiveincomelossderivativeinstrumentgainlossafterreclassificationandtax: int
-    othercomprehensiveincomeunrealizedholdinggainlossonsecuritiesarisingduringperiodnetoftax: int
-    othercomprehensiveincomelossreclassificationadjustmentfromaociforsaleofsecuritiesnetoftax: int
+    othercomprehensiveincomelossforeigncurrencytransactionandtranslationadjustmentnetoftax: (
+        int
+    )
+    othercomprehensiveincomelossderivativeinstrumentgainlossbeforereclassificationaftertax: (
+        int
+    )
+    othercomprehensiveincomelossderivativeinstrumentgainlossreclassificationaftertax: (
+        int
+    )
+    othercomprehensiveincomelossderivativeinstrumentgainlossafterreclassificationandtax: (
+        int
+    )
+    othercomprehensiveincomeunrealizedholdinggainlossonsecuritiesarisingduringperiodnetoftax: (
+        int
+    )
+    othercomprehensiveincomelossreclassificationadjustmentfromaociforsaleofsecuritiesnetoftax: (
+        int
+    )
     othercomprehensiveincomelossavailableforsalesecuritiesadjustmentnetoftax: int
     othercomprehensiveincomelossnetoftaxportionattributabletoparent: int
     comprehensiveincomenetoftax: int
+
 
 class FMPAsReportedIncomeStatement(BaseModel):
     symbol: str
@@ -1036,6 +1132,7 @@ class FMPAsReportedIncomeStatement(BaseModel):
     reportedCurrency: Optional[str] = None
     date: str
     data: FMPAsReportedIncomeStatementData
+
 
 class FMPAsReportedBalanceSheetData(BaseModel):
     cashandcashequivalentsatcarryingvalue: int
@@ -1070,6 +1167,7 @@ class FMPAsReportedBalanceSheetData(BaseModel):
     commonstockparorstatedvaluepershare: float
     commonstocksharesauthorized: int
 
+
 class FMPAsReportedBalanceSheet(BaseModel):
     symbol: str
     fiscalYear: int
@@ -1077,6 +1175,7 @@ class FMPAsReportedBalanceSheet(BaseModel):
     reportedCurrency: Optional[str] = None
     date: str
     data: FMPAsReportedBalanceSheetData
+
 
 class FMPAsReportedCashFlowStatementData(BaseModel):
     cashcashequivalentsrestrictedcashandrestrictedcashequivalents: int
@@ -1104,8 +1203,11 @@ class FMPAsReportedCashFlowStatementData(BaseModel):
     proceedsfromrepaymentsofcommercialpaper: int
     proceedsfrompaymentsforotherfinancingactivities: int
     netcashprovidedbyusedinfinancingactivities: int
-    cashcashequivalentsrestrictedcashandrestrictedcashequivalentsperiodincreasedecreaseincludingexchangerateeffect: int
+    cashcashequivalentsrestrictedcashandrestrictedcashequivalentsperiodincreasedecreaseincludingexchangerateeffect: (
+        int
+    )
     incometaxespaidnet: int
+
 
 class FMPAsReportedCashFlowStatement(BaseModel):
     symbol: str
@@ -1114,6 +1216,7 @@ class FMPAsReportedCashFlowStatement(BaseModel):
     reportedCurrency: Optional[str] = None
     date: str
     data: FMPAsReportedCashFlowStatementData
+
 
 class FMPAsReportedFullStatementData(BaseModel):
     documenttype: str
@@ -1160,19 +1263,33 @@ class FMPAsReportedFullStatementData(BaseModel):
     operatingexpenses: int
     operatingincomeloss: int
     nonoperatingincomeexpense: int
-    incomelossfromcontinuingoperationsbeforeincometaxesextraordinaryitemsnoncontrollinginterest: int
+    incomelossfromcontinuingoperationsbeforeincometaxesextraordinaryitemsnoncontrollinginterest: (
+        int
+    )
     incometaxexpensebenefit: int
     netincomeloss: int
     earningspersharebasic: float
     earningspersharediluted: float
     weightedaveragenumberofsharesoutstandingbasic: int
     weightedaveragenumberofdilutedsharesoutstanding: int
-    othercomprehensiveincomelossforeigncurrencytransactionandtranslationadjustmentnetoftax: int
-    othercomprehensiveincomelossderivativeinstrumentgainlossbeforereclassificationaftertax: int
-    othercomprehensiveincomelossderivativeinstrumentgainlossreclassificationaftertax: int
-    othercomprehensiveincomelossderivativeinstrumentgainlossafterreclassificationandtax: int
-    othercomprehensiveincomeunrealizedholdinggainlossonsecuritiesarisingduringperiodnetoftax: int
-    othercomprehensiveincomelossreclassificationadjustmentfromaociforsaleofsecuritiesnetoftax: int
+    othercomprehensiveincomelossforeigncurrencytransactionandtranslationadjustmentnetoftax: (
+        int
+    )
+    othercomprehensiveincomelossderivativeinstrumentgainlossbeforereclassificationaftertax: (
+        int
+    )
+    othercomprehensiveincomelossderivativeinstrumentgainlossreclassificationaftertax: (
+        int
+    )
+    othercomprehensiveincomelossderivativeinstrumentgainlossafterreclassificationandtax: (
+        int
+    )
+    othercomprehensiveincomeunrealizedholdinggainlossonsecuritiesarisingduringperiodnetoftax: (
+        int
+    )
+    othercomprehensiveincomelossreclassificationadjustmentfromaociforsaleofsecuritiesnetoftax: (
+        int
+    )
     othercomprehensiveincomelossavailableforsalesecuritiesadjustmentnetoftax: int
     othercomprehensiveincomelossnetoftaxportionattributabletoparent: int
     comprehensiveincomenetoftax: int
@@ -1209,7 +1326,9 @@ class FMPAsReportedFullStatementData(BaseModel):
     commonstocksharesauthorized: int
     stockissuedduringperiodvaluenewissues: int
     adjustmentsrelatedtotaxwithholdingforsharebasedcompensation: int
-    adjustmentstoadditionalpaidincapitalsharebasedcompensationrequisiteserviceperiodrecognitionvalue: int
+    adjustmentstoadditionalpaidincapitalsharebasedcompensationrequisiteserviceperiodrecognitionvalue: (
+        int
+    )
     dividends: int
     stockrepurchasedandretiredduringperiodvalue: int
     commonstockdividendspersharedeclared: float
@@ -1237,7 +1356,9 @@ class FMPAsReportedFullStatementData(BaseModel):
     proceedsfromrepaymentsofcommercialpaper: int
     proceedsfrompaymentsforotherfinancingactivities: int
     netcashprovidedbyusedinfinancingactivities: int
-    cashcashequivalentsrestrictedcashandrestrictedcashequivalentsperiodincreasedecreaseincludingexchangerateeffect: int
+    cashcashequivalentsrestrictedcashandrestrictedcashequivalentsperiodincreasedecreaseincludingexchangerateeffect: (
+        int
+    )
     incometaxespaidnet: int
     commercialpapercashflowsummarytabletextblock: str
     contractwithcustomerliabilityrevenuerecognized: int
@@ -1260,9 +1381,15 @@ class FMPAsReportedFullStatementData(BaseModel):
     cashcashequivalentsandmarketablesecurities: int
     restrictedcashandcashequivalents: int
     debtsecuritiesavailableforsalerestricted: int
-    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingafteronethroughfiveyearspercentage: float
-    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingafterfivethroughtenyearspercentage: float
-    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingaftertenyearspercentage: float
+    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingafteronethroughfiveyearspercentage: (
+        float
+    )
+    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingafterfivethroughtenyearspercentage: (
+        float
+    )
+    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingaftertenyearspercentage: (
+        float
+    )
     maximumlengthoftimeforeigncurrencycashflowhedge: str
     concentrationriskpercentage1: float
     numberofsignificantvendors: int
@@ -1302,7 +1429,9 @@ class FMPAsReportedFullStatementData(BaseModel):
     effectiveincometaxratereconciliationimpactofthestateaiddecisionamount: int
     incometaxreconciliationforeignincometaxratedifferential: int
     incometaxreconciliationtaxcreditsresearch: int
-    effectiveincometaxratereconciliationsharebasedcompensationexcesstaxbenefitamount: int
+    effectiveincometaxratereconciliationsharebasedcompensationexcesstaxbenefitamount: (
+        int
+    )
     incometaxreconciliationotheradjustments: int
     effectiveincometaxratecontinuingoperations: float
     deferredtaxassetscapitalizedresearchanddevelopment: int
@@ -1324,7 +1453,9 @@ class FMPAsReportedFullStatementData(BaseModel):
     unrecognizedtaxbenefitsincreasesresultingfrompriorperiodtaxpositions: int
     unrecognizedtaxbenefitsdecreasesresultingfrompriorperiodtaxpositions: int
     unrecognizedtaxbenefitsincreasesresultingfromcurrentperiodtaxpositions: int
-    unrecognizedtaxbenefitsreductionsresultingfromlapseofapplicablestatuteoflimitations: int
+    unrecognizedtaxbenefitsreductionsresultingfromlapseofapplicablestatuteoflimitations: (
+        int
+    )
     lesseeoperatingandfinanceleasetermofcontract: str
     operatingleasecost: int
     variableleasecost: int
@@ -1393,22 +1524,50 @@ class FMPAsReportedFullStatementData(BaseModel):
     longtermdebtmaturitiesrepaymentsofprincipalinyearfive: int
     longtermdebtmaturitiesrepaymentsofprincipalafteryearfive: int
     stockrepurchasedandretiredduringperiodshares: int
-    stockissuedduringperiodsharessharebasedpaymentarrangementnetofshareswithheldfortaxes: int
+    stockissuedduringperiodsharessharebasedpaymentarrangementnetofshareswithheldfortaxes: (
+        int
+    )
     sharebasedcompensationarrangementbysharebasedpaymentawardawardvestingperiod1: str
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnumberofsharesofcommonstockissuedperunituponvesting: int
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiodtotalfairvalue: int
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnumberofsharesofcommonstockissuedperunituponvesting: (
+        int
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiodtotalfairvalue: (
+        int
+    )
     sharespaidfortaxwithholdingforsharebasedcompensation: int
-    employeeservicesharebasedcompensationnonvestedawardstotalcompensationcostnotyetrecognized: int
-    employeeservicesharebasedcompensationnonvestedawardstotalcompensationcostnotyetrecognizedperiodforrecognition1: str
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnonvestednumber: int
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsgrantsinperiod: int
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiod: int
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsforfeitedinperiod: int
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnonvestedweightedaveragegrantdatefairvalue: float
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsgrantsinperiodweightedaveragegrantdatefairvalue: float
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiodweightedaveragegrantdatefairvalue: float
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsforfeituresweightedaveragegrantdatefairvalue: float
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsaggregateintrinsicvaluenonvested: int
+    employeeservicesharebasedcompensationnonvestedawardstotalcompensationcostnotyetrecognized: (
+        int
+    )
+    employeeservicesharebasedcompensationnonvestedawardstotalcompensationcostnotyetrecognizedperiodforrecognition1: (
+        str
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnonvestednumber: (
+        int
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsgrantsinperiod: (
+        int
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiod: (
+        int
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsforfeitedinperiod: (
+        int
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnonvestedweightedaveragegrantdatefairvalue: (
+        float
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsgrantsinperiodweightedaveragegrantdatefairvalue: (
+        float
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiodweightedaveragegrantdatefairvalue: (
+        float
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsforfeituresweightedaveragegrantdatefairvalue: (
+        float
+    )
+    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsaggregateintrinsicvaluenonvested: (
+        int
+    )
     allocatedsharebasedcompensationexpense: int
     employeeservicesharebasedcompensationtaxbenefitfromcompensationexpense: int
     unrecordedunconditionalpurchaseobligationbalanceonfirstanniversary: int
@@ -1422,6 +1581,7 @@ class FMPAsReportedFullStatementData(BaseModel):
     trdarrsecuritiesaggavailamt: int
     insidertrdpoliciesprocadoptedflag: bool
 
+
 class FMPAsReportedFullStatement(BaseModel):
     symbol: str
     fiscalYear: int
@@ -1429,6 +1589,7 @@ class FMPAsReportedFullStatement(BaseModel):
     reportedCurrency: Optional[str] = None
     date: str
     data: FMPAsReportedFullStatementData
+
 
 class FMPForm13FFiling(BaseModel):
     cik: str
@@ -1439,6 +1600,7 @@ class FMPForm13FFiling(BaseModel):
     formType: str
     link: str
     finalLink: str
+
 
 class FMPForm13FExtract(BaseModel):
     date: str
@@ -1456,10 +1618,12 @@ class FMPForm13FExtract(BaseModel):
     link: str
     finalLink: str
 
+
 class FMPForm13FDate(BaseModel):
     date: str
     year: int
     quarter: int
+
 
 class FMPForm13FAnalytics(BaseModel):
     date: str
@@ -1502,6 +1666,7 @@ class FMPForm13FAnalytics(BaseModel):
     changeInPerformance: int
     isCountedForPerformance: bool
 
+
 class FMPHolderPerformance(BaseModel):
     date: str
     cik: str
@@ -1537,6 +1702,7 @@ class FMPHolderPerformance(BaseModel):
     performance5yearRelativeToSP500Percentage: float
     performanceSinceInceptionRelativeToSP500Percentage: float
 
+
 class FMPHolderIndustryBreakdown(BaseModel):
     date: str
     cik: str
@@ -1550,6 +1716,7 @@ class FMPHolderIndustryBreakdown(BaseModel):
     performancePercentage: float
     lastPerformance: int
     changeInPerformance: int
+
 
 class FMPPositionSummary(BaseModel):
     symbol: str
@@ -1589,10 +1756,12 @@ class FMPPositionSummary(BaseModel):
     lastPutCallRatio: float
     putCallRatioChange: float
 
+
 class FMPIndustryPerformanceSummary(BaseModel):
     industryTitle: str
     industryValue: int
     date: str
+
 
 class FMPIndexConstituent(BaseModel):
     symbol: str
@@ -1604,6 +1773,7 @@ class FMPIndexConstituent(BaseModel):
     cik: str
     founded: str
 
+
 class FMPHistoricalIndexConstituent(BaseModel):
     dateAdded: str
     addedSecurity: str
@@ -1612,6 +1782,7 @@ class FMPHistoricalIndexConstituent(BaseModel):
     date: str
     symbol: str
     reason: str
+
 
 class FMPInsiderTrade(BaseModel):
     symbol: str
@@ -1631,8 +1802,10 @@ class FMPInsiderTrade(BaseModel):
     securityName: str
     url: str
 
+
 class FMPInsiderTransactionType(BaseModel):
     transactionType: str
+
 
 class FMPInsiderTradeStatistics(BaseModel):
     symbol: str
@@ -1648,6 +1821,7 @@ class FMPInsiderTradeStatistics(BaseModel):
     averageDisposed: float
     totalPurchases: int
     totalSales: int
+
 
 class FMPAcquisitionOwnership(BaseModel):
     cik: str
@@ -1666,6 +1840,7 @@ class FMPAcquisitionOwnership(BaseModel):
     typeOfReportingPerson: str
     url: str
 
+
 class FMPPressRelease(BaseModel):
     symbol: Optional[str] = None
     publishedDate: str
@@ -1675,6 +1850,7 @@ class FMPPressRelease(BaseModel):
     site: Optional[str] = None
     text: Optional[str] = None
     url: Optional[str] = None
+
 
 class FMPTechnicalIndicator(BaseModel):
     date: str
@@ -1692,6 +1868,7 @@ class FMPTechnicalIndicator(BaseModel):
     standardDeviation: Optional[float] = None
     williams: Optional[float] = None
     adx: Optional[float] = None
+
 
 class FMPQuoteFull(BaseModel):
     symbol: str
@@ -1712,17 +1889,20 @@ class FMPQuoteFull(BaseModel):
     previousClose: float
     timestamp: int
 
+
 class FMPQuoteShort(BaseModel):
     symbol: str
     price: float
     change: float
     volume: int
 
+
 class FMPAftermarketTrade(BaseModel):
     symbol: str
     price: float
     tradeSize: int
     timestamp: int
+
 
 class FMPAftermarketQuote(BaseModel):
     symbol: str
@@ -1732,6 +1912,7 @@ class FMPAftermarketQuote(BaseModel):
     askPrice: float
     volume: int
     timestamp: int
+
 
 class FMPStockPriceChange(BaseModel):
     symbol: str
@@ -1747,6 +1928,7 @@ class FMPStockPriceChange(BaseModel):
     _10Y: float
     max: float
 
+
 class FMPBulkEOD(BaseModel):
     symbol: str
     date: str
@@ -1756,6 +1938,7 @@ class FMPBulkEOD(BaseModel):
     close: float
     adjClose: float
     volume: int
+
 
 class FMPPoliticalTrade(BaseModel):
     symbol: str
@@ -1774,6 +1957,7 @@ class FMPPoliticalTrade(BaseModel):
     comment: str
     link: str
 
+
 class FMPCompanySECFilings(BaseModel):
     symbol: str
     name: str
@@ -1783,10 +1967,12 @@ class FMPCompanySECFilings(BaseModel):
     businessAddress: str
     phoneNumber: str
 
+
 class FMPIndustryClassification(BaseModel):
     office: str
     sicCode: str
     industryTitle: str
+
 
 class FMPIndustryClassificationSearch(BaseModel):
     symbol: str
@@ -1797,6 +1983,7 @@ class FMPIndustryClassificationSearch(BaseModel):
     businessAddress: str
     phoneNumber: str
 
+
 class FMPEarningsTranscript(BaseModel):
     symbol: str
     period: str
@@ -1804,10 +1991,12 @@ class FMPEarningsTranscript(BaseModel):
     date: str
     content: str
 
+
 class FMPEarningsTranscriptDate(BaseModel):
     quarter: int
     fiscalYear: int
     date: str
+
 
 class FMPBulkRating(BaseModel):
     symbol: str
@@ -1821,11 +2010,13 @@ class FMPBulkRating(BaseModel):
     ratingDetailsPERecommendation: str
     ratingDetailsPBRecommendation: str
 
+
 class FMPBulkDCF(BaseModel):
     symbol: str
     date: str
     discountedCashFlow: float
     dcfPercentDiff: str
+
 
 class FMPBulkFinancialScores(BaseModel):
     symbol: str
@@ -1839,6 +2030,7 @@ class FMPBulkFinancialScores(BaseModel):
     marketCap: str
     totalLiabilities: str
     revenue: str
+
 
 class FMPBulkPriceTargetSummary(BaseModel):
     symbol: str
@@ -1856,6 +2048,7 @@ class FMPBulkPriceTargetSummary(BaseModel):
     allTimeAvgPTPercentDif: str
     publishers: str
 
+
 class FMPBulkETFHolder(BaseModel):
     symbol: str
     sharesNumber: str
@@ -1867,6 +2060,7 @@ class FMPBulkETFHolder(BaseModel):
     marketValue: str
     updatedAt: str
 
+
 class FMPBulkUpgradeDowngradeConsensus(BaseModel):
     symbol: str
     strongBuy: str
@@ -1876,9 +2070,11 @@ class FMPBulkUpgradeDowngradeConsensus(BaseModel):
     strongSell: str
     consensus: str
 
+
 class FMPBulkStockPeers(BaseModel):
     symbol: str
     peers: str
+
 
 class FMPBulkEarningsSurprise(BaseModel):
     symbol: str
@@ -1886,6 +2082,7 @@ class FMPBulkEarningsSurprise(BaseModel):
     epsActual: str
     epsEstimated: str
     lastUpdated: str
+
 
 class FMPBulkIncomeStatement(BaseModel):
     date: str
@@ -1928,6 +2125,7 @@ class FMPBulkIncomeStatement(BaseModel):
     weightedAverageShsOut: str
     weightedAverageShsOutDil: str
 
+
 class FMPBulkIncomeStatementGrowth(BaseModel):
     symbol: str
     date: str
@@ -1956,6 +2154,7 @@ class FMPBulkIncomeStatementGrowth(BaseModel):
     growthEPSDiluted: str
     growthWeightedAverageShsOut: str
     growthWeightedAverageShsOutDil: str
+
 
 class FMPBulkBalanceSheetStatement(BaseModel):
     date: str
@@ -2008,6 +2207,7 @@ class FMPBulkBalanceSheetStatement(BaseModel):
     totalDebt: str
     netDebt: str
 
+
 class FMPBulkBalanceSheetGrowth(BaseModel):
     symbol: str
     date: str
@@ -2057,6 +2257,7 @@ class FMPBulkBalanceSheetGrowth(BaseModel):
     growthTotalDebt: str
     growthNetDebt: str
 
+
 class FMPBulkCashFlowStatement(BaseModel):
     date: str
     symbol: str
@@ -2091,6 +2292,7 @@ class FMPBulkCashFlowStatement(BaseModel):
     capitalExpenditure: str
     freeCashFlow: str
 
+
 class FMPBulkCashFlowGrowth(BaseModel):
     symbol: str
     date: str
@@ -2123,6 +2325,7 @@ class FMPBulkCashFlowGrowth(BaseModel):
     growthOperatingCashFlow: str
     growthCapitalExpenditure: str
     growthFreeCashFlow: str
+
 
 class FMPFinancialStatement(BaseModel):
     date: str
@@ -2169,10 +2372,10 @@ class FMPFinancialStatement(BaseModel):
     shortTermInvestments: Optional[int] = None
     cashAndShortTermInvestments: Optional[int] = None
     netReceivables: Optional[int] = None
-    accountsReceivables: Optional[str] = None # Can be empty string
-    otherReceivables: Optional[str] = None # Can be empty string
+    accountsReceivables: Optional[str] = None  # Can be empty string
+    otherReceivables: Optional[str] = None  # Can be empty string
     inventory: Optional[int] = None
-    prepaids: Optional[str] = None # Can be empty string
+    prepaids: Optional[str] = None  # Can be empty string
     otherCurrentAssets: Optional[int] = None
     totalCurrentAssets: Optional[int] = None
     propertyPlantEquipmentNet: Optional[int] = None
@@ -2185,30 +2388,30 @@ class FMPFinancialStatement(BaseModel):
     totalNonCurrentAssets: Optional[int] = None
     otherAssets: Optional[int] = None
     totalAssets: Optional[int] = None
-    totalPayables: Optional[str] = None # Can be empty string
-    accountPayables: Optional[str] = None # Can be empty string
-    otherPayables: Optional[str] = None # Can be empty string
-    accruedExpenses: Optional[str] = None # Can be empty string
+    totalPayables: Optional[str] = None  # Can be empty string
+    accountPayables: Optional[str] = None  # Can be empty string
+    otherPayables: Optional[str] = None  # Can be empty string
+    accruedExpenses: Optional[str] = None  # Can be empty string
     shortTermDebt: Optional[int] = None
-    capitalLeaseObligationsCurrent: Optional[str] = None # Can be empty string
-    taxPayables: Optional[str] = None # Can be empty string
+    capitalLeaseObligationsCurrent: Optional[str] = None  # Can be empty string
+    taxPayables: Optional[str] = None  # Can be empty string
     deferredRevenue: Optional[int] = None
     otherCurrentLiabilities: Optional[int] = None
     totalCurrentLiabilities: Optional[int] = None
     longTermDebt: Optional[int] = None
-    capitalLeaseObligationsNonCurrent: Optional[str] = None # Can be empty string
+    capitalLeaseObligationsNonCurrent: Optional[str] = None  # Can be empty string
     deferredRevenueNonCurrent: Optional[int] = None
     deferredTaxLiabilitiesNonCurrent: Optional[int] = None
     otherNonCurrentLiabilities: Optional[int] = None
     totalNonCurrentLiabilities: Optional[int] = None
     otherLiabilities: Optional[int] = None
-    capitalLeaseObligations: Optional[str] = None # Can be empty string
+    capitalLeaseObligations: Optional[str] = None  # Can be empty string
     totalLiabilities: Optional[int] = None
-    treasuryStock: Optional[str] = None # Can be empty string
+    treasuryStock: Optional[str] = None  # Can be empty string
     preferredStock: Optional[int] = None
     commonStock: Optional[int] = None
     retainedEarnings: Optional[int] = None
-    additionalPaidInCapital: Optional[str] = None # Can be empty string
+    additionalPaidInCapital: Optional[str] = None  # Can be empty string
     accumulatedOtherComprehensiveIncomeLoss: Optional[int] = None
     otherTotalStockholdersEquity: Optional[int] = None
     totalStockholdersEquity: Optional[int] = None
@@ -2230,17 +2433,17 @@ class FMPFinancialStatement(BaseModel):
     salesMaturitiesOfInvestments: Optional[int] = None
     otherInvestingActivities: Optional[int] = None
     netCashProvidedByInvestingActivities: Optional[int] = None
-    netDebtIssuance: Optional[str] = None # Can be empty string
-    longTermNetDebtIssuance: Optional[str] = None # Can be empty string
-    shortTermNetDebtIssuance: Optional[str] = None # Can be empty string
-    netStockIssuance: Optional[str] = None # Can be empty string
-    netCommonStockIssuance: Optional[str] = None # Can be empty string
+    netDebtIssuance: Optional[str] = None  # Can be empty string
+    longTermNetDebtIssuance: Optional[str] = None  # Can be empty string
+    shortTermNetDebtIssuance: Optional[str] = None  # Can be empty string
+    netStockIssuance: Optional[str] = None  # Can be empty string
+    netCommonStockIssuance: Optional[str] = None  # Can be empty string
     commonStockIssuance: Optional[int] = None
     commonStockRepurchased: Optional[int] = None
-    netPreferredStockIssuance: Optional[str] = None # Can be empty string
+    netPreferredStockIssuance: Optional[str] = None  # Can be empty string
     netDividendsPaid: Optional[int] = None
-    commonDividendsPaid: Optional[str] = None # Can be empty string
-    preferredDividendsPaid: Optional[str] = None # Can be empty string
+    commonDividendsPaid: Optional[str] = None  # Can be empty string
+    preferredDividendsPaid: Optional[str] = None  # Can be empty string
     otherFinancingActivities: Optional[int] = None
     netCashProvidedByFinancingActivities: Optional[int] = None
     effectOfForexChangesOnCash: Optional[int] = None
@@ -2250,8 +2453,9 @@ class FMPFinancialStatement(BaseModel):
     operatingCashFlow: Optional[int] = None
     capitalExpenditure: Optional[int] = None
     freeCashFlow: Optional[int] = None
-    incomeTaxesPaid: Optional[str] = None # Can be empty string
-    interestPaid: Optional[str] = None # Can be empty string
+    incomeTaxesPaid: Optional[str] = None  # Can be empty string
+    interestPaid: Optional[str] = None  # Can be empty string
+
 
 class FMPFinancialStatementTTM(BaseModel):
     date: str
@@ -2385,6 +2589,7 @@ class FMPFinancialStatementTTM(BaseModel):
     incomeTaxesPaid: Optional[int] = None
     interestPaid: Optional[int] = None
 
+
 class FMPKeyMetrics(BaseModel):
     symbol: str
     date: str
@@ -2433,6 +2638,7 @@ class FMPKeyMetrics(BaseModel):
     freeCashFlowToFirm: float
     tangibleAssetValue: int
     netCurrentAssetValue: int
+
 
 class FMPFinancialRatios(BaseModel):
     symbol: str
@@ -2499,6 +2705,7 @@ class FMPFinancialRatios(BaseModel):
     effectiveTaxRate: float
     enterpriseValueMultiple: float
     dividendPerShare: float
+
 
 class FMPFinancialStatementGrowth(BaseModel):
     symbol: str

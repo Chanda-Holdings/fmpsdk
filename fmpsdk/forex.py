@@ -1,9 +1,12 @@
 import typing
+
+from pydantic import RootModel
+
 from .general import __quotes
+from .models import *
 from .settings import DEFAULT_LIMIT
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
 
 
 @parse_response
@@ -14,7 +17,7 @@ def forex(apikey: str) -> RootModel[typing.List[FMPForexPair]]:
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"fx"
+    path = "fx"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -27,7 +30,7 @@ def forex_list(apikey: str) -> RootModel[typing.List[FMPQuoteFull]]:
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"forex"
+    path = "forex"
     return __quotes(apikey=apikey, value=path)
 
 
@@ -39,7 +42,7 @@ def available_forex(apikey: str) -> RootModel[typing.List[FMPForexPair]]:
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"symbol/available-forex-currency-pairs"
+    path = "symbol/available-forex-currency-pairs"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -64,7 +67,7 @@ def forex_news(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"forex_news"
+    path = "forex_news"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
     if symbol:
         query_vars["symbol"] = symbol
@@ -93,13 +96,15 @@ def forex_quote(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteFull]
     list
         List of forex quote data.
     """
-    path = f"/forex-quote/{symbol}"
+    path = "/forex-quote/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def forex_quote_short(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteShort]]:
+def forex_quote_short(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPQuoteShort]]:
     """
     Get short forex quote for a given symbol.
 
@@ -115,13 +120,15 @@ def forex_quote_short(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuot
     list
         List of short forex quote data.
     """
-    path = f"/forex-quote-short/{symbol}"
+    path = "/forex-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def batch_forex_quotes(apikey: str, symbols: list = None) -> RootModel[typing.List[FMPBulkEOD]]:
+def batch_forex_quotes(
+    apikey: str, symbols: list = None
+) -> RootModel[typing.List[FMPBulkEOD]]:
     """
     Get batch forex quotes for a list of symbols.
 
@@ -138,10 +145,9 @@ def batch_forex_quotes(apikey: str, symbols: list = None) -> RootModel[typing.Li
         List of batch forex quote data.
     """
     if symbols:
-        symbols_str = ",".join(symbols)
-        path = f"/batch-forex-quotes/{symbols_str}"
+        path = f"/batch-forex-quotes/{','.join(symbols)}"
     else:
-        path = f"/batch-forex-quotes"
+        path = "/batch-forex-quotes"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -153,7 +159,8 @@ __all__ = [
     "forex_news",
     "forex_quote",
     "forex_quote_short",
-    "batch_forex_quotes"
+    "batch_forex_quotes",
 ]
 
-# All function return types should be updated to match ENDPOINT_MODEL_MAP from model_registry.py
+# All function return types should be updated to match ENDPOINT_MODEL_MAP
+# from model_registry.py

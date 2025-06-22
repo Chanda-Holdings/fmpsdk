@@ -1,9 +1,13 @@
-from .url_methods import (__return_json_stable,
-                          __validate_statistics_type,
-                          __validate_technical_indicators_time_delta)
-from .utils import parse_response
-from .models import *
 import typing
+
+from pydantic import RootModel
+
+from .models import *
+from .url_methods import (  # __validate_technical_indicators_time_delta,
+    __return_json_stable,
+    __validate_statistics_type,
+)
+from .utils import parse_response
 
 
 @parse_response
@@ -24,7 +28,7 @@ def technical_indicators(
     :param time_delta: 'daily' or intraday: '1min' - '4hour'
     :return:
     """
-    path = f"technical_indicator/{__validate_technical_indicators_time_delta(time_delta)}/{symbol}"
+    path = "technical_indicator/{__validate_technical_indicators_time_delta(time_delta)}/{symbol}"
     query_vars = {
         "apikey": apikey,
         "period": period,
@@ -58,7 +62,7 @@ def technical_indicators_sma(
     list
         List of SMA technical indicator data.
     """
-    path = f"/technical-indicators/sma/{symbol}"
+    path = "/technical-indicators/sma/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
     return __return_json_stable(path, query_vars)
 
@@ -88,7 +92,7 @@ def technical_indicators_ema(
     list
         List of EMA technical indicator data.
     """
-    path = f"/technical-indicators/ema/{symbol}"
+    path = "/technical-indicators/ema/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
     return __return_json_stable(path, query_vars)
 
@@ -118,7 +122,7 @@ def technical_indicators_dema(
     list
         List of DEMA technical indicator data.
     """
-    path = f"/technical-indicators/dema/{symbol}"
+    path = "/technical-indicators/dema/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
     return __return_json_stable(path, query_vars)
 
@@ -148,7 +152,7 @@ def technical_indicators_rsi(
     list
         List of RSI technical indicator data.
     """
-    path = f"/technical-indicators/rsi/{symbol}"
+    path = "/technical-indicators/rsi/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
     return __return_json_stable(path, query_vars)
 
@@ -178,7 +182,7 @@ def technical_indicators_standarddeviation(
     list
         List of Standard Deviation technical indicator data.
     """
-    path = f"/technical-indicators/standarddeviation/{symbol}"
+    path = "/technical-indicators/standarddeviation/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
     return __return_json_stable(path, query_vars)
 
@@ -208,7 +212,7 @@ def technical_indicators_williams(
     list
         List of Williams %R technical indicator data.
     """
-    path = f"/technical-indicators/williams/{symbol}"
+    path = "/technical-indicators/williams/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
     return __return_json_stable(path, query_vars)
 
@@ -238,6 +242,6 @@ def technical_indicators_adx(
     list
         List of ADX technical indicator data.
     """
-    path = f"/technical-indicators/adx/{symbol}"
+    path = "/technical-indicators/adx/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
     return __return_json_stable(path, query_vars)

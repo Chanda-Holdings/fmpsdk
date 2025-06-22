@@ -1,9 +1,11 @@
 import typing
 
-from .settings import DEFAULT_LIMIT, SEC_RSS_FEEDS_FILENAME
-from .utils import parse_response
-from .url_methods import __return_json_stable
+from pydantic import RootModel
+
 from .models import *
+from .settings import DEFAULT_LIMIT, SEC_RSS_FEEDS_FILENAME
+from .url_methods import __return_json_stable
+from .utils import parse_response
 
 
 @parse_response
@@ -20,7 +22,7 @@ def sec_rss_feeds(
     :param filename: Name of saved file.
     :return: A list of dictionaries.
     """
-    path = f"rss_feed"
+    path = "rss_feed"
     query_vars = {"apikey": apikey}
     query_vars["limit"] = limit
     return __return_json_stable(path=path, query_vars=query_vars)
@@ -82,7 +84,9 @@ def institutional_ownership_extract(
 
 
 @parse_response
-def institutional_ownership_dates(apikey: str, cik: str) -> RootModel[typing.List[FMPForm13FDate]]:
+def institutional_ownership_dates(
+    apikey: str, cik: str
+) -> RootModel[typing.List[FMPForm13FDate]]:
     """
     Get available institutional ownership dates for a CIK.
     Parameters
@@ -96,13 +100,15 @@ def institutional_ownership_dates(apikey: str, cik: str) -> RootModel[typing.Lis
     list
         List of available institutional ownership dates.
     """
-    path = f"/institutional-ownership/dates"
+    path = "/institutional-ownership/dates"
     query_vars = {"apikey": apikey, "cik": cik}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def institutional_ownership_holder_industry_breakdown(apikey: str, cik: str, year: int, quarter: int) -> RootModel[typing.List[FMPHolderIndustryBreakdown]]:
+def institutional_ownership_holder_industry_breakdown(
+    apikey: str, cik: str, year: int, quarter: int
+) -> RootModel[typing.List[FMPHolderIndustryBreakdown]]:
     """
     Get institutional ownership holder industry breakdown for a CIK, year, and quarter.
     Parameters
@@ -120,13 +126,15 @@ def institutional_ownership_holder_industry_breakdown(apikey: str, cik: str, yea
     list
         List of holder industry breakdown data.
     """
-    path = f"/institutional-ownership/holder-industry-breakdown"
+    path = "/institutional-ownership/holder-industry-breakdown"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def institutional_ownership_industry_summary(apikey: str, year: int, quarter: int) -> RootModel[typing.List[FMPIndustryPerformanceSummary]]:
+def institutional_ownership_industry_summary(
+    apikey: str, year: int, quarter: int
+) -> RootModel[typing.List[FMPIndustryPerformanceSummary]]:
     """
     Get institutional ownership industry summary for a year and quarter.
     Parameters
@@ -142,13 +150,15 @@ def institutional_ownership_industry_summary(apikey: str, year: int, quarter: in
     list
         List of industry summary data.
     """
-    path = f"/institutional-ownership/industry-summary"
+    path = "/institutional-ownership/industry-summary"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def institutional_ownership_holdings_portfolio_changes(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+def institutional_ownership_holdings_portfolio_changes(
+    apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None
+) -> RootModel[typing.List[typing.Dict]]:
     """
     Get institutional ownership holdings portfolio changes for a CIK, year, and quarter.
     Parameters
@@ -170,7 +180,7 @@ def institutional_ownership_holdings_portfolio_changes(apikey: str, cik: str, ye
     list
         List of portfolio changes data.
     """
-    path = f"/institutional-ownership/holdings-portfolio-changes"
+    path = "/institutional-ownership/holdings-portfolio-changes"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
         query_vars["page"] = page
@@ -180,7 +190,9 @@ def institutional_ownership_holdings_portfolio_changes(apikey: str, cik: str, ye
 
 
 @parse_response
-def institutional_ownership_holdings_new_positions(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+def institutional_ownership_holdings_new_positions(
+    apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None
+) -> RootModel[typing.List[typing.Dict]]:
     """
     Get institutional ownership holdings new positions for a CIK, year, and quarter.
     Parameters
@@ -202,7 +214,7 @@ def institutional_ownership_holdings_new_positions(apikey: str, cik: str, year: 
     list
         List of new positions data.
     """
-    path = f"/institutional-ownership/holdings-new-positions"
+    path = "/institutional-ownership/holdings-new-positions"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
         query_vars["page"] = page
@@ -212,7 +224,9 @@ def institutional_ownership_holdings_new_positions(apikey: str, cik: str, year: 
 
 
 @parse_response
-def institutional_ownership_holdings_summary(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+def institutional_ownership_holdings_summary(
+    apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None
+) -> RootModel[typing.List[typing.Dict]]:
     """
     Get institutional ownership holdings summary for a CIK, year, and quarter.
     Parameters
@@ -234,7 +248,7 @@ def institutional_ownership_holdings_summary(apikey: str, cik: str, year: int, q
     list
         List of holdings summary data.
     """
-    path = f"/institutional-ownership/holdings-summary"
+    path = "/institutional-ownership/holdings-summary"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
         query_vars["page"] = page
@@ -244,7 +258,9 @@ def institutional_ownership_holdings_summary(apikey: str, cik: str, year: int, q
 
 
 @parse_response
-def institutional_ownership_holdings_overview(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+def institutional_ownership_holdings_overview(
+    apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None
+) -> RootModel[typing.List[typing.Dict]]:
     """
     Get institutional ownership holdings overview for a CIK, year, and quarter.
     Parameters
@@ -266,7 +282,7 @@ def institutional_ownership_holdings_overview(apikey: str, cik: str, year: int, 
     list
         List of holdings overview data.
     """
-    path = f"/institutional-ownership/holdings-overview"
+    path = "/institutional-ownership/holdings-overview"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
         query_vars["page"] = page
@@ -276,9 +292,17 @@ def institutional_ownership_holdings_overview(apikey: str, cik: str, year: int, 
 
 
 @parse_response
-def institutional_ownership_holdings_sold_out_positions(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+def institutional_ownership_holdings_sold_out_positions(
+    apikey: str,
+    cik: str,
+    year: int,
+    quarter: int,
+    page: int = None,
+    limit: int = None,
+) -> RootModel[typing.List[typing.Dict]]:
     """
-    Get institutional ownership holdings sold out positions for a CIK, year, and quarter.
+    Get institutional ownership holdings sold out positions for a CIK, year,
+    and quarter.
     Parameters
     ----------
     apikey : str
@@ -298,7 +322,7 @@ def institutional_ownership_holdings_sold_out_positions(apikey: str, cik: str, y
     list
         List of sold out positions data.
     """
-    path = f"/institutional-ownership/holdings-sold-out-positions"
+    path = "/institutional-ownership/holdings-sold-out-positions"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
         query_vars["page"] = page
@@ -308,7 +332,14 @@ def institutional_ownership_holdings_sold_out_positions(apikey: str, cik: str, y
 
 
 @parse_response
-def institutional_ownership_by_symbol(apikey: str, symbol: str, year: int = None, quarter: int = None, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+def institutional_ownership_by_symbol(
+    apikey: str,
+    symbol: str,
+    year: int = None,
+    quarter: int = None,
+    page: int = None,
+    limit: int = None,
+) -> RootModel[typing.List[typing.Dict]]:
     """
     Get institutional ownership by symbol.
     Parameters
@@ -330,7 +361,7 @@ def institutional_ownership_by_symbol(apikey: str, symbol: str, year: int = None
     list
         List of institutional ownership data for the symbol.
     """
-    path = f"/institutional-ownership/by-symbol"
+    path = "/institutional-ownership/by-symbol"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if year is not None:
         query_vars["year"] = year
@@ -358,7 +389,7 @@ def sec_filings_8k(apikey: str, symbol: str) -> RootModel[typing.List[Any]]:
     list
         List of SEC 8-K filings.
     """
-    path = f"/sec-filings-8k/{symbol}"
+    path = "/sec-filings-8k/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -378,13 +409,15 @@ def sec_filings_financials(apikey: str, symbol: str) -> RootModel[typing.List[An
     list
         List of SEC financial filings.
     """
-    path = f"/sec-filings-financials/{symbol}"
+    path = "/sec-filings-financials/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def sec_filings_search_form_type(apikey: str, form_type: str) -> RootModel[typing.List[Any]]:
+def sec_filings_search_form_type(
+    apikey: str, form_type: str
+) -> RootModel[typing.List[Any]]:
     """
     Search SEC filings by form type.
     Parameters
@@ -398,7 +431,7 @@ def sec_filings_search_form_type(apikey: str, form_type: str) -> RootModel[typin
     list
         List of SEC filings for the form type.
     """
-    path = f"/sec-filings-search/form-type/{form_type}"
+    path = "/sec-filings-search/form-type/{form_type}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -418,13 +451,15 @@ def sec_filings_search_symbol(apikey: str, symbol: str) -> RootModel[typing.List
     list
         List of SEC filings for the symbol.
     """
-    path = f"/sec-filings-search/symbol/{symbol}"
+    path = "/sec-filings-search/symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def sec_filings_company_search_name(apikey: str, name: str) -> RootModel[typing.List[FMPCompanySECFilings]]:
+def sec_filings_company_search_name(
+    apikey: str, name: str
+) -> RootModel[typing.List[FMPCompanySECFilings]]:
     """
     Search SEC filings by company name.
     Parameters
@@ -438,13 +473,15 @@ def sec_filings_company_search_name(apikey: str, name: str) -> RootModel[typing.
     list
         List of SEC filings for the company name.
     """
-    path = f"/sec-filings-company-search/name/{name}"
+    path = "/sec-filings-company-search/name/{name}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def sec_filings_company_search_symbol(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanySECFilings]]:
+def sec_filings_company_search_symbol(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPCompanySECFilings]]:
     """
     Search SEC filings by company symbol.
     Parameters
@@ -458,13 +495,15 @@ def sec_filings_company_search_symbol(apikey: str, symbol: str) -> RootModel[typ
     list
         List of SEC filings for the company symbol.
     """
-    path = f"/sec-filings-company-search/symbol/{symbol}"
+    path = "/sec-filings-company-search/symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def sec_filings_company_search_cik(apikey: str, cik: str) -> RootModel[typing.List[FMPCompanySECFilings]]:
+def sec_filings_company_search_cik(
+    apikey: str, cik: str
+) -> RootModel[typing.List[FMPCompanySECFilings]]:
     """
     Search SEC filings by company CIK.
     Parameters
@@ -478,13 +517,15 @@ def sec_filings_company_search_cik(apikey: str, cik: str) -> RootModel[typing.Li
     list
         List of SEC filings for the company CIK.
     """
-    path = f"/sec-filings-company-search/cik/{cik}"
+    path = "/sec-filings-company-search/cik/{cik}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def sec_profile(apikey: str, symbol: str = None, cik: str = None) -> RootModel[typing.List[FMPCompanyProfile]]:
+def sec_profile(
+    apikey: str, symbol: str = None, cik: str = None
+) -> RootModel[typing.List[FMPCompanyProfile]]:
     """
     Get SEC profile for a given symbol or CIK.
     Parameters
@@ -500,7 +541,7 @@ def sec_profile(apikey: str, symbol: str = None, cik: str = None) -> RootModel[t
     list
         SEC profile data.
     """
-    path = f"/sec-profile/{symbol}" if symbol else f"/sec-profile"
+    path = "/sec-profile/{symbol}" if symbol else "/sec-profile"
     query_vars = {"apikey": apikey}
     if cik:
         query_vars["cik"] = cik

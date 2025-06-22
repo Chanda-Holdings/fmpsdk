@@ -1,8 +1,10 @@
-from .url_methods import __return_json_stable
-from .utils import parse_response
-from .models import *
 import typing
 
+from pydantic import RootModel
+
+from .models import *
+from .url_methods import __return_json_stable
+from .utils import parse_response
 
 
 @parse_response
@@ -28,7 +30,7 @@ def commitment_of_traders_report(
     FmpCommitmentOfTradersReportResponse
         Commitment of Traders report data as a Pydantic model.
     """
-    path = f"/commitment-of-traders-report/{symbol}"
+    path = "/commitment-of-traders-report/{symbol}"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -56,7 +58,7 @@ def commitment_of_traders_report_analysis(
     FmpCommitmentOfTradersAnalysisResponse
         Commitment of Traders report analysis data as a Pydantic model.
     """
-    path = f"/commitment-of-traders-analysis/{symbol}"
+    path = "/commitment-of-traders-analysis/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -78,7 +80,7 @@ def commitment_of_traders_report_list(
     FmpCommitmentOfTradersListResponse
         List of available Commitment of Traders reports as a Pydantic model.
     """
-    path = f"/commitment-of-traders-list"
+    path = "/commitment-of-traders-list"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -100,7 +102,7 @@ def crowdfunding_offerings_latest(
     FmpCrowdfundingOfferingsResponse
         Latest crowdfunding offerings as a Pydantic model.
     """
-    path = f"/crowdfunding-offerings-latest"
+    path = "/crowdfunding-offerings-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -124,7 +126,7 @@ def crowdfunding_offerings_search(
     FmpCrowdfundingOfferingsResponse
         Crowdfunding offerings matching the query as a Pydantic model.
     """
-    path = f"/crowdfunding-offerings-search/{query}"
+    path = "/crowdfunding-offerings-search/{query}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -146,7 +148,7 @@ def crowdfunding_offerings(
     FmpCrowdfundingOfferingsResponse
         All crowdfunding offerings as a Pydantic model.
     """
-    path = f"/crowdfunding-offerings"
+    path = "/crowdfunding-offerings"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -168,7 +170,7 @@ def fundraising_latest(
     FmpFundraisingResponse
         Latest fundraising data as a Pydantic model.
     """
-    path = f"/fundraising-latest"
+    path = "/fundraising-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -192,7 +194,7 @@ def fundraising_search(
     FmpFundraisingResponse
         Fundraising data matching the query as a Pydantic model.
     """
-    path = f"/fundraising-search/{query}"
+    path = "/fundraising-search/{query}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -214,6 +216,6 @@ def fundraising(
     FmpFundraisingResponse
         All fundraising data as a Pydantic model.
     """
-    path = f"/fundraising"
+    path = "/fundraising"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

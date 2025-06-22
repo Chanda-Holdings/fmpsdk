@@ -1,7 +1,10 @@
 import typing
+
+from pydantic import RootModel
+
+from .models import *
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
 
 
 @parse_response
@@ -21,7 +24,7 @@ def senate_latest(
     list
         List of latest Senate trading disclosures.
     """
-    path = f"/senate-latest"
+    path = "/senate-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -43,7 +46,7 @@ def house_latest(
     list
         List of latest House trading disclosures.
     """
-    path = f"/house-latest"
+    path = "/house-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -65,7 +68,7 @@ def senate_trades(
     list
         List of all Senate trades.
     """
-    path = f"/senate-trades"
+    path = "/senate-trades"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -90,7 +93,7 @@ def senate_trades_by_name(
     list
         List of Senate trades for the given name.
     """
-    path = f"/senate-trades-by-name/{name}"
+    path = "/senate-trades-by-name/{name}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -112,7 +115,7 @@ def house_trades(
     list
         List of all House trades.
     """
-    path = f"/house-trades"
+    path = "/house-trades"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -137,7 +140,7 @@ def house_trades_by_name(
     list
         List of House trades for the given name.
     """
-    path = f"/house-trades-by-name/{name}"
+    path = "/house-trades-by-name/{name}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -162,7 +165,7 @@ def senate_trades_by_symbol(
     list
         List of Senate trades for the given symbol.
     """
-    path = f"/senate-trades-by-symbol/{symbol}"
+    path = "/senate-trades-by-symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -187,6 +190,6 @@ def house_trades_by_symbol(
     list
         List of House trades for the given symbol.
     """
-    path = f"/house-trades-by-symbol/{symbol}"
+    path = "/house-trades-by-symbol/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

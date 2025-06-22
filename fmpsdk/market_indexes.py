@@ -1,14 +1,22 @@
 import typing
-from .general import __quotes
-from .settings import (DEFAULT_LIMIT, DOWJONES_CONSTITUENTS_FILENAME,
-                       NASDAQ_CONSTITUENTS_FILENAME,
-                       SP500_CONSTITUENTS_FILENAME)
-from .url_methods import __return_json_stable
-from .utils import parse_response
+
+from pydantic import RootModel
+
+# from .general import __quotes
 from .models import *
 
+# from .settings import (
+#     DEFAULT_LIMIT,
+#     DOWJONES_CONSTITUENTS_FILENAME,
+#     NASDAQ_CONSTITUENTS_FILENAME,
+#     SP500_CONSTITUENTS_FILENAME,
+# )
+from .url_methods import __return_json_stable
+from .utils import parse_response
 
-# All function return types should be updated to match ENDPOINT_MODEL_MAP from model_registry.py
+
+# All function return types should be updated to match ENDPOINT_MODEL_MAP
+# from model_registry.py
 @parse_response
 def indexes(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
@@ -17,7 +25,7 @@ def indexes(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"quotes/index"
+    path = "quotes/index"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -30,7 +38,7 @@ def available_sectors(apikey: str) -> RootModel[typing.List[FMPSector]]:
     :param apikey: Your API key
     :return: A list of sector names.
     """
-    path = f"sectors-list"
+    path = "sectors-list"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -50,7 +58,7 @@ def all_exchange_market_hours(
     list
         List of all exchange market hours.
     """
-    path = f"/all-exchange-market-hours"
+    path = "/all-exchange-market-hours"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -70,7 +78,7 @@ def index_list(
     list
         List of available indexes.
     """
-    path = f"/index-list"
+    path = "/index-list"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -93,6 +101,6 @@ def index_quote_short(
     list
         Short quote data for the index.
     """
-    path = f"/index-quote-short/{symbol}"
+    path = "/index-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

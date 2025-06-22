@@ -1,19 +1,28 @@
 import logging
 import typing
-import requests
-from .settings import (BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
-                       CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
-                       DEFAULT_LIMIT,
-                       FINANCIAL_STATEMENT_FILENAME,
-                       INCOME_STATEMENT_AS_REPORTED_FILENAME)
-from .url_methods import (__validate_industry,
-                          __validate_period, __validate_sector, __return_json_stable)
-from .utils import parse_response
+
+from pydantic import RootModel
+
 from .models import *
+from .settings import (
+    BALANCE_SHEET_STATEMENT_AS_REPORTED_FILENAME,
+    CASH_FLOW_STATEMENT_AS_REPORTED_FILENAME,
+    DEFAULT_LIMIT,
+    INCOME_STATEMENT_AS_REPORTED_FILENAME,
+)
+from .url_methods import (
+    __return_json_stable,
+    __validate_industry,
+    __validate_period,
+    __validate_sector,
+)
+from .utils import parse_response
 
 
 @parse_response
-def company_profile(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanyProfile]]:
+def company_profile(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPCompanyProfile]]:
     """
     Retrieve the company profile for a given symbol.
 
@@ -29,13 +38,15 @@ def company_profile(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompan
     FmpCompanyNameSearchResponse
         Company profile data as a Pydantic model.
     """
-    path = f"/profile/{symbol}"
+    path = "/profile/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def company_profile_cik(apikey: str, cik: str) -> RootModel[typing.List[FMPCompanyProfile]]:
+def company_profile_cik(
+    apikey: str, cik: str
+) -> RootModel[typing.List[FMPCompanyProfile]]:
     """
     Retrieve the company profile by Central Index Key (CIK).
 
@@ -51,7 +62,7 @@ def company_profile_cik(apikey: str, cik: str) -> RootModel[typing.List[FMPCompa
     FmpCikSearchResponse
         Company profile data as a Pydantic model.
     """
-    path = f"/profile-cik/{cik}"
+    path = "/profile-cik/{cik}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -73,13 +84,15 @@ def stock_peers(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockPeer]
     FmpCompanySymbolsListResponse
         List of peer companies as a Pydantic model.
     """
-    path = f"/stock-peers"
+    path = "/stock-peers"
     query_vars = {"symbol": symbol, "apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def delisted_companies(apikey: str, limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPDelistedCompany]]:
+def delisted_companies(
+    apikey: str, limit: int = DEFAULT_LIMIT
+) -> RootModel[typing.List[FMPDelistedCompany]]:
     """
     Retrieve a list of delisted companies.
 
@@ -95,13 +108,15 @@ def delisted_companies(apikey: str, limit: int = DEFAULT_LIMIT) -> RootModel[typ
     FmpCompanySymbolsListResponse
         List of delisted companies as a Pydantic model.
     """
-    path = f"/delisted-companies"
+    path = "/delisted-companies"
     query_vars = {"apikey": apikey, "limit": limit}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def employee_count(apikey: str, symbol: str) -> RootModel[typing.List[FMPEmployeeCount]]:
+def employee_count(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPEmployeeCount]]:
     """
     Retrieve employee count for a given symbol.
 
@@ -117,13 +132,15 @@ def employee_count(apikey: str, symbol: str) -> RootModel[typing.List[FMPEmploye
     FmpFinancialEstimatesResponse
         Employee count data as a Pydantic model.
     """
-    path = f"/employee-count/{symbol}"
+    path = "/employee-count/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def historical_employee_count(apikey: str, symbol: str) -> RootModel[typing.List[FMPHistoricalEmployeeCount]]:
+def historical_employee_count(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPHistoricalEmployeeCount]]:
     """
     Retrieve historical employee count for a given symbol.
 
@@ -139,12 +156,15 @@ def historical_employee_count(apikey: str, symbol: str) -> RootModel[typing.List
     FmpFinancialEstimatesResponse
         Historical employee count data as a Pydantic model.
     """
-    path = f"/historical-employee-count/{symbol}"
+    path = "/historical-employee-count/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
+
 @parse_response
-def income_statement(apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPFinancialStatement]]:
+def income_statement(
+    apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT
+) -> RootModel[typing.List[FMPFinancialStatement]]:
     """
     Retrieve the income statement for a given symbol.
 
@@ -164,13 +184,15 @@ def income_statement(apikey: str, symbol: str, period: str = "annual", limit: in
     FmpFinancialStatementSymbolsListResponse
         List of income statement data as a Pydantic model.
     """
-    path = f"/income-statement/{symbol}"
+    path = "/income-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def balance_sheet_statement(apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPFinancialStatement]]:
+def balance_sheet_statement(
+    apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT
+) -> RootModel[typing.List[FMPFinancialStatement]]:
     """
     Retrieve the balance sheet statement for a given symbol.
 
@@ -190,13 +212,15 @@ def balance_sheet_statement(apikey: str, symbol: str, period: str = "annual", li
     FmpFinancialStatementSymbolsListResponse
         List of balance sheet statement data as a Pydantic model.
     """
-    path = f"/balance-sheet-statement/{symbol}"
+    path = "/balance-sheet-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def cash_flow_statement(apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPFinancialStatement]]:
+def cash_flow_statement(
+    apikey: str, symbol: str, period: str = "annual", limit: int = DEFAULT_LIMIT
+) -> RootModel[typing.List[FMPFinancialStatement]]:
     """
     Retrieve the cash flow statement for a given symbol.
 
@@ -216,7 +240,7 @@ def cash_flow_statement(apikey: str, symbol: str, period: str = "annual", limit:
     FmpFinancialStatementSymbolsListResponse
         List of cash flow statement data as a Pydantic model.
     """
-    path = f"/cash-flow-statement/{symbol}"
+    path = "/cash-flow-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -250,7 +274,7 @@ def income_statement_as_reported(
     FmpFinancialStatementSymbolsListResponse or None
         List of as-reported income statement data as a Pydantic model, or None if downloaded.
     """
-    path = f"/income-statement-as-reported/{symbol}"
+    path = "/income-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -284,7 +308,7 @@ def balance_sheet_statement_as_reported(
     FmpFinancialStatementSymbolsListResponse or None
         List of as-reported balance sheet statement data as a Pydantic model, or None if downloaded.
     """
-    path = f"/balance-sheet-statement-as-reported/{symbol}"
+    path = "/balance-sheet-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -318,7 +342,7 @@ def cash_flow_statement_as_reported(
     FmpFinancialStatementSymbolsListResponse or None
         List of as-reported cash flow statement data as a Pydantic model, or None if downloaded.
     """
-    path = f"/cash-flow-statement-as-reported/{symbol}"
+    path = "/cash-flow-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
     return __return_json_stable(path, query_vars)
 
@@ -346,13 +370,15 @@ def financial_statement_full_as_reported(
     FmpFinancialStatementSymbolsListResponse
         List of full as-reported financial statement data as a Pydantic model.
     """
-    path = f"/financial-statement-full-as-reported/{symbol}"
+    path = "/financial-statement-full-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def financial_statement_symbol_lists(apikey: str) -> RootModel[typing.List[FMPFinancialStatementSymbolList]]:
+def financial_statement_symbol_lists(
+    apikey: str,
+) -> RootModel[typing.List[FMPFinancialStatementSymbolList]]:
     """
     Retrieve the list of symbols that have financial statements.
 
@@ -366,7 +392,7 @@ def financial_statement_symbol_lists(apikey: str) -> RootModel[typing.List[FMPFi
     FmpFinancialStatementSymbolsListResponse
         List of symbols as a Pydantic model.
     """
-    path = f"financial-statement-symbol-lists"
+    path = "financial-statement-symbol-lists"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -397,7 +423,7 @@ def income_statement_growth(
     FmpFinancialStatementSymbolsListResponse
         List of income statement growth data as a Pydantic model.
     """
-    path = f"income-statement-growth"
+    path = "income-statement-growth"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -428,7 +454,7 @@ def balance_sheet_statement_growth(
     FmpFinancialStatementSymbolsListResponse
         List of balance sheet statement growth data as a Pydantic model.
     """
-    path = f"balance-sheet-statement-growth/{symbol}"
+    path = "balance-sheet-statement-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -457,7 +483,7 @@ def cash_flow_statement_growth(
     FmpFinancialStatementSymbolsListResponse
         List of cash flow statement growth data as a Pydantic model.
     """
-    path = f"cash-flow-statement-growth/{symbol}"
+    path = "cash-flow-statement-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -484,7 +510,7 @@ def financial_ratios_ttm(
     FmpFinancialStatementSymbolsListResponse
         List of TTM financial ratios as a Pydantic model.
     """
-    path = f"ratios-ttm/{symbol}"
+    path = "ratios-ttm/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -515,7 +541,7 @@ def financial_ratios(
     FmpFinancialStatementSymbolsListResponse
         List of financial ratios as a Pydantic model.
     """
-    path = f"ratios"
+    path = "ratios"
     query_vars = {
         "apikey": apikey,
         "symbol": symbol,
@@ -551,7 +577,7 @@ def enterprise_values(
     FmpFinancialStatementSymbolsListResponse
         List of enterprise values as a Pydantic model.
     """
-    path = f"enterprise-values"
+    path = "enterprise-values"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -584,7 +610,7 @@ def key_metrics_ttm(
     FmpFinancialStatementSymbolsListResponse
         List of TTM key metrics as a Pydantic model.
     """
-    path = f"key-metrics-ttm/{symbol}"
+    path = "key-metrics-ttm/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -615,7 +641,7 @@ def key_metrics(
     FmpFinancialStatementSymbolsListResponse
         List of key metrics as a Pydantic model.
     """
-    path = f"key-metrics/{symbol}"
+    path = "key-metrics/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -650,7 +676,7 @@ def financial_growth(
     FmpFinancialStatementSymbolsListResponse
         List of financial growth data as a Pydantic model.
     """
-    path = f"financial-growth/{symbol}"
+    path = "financial-growth/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -676,7 +702,7 @@ def rating(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockGrade]]:
     FmpFinancialStatementSymbolsListResponse
         List of company rating data as a Pydantic model.
     """
-    path = f"rating/{symbol}"
+    path = "rating/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars=query_vars)
 
@@ -704,13 +730,15 @@ def historical_rating(
     FmpFinancialStatementSymbolsListResponse
         List of historical company rating data as a Pydantic model.
     """
-    path = f"historical-rating/{symbol}"
+    path = "historical-rating/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
     return __return_json_stable(path, query_vars=query_vars)
 
 
 @parse_response
-def discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
+def discounted_cash_flow(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPDcfValuation]]:
     """
     Retrieve discounted cash flow (DCF) for a given symbol.
 
@@ -726,13 +754,15 @@ def discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPD
     FmpFinancialEstimatesResponse
         List of discounted cash flow data as a Pydantic model.
     """
-    path = f"/discounted-cash-flow/{symbol}"
+    path = "/discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def levered_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
+def levered_discounted_cash_flow(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPDcfValuation]]:
     """
     Retrieve levered discounted cash flow for a given symbol.
 
@@ -748,13 +778,15 @@ def levered_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.L
     FmpFinancialEstimatesResponse
         List of levered discounted cash flow data as a Pydantic model.
     """
-    path = f"/levered-discounted-cash-flow/{symbol}"
+    path = "/levered-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def custom_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
+def custom_discounted_cash_flow(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPDcfValuation]]:
     """
     Retrieve custom discounted cash flow for a given symbol.
 
@@ -770,13 +802,15 @@ def custom_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.Li
     FmpFinancialEstimatesResponse
         List of custom discounted cash flow data as a Pydantic model.
     """
-    path = f"/custom-discounted-cash-flow/{symbol}"
+    path = "/custom-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def custom_levered_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[typing.List[FMPDcfValuation]]:
+def custom_levered_discounted_cash_flow(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPDcfValuation]]:
     """
     Retrieve custom levered discounted cash flow for a given symbol.
 
@@ -792,7 +826,7 @@ def custom_levered_discounted_cash_flow(apikey: str, symbol: str) -> RootModel[t
     FmpFinancialEstimatesResponse
         List of custom levered discounted cash flow data as a Pydantic model.
     """
-    path = f"/custom-levered-discounted-cash-flow/{symbol}"
+    path = "/custom-levered-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -823,7 +857,7 @@ def historical_discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of historical discounted cash flow data as a Pydantic model.
     """
-    path = f"historical-discounted-cash-flow/{symbol}"
+    path = "historical-discounted-cash-flow/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -855,13 +889,15 @@ def historical_daily_discounted_cash_flow(
     FmpFinancialEstimatesResponse
         List of daily historical discounted cash flow data as a Pydantic model.
     """
-    path = f"historical-daily-discounted-cash-flow/{symbol}"
+    path = "historical-daily-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
-def market_capitalization(apikey: str, symbol: str) -> RootModel[typing.List[FMPMarketCap]]:
+def market_capitalization(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPMarketCap]]:
     """
     Retrieve the market capitalization for a given symbol.
 
@@ -877,14 +913,18 @@ def market_capitalization(apikey: str, symbol: str) -> RootModel[typing.List[FMP
     FmpMarketCapitalizationResponse
         List of market capitalization data as a Pydantic model.
     """
-    path = f"market-capitalization/{symbol}"
+    path = "market-capitalization/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
 def historical_market_capitalization(
-    apikey: str, symbol: str, limit: int = DEFAULT_LIMIT, from_date: str = None, to_date: str = None
+    apikey: str,
+    symbol: str,
+    limit: int = DEFAULT_LIMIT,
+    from_date: str = None,
+    to_date: str = None,
 ) -> RootModel[typing.List[FMPHistoricalMarketCap]]:
     """
     Retrieve historical market capitalization for a given symbol.
@@ -907,7 +947,7 @@ def historical_market_capitalization(
     FmpMarketCapitalizationResponse
         List of historical market capitalization data as a Pydantic model.
     """
-    path = f"historical-market-capitalization/{symbol}"
+    path = "historical-market-capitalization/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit, "from": from_date, "to": to_date}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -927,7 +967,7 @@ def symbols_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     FmpCompanySymbolsListResponse
         List of all stock symbols as a Pydantic model.
     """
-    path = f"stock/list"
+    path = "stock/list"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -947,7 +987,7 @@ def etf_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     FmpCompanySymbolsListResponse
         List of all ETF symbols as a Pydantic model.
     """
-    path = f"etf/list"
+    path = "etf/list"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -967,7 +1007,7 @@ def available_traded_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndName
     FmpCompanySymbolsListResponse
         List of all available traded symbols as a Pydantic model.
     """
-    path = f"available-traded/list"
+    path = "available-traded/list"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1020,7 +1060,7 @@ def stock_screener(
     :param limit: Number of rows to return.
     :return: A list of dicitonaries.
     """
-    path = f"company-screener"
+    path = "company-screener"
     query_vars = {"apikey": apikey, "limit": limit}
     if market_cap_more_than:
         query_vars["marketCapMoreThan"] = market_cap_more_than
@@ -1082,7 +1122,7 @@ def stock_news(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"stock_news"
+    path = "stock_news"
     query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if tickers:
         if type(tickers) is list:
@@ -1097,7 +1137,9 @@ def stock_news(
 
 
 @parse_response
-def earnings_surprises(apikey: str, symbol: str) -> RootModel[typing.List[FMPBulkEarningsSurprise]]:
+def earnings_surprises(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPBulkEarningsSurprise]]:
     """
     Query FMP /earnings-surprises/ API.
 
@@ -1105,13 +1147,15 @@ def earnings_surprises(apikey: str, symbol: str) -> RootModel[typing.List[FMPBul
     :param symbol: Company ticker.
     :return: A list of dictionaries.
     """
-    path = f"earnings-surprises/{symbol}"
+    path = "earnings-surprises/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
-def earning_call_transcript(apikey: str, symbol: str, year: int, quarter: int) -> RootModel[typing.List[FMPEarningsTranscript]]:
+def earning_call_transcript(
+    apikey: str, symbol: str, year: int, quarter: int
+) -> RootModel[typing.List[FMPEarningsTranscript]]:
     """
     Query FMP /earning_call_transcript/ API.
 
@@ -1121,13 +1165,15 @@ def earning_call_transcript(apikey: str, symbol: str, year: int, quarter: int) -
     :param quarter: Quarter of the transcripts
     :return: A list of dictionaries.
     """
-    path = f"earning_call_transcript/{symbol}"
+    path = "earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
-def batch_earning_call_transcript(apikey: str, symbol: str, year: int) -> RootModel[typing.List[FMPEarningsTranscript]]:
+def batch_earning_call_transcript(
+    apikey: str, symbol: str, year: int
+) -> RootModel[typing.List[FMPEarningsTranscript]]:
     """
     Query FMP /batch_earning_call_transcript/ API.
 
@@ -1136,13 +1182,15 @@ def batch_earning_call_transcript(apikey: str, symbol: str, year: int) -> RootMo
     :param year: Year of the transcripts
     :return: A list of dictionaries.
     """
-    path = f"batch_earning_call_transcript/{symbol}"
+    path = "batch_earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
-def earning_call_transcripts_available_dates(apikey: str, symbol: str) -> RootModel[typing.List[FMPEarningsTranscriptDate]]:
+def earning_call_transcripts_available_dates(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPEarningsTranscriptDate]]:
     """
     Query FMP /earning_call_transcript/ API.
 
@@ -1150,13 +1198,15 @@ def earning_call_transcripts_available_dates(apikey: str, symbol: str) -> RootMo
     :param symbol: Company ticker.
     :return: A list of lists.
     """
-    path = f"earning_call_transcript"
+    path = "earning_call_transcript"
     query_vars = {"apikey": apikey, "symbol": symbol}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
-def sec_filings(apikey: str, symbol: str, filing_type: str = "", limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPCompanySECFilings]]:
+def sec_filings(
+    apikey: str, symbol: str, filing_type: str = "", limit: int = DEFAULT_LIMIT
+) -> RootModel[typing.List[FMPCompanySECFilings]]:
     """
     Query FMP /sec_filings/ API.
 
@@ -1166,7 +1216,7 @@ def sec_filings(apikey: str, symbol: str, filing_type: str = "", limit: int = DE
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"sec_filings/{symbol}"
+    path = "sec_filings/{symbol}"
     query_vars = {"apikey": apikey, "type": filing_type, "limit": limit}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -1188,7 +1238,7 @@ def press_releases(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"press-releases/{symbol}"
+    path = "press-releases/{symbol}"
     query_vars = {
         "apikey": apikey,
         "limit": limit,
@@ -1200,7 +1250,9 @@ def press_releases(
 
 
 @parse_response
-def social_sentiments(apikey: str, symbol: str, page: int = 0) -> RootModel[typing.List[Any]]:
+def social_sentiments(
+    apikey: str, symbol: str, page: int = 0
+) -> RootModel[typing.List[Any]]:
     """
     Query FMP /historical/social-sentiment/ API
 
@@ -1209,13 +1261,15 @@ def social_sentiments(apikey: str, symbol: str, page: int = 0) -> RootModel[typi
     :param page: Page number.
     :return: A list of dictionaries.
     """
-    path = f"historical/social-sentiment"
+    path = "historical/social-sentiment"
     query_vars = {"apikey": apikey, "symbol": symbol, "page": page}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
-def analyst_estimates(apikey: str, symbol: str, period: str = "annual", limit: int = None) -> RootModel[typing.List[FMPAnalystEstimates]]:
+def analyst_estimates(
+    apikey: str, symbol: str, period: str = "annual", limit: int = None
+) -> RootModel[typing.List[FMPAnalystEstimates]]:
     """
     Get analyst estimates using the /stable/analyst-estimates endpoint.
 
@@ -1235,7 +1289,9 @@ def analyst_estimates(apikey: str, symbol: str, period: str = "annual", limit: i
 
 
 @parse_response
-def ratings_snapshot(apikey: str, symbol: str, date: str = None) -> RootModel[typing.List[FMPRatingSnapshot]]:
+def ratings_snapshot(
+    apikey: str, symbol: str, date: str = None
+) -> RootModel[typing.List[FMPRatingSnapshot]]:
     """
     Get ratings snapshot using the /stable/ratings-snapshot endpoint.
 
@@ -1254,7 +1310,9 @@ def ratings_snapshot(apikey: str, symbol: str, date: str = None) -> RootModel[ty
 
 
 @parse_response
-def ratings_historical(apikey: str, symbol: str, from_date: str = None, to_date: str = None) -> RootModel[typing.List[FMPHistoricalRating]]:
+def ratings_historical(
+    apikey: str, symbol: str, from_date: str = None, to_date: str = None
+) -> RootModel[typing.List[FMPHistoricalRating]]:
     """
     Get historical ratings using the /stable/ratings-historical endpoint.
 
@@ -1276,7 +1334,9 @@ def ratings_historical(apikey: str, symbol: str, from_date: str = None, to_date:
 
 
 @parse_response
-def price_target_summary(apikey: str, symbol: str) -> RootModel[typing.List[FMPPriceTargetSummary]]:
+def price_target_summary(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPPriceTargetSummary]]:
     """
     Get price target summary using the /stable/price-target-summary endpoint.
 
@@ -1292,7 +1352,9 @@ def price_target_summary(apikey: str, symbol: str) -> RootModel[typing.List[FMPP
 
 
 @parse_response
-def price_target_consensus(apikey: str, symbol: str) -> RootModel[typing.List[FMPPriceTargetConsensus]]:
+def price_target_consensus(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPPriceTargetConsensus]]:
     """
     Get price target consensus using the /stable/price-target-consensus endpoint.
 
@@ -1308,7 +1370,9 @@ def price_target_consensus(apikey: str, symbol: str) -> RootModel[typing.List[FM
 
 
 @parse_response
-def price_target_news(apikey: str, symbol: str, limit: int = None) -> RootModel[typing.List[FMPPriceTargetNews]]:
+def price_target_news(
+    apikey: str, symbol: str, limit: int = None
+) -> RootModel[typing.List[FMPPriceTargetNews]]:
     """
     Get price target news using the /stable/price-target-news endpoint.
 
@@ -1327,7 +1391,9 @@ def price_target_news(apikey: str, symbol: str, limit: int = None) -> RootModel[
 
 
 @parse_response
-def price_target_latest_news(apikey: str, symbol: str, limit: int = None) -> RootModel[typing.List[FMPPressRelease]]:
+def price_target_latest_news(
+    apikey: str, symbol: str, limit: int = None
+) -> RootModel[typing.List[FMPPressRelease]]:
     """
     Get latest price target news using the /stable/price-target-latest-news endpoint.
 
@@ -1360,7 +1426,9 @@ def available_industries(apikey: str) -> RootModel[typing.List[FMPIndustry]]:
 
 
 @parse_response
-def upgrades_downgrades_consensus(apikey: str, symbol: str) -> RootModel[typing.List[FMPBulkUpgradeDowngradeConsensus]]:
+def upgrades_downgrades_consensus(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPBulkUpgradeDowngradeConsensus]]:
     """
     Query FMP /upgrades-downgrades-consensus/ API.
 
@@ -1413,7 +1481,7 @@ def esg_disclosures(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGFil
     list
         List of ESG disclosures.
     """
-    path = f"/esg-disclosures/{symbol}"
+    path = "/esg-disclosures/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -1437,7 +1505,7 @@ def esg_ratings(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGRating]
     list
         List of ESG ratings.
     """
-    path = f"/esg-ratings/{symbol}"
+    path = "/esg-ratings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -1461,13 +1529,15 @@ def esg_benchmark(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGBench
     list
         List of ESG benchmark data.
     """
-    path = f"/esg-benchmark/{symbol}"
+    path = "/esg-benchmark/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def earnings(apikey: str, symbol: str = None, limit: int = 100) -> RootModel[typing.List[FMPEarningsReport]]:
+def earnings(
+    apikey: str, symbol: str = None, limit: int = 100
+) -> RootModel[typing.List[FMPEarningsReport]]:
     """
     Query FMP /earnings endpoint.
 
@@ -1491,19 +1561,21 @@ def company_notes(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanyN
     :param symbol: Ticker symbol.
     :return: List of company notes.
     """
-    path = f"company-notes/{symbol}"
+    path = "company-notes/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
+
 @parse_response
-def market_capitalization_batch(apikey: str, symbols: typing.List[str]) -> RootModel[typing.List[FMPMarketCap]]:
+def market_capitalization_batch(
+    apikey: str, symbols: typing.List[str]
+) -> RootModel[typing.List[FMPMarketCap]]:
     """
     Query FMP /market-capitalization-batch endpoint.
     :param apikey: Your API key.
     :param symbols: List of ticker symbols.
     :return: List of market capitalization data for the batch.
     """
-    symbols_str = ",".join(symbols)
-    path = f"market-capitalization-batch/{symbols_str}"
+    path = f"market-capitalization-batch/{','.join(symbols)}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)

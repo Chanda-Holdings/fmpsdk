@@ -1,8 +1,11 @@
 import typing
+
+from pydantic import RootModel
+
+from .models import *
 from .settings import DEFAULT_LIMIT
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
 
 
 @parse_response
@@ -25,7 +28,7 @@ def company_news(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"news/stock"
+    path = "news/stock"
     query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if symbols:
         if type(symbols) is list:
@@ -57,7 +60,7 @@ def company_news_latest(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"news/stock-latest"
+    path = "news/stock-latest"
     query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if from_date:
         query_vars["from"] = from_date
@@ -87,7 +90,7 @@ def company_press_releases(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"news/press-releases"
+    path = "news/press-releases"
     query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if symbols:
         if type(symbols) is list:
@@ -119,7 +122,7 @@ def company_press_releases_latest(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    path = f"news/press-releases-latest"
+    path = "news/press-releases-latest"
     query_vars = {"apikey": apikey, "limit": limit, "page": page}
     if from_date:
         query_vars["from"] = from_date
@@ -144,7 +147,7 @@ def news_general_latest(apikey: str) -> RootModel[typing.List[FMPPressRelease]]:
     list
         List of latest general news.
     """
-    path = f"/news/general-latest"
+    path = "/news/general-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -164,7 +167,7 @@ def news_press_releases_latest(apikey: str) -> RootModel[typing.List[FMPPressRel
     list
         List of latest press releases news.
     """
-    path = f"/news/press-releases-latest"
+    path = "/news/press-releases-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -184,7 +187,7 @@ def news_stock_latest(apikey: str) -> RootModel[typing.List[FMPPressRelease]]:
     list
         List of latest stock news.
     """
-    path = f"/news/stock-latest"
+    path = "/news/stock-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -204,7 +207,7 @@ def news_crypto_latest(apikey: str) -> RootModel[typing.List[FMPPressRelease]]:
     list
         List of latest crypto news.
     """
-    path = f"/news/crypto-latest"
+    path = "/news/crypto-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -224,7 +227,7 @@ def news_forex_latest(apikey: str) -> RootModel[typing.List[FMPPressRelease]]:
     list
         List of latest forex news.
     """
-    path = f"/news/forex-latest"
+    path = "/news/forex-latest"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -244,7 +247,7 @@ def news_press_releases(apikey: str) -> RootModel[typing.List[FMPPressRelease]]:
     list
         List of press releases news.
     """
-    path = f"/news/press-releases"
+    path = "/news/press-releases"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -264,6 +267,6 @@ def news_forex(apikey: str) -> RootModel[typing.List[FMPPressRelease]]:
     list
         List of forex news.
     """
-    path = f"/news/forex"
+    path = "/news/forex"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

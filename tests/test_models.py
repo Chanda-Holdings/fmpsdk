@@ -1,23 +1,25 @@
 """
 Unit tests for fmpsdk Pydantic models.
 """
-import pytest
-from pydantic import ValidationError
+
 from typing import List
 
+import pytest
+from pydantic import ValidationError
+
 from fmpsdk.models import (
-    FMPSymbolSearch,
-    FMPCompanyNameSearch,
     FMPCompanyCIKSearch,
+    FMPCompanyNameSearch,
     FMPCusipSearch,
     FMPIsinSearch,
     FMPStockScreenerResult,
+    FMPSymbolSearch,
 )
 
 
 class TestStockSymbolSearchModels:
     """Test models for stock symbol search endpoints."""
-    
+
     def test_stock_symbol_search_item_valid_data(self):
         """Test FMPSymbolSearch with valid data."""
         data = {
@@ -25,57 +27,59 @@ class TestStockSymbolSearchModels:
             "name": "Apple Inc.",
             "currency": "USD",
             "exchangeFullName": "NASDAQ Global Select",
-            "exchange": "NASDAQ"
+            "exchange": "NASDAQ",
         }
-        
+
         item = FMPSymbolSearch(**data)
-        
+
         assert item.symbol == "AAPL"
         assert item.name == "Apple Inc."
         assert item.currency == "USD"
         assert item.exchangeFullName == "NASDAQ Global Select"
         assert item.exchange == "NASDAQ"
-    
+
     def test_stock_symbol_search_item_missing_required_field(self):
         """Test FMPSymbolSearch validation with missing required field."""
         data = {
             "symbol": "AAPL",
             "name": "Apple Inc.",
             "currency": "USD",
-            "exchangeFullName": "NASDAQ Global Select"
+            "exchangeFullName": "NASDAQ Global Select",
             # Missing 'exchange' field
         }
-        
+
         with pytest.raises(ValidationError):
             FMPSymbolSearch(**data)
-    
+
     def test_stock_symbol_search_response_valid_list(self):
         """Test FMPSymbolSearch RootModel with valid list data."""
         from pydantic import RootModel
+
         data = [
             {
                 "symbol": "AAPL",
                 "name": "Apple Inc.",
                 "currency": "USD",
                 "exchangeFullName": "NASDAQ Global Select",
-                "exchange": "NASDAQ"
+                "exchange": "NASDAQ",
             },
             {
                 "symbol": "MSFT",
                 "name": "Microsoft Corporation",
                 "currency": "USD",
                 "exchangeFullName": "NASDAQ Global Select",
-                "exchange": "NASDAQ"
-            }
+                "exchange": "NASDAQ",
+            },
         ]
         response = RootModel[List[FMPSymbolSearch]](data)
         assert len(response.root) == 2
         assert response.root[0].symbol == "AAPL"
         assert response.root[1].symbol == "MSFT"
-    
+
     def test_stock_symbol_search_response_empty_list(self):
         """Test FMPSymbolSearch RootModel with empty list."""
         from pydantic import RootModel
+
         data = []
         response = RootModel[List[FMPSymbolSearch]](data)
         assert len(response.root) == 0
@@ -83,7 +87,7 @@ class TestStockSymbolSearchModels:
 
 class TestCompanyNameSearchModels:
     """Test models for company name search endpoints."""
-    
+
     def test_company_name_search_item_valid_data(self):
         """Test FMPCompanyNameSearch with valid data."""
         data = {
@@ -91,25 +95,26 @@ class TestCompanyNameSearchModels:
             "name": "Tesla, Inc.",
             "currency": "USD",
             "exchangeFullName": "NASDAQ Global Select",
-            "exchange": "NASDAQ"
+            "exchange": "NASDAQ",
         }
-        
+
         item = FMPCompanyNameSearch(**data)
-        
+
         assert item.symbol == "TSLA"
         assert item.name == "Tesla, Inc."
         assert item.currency == "USD"
-    
+
     def test_company_name_search_response(self):
         """Test FMPCompanyNameSearch RootModel."""
         from pydantic import RootModel
+
         data = [
             {
                 "symbol": "TSLA",
                 "name": "Tesla, Inc.",
                 "currency": "USD",
                 "exchangeFullName": "NASDAQ Global Select",
-                "exchange": "NASDAQ"
+                "exchange": "NASDAQ",
             }
         ]
         response = RootModel[List[FMPCompanyNameSearch]](data)
@@ -119,7 +124,7 @@ class TestCompanyNameSearchModels:
 
 class TestCikSearchModels:
     """Test models for CIK search endpoints."""
-    
+
     def test_cik_search_item_valid_data(self):
         """Test FMPCompanyCIKSearch with valid data."""
         data = {
@@ -128,7 +133,7 @@ class TestCikSearchModels:
             "cik": "0000320193",
             "exchangeFullName": "NASDAQ Global Select",
             "exchange": "NASDAQ",
-            "currency": "USD"
+            "currency": "USD",
         }
         item = FMPCompanyCIKSearch(**data)
         assert item.symbol == "AAPL"
@@ -139,6 +144,7 @@ class TestCikSearchModels:
     def test_cik_search_response(self):
         """Test FMPCompanyCIKSearch RootModel."""
         from pydantic import RootModel
+
         data = [
             {
                 "symbol": "AAPL",
@@ -146,7 +152,7 @@ class TestCikSearchModels:
                 "cik": "0000320193",
                 "exchangeFullName": "NASDAQ Global Select",
                 "exchange": "NASDAQ",
-                "currency": "USD"
+                "currency": "USD",
             }
         ]
         response = RootModel[List[FMPCompanyCIKSearch]](data)
@@ -156,14 +162,14 @@ class TestCikSearchModels:
 
 class TestCusipSearchModels:
     """Test models for CUSIP search endpoints."""
-    
+
     def test_cusip_search_item_valid_data(self):
         """Test FMPCusipSearch with valid data."""
         data = {
             "symbol": "AAPL",
             "companyName": "Apple Inc.",
             "cusip": "037833100",
-            "marketCap": 3000000000000.0
+            "marketCap": 3000000000000.0,
         }
         item = FMPCusipSearch(**data)
         assert item.symbol == "AAPL"
@@ -174,14 +180,14 @@ class TestCusipSearchModels:
 
 class TestIsinSearchModels:
     """Test models for ISIN search endpoints."""
-    
+
     def test_isin_search_item_valid_data(self):
         """Test FMPIsinSearch with valid data."""
         data = {
             "symbol": "AAPL",
             "name": "Apple Inc.",
             "isin": "US0378331005",
-            "marketCap": 3000000000000.0
+            "marketCap": 3000000000000.0,
         }
         item = FMPIsinSearch(**data)
         assert item.symbol == "AAPL"
@@ -192,7 +198,7 @@ class TestIsinSearchModels:
 
 class TestStockScreenerModels:
     """Test models for stock screener endpoints."""
-    
+
     def test_stock_screener_item_valid_data(self):
         """Test FMPStockScreenerResult with valid data."""
         data = {
@@ -210,7 +216,7 @@ class TestStockScreenerModels:
             "country": "US",
             "isEtf": False,
             "isFund": False,
-            "isActivelyTrading": True
+            "isActivelyTrading": True,
         }
         item = FMPStockScreenerResult(**data)
         assert item.symbol == "AAPL"

@@ -2,11 +2,10 @@
 Comprehensive tests for fmpsdk.bulk module.
 Tests all bulk operations including error handling and edge cases.
 """
+
 import os
-import pytest
 
 import fmpsdk.bulk as bulk
-from fmpsdk.models import *
 
 API_KEY = os.getenv("FMP_API_KEY")
 
@@ -247,13 +246,17 @@ class TestBulkFinancialStatements:
 
     def test_balance_sheet_statement_growth_bulk_single_symbol(self):
         """Test balance sheet statement growth bulk with single symbol."""
-        result = bulk.balance_sheet_statement_growth_bulk(apikey=API_KEY, symbols=["AAPL"])
+        result = bulk.balance_sheet_statement_growth_bulk(
+            apikey=API_KEY, symbols=["AAPL"]
+        )
         assert result is not None
 
     def test_balance_sheet_statement_growth_bulk_multiple_symbols(self):
         """Test balance sheet statement growth bulk with multiple symbols."""
         symbols = ["AAPL", "MSFT"]
-        result = bulk.balance_sheet_statement_growth_bulk(apikey=API_KEY, symbols=symbols)
+        result = bulk.balance_sheet_statement_growth_bulk(
+            apikey=API_KEY, symbols=symbols
+        )
         assert result is not None
 
     def test_cash_flow_statement_bulk_single_symbol(self):
@@ -325,7 +328,7 @@ class TestBulkErrorHandling:
             bulk.cash_flow_statement_growth_bulk,
             bulk.eod_bulk,
         ]
-        
+
         for func in functions_to_test:
             try:
                 result = func(apikey=API_KEY, symbols=[])
@@ -338,7 +341,7 @@ class TestBulkErrorHandling:
     def test_bulk_operations_with_invalid_symbols(self):
         """Test bulk operations with invalid/non-existent symbols."""
         invalid_symbols = ["INVALID123", "NOTREAL456"]
-        
+
         # These should return empty results or None, not crash
         result = bulk.profile_bulk(apikey=API_KEY, symbols=invalid_symbols)
         assert result is not None
@@ -351,14 +354,14 @@ class TestBulkPerformance:
         """Test bulk operations with large symbol lists."""
         # Create a large list of symbols
         large_symbol_list = [f"SYM{i:03d}" for i in range(100)]
-        
+
         # Test a few key bulk operations with large lists
         functions_to_test = [
             bulk.profile_bulk,
             bulk.rating_bulk,
             bulk.dcf_bulk,
         ]
-        
+
         for func in functions_to_test:
             result = func(apikey=API_KEY, symbols=large_symbol_list)
             assert result is not None
@@ -367,7 +370,7 @@ class TestBulkPerformance:
         """Test that symbol lists are properly joined for API calls."""
         # This tests the internal ",".join(symbols) functionality
         symbols = ["AAPL", "MSFT", "GOOGL"]
-        
+
         # Make actual API call to test symbol joining
         result = bulk.profile_bulk(apikey=API_KEY, symbols=symbols)
         assert result is not None
@@ -379,9 +382,9 @@ class TestBulkDataTypes:
     def test_bulk_operations_return_types(self):
         """Test that bulk operations return proper types."""
         result = bulk.profile_bulk(apikey=API_KEY, symbols=["AAPL"])
-        
+
         # Should return a list-like object or None
-        assert result is None or hasattr(result, '__iter__')
+        assert result is None or hasattr(result, "__iter__")
 
     def test_scores_bulk_symbol_type_validation(self):
         """Test that scores_bulk properly handles symbol list types."""
@@ -391,7 +394,7 @@ class TestBulkDataTypes:
             ("AAPL", "MSFT"),  # Tuple
             {"AAPL", "MSFT"},  # Set (should work but order not guaranteed)
         ]
-        
+
         for symbols in symbol_inputs:
             result = bulk.scores_bulk(apikey=API_KEY, symbols=list(symbols))
             assert result is not None

@@ -2,37 +2,39 @@
 Comprehensive endpoint testing for all fmpsdk modules.
 Requires a valid FMP API key set as the environment variable FMP_API_KEY.
 """
+
 import os
+
 import pytest
-from pydantic import BaseModel
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 load_dotenv()
 
-# Import specific functions to avoid namespace conflicts
-from fmpsdk.general import quote, available_indexes  
-from fmpsdk.stock_time_series import quote_short, historical_price_eod_full
-from fmpsdk.company_valuation import company_profile, income_statement
-from fmpsdk.news import news_general_latest, news_stock_latest
-from fmpsdk.forex import available_forex, forex_quote
-from fmpsdk.cryptocurrencies import available_cryptocurrencies, cryptocurrency_quote
-from fmpsdk.etf import available_etfs, etf_info
-from fmpsdk.insider_trading import insider_trading, insider_trading_latest
-from fmpsdk.calendar import earnings_calendar, ipos_calendar
-from fmpsdk.economic_indicators import treasury_rates
+import fmpsdk.calendar_module as calendar_module
+import fmpsdk.company_valuation as company_valuation_module
+import fmpsdk.cryptocurrencies as cryptocurrencies_module
+import fmpsdk.economic_indicators as economic_indicators_module
+import fmpsdk.etf as etf_module
+import fmpsdk.forex as forex_module
 
 # Import modules for module checking test
 import fmpsdk.general as general_module
-import fmpsdk.stock_time_series as stock_time_series_module
-import fmpsdk.company_valuation as company_valuation_module
-import fmpsdk.news as news_module
-import fmpsdk.forex as forex_module
-import fmpsdk.cryptocurrencies as cryptocurrencies_module
-import fmpsdk.etf as etf_module
 import fmpsdk.insider_trading as insider_trading_module
-import fmpsdk.calendar as calendar_module
-import fmpsdk.economic_indicators as economic_indicators_module
+import fmpsdk.news as news_module
+import fmpsdk.stock_time_series as stock_time_series_module
+from fmpsdk.calendar_module import earnings_calendar, ipos_calendar
+from fmpsdk.company_valuation import company_profile, income_statement
+from fmpsdk.cryptocurrencies import available_cryptocurrencies, cryptocurrency_quote
+from fmpsdk.economic_indicators import treasury_rates
+from fmpsdk.etf import available_etfs, etf_info
+from fmpsdk.forex import available_forex, forex_quote
 
+# Import specific functions to avoid namespace conflicts
+from fmpsdk.general import available_indexes, quote
+from fmpsdk.insider_trading import insider_trading, insider_trading_latest
+from fmpsdk.news import news_general_latest, news_stock_latest
+from fmpsdk.stock_time_series import historical_price_eod_full, quote_short
 
 API_KEY = os.getenv("FMP_API_KEY")
 
@@ -46,7 +48,7 @@ class TestAllEndpoints:
             (available_indexes, {}),
             (quote, {"symbol": "AAPL"}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -57,7 +59,7 @@ class TestAllEndpoints:
         endpoints_to_test = [
             (quote_short, {"symbol": "AAPL"}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -69,7 +71,7 @@ class TestAllEndpoints:
             (company_profile, {"symbol": "AAPL"}),
             (income_statement, {"symbol": "AAPL"}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -81,7 +83,7 @@ class TestAllEndpoints:
             (news_general_latest, {}),
             (news_stock_latest, {}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -93,7 +95,7 @@ class TestAllEndpoints:
             (available_forex, {}),
             (forex_quote, {"symbol": "EURUSD"}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -105,7 +107,7 @@ class TestAllEndpoints:
             (available_cryptocurrencies, {}),
             (cryptocurrency_quote, {"symbol": "BTCUSD"}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -117,7 +119,7 @@ class TestAllEndpoints:
             (available_etfs, {}),
             (etf_info, {"symbol": "SPY"}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -129,7 +131,7 @@ class TestAllEndpoints:
             (insider_trading_latest, {}),
             (insider_trading, {"symbol": "AAPL"}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -141,7 +143,7 @@ class TestAllEndpoints:
             (earnings_calendar, {}),
             (ipos_calendar, {}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -152,7 +154,7 @@ class TestAllEndpoints:
         endpoints_to_test = [
             (treasury_rates, {}),
         ]
-        
+
         for endpoint_func, params in endpoints_to_test:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -163,19 +165,19 @@ class TestAllEndpoints:
         """Test that the same symbol works across different modules."""
         # Test symbol in different modules
         results = []
-        
+
         # General quote
         result1 = quote(apikey=API_KEY, symbol=symbol)
         results.append(result1)
-        
+
         # Stock time series quote
         result2 = quote_short(apikey=API_KEY, symbol=symbol)
         results.append(result2)
-        
+
         # Company profile
         result3 = company_profile(apikey=API_KEY, symbol=symbol)
         results.append(result3)
-        
+
         # All should return valid responses
         for result in results:
             assert result is not None
@@ -187,7 +189,7 @@ class TestAllEndpoints:
             (forex_quote, {"symbol": "INVALID_FOREX"}),
             (cryptocurrency_quote, {"symbol": "INVALID_CRYPTO"}),
         ]
-        
+
         for endpoint_func, params in invalid_params_tests:
             params["apikey"] = API_KEY
             result = endpoint_func(**params)
@@ -201,10 +203,10 @@ class TestAllEndpoints:
             available_forex(apikey=API_KEY),
             available_cryptocurrencies(apikey=API_KEY),
         ]
-        
+
         for result in test_endpoints:
             assert result is not None
-            if hasattr(result, '__iter__'):
+            if hasattr(result, "__iter__"):
                 items = list(result)
                 if items:
                     # Should be consistent response types
@@ -215,11 +217,11 @@ class TestAllEndpoints:
         """Test behavior under rapid API calls."""
         # Make several quick calls to test rate limiting behavior
         results = []
-        
+
         for i in range(5):
             result = quote(apikey=API_KEY, symbol="AAPL")
             results.append(result)
-        
+
         # Should handle rate limiting gracefully
         successful_calls = [r for r in results if r is not None]
         assert len(successful_calls) > 0
@@ -227,28 +229,33 @@ class TestAllEndpoints:
     def test_module_function_coverage(self):
         """Test that major functions exist in each module."""
         module_function_map = {
-            general_module: ['quote', 'available_indexes'],
-            stock_time_series_module: ['quote_short', 'historical_price_eod_full'],
-            company_valuation_module: ['company_profile', 'income_statement'],
-            news_module: ['news_general_latest', 'news_stock_latest'],
-            forex_module: ['available_forex', 'forex_quote'],
-            cryptocurrencies_module: ['available_cryptocurrencies', 'cryptocurrency_quote'],
-            etf_module: ['available_etfs', 'etf_info'],
-            insider_trading_module: ['insider_trading', 'insider_trading_latest'],
-            calendar_module: ['earnings_calendar', 'ipos_calendar'],
-            economic_indicators_module: ['treasury_rates'],
+            general_module: ["quote", "available_indexes"],
+            stock_time_series_module: ["quote_short", "historical_price_eod_full"],
+            company_valuation_module: ["company_profile", "income_statement"],
+            news_module: ["news_general_latest", "news_stock_latest"],
+            forex_module: ["available_forex", "forex_quote"],
+            cryptocurrencies_module: [
+                "available_cryptocurrencies",
+                "cryptocurrency_quote",
+            ],
+            etf_module: ["available_etfs", "etf_info"],
+            insider_trading_module: ["insider_trading", "insider_trading_latest"],
+            calendar_module: ["earnings_calendar", "ipos_calendar"],
+            economic_indicators_module: ["treasury_rates"],
         }
-        
+
         for module, functions in module_function_map.items():
             for func_name in functions:
-                assert hasattr(module, func_name), f"Module {module.__name__} missing function {func_name}"
+                assert hasattr(
+                    module, func_name
+                ), f"Module {module.__name__} missing function {func_name}"
 
     def test_batch_symbol_processing(self):
         """Test processing multiple symbols efficiently."""
         symbols = ["AAPL", "MSFT", "GOOGL"]
-        
+
         for symbol in symbols:
             result = quote(apikey=API_KEY, symbol=symbol)
             assert result is not None
-            
+
         # Should complete without errors for all symbols

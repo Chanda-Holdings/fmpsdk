@@ -1,52 +1,24 @@
 import logging
 
-from fmpsdk.alternative_data import *
-from fmpsdk.bulk import *
-from fmpsdk.calendar import *
-from fmpsdk.commodities import *
-from fmpsdk.company_valuation import *
-from fmpsdk.cryptocurrencies import *
-from fmpsdk.etf import *
-from fmpsdk.general import *
-from fmpsdk.institutional_fund import *
-from fmpsdk.market_indexes import *
-from fmpsdk.mutual_funds import *
-from fmpsdk.news import *
-from fmpsdk.senate import *
-from fmpsdk.stock_time_series import *
-from fmpsdk.technical_indicators import *
-
-from .models import (
-    FMPSymbolSearch,
-    FMPCompanyNameSearch,
-    FMPCompanyCIKSearch,
-    FMPCusipSearch,
-    FMPIsinSearch,
-    FMPStockScreenerResult,
-    FMPCompanyProfile,
-    FMPSymbolAndNameList,
-    FMPFinancialStatementSymbolList,
-    FMPSymbolAndCIKList,
-    FMPSymbolChange,
-    FMPEarningsTranscriptList,
-    FMPExchangeInfo,
-    FMPSector,
-    FMPIndustry,
-    FMPCountry,
-    FMPAnalystEstimates,
-    FMPRatingSnapshot,
-    FMPHistoricalRating,
-    FMPPriceTargetSummary,
-    FMPPriceTargetConsensus,
-    FMPPriceTargetNews,
-    FMPStockGrade,
-    FMPHistoricalStockGrade,
-    FMPStockGradeSummary,
-    FMPStockGradeNews,
-    # ...add more as needed from models.py...
+# Import specific functions from cryptocurrencies for backward compatibility
+from .cryptocurrencies import (
+    available_cryptocurrencies,
+    cryptocurrencies_list,
+    cryptocurrency_list,
+    last_crypto_price,
 )
-from .settings import *
-from .shares_float import *
+
+# Import technical indicator functions for test compatibility
+from .technical_indicators import (
+    technical_indicators,
+    technical_indicators_adx,
+    technical_indicators_dema,
+    technical_indicators_ema,
+    technical_indicators_rsi,
+    technical_indicators_sma,
+    technical_indicators_standarddeviation,
+    technical_indicators_williams,
+)
 
 attribution: str = "Data provided by Financial Modeling Prep"
 logging.info(attribution)
@@ -93,7 +65,8 @@ __all__ = [
     "stock_screener",
     "delisted_companies",
     "stock_news",
-    "social_sentiments" "earnings_surprises",
+    "social_sentiments",
+    "earnings_surprises",
     "sec_filings",
     "press_releases",
     "earning_calendar",
@@ -120,6 +93,13 @@ __all__ = [
     "historical_stock_dividend",
     "historical_stock_split",
     "technical_indicators",
+    "technical_indicators_sma",
+    "technical_indicators_ema",
+    "technical_indicators_dema",
+    "technical_indicators_rsi",
+    "technical_indicators_standarddeviation",
+    "technical_indicators_williams",
+    "technical_indicators_adx",
     "indexes",
     "actives",
     "gainers",
@@ -195,13 +175,3 @@ __all__ = [
     "etf_sector_weightings",
     "cryptocurrency_list",
 ]
-
-from .cryptocurrencies import (
-    available_cryptocurrencies,
-    cryptocurrencies_list,
-    last_crypto_price,
-    cryptocurrency_quote,
-    cryptocurrency_quote_short,
-    batch_crypto_quotes,
-    cryptocurrency_list,
-)

@@ -1,7 +1,10 @@
 import typing
+
+from pydantic import RootModel
+
+from .models import *
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
 
 
 @parse_response
@@ -22,7 +25,7 @@ def commodities_quote(
     list
         List of commodity quote data.
     """
-    path = f"/commodities-quote/{symbol}"
+    path = "/commodities-quote/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -45,7 +48,7 @@ def commodities_quote_short(
     list
         List of short commodity quote data.
     """
-    path = f"/commodities-quote-short/{symbol}"
+    path = "/commodities-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -69,9 +72,8 @@ def batch_commodity_quotes(
         List of batch commodity quote data.
     """
     if symbols:
-        symbols_str = ",".join(symbols)
-        path = f"/batch-commodity-quotes/{symbols_str}"
+        path = f"/batch-commodity-quotes/{','.join(symbols)}"
     else:
-        path = f"/batch-commodity-quotes"
+        path = "/batch-commodity-quotes"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)

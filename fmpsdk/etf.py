@@ -1,8 +1,11 @@
+import typing
+
+from pydantic import RootModel
+
 from .general import __quotes
+from .models import *
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
-import typing
 
 
 @parse_response
@@ -13,7 +16,7 @@ def available_etfs(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"symbol/available-etfs"
+    path = "symbol/available-etfs"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -28,7 +31,7 @@ def etf_price_realtime(apikey: str) -> RootModel[typing.List[FMPBulkEOD]]:
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"etf"
+    path = "etf"
     return __quotes(apikey=apikey, value=path)
 
 
@@ -43,7 +46,7 @@ def etf_info(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundInfo]]:
     :param symbol: ETF ticker.
     :return: A list of dictionaries.
     """
-    path = f"etf-info"
+    path = "etf-info"
     query_vars = {"symbol": symbol, "apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -68,7 +71,7 @@ def etf_holdings(
     list
         List of ETF holdings.
     """
-    path = f"/etf/holdings/{symbol}"
+    path = "/etf/holdings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -93,13 +96,15 @@ def etf_asset_exposure(
     list
         List of ETF asset exposure data.
     """
-    path = f"/etf/asset-exposure/{symbol}"
+    path = "/etf/asset-exposure/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def etf_sector_weightings(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundSectorWeighting]]:
+def etf_sector_weightings(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPFundSectorWeighting]]:
     """
     Query FMP /etf/sector-weightings endpoint.
 
@@ -107,6 +112,6 @@ def etf_sector_weightings(apikey: str, symbol: str) -> RootModel[typing.List[FMP
     :param symbol: ETF ticker symbol.
     :return: List of sector weightings for the ETF.
     """
-    path = f"etf/sector-weightings/{symbol}"
+    path = "etf/sector-weightings/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)

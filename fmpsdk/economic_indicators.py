@@ -1,11 +1,16 @@
 import typing
+
+from pydantic import RootModel
+
+from .models import *
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
 
 
 @parse_response
-def treasury_rates(apikey: str, from_date: str = None, to_date: str = None) -> RootModel[typing.List[FMPTreasuryRates]]:
+def treasury_rates(
+    apikey: str, from_date: str = None, to_date: str = None
+) -> RootModel[typing.List[FMPTreasuryRates]]:
     """
     Get US Treasury rates.
 
@@ -23,7 +28,7 @@ def treasury_rates(apikey: str, from_date: str = None, to_date: str = None) -> R
     list
         List of US Treasury rates.
     """
-    path = f"/treasury-rates"
+    path = "/treasury-rates"
     query_vars = {"apikey": apikey}
     if from_date:
         query_vars["from"] = from_date
@@ -33,7 +38,9 @@ def treasury_rates(apikey: str, from_date: str = None, to_date: str = None) -> R
 
 
 @parse_response
-def economic_indicators(apikey: str, name: str, from_date: str = None, to_date: str = None) -> RootModel[typing.List[FMPEconomicIndicator]]:
+def economic_indicators(
+    apikey: str, name: str, from_date: str = None, to_date: str = None
+) -> RootModel[typing.List[FMPEconomicIndicator]]:
     """
     Get economic indicators.
 
@@ -53,7 +60,7 @@ def economic_indicators(apikey: str, name: str, from_date: str = None, to_date: 
     list
         List of economic indicators.
     """
-    path = f"/economic-indicators"
+    path = "/economic-indicators"
     query_vars = {"apikey": apikey, "name": name}
     if from_date:
         query_vars["from"] = from_date

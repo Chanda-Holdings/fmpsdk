@@ -1,10 +1,12 @@
 import logging
 import typing
 
+from pydantic import RootModel
+
 from .general import __quotes
+from .models import *
 from .url_methods import __return_json_stable
 from .utils import parse_response
-from .models import *
 
 
 @parse_response
@@ -17,7 +19,7 @@ def available_cryptocurrencies(
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"symbol/available-cryptocurrencies"
+    path = "symbol/available-cryptocurrencies"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
@@ -30,7 +32,7 @@ def cryptocurrencies_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndName
     :param apikey: Your API key.
     :return: A list of dictionaries.
     """
-    path = f"crypto"
+    path = "crypto"
     return __quotes(apikey=apikey, value=path)
 
 
@@ -58,13 +60,15 @@ def last_crypto_price(apikey: str, symbol: str) -> typing.Optional[typing.Dict]:
         logging.warning("No symbol provided for last crypto price request.")
         return None
 
-    path = f"crypto/last/{symbol}"
+    path = "crypto/last/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
 @parse_response
-def cryptocurrency_quote(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteFull]]:
+def cryptocurrency_quote(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPQuoteFull]]:
     """
     Get cryptocurrency quote for a given symbol.
 
@@ -80,13 +84,15 @@ def cryptocurrency_quote(apikey: str, symbol: str) -> RootModel[typing.List[FMPQ
     list
         List of cryptocurrency quote data.
     """
-    path = f"/cryptocurrency-quote/{symbol}"
+    path = "/cryptocurrency-quote/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def cryptocurrency_quote_short(apikey: str, symbol: str) -> RootModel[typing.List[FMPQuoteShort]]:
+def cryptocurrency_quote_short(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPQuoteShort]]:
     """
     Get short cryptocurrency quote for a given symbol.
 
@@ -102,13 +108,15 @@ def cryptocurrency_quote_short(apikey: str, symbol: str) -> RootModel[typing.Lis
     list
         List of short cryptocurrency quote data.
     """
-    path = f"/cryptocurrency-quote-short/{symbol}"
+    path = "/cryptocurrency-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
 
 @parse_response
-def batch_crypto_quotes(apikey: str, symbols: list = None) -> RootModel[typing.List[FMPBulkEOD]]:
+def batch_crypto_quotes(
+    apikey: str, symbols: list = None
+) -> RootModel[typing.List[FMPBulkEOD]]:
     """
     Get batch cryptocurrency quotes for a list of symbols.
 
@@ -117,7 +125,8 @@ def batch_crypto_quotes(apikey: str, symbols: list = None) -> RootModel[typing.L
     apikey : str
         Your FMP API key.
     symbols : list, optional
-        List of cryptocurrency symbols (e.g., ['BTCUSD', 'ETHUSD']). If None, returns all.
+        List of cryptocurrency symbols (e.g., ['BTCUSD', 'ETHUSD']).
+        If None, returns all.
 
     Returns
     -------
@@ -125,10 +134,9 @@ def batch_crypto_quotes(apikey: str, symbols: list = None) -> RootModel[typing.L
         List of batch cryptocurrency quote data.
     """
     if symbols:
-        symbols_str = ",".join(symbols)
-        path = f"/batch-crypto-quotes/{symbols_str}"
+        path = f"/batch-crypto-quotes/{','.join(symbols)}"
     else:
-        path = f"/batch-crypto-quotes"
+        path = "/batch-crypto-quotes"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
 
@@ -153,5 +161,5 @@ __all__ = [
     "cryptocurrency_quote",
     "cryptocurrency_quote_short",
     "batch_crypto_quotes",
-    "cryptocurrency_list"
+    "cryptocurrency_list",
 ]
