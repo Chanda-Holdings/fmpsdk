@@ -90,6 +90,7 @@ def __validate_period(value: str) -> str:
         return value
     else:
         logging.error(f"Invalid period value: {value}.  Valid options: {valid_values}")
+        return value  # Return the value anyway to avoid breaking
 
 
 def __validate_sector(value: str) -> str:
@@ -103,6 +104,7 @@ def __validate_sector(value: str) -> str:
         return value
     else:
         logging.error(f"Invalid sector value: {value}.  Valid options: {valid_values}")
+        return value  # Return the value anyway to avoid breaking
 
 
 def __validate_industry(value: str) -> str:
@@ -118,6 +120,7 @@ def __validate_industry(value: str) -> str:
         logging.error(
             f"Invalid industry value: {value}.  Valid options: {valid_values}"
         )
+        return value  # Return the value anyway to avoid breaking
 
 
 def __validate_time_delta(value: str) -> str:
@@ -133,6 +136,7 @@ def __validate_time_delta(value: str) -> str:
         logging.error(
             f"Invalid time_delta value: {value}.  Valid options: {valid_values}"
         )
+        return value  # Return the value anyway to avoid breaking
 
 
 def __validate_series_type(value: str) -> str:
@@ -148,6 +152,7 @@ def __validate_series_type(value: str) -> str:
         logging.error(
             f"Invalid series_type value: {value}.  Valid options: {valid_values}"
         )
+        return value  # Return the value anyway to avoid breaking
 
 
 def __validate_statistics_type(value: str) -> str:
@@ -163,6 +168,7 @@ def __validate_statistics_type(value: str) -> str:
         logging.error(
             f"Invalid statistics_type value: {value}.  Valid options: {valid_values}"
         )
+        return value  # Return the value anyway to avoid breaking
 
 
 def __validate_technical_indicators_time_delta(value: str) -> str:
@@ -177,6 +183,7 @@ def __validate_technical_indicators_time_delta(value: str) -> str:
         logging.error(
             f"Invalid time_delta value: {value}.  Valid options: {valid_values}"
         )
+        return value  # Return the value anyway to avoid breaking
 
 
 def __validate_economic_indicator(value: str) -> str:

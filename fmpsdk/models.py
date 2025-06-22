@@ -2554,8 +2554,8 @@ class FMPFinancialStatementTTM(BaseModel):
     deferredIncomeTax: Optional[int] = None
     stockBasedCompensation: Optional[int] = None
     changeInWorkingCapital: Optional[int] = None
-    accountsReceivables: Optional[int] = None
-    inventory: Optional[int] = None
+    # accountsReceivables: Optional[int] = None  # Duplicate - defined above in Balance Sheet Fields
+    # inventory: Optional[int] = None  # Duplicate - defined above in Balance Sheet Fields
     accountsPayables: Optional[int] = None
     otherWorkingCapital: Optional[int] = None
     otherNonCashItems: Optional[int] = None

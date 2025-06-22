@@ -53,7 +53,16 @@ def parse_response(func) -> typing.Callable:
             if raw is None:
                 raw = []
 
-            result = model.model_validate(raw)
+            try:
+                # Try BaseModel.model_validate first
+                if hasattr(model, "model_validate"):
+                    result = model.model_validate(raw)
+                else:
+                    # Fallback to constructor for RootModel
+                    result = model(raw)
+            except (AttributeError, TypeError):
+                # Final fallback to constructor
+                result = model(raw)
             # Do NOT unwrap __root__ or root; always return the model instance
             return result
         return raw
