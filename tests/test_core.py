@@ -11,7 +11,7 @@ from fmpsdk import settings
 from fmpsdk.utils import parse_response, iterate_over_pages
 
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 
 class TestCoreFunctionality:

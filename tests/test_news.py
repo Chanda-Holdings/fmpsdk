@@ -6,7 +6,7 @@ import os
 import pytest
 import fmpsdk.news as news
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 @pytest.mark.parametrize("func,kwargs", [
     (news.company_news, {"symbols": "AAPL"}),

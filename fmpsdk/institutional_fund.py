@@ -1,7 +1,4 @@
-import logging
 import typing
-
-import requests
 
 from .settings import DEFAULT_LIMIT, SEC_RSS_FEEDS_FILENAME
 from .utils import parse_response
@@ -147,6 +144,202 @@ def institutional_ownership_industry_summary(apikey: str, year: int, quarter: in
     """
     path = f"/institutional-ownership/industry-summary"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_holdings_portfolio_changes(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+    """
+    Get institutional ownership holdings portfolio changes for a CIK, year, and quarter.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional holder.
+    year : int
+        Year of the filing period.
+    quarter : int
+        Quarter of the filing period (1, 2, 3, or 4).
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Number of results per page.
+    Returns
+    -------
+    list
+        List of portfolio changes data.
+    """
+    path = f"/institutional-ownership/holdings-portfolio-changes"
+    query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
+    if page is not None:
+        query_vars["page"] = page
+    if limit is not None:
+        query_vars["limit"] = limit
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_holdings_new_positions(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+    """
+    Get institutional ownership holdings new positions for a CIK, year, and quarter.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional holder.
+    year : int
+        Year of the filing period.
+    quarter : int
+        Quarter of the filing period (1, 2, 3, or 4).
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Number of results per page.
+    Returns
+    -------
+    list
+        List of new positions data.
+    """
+    path = f"/institutional-ownership/holdings-new-positions"
+    query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
+    if page is not None:
+        query_vars["page"] = page
+    if limit is not None:
+        query_vars["limit"] = limit
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_holdings_summary(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+    """
+    Get institutional ownership holdings summary for a CIK, year, and quarter.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional holder.
+    year : int
+        Year of the filing period.
+    quarter : int
+        Quarter of the filing period (1, 2, 3, or 4).
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Number of results per page.
+    Returns
+    -------
+    list
+        List of holdings summary data.
+    """
+    path = f"/institutional-ownership/holdings-summary"
+    query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
+    if page is not None:
+        query_vars["page"] = page
+    if limit is not None:
+        query_vars["limit"] = limit
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_holdings_overview(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+    """
+    Get institutional ownership holdings overview for a CIK, year, and quarter.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional holder.
+    year : int
+        Year of the filing period.
+    quarter : int
+        Quarter of the filing period (1, 2, 3, or 4).
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Number of results per page.
+    Returns
+    -------
+    list
+        List of holdings overview data.
+    """
+    path = f"/institutional-ownership/holdings-overview"
+    query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
+    if page is not None:
+        query_vars["page"] = page
+    if limit is not None:
+        query_vars["limit"] = limit
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_holdings_sold_out_positions(apikey: str, cik: str, year: int, quarter: int, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+    """
+    Get institutional ownership holdings sold out positions for a CIK, year, and quarter.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    cik : str
+        CIK of the institutional holder.
+    year : int
+        Year of the filing period.
+    quarter : int
+        Quarter of the filing period (1, 2, 3, or 4).
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Number of results per page.
+    Returns
+    -------
+    list
+        List of sold out positions data.
+    """
+    path = f"/institutional-ownership/holdings-sold-out-positions"
+    query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
+    if page is not None:
+        query_vars["page"] = page
+    if limit is not None:
+        query_vars["limit"] = limit
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def institutional_ownership_by_symbol(apikey: str, symbol: str, year: int = None, quarter: int = None, page: int = None, limit: int = None) -> RootModel[typing.List[typing.Dict]]:
+    """
+    Get institutional ownership by symbol.
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Stock symbol.
+    year : int, optional
+        Year of the filing period.
+    quarter : int, optional
+        Quarter of the filing period (1, 2, 3, or 4).
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Number of results per page.
+    Returns
+    -------
+    list
+        List of institutional ownership data for the symbol.
+    """
+    path = f"/institutional-ownership/by-symbol"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if year is not None:
+        query_vars["year"] = year
+    if quarter is not None:
+        query_vars["quarter"] = quarter
+    if page is not None:
+        query_vars["page"] = page
+    if limit is not None:
+        query_vars["limit"] = limit
     return __return_json_stable(path, query_vars)
 
 

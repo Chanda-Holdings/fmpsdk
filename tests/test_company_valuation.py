@@ -6,7 +6,7 @@ import os
 import pytest
 import fmpsdk.company_valuation as cv
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 @pytest.mark.parametrize("func,kwargs", [
     (cv.company_profile, {"symbol": "AAPL"}),

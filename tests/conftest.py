@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Test configuration
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 RATE_LIMIT_DELAY = 0.1  # Delay between API calls to respect rate limits
 
 # Common test symbols for different categories

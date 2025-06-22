@@ -29,7 +29,7 @@ import fmpsdk.euronext as euronext
 import fmpsdk.tsx as tsx
 import fmpsdk.senate as senate
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 class TestCrossModuleIntegration:
     """Test interactions between different modules."""

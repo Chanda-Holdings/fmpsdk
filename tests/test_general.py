@@ -6,7 +6,7 @@ import os
 import pytest
 import fmpsdk.general as general
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 @pytest.mark.parametrize("func,kwargs", [
     (general.search_symbol, {"query": "AAPL"}),

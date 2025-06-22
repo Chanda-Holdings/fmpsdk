@@ -6,7 +6,7 @@ import os
 import pytest
 import fmpsdk.stock_time_series as sts
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 @pytest.mark.parametrize("func,kwargs", [
     (sts.quote_short, {"symbol": "AAPL"}),

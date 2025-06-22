@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from fmpsdk.shares_float import shares_float, shares_float_all
 
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 
 class TestSharesFloatEndpoints:

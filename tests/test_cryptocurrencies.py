@@ -10,7 +10,7 @@ from pydantic import BaseModel
 import fmpsdk.cryptocurrencies as cc
 
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 
 class TestCryptocurrencyEndpoints:

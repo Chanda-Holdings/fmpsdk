@@ -140,3 +140,53 @@ def house_trades_by_name(
     path = f"/house-trades-by-name/{name}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def senate_trades_by_symbol(
+    apikey: str,
+    symbol: str,
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
+    """
+    Get Senate trades by symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Stock symbol to search for.
+
+    Returns
+    -------
+    list
+        List of Senate trades for the given symbol.
+    """
+    path = f"/senate-trades-by-symbol/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def house_trades_by_symbol(
+    apikey: str,
+    symbol: str,
+) -> RootModel[typing.List[FMPPoliticalTrade]]:
+    """
+    Get House trades by symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Stock symbol to search for.
+
+    Returns
+    -------
+    list
+        List of House trades for the given symbol.
+    """
+    path = f"/house-trades-by-symbol/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)

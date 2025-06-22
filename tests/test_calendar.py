@@ -15,7 +15,7 @@ from fmpsdk.calendar import (
     splits_calendar,
 )
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 
 @pytest.mark.parametrize("func,kwargs", [

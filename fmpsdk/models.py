@@ -61,40 +61,40 @@ class FMPStockScreenerResult(BaseModel):
 class FMPCompanyProfile(BaseModel):
     symbol: str
     price: Optional[float] = None
-    beta: float
-    volAvg: int
+    beta: Optional[float] = None
+    volAvg: Optional[int] = None
     mktCap: Optional[float] = None
-    lastDiv: float
+    lastDiv: Optional[float] = None
     range: Optional[str] = None
     changes: Optional[float] = None
-    companyName: str
-    currency: str
+    companyName: Optional[str] = None
+    currency: Optional[str] = None
     cik: Optional[str] = None
     isin: Optional[str] = None
     cusip: Optional[str] = None
-    exchange: str
-    exchangeShortName: str
-    industry: str
-    website: str
-    description: str
-    ceo: str
-    sector: str
-    country: str
-    fullTimeEmployees: str
-    phone: str
-    address: str
-    city: str
-    state: str
-    zip: str
+    exchange: Optional[str] = None
+    exchangeShortName: Optional[str] = None
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    description: Optional[str] = None
+    ceo: Optional[str] = None
+    sector: Optional[str] = None
+    country: Optional[str] = None
+    fullTimeEmployees: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip: Optional[str] = None
     dcfDiff: Optional[float] = None
-    dcf: float
-    image: str
-    ipoDate: str
-    defaultImage: bool
-    isEtf: bool
-    isActivelyTrading: bool
-    isAdr: bool
-    isFund: bool
+    dcf: Optional[float] = None
+    image: Optional[str] = None
+    ipoDate: Optional[str] = None
+    defaultImage: Optional[bool] = None
+    isEtf: Optional[bool] = None
+    isActivelyTrading: Optional[bool] = None
+    isAdr: Optional[bool] = None
+    isFund: Optional[bool] = None
 
 class FMPSymbolAndCompanyNameList(BaseModel):
     symbol: str
@@ -1770,7 +1770,7 @@ class FMPPoliticalTrade(BaseModel):
     assetType: str
     type: str
     amount: str
-    capitalGainsOver200USD: str
+    capitalGainsOver200USD: Optional[str] = None
     comment: str
     link: str
 

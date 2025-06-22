@@ -16,7 +16,7 @@ from fmpsdk.insider_trading import (
 )
 
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 
 class TestInsiderTradingEndpoints:

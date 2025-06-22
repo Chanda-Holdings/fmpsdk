@@ -9,7 +9,7 @@ from pydantic import BaseModel
 import fmpsdk.etf as etf
 
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 
 class TestETFEndpoints:

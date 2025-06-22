@@ -103,3 +103,25 @@ def funds_disclosure_dates(apikey: str, symbol: str) -> RootModel[typing.List[FM
     path = f"/funds/disclosure-dates/{symbol}"
     query_vars = {"apikey": apikey}
     return __return_json_stable(path, query_vars)
+
+
+@parse_response
+def mutual_fund_holdings(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundHolder]]:
+    """
+    Get mutual fund holdings for a given symbol.
+
+    Parameters
+    ----------
+    apikey : str
+        Your FMP API key.
+    symbol : str
+        Mutual fund ticker symbol.
+
+    Returns
+    -------
+    list
+        List of mutual fund holdings.
+    """
+    path = f"/mutual-fund-holdings/{symbol}"
+    query_vars = {"apikey": apikey}
+    return __return_json_stable(path, query_vars)

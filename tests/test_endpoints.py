@@ -34,7 +34,7 @@ import fmpsdk.calendar as calendar_module
 import fmpsdk.economic_indicators as economic_indicators_module
 
 
-API_KEY = os.getenv("FMP_API_KEY", "demo")
+API_KEY = os.getenv("FMP_API_KEY")
 
 
 class TestAllEndpoints:
