@@ -91,7 +91,7 @@ def upgrades_downgrades_consensus_bulk(
     query_vars = {"apikey": apikey}
 
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     if download:
         query_vars["datatype"] = "csv"

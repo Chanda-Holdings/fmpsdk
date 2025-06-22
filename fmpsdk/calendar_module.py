@@ -38,7 +38,7 @@ def dividends(
     if to_date:
         query_vars["to"] = to_date
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -67,7 +67,7 @@ def dividends_calendar(
     if to_date:
         query_vars["to"] = to_date
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -96,7 +96,7 @@ def earnings_calendar(
     if to_date:
         query_vars["to"] = to_date
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -125,7 +125,7 @@ def ipos_calendar(
     if to_date:
         query_vars["to"] = to_date
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -150,7 +150,7 @@ def ipos_disclosure(
     if symbol:
         query_vars["symbol"] = symbol
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -175,7 +175,7 @@ def ipos_prospectus(
     if symbol:
         query_vars["symbol"] = symbol
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -208,7 +208,7 @@ def splits(
     if to_date:
         query_vars["to"] = to_date
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -237,5 +237,5 @@ def splits_calendar(
     if to_date:
         query_vars["to"] = to_date
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)

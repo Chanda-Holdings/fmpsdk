@@ -1,5 +1,25 @@
 import logging
 
+# Import essential functions from company_valuation
+from .company_valuation import (
+    balance_sheet_statement,
+    balance_sheet_statement_as_reported,
+    balance_sheet_statement_growth,
+    cash_flow_statement,
+    cash_flow_statement_as_reported,
+    cash_flow_statement_growth,
+    company_profile,
+    enterprise_values,
+    financial_ratios,
+    financial_ratios_ttm,
+    financial_statement_full_as_reported,
+    financial_statement_symbol_lists,
+    income_statement,
+    income_statement_as_reported,
+    income_statement_growth,
+    key_metrics_ttm,
+)
+
 # Import specific functions from cryptocurrencies for backward compatibility
 from .cryptocurrencies import (
     available_cryptocurrencies,
@@ -7,6 +27,14 @@ from .cryptocurrencies import (
     cryptocurrency_list,
     last_crypto_price,
 )
+
+# Import essential functions from general
+from .general import (
+    available_industries,
+    quote,
+)
+from .general import search_name as search_ticker
+from .general import search_symbol as search
 
 # Import technical indicator functions for test compatibility
 from .technical_indicators import (
@@ -19,6 +47,9 @@ from .technical_indicators import (
     technical_indicators_standarddeviation,
     technical_indicators_williams,
 )
+
+# Import utility functions
+from .utils import iterate_over_pages
 
 attribution: str = "Data provided by Financial Modeling Prep"
 logging.info(attribution)

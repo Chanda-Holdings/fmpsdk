@@ -1284,7 +1284,7 @@ def analyst_estimates(
     path = "analyst-estimates"
     query_vars = {"apikey": apikey, "symbol": symbol, "period": period}
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -1386,7 +1386,7 @@ def price_target_news(
     path = "price-target-news"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -1407,7 +1407,7 @@ def price_target_latest_news(
     path = "price-target-latest-news"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 

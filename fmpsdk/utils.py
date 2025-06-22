@@ -1,6 +1,9 @@
 import typing
+from typing import Any, Callable, TypeVar, cast
 
 # from pydantic import BaseModel
+
+T = TypeVar("T")
 
 
 def iterate_over_pages(
@@ -34,13 +37,13 @@ def iterate_over_pages(
         return data_list
 
 
-def parse_response(func) -> typing.Callable:
+def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
     from functools import wraps
 
     from .model_registry import ENDPOINT_MODEL_MAP
 
     @wraps(func)
-    def wrapper(*args, **kwargs) -> typing.Any:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         raw = func(*args, **kwargs)
 
         # Check for API error responses and return them as-is

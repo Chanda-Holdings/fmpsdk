@@ -41,3 +41,5 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 strict_optional = false
+# Suppress return-value errors for decorated functions with type transformations
+disable_error_code = ["return-value"]

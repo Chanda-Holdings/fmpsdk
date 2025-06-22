@@ -24,7 +24,7 @@ def sec_rss_feeds(
     """
     path = "rss_feed"
     query_vars = {"apikey": apikey}
-    query_vars["limit"] = limit
+    query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -183,9 +183,9 @@ def institutional_ownership_holdings_portfolio_changes(
     path = "/institutional-ownership/holdings-portfolio-changes"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path, query_vars)
 
 
@@ -217,9 +217,9 @@ def institutional_ownership_holdings_new_positions(
     path = "/institutional-ownership/holdings-new-positions"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path, query_vars)
 
 
@@ -251,9 +251,9 @@ def institutional_ownership_holdings_summary(
     path = "/institutional-ownership/holdings-summary"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path, query_vars)
 
 
@@ -285,9 +285,9 @@ def institutional_ownership_holdings_overview(
     path = "/institutional-ownership/holdings-overview"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path, query_vars)
 
 
@@ -325,9 +325,9 @@ def institutional_ownership_holdings_sold_out_positions(
     path = "/institutional-ownership/holdings-sold-out-positions"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path, query_vars)
 
 
@@ -364,13 +364,13 @@ def institutional_ownership_by_symbol(
     path = "/institutional-ownership/by-symbol"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if year is not None:
-        query_vars["year"] = year
+        query_vars["year"] = str(year)
     if quarter is not None:
-        query_vars["quarter"] = quarter
+        query_vars["quarter"] = str(quarter)
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path, query_vars)
 
 

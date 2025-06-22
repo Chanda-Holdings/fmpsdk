@@ -34,9 +34,11 @@ def quote(
     :param symbol: The Ticker(s), Index(es), Commodity(ies), etc. symbol to query for.
     :return: A list of dictionaries.
     """
-    if type(symbol) is list:
-        symbol = ",".join(symbol)
-    return __quotes(apikey=apikey, value=symbol)
+    if isinstance(symbol, list):
+        symbol_str = ",".join(symbol)
+    else:
+        symbol_str = symbol
+    return __quotes(apikey=apikey, value=symbol_str)
 
 
 @parse_response
@@ -68,7 +70,7 @@ def search_symbol(
     if exchange:
         query_vars["exchange"] = exchange
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -95,7 +97,7 @@ def search_name(
     if exchange:
         query_vars["exchange"] = exchange
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -118,7 +120,7 @@ def search_cik(
     path = "search-cik"
     query_vars = {"apikey": apikey, "query": query}
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -141,7 +143,7 @@ def search_cusip(
     path = "search-cusip"
     query_vars = {"apikey": apikey, "query": query}
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -164,7 +166,7 @@ def search_isin(
     path = "search-isin"
     query_vars = {"apikey": apikey, "query": query}
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -227,7 +229,7 @@ def stock_list(
     if exchange:
         query_vars["exchange"] = exchange
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -252,7 +254,7 @@ def financial_statement_symbol_list(
     if exchange:
         query_vars["exchange"] = exchange
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -273,7 +275,7 @@ def cik_list(
     path = "cik-list"
     query_vars = {"apikey": apikey}
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -323,7 +325,7 @@ def etf_list(
     if exchange:
         query_vars["exchange"] = exchange
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -348,7 +350,7 @@ def actively_trading_list(
     if exchange:
         query_vars["exchange"] = exchange
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
@@ -373,7 +375,7 @@ def earnings_transcript_list(
     if symbol:
         query_vars["symbol"] = symbol
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json_stable(path=path, query_vars=query_vars)
 
 
