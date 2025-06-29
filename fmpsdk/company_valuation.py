@@ -1132,6 +1132,7 @@ def stock_screener(
             query_vars["exchange"] = exchange
     return __return_json(path=path, query_vars=query_vars)
 
+
 @parse_response
 def earnings_surprises(
     apikey: str, symbol: str
@@ -1236,7 +1237,7 @@ def social_sentiment(
 
 @parse_response
 def trending_sentiment(
-    apikey: str, type: str, source: str="stocktwits"
+    apikey: str, type: str, source: str = "stocktwits"
 ) -> RootModel[typing.List[Any]]:
     """
     Query FMP /social-sentiments/trending API

@@ -71,7 +71,13 @@ def company_press_releases(
 
 
 @parse_response
-def news_general(apikey: str, from_date: str = None, to_date: str = None, page: int = 0, limit: int = DEFAULT_LIMIT) -> RootModel[typing.List[FMPNewsArticle]]:
+def news_general(
+    apikey: str,
+    from_date: str = None,
+    to_date: str = None,
+    page: int = 0,
+    limit: int = DEFAULT_LIMIT,
+) -> RootModel[typing.List[FMPNewsArticle]]:
     """
     Get latest general news.
 
@@ -94,16 +100,23 @@ def news_general(apikey: str, from_date: str = None, to_date: str = None, page: 
         List of latest general news.
     """
     path = "/news/general-latest"
-    query_vars = {"apikey": apikey, "limit": limit, "page": page, "from": from_date, "to": to_date}
+    query_vars = {
+        "apikey": apikey,
+        "limit": limit,
+        "page": page,
+        "from": from_date,
+        "to": to_date,
+    }
     return __return_json(path, query_vars)
 
 
 @parse_response
-def news_crypto(apikey: str, 
+def news_crypto(
+    apikey: str,
     from_date: str = None,
     to_date: str = None,
     page: int = 0,
-    limit: int = DEFAULT_LIMIT
+    limit: int = DEFAULT_LIMIT,
 ) -> RootModel[typing.List[FMPNewsArticle]]:
     """
     Get latest crypto news.
@@ -127,16 +140,23 @@ def news_crypto(apikey: str,
         List of latest crypto news.
     """
     path = "/news/crypto-latest"
-    query_vars = {"apikey": apikey, "limit": limit, "page": page, "from": from_date, "to": to_date}
+    query_vars = {
+        "apikey": apikey,
+        "limit": limit,
+        "page": page,
+        "from": from_date,
+        "to": to_date,
+    }
     return __return_json(path, query_vars)
 
 
 @parse_response
-def news_forex(apikey: str, 
+def news_forex(
+    apikey: str,
     from_date: str = None,
     to_date: str = None,
     page: int = 0,
-    limit: int = DEFAULT_LIMIT
+    limit: int = DEFAULT_LIMIT,
 ) -> RootModel[typing.List[FMPNewsArticle]]:
     """
     Get latest forex news.
@@ -160,7 +180,13 @@ def news_forex(apikey: str,
         List of latest forex news.
     """
     path = "/news/forex-latest"
-    query_vars = {"apikey": apikey, "limit": limit, "page": page, "from": from_date, "to": to_date}
+    query_vars = {
+        "apikey": apikey,
+        "limit": limit,
+        "page": page,
+        "from": from_date,
+        "to": to_date,
+    }
     return __return_json(path, query_vars)
 
 
@@ -183,4 +209,3 @@ def price_target_latest_news(
     if limit:
         query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
-

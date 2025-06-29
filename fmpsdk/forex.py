@@ -9,7 +9,6 @@ from .models import (
     FMPQuoteFull,
     FMPQuoteShort,
 )
-from .settings import DEFAULT_LIMIT
 from .url_methods import __return_json
 from .utils import parse_response
 
@@ -129,11 +128,7 @@ __all__ = [
     "forex",
     "forex_list",
     "available_forex",
-    "forex_news",
     "forex_quote",
     "forex_quote_short",
     "batch_forex_quotes",
 ]
-
-# All function return types should be updated to match ENDPOINT_MODEL_MAP
-# from model_registry.py

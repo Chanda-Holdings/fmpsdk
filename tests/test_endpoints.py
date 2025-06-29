@@ -55,7 +55,7 @@ from fmpsdk.etf import available_etfs, etf_info
 
 # Import specific functions to avoid namespace conflicts
 from fmpsdk.general import available_indexes, quote
-from fmpsdk.news import news_general, news_crypto
+from fmpsdk.news import news_crypto, news_general
 from fmpsdk.stock_time_series import historical_price_eod_full, quote_short
 
 API_KEY = os.getenv("FMP_API_KEY")

@@ -17,6 +17,7 @@ from .settings import (
     TECHNICAL_INDICATORS_TIME_DELTA_VALUES,
     TIME_DELTA_VALUES,
 )
+
 CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
 
@@ -30,6 +31,7 @@ def __get_base_url(version: str) -> str:
     Get the base URL for the API requests.
     """
     return BASE_URL_V4 if version == "v4" else BASE_URL_STABLE
+
 
 def __return_json(
     path: str, query_vars: typing.Dict, version: str = "stable"

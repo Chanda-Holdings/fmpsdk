@@ -144,9 +144,7 @@ class TestDataTypesAndFormats:
         assert result is not None
 
         # Test news with date range
-        result = news.company_news(
-            apikey=API_KEY, from_date=from_date, to_date=to_date
-        )
+        result = news.company_news(apikey=API_KEY, from_date=from_date, to_date=to_date)
         assert result is not None
 
 
@@ -318,24 +316,26 @@ class TestAdvancedFeatures:
         assert result is not None
 
         # Test with comma-separated string
-        result = news.company_press_releases(apikey=API_KEY, symbols="AAPL,MSFT,GOOGL", limit=10)
+        result = news.company_press_releases(
+            apikey=API_KEY, symbols="AAPL,MSFT,GOOGL", limit=10
+        )
         assert result is not None
 
     def test_news_endpoints_with_dates(self):
         """Test new news endpoints with date parameters."""
         from_date = "2024-01-01"
-        to_date = "2024-01-31"        # Test general news
+        to_date = "2024-01-31"  # Test general news
         result = news.news_general(
             apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
         )
         assert result is not None
-        
+
         # Test crypto news
         result = news.news_crypto(
             apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
         )
         assert result is not None
-        
+
         # Test forex news
         result = news.news_forex(
             apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
@@ -347,6 +347,6 @@ class TestAdvancedFeatures:
         # Test general news pagination
         page_0 = news.news_general(apikey=API_KEY, page=0, limit=5)
         page_1 = news.news_general(apikey=API_KEY, page=1, limit=5)
-        
+
         assert page_0 is not None
         assert page_1 is not None

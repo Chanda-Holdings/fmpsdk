@@ -25,7 +25,7 @@ API_KEY = os.getenv("FMP_API_KEY")
 def test_news_endpoints(func, kwargs):
     """Test news API endpoints with real API calls."""
     from pydantic import RootModel
-    
+
     kwargs["apikey"] = API_KEY
     result = func(**kwargs)
     assert result is not None, f"{func.__name__} returned None"
@@ -78,7 +78,9 @@ def test_news_multiple_symbols():
     assert result is not None
 
     # Test with comma-separated string
-    result = news.company_press_releases(apikey=API_KEY, symbols="AAPL,MSFT,GOOGL", limit=10)
+    result = news.company_press_releases(
+        apikey=API_KEY, symbols="AAPL,MSFT,GOOGL", limit=10
+    )
     assert result is not None
 
 
@@ -94,11 +96,11 @@ def test_new_news_endpoints():
     # Test general news
     result = news.news_general(apikey=API_KEY, limit=5)
     assert result is not None
-    
+
     # Test crypto news
     result = news.news_crypto(apikey=API_KEY, limit=5)
     assert result is not None
-    
+
     # Test forex news
     result = news.news_forex(apikey=API_KEY, limit=5)
     assert result is not None
@@ -108,19 +110,19 @@ def test_new_news_endpoints_with_dates():
     """Test new news endpoints with date parameters."""
     from_date = "2024-01-01"
     to_date = "2024-01-31"
-    
+
     # Test general news with dates
     result = news.news_general(
         apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
     )
     assert result is not None
-    
+
     # Test crypto news with dates
     result = news.news_crypto(
         apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
     )
     assert result is not None
-    
+
     # Test forex news with dates
     result = news.news_forex(
         apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
@@ -133,7 +135,7 @@ def test_new_news_endpoints_with_pagination():
     # Test general news pagination
     result_page_0 = news.news_general(apikey=API_KEY, page=0, limit=5)
     result_page_1 = news.news_general(apikey=API_KEY, page=1, limit=5)
-    
+
     assert result_page_0 is not None
     assert result_page_1 is not None
 
@@ -141,12 +143,16 @@ def test_new_news_endpoints_with_pagination():
 def test_return_type_consistency():
     """Test that all news endpoints return valid responses."""
     from pydantic import RootModel
-    
+
     # Test a few endpoints to ensure they return valid data
     result = news.company_news(apikey=API_KEY, limit=1)
     assert result is not None
-    assert isinstance(result, (list, dict, RootModel)), "Should return valid response data"
-    
+    assert isinstance(
+        result, (list, dict, RootModel)
+    ), "Should return valid response data"
+
     result = news.news_general(apikey=API_KEY, limit=1)
     assert result is not None
-    assert isinstance(result, (list, dict, RootModel)), "Should return valid response data"
+    assert isinstance(
+        result, (list, dict, RootModel)
+    ), "Should return valid response data"
