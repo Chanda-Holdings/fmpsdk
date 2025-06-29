@@ -11,7 +11,7 @@ from .models import (
     FMPFundSectorWeighting,
     FMPSymbolAndNameList,
 )
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -25,7 +25,7 @@ def available_etfs(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
     path = "symbol/available-etfs"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -55,7 +55,7 @@ def etf_info(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundInfo]]:
     """
     path = "etf-info"
     query_vars = {"symbol": symbol, "apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -80,7 +80,7 @@ def etf_holdings(
     """
     path = f"/etf/holdings/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -105,7 +105,7 @@ def etf_asset_exposure(
     """
     path = f"/etf/asset-exposure/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -121,4 +121,4 @@ def etf_sector_weightings(
     """
     path = f"etf/sector-weightings/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)

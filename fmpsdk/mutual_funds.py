@@ -9,7 +9,7 @@ from .models import (
     FMPFundHolder,
     FMPSymbolAndNameList,
 )
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -45,7 +45,7 @@ def funds_disclosure_holders_latest(
     """
     path = f"/funds/disclosure-holders-latest/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -69,7 +69,7 @@ def funds_disclosure(
     """
     path = f"/funds/disclosure/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -93,7 +93,7 @@ def funds_disclosure_holders_search(
     """
     path = f"/funds/disclosure-holders-search/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -117,7 +117,7 @@ def funds_disclosure_dates(
     """
     path = f"/funds/disclosure-dates/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -141,4 +141,4 @@ def mutual_fund_holdings(
     """
     path = f"/mutual-fund-holdings/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

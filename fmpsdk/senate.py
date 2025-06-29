@@ -3,7 +3,7 @@ import typing
 from pydantic import RootModel
 
 from .models import FMPPoliticalTrade
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -26,7 +26,7 @@ def senate_latest(
     """
     path = "/senate-latest"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -48,7 +48,7 @@ def house_latest(
     """
     path = "/house-latest"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -70,7 +70,7 @@ def senate_trades(
     """
     path = "/senate-trades"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -95,7 +95,7 @@ def senate_trades_by_name(
     """
     path = f"/senate-trades-by-name/{name}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -117,7 +117,7 @@ def house_trades(
     """
     path = "/house-trades"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -142,7 +142,7 @@ def house_trades_by_name(
     """
     path = f"/house-trades-by-name/{name}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -167,7 +167,7 @@ def senate_trades_by_symbol(
     """
     path = f"/senate-trades-by-symbol/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -192,4 +192,4 @@ def house_trades_by_symbol(
     """
     path = f"/house-trades-by-symbol/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

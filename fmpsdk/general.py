@@ -22,7 +22,7 @@ from .models import (
     FMPSymbolChange,
     FMPSymbolSearch,
 )
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -37,7 +37,7 @@ def __quotes(apikey: str, value: str) -> typing.Optional[typing.List[typing.Dict
     """
     path = "quote"
     query_vars = {"apikey": apikey, "symbol": value}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -90,7 +90,7 @@ def search_symbol(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -117,7 +117,7 @@ def search_name(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -140,7 +140,7 @@ def search_cik(
     query_vars = {"apikey": apikey, "query": query}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -163,7 +163,7 @@ def search_cusip(
     query_vars = {"apikey": apikey, "query": query}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -186,7 +186,7 @@ def search_isin(
     query_vars = {"apikey": apikey, "query": query}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -205,7 +205,7 @@ def company_screener(
     path = "company-screener"
     query_vars = {"apikey": apikey}
     query_vars.update(filters)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -224,7 +224,7 @@ def search_exchange_variants(
     """
     path = "search-exchange-variants"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -249,7 +249,7 @@ def stock_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -274,7 +274,7 @@ def financial_statement_symbol_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -295,7 +295,7 @@ def cik_list(
     query_vars = {"apikey": apikey}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -320,7 +320,7 @@ def symbol_change(
         query_vars["date"] = date
     if symbol:
         query_vars["symbol"] = symbol
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -345,7 +345,7 @@ def etf_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -370,7 +370,7 @@ def actively_trading_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -395,7 +395,7 @@ def earnings_transcript_list(
         query_vars["symbol"] = symbol
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -412,7 +412,7 @@ def available_exchanges(
     """
     path = "available-exchanges"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -429,7 +429,7 @@ def available_sectors(
     """
     path = "available-sectors"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -446,7 +446,7 @@ def available_industries(
     """
     path = "available-industries"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -463,7 +463,7 @@ def available_countries(
     """
     path = "available-countries"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -480,4 +480,4 @@ def available_indexes(
     """
     path = "index-list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)

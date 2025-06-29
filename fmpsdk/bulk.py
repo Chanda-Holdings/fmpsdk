@@ -23,7 +23,7 @@ from .models import (
     FMPFinancialScores,
     FMPKeyMetrics,
 )
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -48,7 +48,7 @@ def bulk_profiles(apikey: str, part: str) -> RootModel[typing.List[FMPCompanyPro
     """
     path = "profile-bulk"
     query_vars = {"apikey": apikey, "part": part}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -78,7 +78,7 @@ def scores_bulk(
 
     path = "scores-bulk"
     query_vars = {"apikey": apikey, "symbol": ",".join(symbols)}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -115,7 +115,7 @@ def upgrades_downgrades_consensus_bulk(
     if download:
         query_vars["datatype"] = "csv"
 
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -139,7 +139,7 @@ def profile_bulk(
     symbols_str = ",".join(symbols)
     path = f"/profile-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -161,7 +161,7 @@ def rating_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkRati
     symbols_str = ",".join(symbols)
     path = f"/rating-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -183,7 +183,7 @@ def dcf_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkDCF]]:
     symbols_str = ",".join(symbols)
     path = f"/dcf-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -207,7 +207,7 @@ def price_target_summary_bulk(
     symbols_str = ",".join(symbols)
     path = f"/price-target-summary-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -231,7 +231,7 @@ def etf_holder_bulk(
     symbols_str = ",".join(symbols)
     path = f"/etf-holder-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -255,7 +255,7 @@ def key_metrics_ttm_bulk(
     symbols_str = ",".join(symbols)
     path = f"/key-metrics-ttm-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -279,7 +279,7 @@ def ratios_ttm_bulk(
     symbols_str = ",".join(symbols)
     path = f"/ratios-ttm-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -301,7 +301,7 @@ def peers_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkStock
     symbols_str = ",".join(symbols)
     path = f"/peers-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -325,7 +325,7 @@ def earnings_surprises_bulk(
     symbols_str = ",".join(symbols)
     path = f"/earnings-surprises-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -349,7 +349,7 @@ def income_statement_bulk(
     symbols_str = ",".join(symbols)
     path = f"/income-statement-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -373,7 +373,7 @@ def income_statement_growth_bulk(
     symbols_str = ",".join(symbols)
     path = f"/income-statement-growth-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -397,7 +397,7 @@ def balance_sheet_statement_bulk(
     symbols_str = ",".join(symbols)
     path = f"/balance-sheet-statement-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -421,7 +421,7 @@ def balance_sheet_statement_growth_bulk(
     symbols_str = ",".join(symbols)
     path = f"/balance-sheet-statement-growth-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -445,7 +445,7 @@ def cash_flow_statement_bulk(
     symbols_str = ",".join(symbols)
     path = f"/cash-flow-statement-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -469,7 +469,7 @@ def cash_flow_statement_growth_bulk(
     symbols_str = ",".join(symbols)
     path = f"/cash-flow-statement-growth-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -491,4 +491,4 @@ def eod_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkEOD]]:
     symbols_str = ",".join(symbols)
     path = f"/eod-bulk/{symbols_str}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

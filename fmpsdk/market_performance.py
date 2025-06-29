@@ -13,7 +13,7 @@ from .models import (
     FMPSectorPerformanceSnapshot,
     FMPSectorPESnapshot,
 )
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -31,7 +31,7 @@ def sector_performance_snapshot(
     """
     path = "sector-performance-snapshot"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -48,7 +48,7 @@ def industry_performance_snapshot(
     """
     path = "industry-performance-snapshot"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -66,7 +66,7 @@ def historical_sector_performance(
     """
     path = "historical-sector-performance"
     query_vars = {"apikey": apikey, "sector": sector}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -84,7 +84,7 @@ def historical_industry_performance(
     """
     path = "historical-industry-performance"
     query_vars = {"apikey": apikey, "industry": industry}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -101,7 +101,7 @@ def sector_pe_snapshot(
     """
     path = "sector-pe-snapshot"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -118,7 +118,7 @@ def industry_pe_snapshot(
     """
     path = "industry-pe-snapshot"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -136,7 +136,7 @@ def historical_sector_pe(
     """
     path = "historical-sector-pe"
     query_vars = {"apikey": apikey, "sector": sector}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -154,7 +154,7 @@ def historical_industry_pe(
     """
     path = "historical-industry-pe"
     query_vars = {"apikey": apikey, "industry": industry}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -171,7 +171,7 @@ def biggest_gainers(
     """
     path = "biggest-gainers"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -188,7 +188,7 @@ def biggest_losers(
     """
     path = "biggest-losers"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -205,4 +205,4 @@ def most_active_stocks(
     """
     path = "most-actives"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)

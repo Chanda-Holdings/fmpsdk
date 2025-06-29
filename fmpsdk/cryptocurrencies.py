@@ -5,7 +5,7 @@ from pydantic import RootModel
 
 from .general import __quotes
 from .models import FMPBulkEOD, FMPQuoteFull, FMPQuoteShort, FMPSymbolAndNameList
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -21,7 +21,7 @@ def available_cryptocurrencies(
     """
     path = "symbol/available-cryptocurrencies"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -62,7 +62,7 @@ def last_crypto_price(apikey: str, symbol: str) -> typing.Optional[typing.Dict]:
 
     path = f"crypto/last/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -86,7 +86,7 @@ def cryptocurrency_quote(
     """
     path = f"/cryptocurrency-quote/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -110,7 +110,7 @@ def cryptocurrency_quote_short(
     """
     path = f"/cryptocurrency-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -138,7 +138,7 @@ def batch_crypto_quotes(
     else:
         path = "/batch-crypto-quotes"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -151,7 +151,7 @@ def cryptocurrency_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameLi
     """
     path = "cryptocurrency-list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 __all__ = [

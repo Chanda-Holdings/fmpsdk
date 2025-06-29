@@ -13,7 +13,7 @@ from .models import (
     FMPIndustryPerformanceSummary,
 )
 from .settings import DEFAULT_LIMIT
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -34,7 +34,7 @@ def sec_rss_feeds(
     path = "rss_feed"
     query_vars = {"apikey": apikey}
     query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -60,7 +60,7 @@ def institutional_ownership_latest(
     """
     path = "/stable/institutional-ownership/latest"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -89,7 +89,7 @@ def institutional_ownership_extract(
     """
     path = "/stable/institutional-ownership/extract"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -111,7 +111,7 @@ def institutional_ownership_dates(
     """
     path = "/institutional-ownership/dates"
     query_vars = {"apikey": apikey, "cik": cik}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -137,7 +137,7 @@ def institutional_ownership_holder_industry_breakdown(
     """
     path = "/institutional-ownership/holder-industry-breakdown"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -161,7 +161,7 @@ def institutional_ownership_industry_summary(
     """
     path = "/institutional-ownership/industry-summary"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -195,7 +195,7 @@ def institutional_ownership_holdings_portfolio_changes(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -229,7 +229,7 @@ def institutional_ownership_holdings_new_positions(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -263,7 +263,7 @@ def institutional_ownership_holdings_summary(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -297,7 +297,7 @@ def institutional_ownership_holdings_overview(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -337,7 +337,7 @@ def institutional_ownership_holdings_sold_out_positions(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -380,7 +380,7 @@ def institutional_ownership_by_symbol(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -400,7 +400,7 @@ def sec_filings_8k(apikey: str, symbol: str) -> RootModel[typing.List[Any]]:
     """
     path = f"/sec-filings-8k/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -420,7 +420,7 @@ def sec_filings_financials(apikey: str, symbol: str) -> RootModel[typing.List[An
     """
     path = f"/sec-filings-financials/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -442,7 +442,7 @@ def sec_filings_search_form_type(
     """
     path = f"/sec-filings-search/form-type/{form_type}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -462,7 +462,7 @@ def sec_filings_search_symbol(apikey: str, symbol: str) -> RootModel[typing.List
     """
     path = f"/sec-filings-search/symbol/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -484,7 +484,7 @@ def sec_filings_company_search_name(
     """
     path = f"/sec-filings-company-search/name/{name}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -506,7 +506,7 @@ def sec_filings_company_search_symbol(
     """
     path = f"/sec-filings-company-search/symbol/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -528,7 +528,7 @@ def sec_filings_company_search_cik(
     """
     path = f"/sec-filings-company-search/cik/{cik}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -554,4 +554,4 @@ def sec_profile(
     query_vars = {"apikey": apikey}
     if cik:
         query_vars["cik"] = cik
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

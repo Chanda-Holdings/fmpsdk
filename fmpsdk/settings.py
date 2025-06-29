@@ -2,6 +2,7 @@ import typing
 
 FMP_ENDPOINT: str = "https://financialmodelingprep.com/"
 BASE_URL_STABLE: str = "https://financialmodelingprep.com/stable/"
+BASE_URL_V4: str = "https://financialmodelingprep.com/api/v4/"
 DEFAULT_LINE_PARAMETER = "line"
 DEFAULT_LIMIT: int = 0
 INDUSTRY_VALUES: typing.List = [

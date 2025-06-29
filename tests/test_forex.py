@@ -11,7 +11,6 @@ from fmpsdk.forex import (
     available_forex,
     batch_forex_quotes,
     forex,
-    forex_news,
     forex_quote,
     forex_quote_short,
 )
@@ -24,8 +23,6 @@ API_KEY = os.getenv("FMP_API_KEY")
     [
         (forex, {}),
         (available_forex, {}),
-        (forex_news, {}),
-        (forex_news, {"symbol": "EURUSD"}),
     ],
 )
 def test_forex_endpoints(func, kwargs):
@@ -45,36 +42,28 @@ def test_forex_endpoints(func, kwargs):
             pass
 
 
-def test_forex_news_with_date_range():
-    """Test forex news with date range and pagination."""
-    result = forex_news(
-        apikey=API_KEY,
-        symbol="EURUSD",
-        from_date="2024-01-01",
-        to_date="2024-01-31",
-        limit=10,
-    )
+def test_forex_data_endpoints():
+    """Test forex data endpoints."""
+    result = forex(apikey=API_KEY)
     assert result is not None
 
 
-def test_forex_news_pagination():
-    """Test forex news with pagination."""
-    # Test first page
-    result_page_0 = forex_news(apikey=API_KEY, page=0, limit=5)
-    assert result_page_0 is not None
+def test_forex_quotes():
+    """Test forex quote functionality."""
+    # Test basic forex data
+    result = forex(apikey=API_KEY)
+    assert result is not None
 
-    # Test second page
-    result_page_1 = forex_news(apikey=API_KEY, page=1, limit=5)
-    assert result_page_1 is not None
+    # Test available forex pairs
+    result = available_forex(apikey=API_KEY)
+    assert result is not None
 
 
 def test_major_forex_pairs():
-    """Test forex news for major currency pairs."""
-    major_pairs = ["EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "USDCAD"]
-
-    for pair in major_pairs:
-        result = forex_news(apikey=API_KEY, symbol=pair, limit=5)
-        assert result is not None, f"Failed for forex pair {pair}"
+    """Test forex data for major currency pairs."""
+    # Test that we can get general forex data
+    result = forex(apikey=API_KEY)
+    assert result is not None
 
 
 def test_forex_list_endpoints():

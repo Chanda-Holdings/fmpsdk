@@ -3,7 +3,7 @@ import typing
 from pydantic import RootModel
 
 from .models import FMPEconomicIndicator, FMPTreasuryRates
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -34,7 +34,7 @@ def treasury_rates(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -66,4 +66,4 @@ def economic_indicators(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

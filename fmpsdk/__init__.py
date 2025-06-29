@@ -106,21 +106,17 @@ from .company_valuation import (
     levered_discounted_cash_flow,
     market_capitalization,
     market_capitalization_batch,
-    press_releases,
     price_target_consensus,
-    price_target_latest_news,
     price_target_news,
     price_target_summary,
     rating,
     ratings_historical,
     ratings_snapshot,
     sec_filings,
-    social_sentiments,
     stock_grade_latest_news,
     stock_grade_news,
     stock_grades,
     stock_grades_summary,
-    stock_news,
     stock_peers,
     stock_screener,
     symbols_list,
@@ -151,18 +147,12 @@ from .etf import (
     etf_sector_weightings,
 )
 
-# Import all functions from euronext
-from .euronext import (
-    euronext_list,
-)
-
 # Import all functions from forex
 from .forex import (
     available_forex,
     batch_forex_quotes,
     forex,
     forex_list,
-    forex_news,
     forex_quote,
     forex_quote_short,
 )
@@ -270,16 +260,11 @@ from .mutual_funds import (
 # Import all functions from news
 from .news import (
     company_news,
-    company_news_latest,
     company_press_releases,
-    company_press_releases_latest,
-    news_crypto_latest,
+    news_crypto,
     news_forex,
-    news_forex_latest,
-    news_general_latest,
-    news_press_releases,
-    news_press_releases_latest,
-    news_stock_latest,
+    news_general,
+    price_target_latest_news,
 )
 
 # Import all functions from senate
@@ -432,8 +417,6 @@ __all__ = [
     "batch_earning_call_transcript",
     "earning_call_transcripts_available_dates",
     "sec_filings",
-    "press_releases",
-    "social_sentiments",
     "analyst_estimates",
     "ratings_snapshot",
     "ratings_historical",
@@ -558,16 +541,11 @@ __all__ = [
     "mutual_fund_holdings",
     # news
     "company_news",
-    "company_news_latest",
     "company_press_releases",
-    "company_press_releases_latest",
-    "news_general_latest",
-    "news_press_releases_latest",
-    "news_stock_latest",
-    "news_crypto_latest",
-    "news_forex_latest",
-    "news_press_releases",
+    "news_crypto",
     "news_forex",
+    "news_general",
+    "price_target_latest_news",
     # senate
     "senate_latest",
     "house_latest",

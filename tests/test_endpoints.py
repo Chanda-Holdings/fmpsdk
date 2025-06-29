@@ -55,7 +55,7 @@ from fmpsdk.etf import available_etfs, etf_info
 
 # Import specific functions to avoid namespace conflicts
 from fmpsdk.general import available_indexes, quote
-from fmpsdk.news import news_general_latest, news_stock_latest
+from fmpsdk.news import news_general, news_crypto
 from fmpsdk.stock_time_series import historical_price_eod_full, quote_short
 
 API_KEY = os.getenv("FMP_API_KEY")
@@ -102,8 +102,8 @@ class TestAllEndpoints:
     def test_news_endpoints_basic(self):
         """Test basic news endpoints."""
         endpoints_to_test = [
-            (news_general_latest, {}),
-            (news_stock_latest, {}),
+            (news_general, {}),
+            (news_crypto, {}),
         ]
 
         for endpoint_func, params in endpoints_to_test:
@@ -254,7 +254,7 @@ class TestAllEndpoints:
             general_module: ["quote", "available_indexes"],
             stock_time_series_module: ["quote_short", "historical_price_eod_full"],
             company_valuation_module: ["company_profile", "income_statement"],
-            news_module: ["news_general_latest", "news_stock_latest"],
+            news_module: ["news_general", "news_crypto"],
             forex_module: ["available_forex", "forex_quote"],
             cryptocurrencies_module: [
                 "available_cryptocurrencies",

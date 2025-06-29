@@ -35,7 +35,6 @@ from .models import (
     FMPIndustry,
     FMPKeyMetrics,
     FMPMarketCap,
-    FMPPressRelease,
     FMPPriceTargetConsensus,
     FMPPriceTargetNews,
     FMPPriceTargetSummary,
@@ -52,7 +51,7 @@ from .settings import (
 )
 from .url_methods import (
     __return_binary_stable,
-    __return_json_stable,
+    __return_json,
     __validate_industry,
     __validate_period,
     __validate_sector,
@@ -81,7 +80,7 @@ def company_profile(
     """
     path = f"/profile/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -105,7 +104,7 @@ def company_profile_cik(
     """
     path = f"/profile-cik/{cik}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -127,7 +126,7 @@ def stock_peers(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockPeer]
     """
     path = "/stock-peers"
     query_vars = {"symbol": symbol, "apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -151,7 +150,7 @@ def delisted_companies(
     """
     path = "/delisted-companies"
     query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -175,7 +174,7 @@ def employee_count(
     """
     path = f"/employee-count/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -199,7 +198,7 @@ def historical_employee_count(
     """
     path = f"/historical-employee-count/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -227,7 +226,7 @@ def income_statement(
     """
     path = f"/income-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -255,7 +254,7 @@ def balance_sheet_statement(
     """
     path = f"/balance-sheet-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -283,7 +282,7 @@ def cash_flow_statement(
     """
     path = f"/cash-flow-statement/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -314,7 +313,7 @@ def income_statement_as_reported(
     """
     path = f"/income-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -345,7 +344,7 @@ def balance_sheet_statement_as_reported(
     """
     path = f"/balance-sheet-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -376,7 +375,7 @@ def cash_flow_statement_as_reported(
     """
     path = f"/cash-flow-statement-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -404,7 +403,7 @@ def financial_statement_full_as_reported(
     """
     path = f"/financial-statement-full-as-reported/{symbol}"
     query_vars = {"apikey": apikey, "period": period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -426,7 +425,7 @@ def financial_statement_symbol_lists(
     """
     path = "financial-statement-symbol-lists"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -462,7 +461,7 @@ def income_statement_growth(
         "symbol": symbol,
         "period": __validate_period(period),
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -491,7 +490,7 @@ def balance_sheet_statement_growth(
         "apikey": apikey,
         "limit": limit,
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -520,7 +519,7 @@ def cash_flow_statement_growth(
         "apikey": apikey,
         "limit": limit,
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -544,7 +543,7 @@ def financial_ratios_ttm(
     """
     path = f"ratios-ttm/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -580,7 +579,7 @@ def financial_ratios(
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -616,7 +615,7 @@ def enterprise_values(
         "symbol": symbol,
         "period": __validate_period(value=period),
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -644,7 +643,7 @@ def key_metrics_ttm(
     """
     path = f"key-metrics-ttm/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -679,7 +678,7 @@ def key_metrics(
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -714,7 +713,7 @@ def financial_growth(
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -736,7 +735,7 @@ def rating(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockGrade]]:
     """
     path = f"rating/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars=query_vars)
+    return __return_json(path, query_vars=query_vars)
 
 
 @parse_response
@@ -764,7 +763,7 @@ def historical_rating(
     """
     path = f"historical-rating/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_stable(path, query_vars=query_vars)
+    return __return_json(path, query_vars=query_vars)
 
 
 @parse_response
@@ -788,7 +787,7 @@ def discounted_cash_flow(
     """
     path = f"/discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -812,7 +811,7 @@ def levered_discounted_cash_flow(
     """
     path = f"/levered-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -836,7 +835,7 @@ def custom_discounted_cash_flow(
     """
     path = f"/custom-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -860,7 +859,7 @@ def custom_levered_discounted_cash_flow(
     """
     path = f"/custom-levered-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -895,7 +894,7 @@ def historical_discounted_cash_flow(
         "limit": limit,
         "period": __validate_period(value=period),
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -923,7 +922,7 @@ def historical_daily_discounted_cash_flow(
     """
     path = f"historical-daily-discounted-cash-flow/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -947,7 +946,7 @@ def market_capitalization(
     """
     path = f"market-capitalization/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -981,7 +980,7 @@ def historical_market_capitalization(
     """
     path = f"historical-market-capitalization/{symbol}"
     query_vars = {"apikey": apikey, "limit": limit, "from": from_date, "to": to_date}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1001,7 +1000,7 @@ def symbols_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
     path = "stock/list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1021,7 +1020,7 @@ def etf_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
     path = "etf/list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1041,7 +1040,7 @@ def available_traded_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndName
     """
     path = "available-traded/list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1131,42 +1130,7 @@ def stock_screener(
             query_vars["exchange"] = ",".join(exchange)
         else:
             query_vars["exchange"] = exchange
-    return __return_json_stable(path=path, query_vars=query_vars)
-
-
-@parse_response
-def stock_news(
-    apikey: str,
-    tickers: typing.Union[str, typing.List] = "",
-    from_date: str = None,
-    to_date: str = None,
-    page: int = 0,
-    limit: int = DEFAULT_LIMIT,
-) -> RootModel[typing.List[FMPPressRelease]]:
-    """
-    Query FMP /stock_news/ API.
-
-    :param apikey: Your API key.
-    :param tickers: List of ticker symbols.
-    :param from_date: The starting time for the API ("yyyy-mm-dd").
-    :param to_date: The ending time for the API ("yyyy-mm-dd")
-    :param page: Page number.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
-    """
-    path = "stock_news"
-    query_vars = {"apikey": apikey, "limit": limit, "page": page}
-    if tickers:
-        if type(tickers) is list:
-            tickers = ",".join(tickers)
-        query_vars["tickers"] = tickers
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
-
-    return __return_json_stable(path=path, query_vars=query_vars)
-
+    return __return_json(path=path, query_vars=query_vars)
 
 @parse_response
 def earnings_surprises(
@@ -1181,7 +1145,7 @@ def earnings_surprises(
     """
     path = f"earnings-surprises/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1199,7 +1163,7 @@ def earning_call_transcript(
     """
     path = f"earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1216,7 +1180,7 @@ def batch_earning_call_transcript(
     """
     path = f"batch_earning_call_transcript/{symbol}"
     query_vars = {"apikey": apikey, "year": year}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1232,7 +1196,7 @@ def earning_call_transcripts_available_dates(
     """
     path = "earning_call_transcript"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1250,39 +1214,11 @@ def sec_filings(
     """
     path = f"sec_filings/{symbol}"
     query_vars = {"apikey": apikey, "type": filing_type, "limit": limit}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
-def press_releases(
-    apikey: str,
-    symbol: str,
-    from_date: str = None,
-    to_date: str = None,
-    page: int = 0,
-    limit: int = DEFAULT_LIMIT,
-) -> RootModel[typing.List[FMPPressRelease]]:
-    """
-    Query FMP /press-releases/ API.
-
-    :param apikey: Your API key.
-    :param symbol: Company ticker.
-    :param limit: Number of rows to return.
-    :return: A list of dictionaries.
-    """
-    path = f"press-releases/{symbol}"
-    query_vars = {
-        "apikey": apikey,
-        "limit": limit,
-        "from": from_date,
-        "to": to_date,
-        "page": page,
-    }
-    return __return_json_stable(path=path, query_vars=query_vars)
-
-
-@parse_response
-def social_sentiments(
+def social_sentiment(
     apikey: str, symbol: str, page: int = 0
 ) -> RootModel[typing.List[Any]]:
     """
@@ -1295,7 +1231,24 @@ def social_sentiments(
     """
     path = "historical/social-sentiment"
     query_vars = {"apikey": apikey, "symbol": symbol, "page": page}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars, version="v4")
+
+
+@parse_response
+def trending_sentiment(
+    apikey: str, type: str, source: str="stocktwits"
+) -> RootModel[typing.List[Any]]:
+    """
+    Query FMP /social-sentiments/trending API
+
+    :param apikey: Your API key.
+    :param type: 'bearish' or 'bullish'.
+    :param source: Source of the sentiment (e.g., 'stocktwits').
+    :return: A list of dictionaries.
+    """
+    path = "social-sentiments/trending"
+    query_vars = {"apikey": apikey, "type": type, "source": source}
+    return __return_json(path=path, query_vars=query_vars, version="v4")
 
 
 @parse_response
@@ -1317,7 +1270,7 @@ def analyst_estimates(
     query_vars = {"apikey": apikey, "symbol": symbol, "period": period}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1338,7 +1291,7 @@ def ratings_snapshot(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if date:
         query_vars["date"] = date
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1362,7 +1315,7 @@ def ratings_historical(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1380,7 +1333,7 @@ def price_target_summary(
     """
     path = "price-target-summary"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1398,7 +1351,7 @@ def price_target_consensus(
     """
     path = "price-target-consensus"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1419,28 +1372,7 @@ def price_target_news(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
-
-
-@parse_response
-def price_target_latest_news(
-    apikey: str, symbol: str, limit: int = None
-) -> RootModel[typing.List[FMPPressRelease]]:
-    """
-    Get latest price target news using the /stable/price-target-latest-news endpoint.
-
-    Parameters:
-        apikey (str): Your API key.
-        symbol (str): The symbol to get latest price target news for.
-        limit (int, optional): Limit the number of results.
-    Returns:
-        List of dictionaries with latest price target news.
-    """
-    path = "price-target-latest-news"
-    query_vars = {"apikey": apikey, "symbol": symbol}
-    if limit:
-        query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1454,7 +1386,7 @@ def available_industries(apikey: str) -> RootModel[typing.List[FMPIndustry]]:
     """
     path = "available-industries"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1491,7 +1423,7 @@ def upgrades_downgrades_consensus(
 
     path = "upgrades-downgrades-consensus"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1515,7 +1447,7 @@ def esg_disclosures(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGFil
     """
     path = f"/esg-disclosures/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -1539,7 +1471,7 @@ def esg_ratings(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGRating]
     """
     path = f"/esg-ratings/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -1563,7 +1495,7 @@ def esg_benchmark(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGBench
     """
     path = f"/esg-benchmark/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -1582,7 +1514,7 @@ def earnings(
     query_vars = {"apikey": apikey, "limit": limit}
     if symbol:
         query_vars["symbol"] = symbol
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1595,7 +1527,7 @@ def company_notes(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanyN
     """
     path = f"company-notes/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1610,7 +1542,7 @@ def market_capitalization_batch(
     """
     path = f"market-capitalization-batch/{','.join(symbols)}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1631,7 +1563,7 @@ def stock_grades(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1652,7 +1584,7 @@ def historical_stock_grades(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1670,7 +1602,7 @@ def stock_grades_summary(
     """
     path = "grades-consensus"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1691,7 +1623,7 @@ def stock_grade_news(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -1711,7 +1643,7 @@ def stock_grade_latest_news(
     query_vars = {"apikey": apikey}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 def financial_reports_xlsx(

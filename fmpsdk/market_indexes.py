@@ -11,7 +11,7 @@ from .models import FMPExchangeInfo, FMPQuoteShort, FMPSector, FMPSymbolAndNameL
 #     NASDAQ_CONSTITUENTS_FILENAME,
 #     SP500_CONSTITUENTS_FILENAME,
 # )
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -27,7 +27,7 @@ def indexes(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
     path = "quotes/index"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -40,7 +40,7 @@ def available_sectors(apikey: str) -> RootModel[typing.List[FMPSector]]:
     """
     path = "sectors-list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -60,7 +60,7 @@ def all_exchange_market_hours(
     """
     path = "/all-exchange-market-hours"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -80,7 +80,7 @@ def index_list(
     """
     path = "/index-list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -103,4 +103,4 @@ def index_quote_short(
     """
     path = f"/index-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

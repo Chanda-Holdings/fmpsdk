@@ -11,7 +11,7 @@ from .models import (
     FMPEquityOfferingSearch,
     FMPSymbolAndNameList,
 )
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -44,7 +44,7 @@ def commitment_of_traders_report(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -68,7 +68,7 @@ def commitment_of_traders_report_analysis(
     """
     path = f"/commitment-of-traders-analysis/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -90,7 +90,7 @@ def commitment_of_traders_report_list(
     """
     path = "/commitment-of-traders-list"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -112,7 +112,7 @@ def crowdfunding_offerings_latest(
     """
     path = "/crowdfunding-offerings-latest"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -136,7 +136,7 @@ def crowdfunding_offerings_search(
     """
     path = f"/crowdfunding-offerings-search/{query}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -158,7 +158,7 @@ def crowdfunding_offerings(
     """
     path = "/crowdfunding-offerings"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -180,7 +180,7 @@ def fundraising_latest(
     """
     path = "/fundraising-latest"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -204,7 +204,7 @@ def fundraising_search(
     """
     path = f"/fundraising-search/{query}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -226,4 +226,4 @@ def fundraising(
     """
     path = "/fundraising"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

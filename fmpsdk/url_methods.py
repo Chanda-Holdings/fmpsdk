@@ -7,6 +7,7 @@ import requests
 
 from .settings import (
     BASE_URL_STABLE,
+    BASE_URL_V4,
     ECONOMIC_INDICATOR_VALUES,
     INDUSTRY_VALUES,
     PERIOD_VALUES,
@@ -16,7 +17,6 @@ from .settings import (
     TECHNICAL_INDICATORS_TIME_DELTA_VALUES,
     TIME_DELTA_VALUES,
 )
-
 CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
 
@@ -25,8 +25,14 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def __return_json_stable(
-    path: str, query_vars: typing.Dict
+def __get_base_url(version: str) -> str:
+    """
+    Get the base URL for the API requests.
+    """
+    return BASE_URL_V4 if version == "v4" else BASE_URL_STABLE
+
+def __return_json(
+    path: str, query_vars: typing.Dict, version: str = "stable"
 ) -> typing.Optional[typing.List]:
     """
     Query URL for JSON response for stable version of FMP API.
@@ -36,7 +42,8 @@ def __return_json_stable(
     :return: JSON response
     """
 
-    url = f"{BASE_URL_STABLE}{path}"
+    base_url = __get_base_url(version)
+    url = f"{base_url}{path}"
     return_var = None
     try:
         response = requests.get(

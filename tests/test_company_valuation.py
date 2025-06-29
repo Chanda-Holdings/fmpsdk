@@ -52,7 +52,6 @@ API_KEY = os.getenv("FMP_API_KEY")
         (cv.price_target_summary, {"symbol": "AAPL"}),
         (cv.price_target_consensus, {"symbol": "AAPL"}),
         (cv.price_target_news, {"symbol": "AAPL"}),
-        (cv.price_target_latest_news, {"symbol": "AAPL"}),
         (cv.esg_disclosures, {"symbol": "AAPL"}),
         (cv.esg_ratings, {"symbol": "AAPL"}),
         (cv.esg_benchmark, {"symbol": "AAPL"}),
@@ -205,10 +204,6 @@ def test_price_targets():
 
     # Test price target news
     result = cv.price_target_news(apikey=API_KEY, symbol="AAPL", limit=10)
-    assert result is not None
-
-    # Test latest price target news
-    result = cv.price_target_latest_news(apikey=API_KEY, symbol="AAPL", limit=10)
     assert result is not None
 
 

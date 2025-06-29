@@ -883,13 +883,13 @@ class FMPFundDisclosureDate(BaseModel):
 
 class FMPCrowdfundingCampaign(BaseModel):
     cik: str
-    companyName: str
+    companyName: Optional[str] = None
     date: Optional[str] = None
     filingDate: str
     acceptedDate: str
     formType: str
     formSignification: str
-    nameOfIssuer: str
+    nameOfIssuer: Optional[str] = None
     legalStatusForm: Optional[str] = None
     jurisdictionOrganization: Optional[str] = None
     issuerStreet: Optional[str] = None
@@ -1841,7 +1841,7 @@ class FMPAcquisitionOwnership(BaseModel):
     url: str
 
 
-class FMPPressRelease(BaseModel):
+class FMPNewsArticle(BaseModel):
     symbol: Optional[str] = None
     publishedDate: str
     publisher: Optional[str] = None

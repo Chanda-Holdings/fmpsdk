@@ -9,7 +9,7 @@ from .models import (
     FMPInsiderTransactionType,
 )
 from .settings import DEFAULT_LIMIT
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -43,7 +43,7 @@ def insider_trading(
     if transactionType:
         query_vars["transactionType"] = transactionType
 
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -70,7 +70,7 @@ def insider_trading_latest(
     """
     path = "/insider-trading/latest"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -100,7 +100,7 @@ def insider_trading_reporting_name(
     """
     path = f"/insider-trading/reporting-name/{name}"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -130,7 +130,7 @@ def insider_trading_transaction_type(
     """
     path = f"/insider-trading-transaction-type/{transaction_type}"
     query_vars = {"apikey": apikey, "page": page, "limit": limit}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -148,7 +148,7 @@ def insider_trading_statistics(
     query_vars = {"apikey": apikey}
     if symbol:
         query_vars["symbol"] = symbol
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -171,4 +171,4 @@ def acquisition_ownership(
     if symbol:
         query_vars["symbol"] = symbol
 
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)

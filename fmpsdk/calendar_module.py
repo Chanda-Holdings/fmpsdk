@@ -13,7 +13,7 @@ from .models import (
     FMPUpcomingIPO,
 )
 from .url_methods import (  # Correct import for stable request function
-    __return_json_stable,
+    __return_json,
 )
 from .utils import parse_response
 
@@ -48,7 +48,7 @@ def dividends(
         query_vars["to"] = to_date
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -77,7 +77,7 @@ def dividends_calendar(
         query_vars["to"] = to_date
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -106,7 +106,7 @@ def earnings_calendar(
         query_vars["to"] = to_date
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -135,7 +135,7 @@ def ipos_calendar(
         query_vars["to"] = to_date
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -160,7 +160,7 @@ def ipos_disclosure(
         query_vars["symbol"] = symbol
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -185,7 +185,7 @@ def ipos_prospectus(
         query_vars["symbol"] = symbol
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -218,7 +218,7 @@ def splits(
         query_vars["to"] = to_date
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -247,4 +247,4 @@ def splits_calendar(
         query_vars["to"] = to_date
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)

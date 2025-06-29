@@ -4,7 +4,7 @@ from pydantic import RootModel
 
 from .models import FMPTechnicalIndicator
 from .url_methods import (
-    __return_json_stable,
+    __return_json,
     __validate_statistics_type,
 )
 from .utils import parse_response
@@ -34,7 +34,7 @@ def technical_indicators(
         "period": period,
         "type": __validate_statistics_type(statistics_type),
     }
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -64,7 +64,7 @@ def technical_indicators_sma(
     """
     path = f"/technical-indicators/sma/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -94,7 +94,7 @@ def technical_indicators_ema(
     """
     path = f"/technical-indicators/ema/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -124,7 +124,7 @@ def technical_indicators_dema(
     """
     path = f"/technical-indicators/dema/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -154,7 +154,7 @@ def technical_indicators_rsi(
     """
     path = f"/technical-indicators/rsi/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -184,7 +184,7 @@ def technical_indicators_standarddeviation(
     """
     path = f"/technical-indicators/standarddeviation/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -214,7 +214,7 @@ def technical_indicators_williams(
     """
     path = f"/technical-indicators/williams/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -244,4 +244,4 @@ def technical_indicators_adx(
     """
     path = f"/technical-indicators/adx/{symbol}"
     query_vars = {"apikey": apikey, "interval": interval, "time_period": time_period}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

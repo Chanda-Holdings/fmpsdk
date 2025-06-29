@@ -3,7 +3,7 @@ import typing
 from pydantic import RootModel
 
 from .models import FMPAllShareFloat, FMPShareFloat
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -17,7 +17,7 @@ def shares_float(apikey: str, symbol: str) -> RootModel[typing.List[FMPShareFloa
     """
     path = f"shares-float/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -29,4 +29,4 @@ def shares_float_all(apikey: str) -> RootModel[typing.List[FMPAllShareFloat]]:
     """
     path = "shares-float-all"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)

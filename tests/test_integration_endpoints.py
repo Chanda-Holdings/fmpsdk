@@ -12,7 +12,6 @@ import fmpsdk.commodities as commodities
 import fmpsdk.company_valuation as cv
 import fmpsdk.cryptocurrencies as crypto
 import fmpsdk.etf as etf
-import fmpsdk.euronext as euronext
 import fmpsdk.tsx as tsx
 
 
@@ -31,12 +30,11 @@ economic.treasury_rates = treasury_rates
 economic.economic_indicators = economic_indicators
 
 # Import and setup forex
-from fmpsdk.forex import available_forex, forex, forex_news
+from fmpsdk.forex import available_forex, forex
 
 forex_mod = ModuleMock()
 forex_mod.forex = forex
 forex_mod.available_forex = available_forex
-forex_mod.forex_news = forex_news
 
 # Import and setup insider trading
 from fmpsdk.insider_trading import insider_trading, insider_trading_statistics
@@ -82,7 +80,7 @@ class TestCrossModuleIntegration:
         assert quote is not None
 
         # 5. Get news for the company
-        company_news = news.company_news(apikey=API_KEY, symbols="AAPL", limit=5)
+        company_news = news.company_news(apikey=API_KEY, limit=5)
         assert company_news is not None
 
     def test_market_data_consistency(self):
@@ -122,7 +120,7 @@ class TestDataTypesAndFormats:
             (general.search_symbol, {"symbol": "AAPL"}),
             (cv.company_profile, {"symbol": "AAPL"}),
             (sts.quote_short, {"symbol": "AAPL"}),
-            (news.company_news, {"symbols": "AAPL", "limit": 1}),
+            (news.company_news, {"limit": 1}),
             (calendar.earnings_calendar, {"limit": 5}),
         ]
 
@@ -147,7 +145,7 @@ class TestDataTypesAndFormats:
 
         # Test news with date range
         result = news.company_news(
-            apikey=API_KEY, symbols="AAPL", from_date=from_date, to_date=to_date
+            apikey=API_KEY, from_date=from_date, to_date=to_date
         )
         assert result is not None
 
@@ -203,10 +201,6 @@ class TestSpecializedEndpoints:
         available = forex_mod.available_forex(apikey=API_KEY)
         assert available is not None
 
-        # Get forex news
-        forex_news = forex_mod.forex_news(apikey=API_KEY, limit=5)
-        assert forex_news is not None
-
     def test_commodity_endpoints(self):
         """Test commodity-related endpoints."""
         # Get commodity quotes
@@ -259,10 +253,6 @@ class TestSpecializedEndpoints:
         tsx_list = tsx.tsx_list(apikey=API_KEY)
         assert tsx_list is not None
 
-        # Test Euronext
-        euronext_list = euronext.euronext_list(apikey=API_KEY)
-        assert euronext_list is not None
-
 
 class TestBulkOperations:
     """Test bulk operations and list endpoints."""
@@ -302,8 +292,8 @@ class TestAdvancedFeatures:
     def test_pagination_across_endpoints(self):
         """Test pagination functionality across different endpoints."""
         # Test news pagination
-        page_0 = news.company_news(apikey=API_KEY, symbols="AAPL", page=0, limit=5)
-        page_1 = news.company_news(apikey=API_KEY, symbols="AAPL", page=1, limit=5)
+        page_0 = news.company_news(apikey=API_KEY, page=0, limit=5)
+        page_1 = news.company_news(apikey=API_KEY, page=1, limit=5)
 
         assert page_0 is not None
         assert page_1 is not None
@@ -316,17 +306,47 @@ class TestAdvancedFeatures:
             result = calendar.earnings_calendar(apikey=API_KEY, limit=limit)
             assert result is not None
 
-            result = news.company_news_latest(apikey=API_KEY, limit=limit)
+            result = news.company_news(apikey=API_KEY, limit=limit)
             assert result is not None
 
     def test_multiple_symbols_processing(self):
         """Test endpoints that can handle multiple symbols."""
         symbols = ["AAPL", "MSFT", "GOOGL", "AMZN"]
 
-        # Test news with multiple symbols
-        result = news.company_news(apikey=API_KEY, symbols=symbols, limit=10)
+        # Test press releases with multiple symbols (company_news doesn't accept symbols parameter)
+        result = news.company_press_releases(apikey=API_KEY, symbols=symbols, limit=10)
         assert result is not None
 
         # Test with comma-separated string
-        result = news.company_news(apikey=API_KEY, symbols="AAPL,MSFT,GOOGL", limit=10)
+        result = news.company_press_releases(apikey=API_KEY, symbols="AAPL,MSFT,GOOGL", limit=10)
         assert result is not None
+
+    def test_news_endpoints_with_dates(self):
+        """Test new news endpoints with date parameters."""
+        from_date = "2024-01-01"
+        to_date = "2024-01-31"        # Test general news
+        result = news.news_general(
+            apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
+        )
+        assert result is not None
+        
+        # Test crypto news
+        result = news.news_crypto(
+            apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
+        )
+        assert result is not None
+        
+        # Test forex news
+        result = news.news_forex(
+            apikey=API_KEY, from_date=from_date, to_date=to_date, limit=5
+        )
+        assert result is not None
+
+    def test_news_pagination_new_functions(self):
+        """Test pagination with new news functions."""
+        # Test general news pagination
+        page_0 = news.news_general(apikey=API_KEY, page=0, limit=5)
+        page_1 = news.news_general(apikey=API_KEY, page=1, limit=5)
+        
+        assert page_0 is not None
+        assert page_1 is not None

@@ -3,7 +3,7 @@ import typing
 from pydantic import RootModel
 
 from .models import FMPBulkEOD, FMPQuoteFull, FMPQuoteShort
-from .url_methods import __return_json_stable
+from .url_methods import __return_json
 from .utils import parse_response
 
 
@@ -27,7 +27,7 @@ def commodities_quote(
     """
     path = f"/commodities-quote/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -50,7 +50,7 @@ def commodities_quote_short(
     """
     path = f"/commodities-quote-short/{symbol}"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)
 
 
 @parse_response
@@ -76,4 +76,4 @@ def batch_commodity_quotes(
     else:
         path = "/batch-commodity-quotes"
     query_vars = {"apikey": apikey}
-    return __return_json_stable(path, query_vars)
+    return __return_json(path, query_vars)

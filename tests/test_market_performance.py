@@ -12,7 +12,7 @@ class TestMarketPerformance:
     def mock_api_key(self):
         return "test_api_key"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_sector_performance_snapshot(self, mock_return_json, mock_api_key):
         """Test sector performance snapshot endpoint."""
         # Mock the return value
@@ -33,7 +33,7 @@ class TestMarketPerformance:
         assert len(result.root) == 1
         assert result.root[0].sector == "Technology"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_industry_performance_snapshot(self, mock_return_json, mock_api_key):
         """Test industry performance snapshot endpoint."""
         mock_return_json.return_value = [
@@ -55,7 +55,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].industry == "Software"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_historical_sector_performance(self, mock_return_json, mock_api_key):
         """Test historical sector performance endpoint."""
         mock_return_json.return_value = [
@@ -75,7 +75,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].sector == "Technology"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_historical_industry_performance(self, mock_return_json, mock_api_key):
         """Test historical industry performance endpoint."""
         mock_return_json.return_value = [
@@ -95,7 +95,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].industry == "Software"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_sector_pe_snapshot(self, mock_return_json, mock_api_key):
         """Test sector PE snapshot endpoint."""
         mock_return_json.return_value = [
@@ -112,7 +112,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].pe == 25.5
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_industry_pe_snapshot(self, mock_return_json, mock_api_key):
         """Test industry PE snapshot endpoint."""
         mock_return_json.return_value = [
@@ -129,7 +129,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].industry == "Software"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_historical_sector_pe(self, mock_return_json, mock_api_key):
         """Test historical sector PE endpoint."""
         mock_return_json.return_value = [
@@ -152,7 +152,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].sector == "Technology"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_historical_industry_pe(self, mock_return_json, mock_api_key):
         """Test historical industry PE endpoint."""
         mock_return_json.return_value = [
@@ -175,7 +175,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].industry == "Software"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_biggest_gainers(self, mock_return_json, mock_api_key):
         """Test biggest gainers endpoint."""
         mock_return_json.return_value = [
@@ -198,7 +198,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].symbol == "AAPL"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_biggest_losers(self, mock_return_json, mock_api_key):
         """Test biggest losers endpoint."""
         mock_return_json.return_value = [
@@ -221,7 +221,7 @@ class TestMarketPerformance:
         assert isinstance(result.root, list)
         assert result.root[0].symbol == "TSLA"
 
-    @patch("fmpsdk.market_performance.__return_json_stable")
+    @patch("fmpsdk.market_performance.__return_json")
     def test_most_active_stocks(self, mock_return_json, mock_api_key):
         """Test most active stocks endpoint."""
         mock_return_json.return_value = [
