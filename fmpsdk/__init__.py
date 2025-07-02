@@ -113,6 +113,7 @@ from .company_valuation import (
     ratings_historical,
     ratings_snapshot,
     sec_filings,
+    social_sentiment,
     stock_grade_latest_news,
     stock_grade_news,
     stock_grades,
@@ -120,6 +121,7 @@ from .company_valuation import (
     stock_peers,
     stock_screener,
     symbols_list,
+    trending_sentiment,
     upgrades_downgrades_consensus,
 )
 
@@ -417,6 +419,8 @@ __all__ = [
     "batch_earning_call_transcript",
     "earning_call_transcripts_available_dates",
     "sec_filings",
+    "social_sentiment",
+    "trending_sentiment",
     "analyst_estimates",
     "ratings_snapshot",
     "ratings_historical",

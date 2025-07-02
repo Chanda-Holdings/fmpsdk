@@ -63,6 +63,8 @@ API_KEY = os.getenv("FMP_API_KEY")
         (cv.stock_grades_summary, {"symbol": "AAPL"}),
         (cv.stock_grade_news, {"symbol": "AAPL"}),
         (cv.stock_grade_latest_news, {}),
+        (cv.social_sentiment, {"symbol": "AAPL"}),
+        (cv.trending_sentiment, {"type": "bullish"}),
         (cv.financial_reports_xlsx, {"symbol": "AAPL", "year": 2023}),
     ],
 )
@@ -315,3 +317,21 @@ def test_different_company_types():
         # Test market cap
         result = cv.market_capitalization(apikey=API_KEY, symbol=symbol)
         assert result is not None, f"Market cap failed for {symbol}"
+
+
+def test_social_sentiment_endpoints():
+    """Test social sentiment and trending sentiment endpoints."""
+    # Test social sentiment for a specific symbol
+    result = cv.social_sentiment(apikey=API_KEY, symbol="AAPL", page=0)
+    assert result is not None
+
+    # Test trending sentiment with different types
+    result = cv.trending_sentiment(apikey=API_KEY, type="bullish")
+    assert result is not None
+
+    result = cv.trending_sentiment(apikey=API_KEY, type="bearish")
+    assert result is not None
+
+    # Test trending sentiment with different sources
+    result = cv.trending_sentiment(apikey=API_KEY, type="bullish", source="stocktwits")
+    assert result is not None

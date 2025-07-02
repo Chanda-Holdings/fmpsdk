@@ -20,6 +20,7 @@ API_KEY = os.getenv("FMP_API_KEY")
         (news.news_general, {}),  # Updated function name
         (news.news_crypto, {}),  # Updated function name
         (news.news_forex, {}),  # Updated function name
+        (news.price_target_latest_news, {"symbol": "AAPL"}),
     ],
 )
 def test_news_endpoints(func, kwargs):
@@ -156,3 +157,19 @@ def test_return_type_consistency():
     assert isinstance(
         result, (list, dict, RootModel)
     ), "Should return valid response data"
+
+
+def test_price_target_latest_news():
+    """Test price target latest news endpoint."""
+    # Test basic functionality
+    result = news.price_target_latest_news(apikey=API_KEY, symbol="AAPL")
+    assert result is not None
+
+    # Test with limit parameter
+    result = news.price_target_latest_news(apikey=API_KEY, symbol="AAPL", limit=5)
+    assert result is not None
+
+    # Test with different symbols
+    for symbol in ["MSFT", "GOOGL", "TSLA"]:
+        result = news.price_target_latest_news(apikey=API_KEY, symbol=symbol, limit=3)
+        assert result is not None

@@ -209,6 +209,8 @@ ENDPOINT_MODEL_MAP = {
     "company_profile": RootModel[List[FMPCompanyProfile]],
     "company_profile_cik": RootModel[List[FMPCompanyProfile]],
     "company_notes": RootModel[List[FMPCompanyNote]],
+    "social_sentiment": RootModel[List[Any]],
+    "trending_sentiment": RootModel[List[Any]],
     "stock_peers": RootModel[List[FMPStockPeer]],
     "delisted_companies": RootModel[List[FMPDelistedCompany]],
     "employee_count": RootModel[List[FMPEmployeeCount]],

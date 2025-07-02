@@ -43,7 +43,7 @@ class FMPIsinSearch(BaseModel):
     symbol: str
     name: str
     isin: str
-    marketCap: int
+    marketCap: float
 
 
 class FMPStockScreenerResult(BaseModel):
@@ -105,7 +105,7 @@ class FMPCompanyProfile(BaseModel):
 
 class FMPSymbolAndCompanyNameList(BaseModel):
     symbol: str
-    companyName: str
+    companyName: Optional[str] = None
 
 
 class FMPSymbolAndNameList(BaseModel):
