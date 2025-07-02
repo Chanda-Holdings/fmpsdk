@@ -192,7 +192,7 @@ from .general import (
 # Import all functions from insider_trading
 from .insider_trading import (
     acquisition_ownership,
-    insider_trading,
+    insider_trading_search,
     insider_trading_latest,
     insider_trading_reporting_name,
     insider_trading_statistics,
@@ -491,7 +491,7 @@ __all__ = [
     "search_ticker",
     "search",
     # insider_trading
-    "insider_trading",
+    "insider_trading_search",
     "insider_trading_latest",
     "insider_trading_reporting_name",
     "insider_trading_transaction_type",

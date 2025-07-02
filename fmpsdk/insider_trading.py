@@ -14,7 +14,7 @@ from .utils import parse_response
 
 
 @parse_response
-def insider_trading(
+def insider_trading_search(
     apikey: str,
     symbol: str = None,
     reportingCik: str = None,

@@ -37,10 +37,10 @@ forex_module.available_forex = available_forex
 forex_module.forex_quote = forex_quote
 
 # Import all the insider_trading functions and attach them to our mock
-from fmpsdk.insider_trading import insider_trading, insider_trading_latest
+from fmpsdk.insider_trading import insider_trading_search, insider_trading_latest
 
 insider_trading_module = ModuleMock()
-insider_trading_module.insider_trading = insider_trading
+insider_trading_module.insider_trading_search = insider_trading_search
 insider_trading_module.insider_trading_latest = insider_trading_latest
 
 # Import all the economic_indicators functions and attach them to our mock
@@ -151,7 +151,7 @@ class TestAllEndpoints:
         """Test basic insider trading endpoints."""
         endpoints_to_test = [
             (insider_trading_latest, {}),
-            (insider_trading, {"symbol": "AAPL"}),
+            (insider_trading_search, {"symbol": "AAPL"}),
         ]
 
         for endpoint_func, params in endpoints_to_test:
@@ -261,7 +261,7 @@ class TestAllEndpoints:
                 "cryptocurrency_quote",
             ],
             etf_module: ["available_etfs", "etf_info"],
-            insider_trading_module: ["insider_trading", "insider_trading_latest"],
+            insider_trading_module: ["insider_trading_search", "insider_trading_latest"],
             calendar_module: ["earnings_calendar", "ipos_calendar"],
             economic_indicators_module: ["treasury_rates"],
         }

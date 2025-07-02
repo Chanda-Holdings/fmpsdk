@@ -10,7 +10,7 @@ import pytest
 from pydantic import BaseModel
 
 from fmpsdk.insider_trading import (
-    insider_trading,
+    insider_trading_search,
     insider_trading_latest,
     insider_trading_reporting_name,
     insider_trading_statistics,
@@ -26,7 +26,7 @@ class TestInsiderTradingEndpoints:
     @pytest.mark.parametrize("symbol", ["AAPL", "MSFT", "GOOGL", "TSLA"])
     def test_insider_trading_multiple_symbols(self, symbol):
         """Test insider trading data for multiple symbols."""
-        result = insider_trading(apikey=API_KEY, symbol=symbol)
+        result = insider_trading_search(apikey=API_KEY, symbol=symbol)
         assert result is not None
         if hasattr(result, "__iter__"):
             trades = list(result)
@@ -74,7 +74,7 @@ class TestInsiderTradingEndpoints:
 
     def test_insider_trading_data_validation(self):
         """Test that insider trading data contains expected fields."""
-        result = insider_trading(apikey=API_KEY, symbol="AAPL")
+        result = insider_trading_search(apikey=API_KEY, symbol="AAPL")
         assert result is not None
         if hasattr(result, "__iter__"):
             trades = list(result)
@@ -101,7 +101,7 @@ class TestInsiderTradingEndpoints:
     )
     def test_insider_trading_volume_expectations(self, symbol, min_expected_trades):
         """Test insider trading volume for active companies."""
-        result = insider_trading(apikey=API_KEY, symbol=symbol)
+        result = insider_trading_search(apikey=API_KEY, symbol=symbol)
         assert result is not None
         if hasattr(result, "__iter__"):
             trades = list(result)
@@ -112,7 +112,7 @@ class TestInsiderTradingEndpoints:
         symbol = "AAPL"
 
         # Get insider trades
-        trades_result = insider_trading(apikey=API_KEY, symbol=symbol)
+        trades_result = insider_trading_search(apikey=API_KEY, symbol=symbol)
         assert trades_result is not None
 
         # Get insider statistics

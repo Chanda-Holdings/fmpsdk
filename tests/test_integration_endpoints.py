@@ -37,10 +37,10 @@ forex_mod.forex = forex
 forex_mod.available_forex = available_forex
 
 # Import and setup insider trading
-from fmpsdk.insider_trading import insider_trading, insider_trading_statistics
+from fmpsdk.insider_trading import insider_trading_search, insider_trading_statistics
 
 insider_mod = ModuleMock()
-insider_mod.insider_trading = insider_trading
+insider_mod.insider_trading_search = insider_trading_search
 insider_mod.insider_trading_statistics = insider_trading_statistics
 
 # Import all modules
@@ -228,7 +228,7 @@ class TestSpecializedEndpoints:
     def test_insider_trading_endpoints(self):
         """Test insider trading endpoints."""
         # Get latest insider trading
-        trading = insider_mod.insider_trading(apikey=API_KEY, symbol="AAPL", limit=10)
+        trading = insider_mod.insider_trading_search(apikey=API_KEY, symbol="AAPL", limit=10)
         assert trading is not None
 
         # Get insider trading statistics

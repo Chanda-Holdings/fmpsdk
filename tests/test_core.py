@@ -5,12 +5,11 @@ Requires a valid FMP API key set as the environment variable FMP_API_KEY.
 
 import os
 
-import pytest
 from pydantic import BaseModel
 
 import fmpsdk
 from fmpsdk import settings
-from fmpsdk.utils import iterate_over_pages, parse_response
+from fmpsdk.utils import parse_response
 
 API_KEY = os.getenv("FMP_API_KEY")
 
@@ -66,7 +65,7 @@ class TestCoreFunctionality:
             "cryptocurrencies",
             "etf",
             "insider_trading",
-            "calendar_module",  # Updated from 'calendar'
+            "calendar_module",
             "economic_indicators",
         ]
 
