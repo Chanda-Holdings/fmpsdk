@@ -2,50 +2,21 @@ import typing
 
 from pydantic import RootModel
 
-from .general import __quotes
 from .models import (
-    FMPBulkEOD,
     FMPFundAssetExposure,
+    FMPFundCountryAllocation,
     FMPFundHolding,
     FMPFundInfo,
     FMPFundSectorWeighting,
-    FMPSymbolAndNameList,
 )
 from .url_methods import __return_json
 from .utils import parse_response
 
 
 @parse_response
-def available_etfs(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
-    """
-    Query FMP /symbol/available-etfs/ API
-
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
-    """
-    path = "symbol/available-etfs"
-    query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
-
-
-@parse_response
-def etf_price_realtime(apikey: str) -> RootModel[typing.List[FMPBulkEOD]]:
-    """
-    Query FMP /quotes/etf/ API
-
-    All Real-time ETF Prices.
-
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
-    """
-    path = "etf"
-    return __quotes(apikey=apikey, value=path)
-
-
-@parse_response
 def etf_info(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundInfo]]:
     """
-    Query FMP /etf-info/ API
+    Query FMP /etf/info/ API
 
     All Real-time ETF Prices.
 
@@ -53,8 +24,8 @@ def etf_info(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundInfo]]:
     :param symbol: ETF ticker.
     :return: A list of dictionaries.
     """
-    path = "etf-info"
-    query_vars = {"symbol": symbol, "apikey": apikey}
+    path = "etf/info"
+    query_vars = {"apikey": apikey, "symbol": symbol}
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -78,8 +49,8 @@ def etf_holdings(
     list
         List of ETF holdings.
     """
-    path = f"/etf/holdings/{symbol}"
-    query_vars = {"apikey": apikey}
+    path = "etf/holdings"
+    query_vars = {"apikey": apikey, "symbol": symbol}
     return __return_json(path, query_vars)
 
 
@@ -103,9 +74,25 @@ def etf_asset_exposure(
     list
         List of ETF asset exposure data.
     """
-    path = f"/etf/asset-exposure/{symbol}"
-    query_vars = {"apikey": apikey}
+    path = "etf/asset-exposure"
+    query_vars = {"apikey": apikey, "symbol": symbol}
     return __return_json(path, query_vars)
+
+
+@parse_response
+def etf_country_weightings(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPFundCountryAllocation]]:
+    """
+    Query FMP /etf/country-weightings endpoint.
+
+    :param apikey: Your API key.
+    :param symbol: ETF ticker symbol.
+    :return: List of country weightings for the ETF.
+    """
+    path = "etf/country-weightings"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
@@ -119,6 +106,6 @@ def etf_sector_weightings(
     :param symbol: ETF ticker symbol.
     :return: List of sector weightings for the ETF.
     """
-    path = f"etf/sector-weightings/{symbol}"
-    query_vars = {"apikey": apikey}
+    path = "etf/sector-weightings"
+    query_vars = {"apikey": apikey, "symbol": symbol}
     return __return_json(path=path, query_vars=query_vars)

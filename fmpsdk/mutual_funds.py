@@ -2,7 +2,6 @@ import typing
 
 from pydantic import RootModel
 
-from .general import __quotes
 from .models import (
     FMPFundDisclosure,
     FMPFundDisclosureDate,
@@ -11,17 +10,6 @@ from .models import (
 )
 from .url_methods import __return_json
 from .utils import parse_response
-
-
-def mutual_fund_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
-    """
-    Query FMP /quotes/mutual_fund/ API
-
-    :param apikey: Your API key.
-    :return: A list of dictionaries.
-    """
-    path = "mutual_fund"
-    return __quotes(apikey=apikey, value=path)
 
 
 @parse_response
@@ -43,14 +31,14 @@ def funds_disclosure_holders_latest(
     list
         List of latest fund disclosure holders.
     """
-    path = f"/funds/disclosure-holders-latest/{symbol}"
-    query_vars = {"apikey": apikey}
+    path = "funds/disclosure-holders-latest"
+    query_vars = {"apikey": apikey, "symbol": symbol}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def funds_disclosure(
-    apikey: str, symbol: str
+    apikey: str, symbol: str, year: str, quarter: str, cik: str = None
 ) -> RootModel[typing.List[FMPFundDisclosure]]:
     """
     Get fund disclosure for a given symbol.
@@ -61,44 +49,52 @@ def funds_disclosure(
         Your FMP API key.
     symbol : str
         Fund ticker symbol.
+    year : str
+        The year for which to retrieve fund disclosure data (e.g., '2023').
+    quarter : str
+        The quarter for which to retrieve fund disclosure data (e.g., 'Q1').
+    cik : str, optional
+        The CIK number for the fund.
 
     Returns
     -------
     list
         List of fund disclosure data.
     """
-    path = f"/funds/disclosure/{symbol}"
-    query_vars = {"apikey": apikey}
+    path = "funds/disclosure"
+    query_vars = {"apikey": apikey, "symbol": symbol, "year": year, "quarter": quarter}
+    if cik:
+        query_vars["cik"] = cik
     return __return_json(path, query_vars)
 
 
 @parse_response
 def funds_disclosure_holders_search(
-    apikey: str, symbol: str
+    apikey: str, name: str
 ) -> RootModel[typing.List[FMPFundHolder]]:
     """
-    Search fund disclosure holders for a given symbol.
+    Search fund disclosure holders for a given name.
 
     Parameters
     ----------
     apikey : str
         Your FMP API key.
-    symbol : str
-        Fund ticker symbol.
+    name : str
+        Fund or entity name.
 
     Returns
     -------
     list
         List of fund disclosure holders search results.
     """
-    path = f"/funds/disclosure-holders-search/{symbol}"
-    query_vars = {"apikey": apikey}
+    path = "funds/disclosure-holders-search"
+    query_vars = {"apikey": apikey, "name": name}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def funds_disclosure_dates(
-    apikey: str, symbol: str
+    apikey: str, symbol: str, cik: str = None
 ) -> RootModel[typing.List[FMPFundDisclosureDate]]:
     """
     Get fund disclosure dates for a given symbol.
@@ -109,36 +105,16 @@ def funds_disclosure_dates(
         Your FMP API key.
     symbol : str
         Fund ticker symbol.
+    cik : str, optional
+        The CIK number for the fund.
 
     Returns
     -------
     list
         List of fund disclosure dates.
     """
-    path = f"/funds/disclosure-dates/{symbol}"
-    query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
-
-
-@parse_response
-def mutual_fund_holdings(
-    apikey: str, symbol: str
-) -> RootModel[typing.List[FMPFundHolder]]:
-    """
-    Get mutual fund holdings for a given symbol.
-
-    Parameters
-    ----------
-    apikey : str
-        Your FMP API key.
-    symbol : str
-        Mutual fund ticker symbol.
-
-    Returns
-    -------
-    list
-        List of mutual fund holdings.
-    """
-    path = f"/mutual-fund-holdings/{symbol}"
-    query_vars = {"apikey": apikey}
+    path = "funds/disclosure-dates"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if cik:
+        query_vars["cik"] = cik
     return __return_json(path, query_vars)

@@ -21,9 +21,7 @@ from .utils import parse_response
 @parse_response
 def dividends(
     apikey: str,
-    symbol: str = None,
-    from_date: str = None,
-    to_date: str = None,
+    symbol: str,
     limit: int = None,
 ) -> RootModel[typing.List[FMPDividend]]:
     """
@@ -31,21 +29,13 @@ def dividends(
 
     Parameters:
         apikey (str): Your API key.
-        symbol (str, optional): The symbol to get dividends for.
-        from_date (str, optional): Start date (YYYY-MM-DD).
-        to_date (str, optional): End date (YYYY-MM-DD).
+        symbol (str): The symbol to get dividends for.
         limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with dividends.
     """
     path = "dividends"
-    query_vars = {"apikey": apikey}
-    if symbol:
-        query_vars["symbol"] = symbol
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
+    query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
@@ -56,7 +46,6 @@ def dividends_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPDividendCalendarEvent]]:
     """
     Get dividends calendar using the /stable/dividends-calendar endpoint.
@@ -65,7 +54,6 @@ def dividends_calendar(
         apikey (str): Your API key.
         from_date (str, optional): Start date (YYYY-MM-DD).
         to_date (str, optional): End date (YYYY-MM-DD).
-        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with dividends calendar.
     """
@@ -75,8 +63,6 @@ def dividends_calendar(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -85,7 +71,6 @@ def earnings_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPEarningsCalendarEvent]]:
     """
     Get earnings calendar using the /stable/earnings-calendar endpoint.
@@ -94,7 +79,6 @@ def earnings_calendar(
         apikey (str): Your API key.
         from_date (str, optional): Start date (YYYY-MM-DD).
         to_date (str, optional): End date (YYYY-MM-DD).
-        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with earnings calendar.
     """
@@ -104,8 +88,6 @@ def earnings_calendar(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -114,7 +96,6 @@ def ipos_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPUpcomingIPO]]:
     """
     Get IPOs calendar using the /stable/ipos-calendar endpoint.
@@ -123,7 +104,6 @@ def ipos_calendar(
         apikey (str): Your API key.
         from_date (str, optional): Start date (YYYY-MM-DD).
         to_date (str, optional): End date (YYYY-MM-DD).
-        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with IPOs calendar.
     """
@@ -133,8 +113,6 @@ def ipos_calendar(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -142,7 +120,6 @@ def ipos_calendar(
 def ipos_disclosure(
     apikey: str,
     symbol: str = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPDisclosureFiling]]:
     """
     Get IPOs disclosure using the /stable/ipos-disclosure endpoint.
@@ -150,7 +127,6 @@ def ipos_disclosure(
     Parameters:
         apikey (str): Your API key.
         symbol (str, optional): The symbol to get IPO disclosure for.
-        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with IPOs disclosure.
     """
@@ -158,8 +134,6 @@ def ipos_disclosure(
     query_vars = {"apikey": apikey}
     if symbol:
         query_vars["symbol"] = symbol
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -167,7 +141,6 @@ def ipos_disclosure(
 def ipos_prospectus(
     apikey: str,
     symbol: str = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPProspectusFiling]]:
     """
     Get IPOs prospectus using the /stable/ipos-prospectus endpoint.
@@ -175,7 +148,6 @@ def ipos_prospectus(
     Parameters:
         apikey (str): Your API key.
         symbol (str, optional): The symbol to get IPO prospectus for.
-        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with IPOs prospectus.
     """
@@ -183,8 +155,6 @@ def ipos_prospectus(
     query_vars = {"apikey": apikey}
     if symbol:
         query_vars["symbol"] = symbol
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -192,8 +162,6 @@ def ipos_prospectus(
 def splits(
     apikey: str,
     symbol: str = None,
-    from_date: str = None,
-    to_date: str = None,
     limit: int = None,
 ) -> RootModel[typing.List[FMPStockSplit]]:
     """
@@ -202,8 +170,6 @@ def splits(
     Parameters:
         apikey (str): Your API key.
         symbol (str, optional): The symbol to get splits for.
-        from_date (str, optional): Start date (YYYY-MM-DD).
-        to_date (str, optional): End date (YYYY-MM-DD).
         limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with splits.
@@ -212,10 +178,6 @@ def splits(
     query_vars = {"apikey": apikey}
     if symbol:
         query_vars["symbol"] = symbol
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
     if limit:
         query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
@@ -226,7 +188,6 @@ def splits_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPStockSplitCalendarEvent]]:
     """
     Get splits calendar using the /stable/splits-calendar endpoint.
@@ -235,7 +196,6 @@ def splits_calendar(
         apikey (str): Your API key.
         from_date (str, optional): Start date (YYYY-MM-DD).
         to_date (str, optional): End date (YYYY-MM-DD).
-        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with splits calendar.
     """
@@ -245,6 +205,4 @@ def splits_calendar(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)

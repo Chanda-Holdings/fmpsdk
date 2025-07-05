@@ -84,8 +84,6 @@ def scores_bulk(
 @parse_response
 def upgrades_downgrades_consensus_bulk(
     apikey: str,
-    limit: typing.Optional[int] = None,
-    download: bool = False,
 ) -> RootModel[typing.List[FMPBulkUpgradeDowngradeConsensus]]:
     """
     Get bulk data for upgrades and downgrades consensus.
@@ -97,10 +95,7 @@ def upgrades_downgrades_consensus_bulk(
     ----------
     apikey : str
         Your API key.
-    limit : int, optional
-        Number of rows to return.
-    download : bool, optional
-        If True, returns data in CSV format.
+
     Returns
     -------
     FmpCompanySymbolsListResponse
@@ -108,12 +103,6 @@ def upgrades_downgrades_consensus_bulk(
     """
     path = "upgrades-downgrades-consensus-bulk"
     query_vars = {"apikey": apikey}
-
-    if limit is not None:
-        query_vars["limit"] = str(limit)
-
-    if download:
-        query_vars["datatype"] = "csv"
 
     return __return_json(path=path, query_vars=query_vars)
 
@@ -137,8 +126,8 @@ def profile_bulk(
         List of company profiles as Pydantic models.
     """
     symbols_str = ",".join(symbols)
-    path = f"/profile-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = "profile-bulk"
+    query_vars = {"apikey": apikey, "symbols": symbols_str}
     return __return_json(path, query_vars)
 
 
@@ -159,8 +148,8 @@ def rating_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkRati
         List of ratings as Pydantic models.
     """
     symbols_str = ",".join(symbols)
-    path = f"/rating-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = "rating-bulk"
+    query_vars = {"apikey": apikey, "symbols": symbols_str}
     return __return_json(path, query_vars)
 
 
@@ -181,39 +170,35 @@ def dcf_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkDCF]]:
         List of discounted cash flow data as Pydantic models.
     """
     symbols_str = ",".join(symbols)
-    path = f"/dcf-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = "dcf-bulk"
+    query_vars = {"apikey": apikey, "symbols": symbols_str}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def price_target_summary_bulk(
-    apikey: str, symbols: list
+    apikey: str,
 ) -> RootModel[typing.List[FMPBulkPriceTargetSummary]]:
     """
-    Get bulk price target summary for a list of symbols.
+    Get bulk price target summary.
 
     Parameters
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of price target summaries as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/price-target-summary-bulk/{symbols_str}"
+    path = "price-target-summary-bulk"
     query_vars = {"apikey": apikey}
     return __return_json(path, query_vars)
 
 
 @parse_response
-def etf_holder_bulk(
-    apikey: str, symbols: list
-) -> RootModel[typing.List[FMPBulkETFHolder]]:
+def etf_holder_bulk(apikey: str, part: str) -> RootModel[typing.List[FMPBulkETFHolder]]:
     """
     Get bulk ETF holders for a list of symbols.
 
@@ -221,23 +206,20 @@ def etf_holder_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ETF ticker symbols.
+    part : str
+        Part of the ETF to retrieve (e.g., 'holdings', 'performance').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of ETF holders as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/etf-holder-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"etf-holder-bulk"
+    query_vars = {"apikey": apikey, "part": part}
     return __return_json(path, query_vars)
 
 
 @parse_response
-def key_metrics_ttm_bulk(
-    apikey: str, symbols: list
-) -> RootModel[typing.List[FMPKeyMetrics]]:
+def key_metrics_ttm_bulk(apikey: str) -> RootModel[typing.List[FMPKeyMetrics]]:
     """
     Get bulk key metrics TTM for a list of symbols.
 
@@ -245,23 +227,18 @@ def key_metrics_ttm_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of key metrics TTM data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/key-metrics-ttm-bulk/{symbols_str}"
+    path = "key-metrics-ttm-bulk"
     query_vars = {"apikey": apikey}
     return __return_json(path, query_vars)
 
 
 @parse_response
-def ratios_ttm_bulk(
-    apikey: str, symbols: list
-) -> RootModel[typing.List[FMPFinancialRatios]]:
+def ratios_ttm_bulk(apikey: str) -> RootModel[typing.List[FMPFinancialRatios]]:
     """
     Get bulk ratios TTM for a list of symbols.
 
@@ -269,21 +246,19 @@ def ratios_ttm_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of ratios TTM data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/ratios-ttm-bulk/{symbols_str}"
+    path = "ratios-ttm-bulk"
     query_vars = {"apikey": apikey}
     return __return_json(path, query_vars)
 
 
 @parse_response
-def peers_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkStockPeers]]:
+def peers_bulk(apikey: str) -> RootModel[typing.List[FMPBulkStockPeers]]:
     """
     Get bulk peers for a list of symbols.
 
@@ -291,22 +266,20 @@ def peers_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkStock
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of peers data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/peers-bulk/{symbols_str}"
+    path = "peers-bulk"
     query_vars = {"apikey": apikey}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def earnings_surprises_bulk(
-    apikey: str, symbols: list
+    apikey: str, year: str
 ) -> RootModel[typing.List[FMPBulkEarningsSurprise]]:
     """
     Get bulk earnings surprises for a list of symbols.
@@ -315,22 +288,21 @@ def earnings_surprises_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    year : str
+        The year for which to retrieve earnings surprises.
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of earnings surprises data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/earnings-surprises-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"earnings-surprises-bulk"
+    query_vars = {"apikey": apikey, "year": year}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def income_statement_bulk(
-    apikey: str, symbols: list
+    apikey: str, year: str, period: str
 ) -> RootModel[typing.List[FMPBulkIncomeStatement]]:
     """
     Get bulk income statements for a list of symbols.
@@ -339,22 +311,23 @@ def income_statement_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    year : str
+        The year for which to retrieve income statements.
+    period : str
+        The period for which to retrieve income statements (e.g., 'FY', 'Q1', 'Q2').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of income statements as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/income-statement-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"income-statement-bulk"
+    query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def income_statement_growth_bulk(
-    apikey: str, symbols: list
+    apikey: str, year: str, period: str
 ) -> RootModel[typing.List[FMPBulkIncomeStatementGrowth]]:
     """
     Get bulk income statement growth for a list of symbols.
@@ -363,22 +336,23 @@ def income_statement_growth_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    year : str
+        The year for which to retrieve income statement growth.
+    period : str
+        The period for which to retrieve income statement growth (e.g., 'FY', 'Q1', 'Q2').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of income statement growth data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/income-statement-growth-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"income-statement-growth-bulk"
+    query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def balance_sheet_statement_bulk(
-    apikey: str, symbols: list
+    apikey: str, year: str, period: str
 ) -> RootModel[typing.List[FMPBulkBalanceSheetStatement]]:
     """
     Get bulk balance sheet statements for a list of symbols.
@@ -387,22 +361,23 @@ def balance_sheet_statement_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    year : str
+        The year for which to retrieve balance sheet statements.
+    period : str
+        The period for which to retrieve balance sheet statements (e.g., 'FY', 'Q1', 'Q2').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of balance sheet statements as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/balance-sheet-statement-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"balance-sheet-statement-bulk"
+    query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def balance_sheet_statement_growth_bulk(
-    apikey: str, symbols: list
+    apikey: str, year: str, period: str
 ) -> RootModel[typing.List[FMPBulkBalanceSheetGrowth]]:
     """
     Get bulk balance sheet statement growth for a list of symbols.
@@ -411,22 +386,23 @@ def balance_sheet_statement_growth_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    year : str
+        The year for which to retrieve balance sheet statement growth.
+    period : str
+        The period for which to retrieve balance sheet statement growth (e.g., 'FY', 'Q1', 'Q2').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of balance sheet statement growth data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/balance-sheet-statement-growth-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"balance-sheet-statement-growth-bulk"
+    query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def cash_flow_statement_bulk(
-    apikey: str, symbols: list
+    apikey: str, year: str, period: str
 ) -> RootModel[typing.List[FMPBulkCashFlowStatement]]:
     """
     Get bulk cash flow statements for a list of symbols.
@@ -435,22 +411,23 @@ def cash_flow_statement_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    year : str
+        The year for which to retrieve cash flow statements.
+    period : str
+        The period for which to retrieve cash flow statements (e.g., 'FY', 'Q1', 'Q2').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of cash flow statements as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/cash-flow-statement-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"cash-flow-statement-bulk"
+    query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)
 
 
 @parse_response
 def cash_flow_statement_growth_bulk(
-    apikey: str, symbols: list
+    apikey: str, year: str, period: str
 ) -> RootModel[typing.List[FMPBulkCashFlowGrowth]]:
     """
     Get bulk cash flow statement growth for a list of symbols.
@@ -459,21 +436,22 @@ def cash_flow_statement_growth_bulk(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    year : str
+        The year for which to retrieve cash flow statement growth.
+    period : str
+        The period for which to retrieve cash flow statement growth (e.g., 'FY', 'Q1', 'Q2').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of cash flow statement growth data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/cash-flow-statement-growth-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"cash-flow-statement-growth-bulk"
+    query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)
 
 
 @parse_response
-def eod_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkEOD]]:
+def eod_bulk(apikey: str, date: str) -> RootModel[typing.List[FMPBulkEOD]]:
     """
     Get bulk end-of-day (EOD) data for a list of symbols.
 
@@ -481,14 +459,13 @@ def eod_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkEOD]]:
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
-        List of ticker symbols.
+    date : str
+        The date for which to retrieve EOD data (format: 'YYYY-MM-DD').
     Returns
     -------
     FmpCompanySymbolsListResponse
         List of EOD data as Pydantic models.
     """
-    symbols_str = ",".join(symbols)
-    path = f"/eod-bulk/{symbols_str}"
-    query_vars = {"apikey": apikey}
+    path = f"eod-bulk"
+    query_vars = {"apikey": apikey, "date": date}
     return __return_json(path, query_vars)

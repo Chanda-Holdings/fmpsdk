@@ -2,19 +2,19 @@ import typing
 
 from pydantic import RootModel
 
-from .models import FMPForexPair
+from .models import FMPSymbolAndNameList
 from .url_methods import __return_json
 from .utils import parse_response
 
 
 @parse_response
-def forex_list(apikey: str) -> RootModel[typing.List[FMPForexPair]]:
+def cryptocurrency_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
     """
-    Query FMP /forex-list/ API
+    Query FMP /cryptocurrency-list endpoint.
 
     :param apikey: Your API key.
-    :return: A list of dictionaries.
+    :return: List of all cryptocurrencies.
     """
-    path = "forex-list"
+    path = "cryptocurrency-list"
     query_vars = {"apikey": apikey}
     return __return_json(path=path, query_vars=query_vars)
