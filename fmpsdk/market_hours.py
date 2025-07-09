@@ -27,7 +27,7 @@ def exchange_market_hours(
     """
     path = "exchange-market-hours"
     query_vars = {"apikey": apikey, "exchange": exchange}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -61,7 +61,7 @@ def holidays_by_exchange(
     if to_date:
         query_vars["to"] = to_date
 
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -81,4 +81,4 @@ def all_exchange_market_hours(
     """
     path = "all-exchange-market-hours"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

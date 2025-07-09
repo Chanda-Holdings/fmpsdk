@@ -17,4 +17,4 @@ def forex_list(apikey: str) -> RootModel[typing.List[FMPForexPair]]:
     """
     path = "forex-list"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

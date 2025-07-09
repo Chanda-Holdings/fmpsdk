@@ -1079,16 +1079,25 @@ class FMPFullFinancialReport(BaseModel):
         raw: Dict[str, Union[str, List[Dict[str, List[Union[str, int, float, None]]]]]],
     ):
         fixed_fields = {
-            "symbol": raw.get("symbol"),
-            "period": raw.get("period"),
-            "year": raw.get("year"),
+            "symbol": str(raw.get("symbol", "")),
+            "period": str(raw.get("period", "")) if raw.get("period") else None,
+            "year": str(raw.get("year", "")) if raw.get("year") else None,
         }
-        sections = {
-            k: FinancialSection([FinancialSectionEntry(entry) for entry in v])
-            for k, v in raw.items()
-            if k not in {"symbol", "period", "year"}
-        }
-        return cls(**fixed_fields, sections=sections)
+
+        # Create instance with fixed fields
+        instance = cls(**fixed_fields)
+
+        # Add sections as dynamic attributes
+        for k, v in raw.items():
+            if k not in {"symbol", "period", "year"} and isinstance(v, list):
+                # Process each entry in the list
+                section_entries = []
+                for entry in v:
+                    if isinstance(entry, dict):
+                        section_entries.append(FinancialSectionEntry(entry))
+                setattr(instance, k, FinancialSection(section_entries))
+
+        return instance
 
 
 # class FMPFullFinancialReport(BaseModel):

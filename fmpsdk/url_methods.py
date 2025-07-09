@@ -26,7 +26,7 @@ def __get_base_url(version: str) -> str:
 
 def __return_json(
     path: str, query_vars: typing.Dict, version: str = "stable"
-) -> typing.Optional[typing.List]:
+) -> typing.Optional[typing.List[typing.Any]]:
     """
     Query URL for JSON response for stable version of FMP API.
 
@@ -60,16 +60,16 @@ def __return_json(
                         logging.error(
                             f"{error_msg}\nURL: {url}\nQuery variables: {query_vars}"
                         )
-                        return error_json  # Return the error response as JSON
+                        return error_json  # type: ignore[no-any-return]
                     except json.JSONDecodeError:
                         pass
                 except UnicodeDecodeError:
-                    error_msg += f": {response.content}"
+                    error_msg += f": {response.content!r}"
 
             logging.error(f"{error_msg}\nURL: {url}\nQuery variables: {query_vars}")
 
             # Return a generic error message dict
-            return {
+            return {  # type: ignore[no-any-return]
                 "Error Message": f"API request failed with status code {response.status_code}"
             }
 
@@ -115,7 +115,7 @@ def __return_json(
             f"URL: {url}\n"
             f"Query variables: {query_vars}\n"
             f"Response status code: {response.status_code if response else 'No response'}\n"
-            f"Response content: {response.content if response else 'No response'}\n"
+            f"Response content: {repr(response.content) if response else 'No response'}\n"
             f"Response text: {response.text if response else 'No response text'}"
         )
     return return_var

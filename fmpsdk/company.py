@@ -42,7 +42,7 @@ def company_profile(
     """
     path = "profile"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -66,7 +66,7 @@ def company_profile_cik(
     """
     path = f"profile-cik"
     query_vars = {"apikey": apikey, "cik": cik}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -79,7 +79,7 @@ def company_notes(apikey: str, symbol: str) -> RootModel[typing.List[FMPCompanyN
     """
     path = "company-notes"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -101,7 +101,7 @@ def stock_peers(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockPeer]
     """
     path = "stock-peers"
     query_vars = {"symbol": symbol, "apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -131,7 +131,7 @@ def delisted_companies(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -159,7 +159,7 @@ def employee_count(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -187,7 +187,7 @@ def historical_employee_count(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -211,7 +211,7 @@ def market_capitalization(
     """
     path = "market-capitalization"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -226,7 +226,7 @@ def market_capitalization_batch(
     """
     path = "market-capitalization-batch"
     query_vars = {"apikey": apikey, "symbols": ",".join(symbols)}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -266,7 +266,7 @@ def historical_market_capitalization(
         query_vars["from"] = from_date
     if to_date is not None:
         query_vars["to"] = to_date
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -279,7 +279,7 @@ def shares_float(apikey: str, symbol: str) -> RootModel[typing.List[FMPShareFloa
     """
     path = "shares-float"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -299,7 +299,7 @@ def shares_float_all(
         query_vars["limit"] = str(limit)
     if page is not None:
         query_vars["page"] = str(page)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -329,7 +329,7 @@ def mergers_acquisitions(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -353,7 +353,7 @@ def mergers_acquisitions_search(
     """
     path = "mergers-acquisitions-latest"
     query_vars = {"apikey": apikey, "name": name}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -381,7 +381,7 @@ def key_executives(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if active is not None:
         query_vars["active"] = str(active)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -405,7 +405,7 @@ def key_executives_compensation(
     """
     path = "governance-executive-compensation"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -431,4 +431,4 @@ def executive_compensation_benchmark(
     query_vars = {"apikey": apikey}
     if year is not None:
         query_vars["year"] = year
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

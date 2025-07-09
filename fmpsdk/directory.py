@@ -40,7 +40,7 @@ def stock_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -65,7 +65,7 @@ def financial_statement_symbol_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -86,7 +86,7 @@ def cik_list(
     query_vars = {"apikey": apikey}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -111,7 +111,7 @@ def symbol_change(
         query_vars["date"] = date
     if symbol:
         query_vars["symbol"] = symbol
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -136,7 +136,7 @@ def etf_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -161,7 +161,7 @@ def actively_trading_list(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -186,7 +186,7 @@ def earnings_transcript_list(
         query_vars["symbol"] = symbol
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -203,7 +203,7 @@ def available_exchanges(
     """
     path = "available-exchanges"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -220,7 +220,7 @@ def available_sectors(
     """
     path = "available-sectors"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -237,7 +237,7 @@ def available_industries(
     """
     path = "available-industries"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -254,7 +254,7 @@ def available_countries(
     """
     path = "available-countries"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -271,4 +271,4 @@ def available_indexes(
     """
     path = "index-list"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

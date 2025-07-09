@@ -32,7 +32,7 @@ def funds_disclosure_holders_latest(
     """
     path = "funds/disclosure-holders-latest"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -64,7 +64,7 @@ def funds_disclosure(
     query_vars = {"apikey": apikey, "symbol": symbol, "year": year, "quarter": quarter}
     if cik:
         query_vars["cik"] = cik
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -88,7 +88,7 @@ def funds_disclosure_holders_search(
     """
     path = "funds/disclosure-holders-search"
     query_vars = {"apikey": apikey, "name": name}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -116,4 +116,4 @@ def funds_disclosure_dates(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if cik:
         query_vars["cik"] = cik
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

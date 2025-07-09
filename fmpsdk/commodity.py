@@ -17,4 +17,4 @@ def commodity_list(apikey: str) -> RootModel[typing.List[FMPCommodity]]:
     """
     path = "commodities-list"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

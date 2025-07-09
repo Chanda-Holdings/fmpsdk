@@ -29,7 +29,7 @@ def sec_rss_feeds(
     path = "rss_feed"
     query_vars = {"apikey": apikey}
     query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -61,7 +61,7 @@ def sec_filings_8k(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -93,7 +93,7 @@ def sec_filings_financials(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -137,7 +137,7 @@ def sec_filings_search_form_type(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -182,7 +182,7 @@ def sec_filings_search_symbol(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -227,7 +227,7 @@ def sec_filings_search_cik(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -272,7 +272,7 @@ def sec_filings_company_search_name(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -317,7 +317,7 @@ def sec_filings_company_search_symbol(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -340,7 +340,7 @@ def sec_filings_company_search_cik(
     """
     path = f"sec-filings-company-search/cik"
     query_vars = {"apikey": apikey, "cik": cik}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -366,7 +366,7 @@ def sec_profile(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if cik_A:
         query_vars["cik-A"] = cik_A
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -395,7 +395,7 @@ def industry_classification_list(
         query_vars["industry_title"] = industry_title
     if sic_code:
         query_vars["sic_code"] = sic_code
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -428,7 +428,7 @@ def industry_classification_search(
         query_vars["cik"] = cik
     if sicCode:
         query_vars["sicCode"] = sicCode
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -457,4 +457,4 @@ def industry_classification_all(
         query_vars["page"] = str(page)
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

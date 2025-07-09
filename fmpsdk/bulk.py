@@ -48,7 +48,7 @@ def bulk_profiles(apikey: str, part: str) -> RootModel[typing.List[FMPCompanyPro
     """
     path = "profile-bulk"
     query_vars = {"apikey": apikey, "part": part}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -78,7 +78,7 @@ def scores_bulk(
 
     path = "scores-bulk"
     query_vars = {"apikey": apikey, "symbol": ",".join(symbols)}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -104,7 +104,7 @@ def upgrades_downgrades_consensus_bulk(
     path = "upgrades-downgrades-consensus-bulk"
     query_vars = {"apikey": apikey}
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -128,7 +128,7 @@ def profile_bulk(
     symbols_str = ",".join(symbols)
     path = "profile-bulk"
     query_vars = {"apikey": apikey, "symbols": symbols_str}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -150,7 +150,7 @@ def rating_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkRati
     symbols_str = ",".join(symbols)
     path = "rating-bulk"
     query_vars = {"apikey": apikey, "symbols": symbols_str}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -172,7 +172,7 @@ def dcf_bulk(apikey: str, symbols: list) -> RootModel[typing.List[FMPBulkDCF]]:
     symbols_str = ",".join(symbols)
     path = "dcf-bulk"
     query_vars = {"apikey": apikey, "symbols": symbols_str}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -194,7 +194,7 @@ def price_target_summary_bulk(
     """
     path = "price-target-summary-bulk"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -215,7 +215,7 @@ def etf_holder_bulk(apikey: str, part: str) -> RootModel[typing.List[FMPBulkETFH
     """
     path = f"etf-holder-bulk"
     query_vars = {"apikey": apikey, "part": part}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -234,7 +234,7 @@ def key_metrics_ttm_bulk(apikey: str) -> RootModel[typing.List[FMPKeyMetricsTTM]
     """
     path = "key-metrics-ttm-bulk"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -254,7 +254,7 @@ def ratios_ttm_bulk(apikey: str) -> RootModel[typing.List[FMPFinancialRatios]]:
     """
     path = "ratios-ttm-bulk"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -274,7 +274,7 @@ def peers_bulk(apikey: str) -> RootModel[typing.List[FMPBulkStockPeers]]:
     """
     path = "peers-bulk"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -297,7 +297,7 @@ def earnings_surprises_bulk(
     """
     path = f"earnings-surprises-bulk"
     query_vars = {"apikey": apikey, "year": year}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -322,7 +322,7 @@ def income_statement_bulk(
     """
     path = f"income-statement-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -347,7 +347,7 @@ def income_statement_growth_bulk(
     """
     path = f"income-statement-growth-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -372,7 +372,7 @@ def balance_sheet_statement_bulk(
     """
     path = f"balance-sheet-statement-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -397,7 +397,7 @@ def balance_sheet_statement_growth_bulk(
     """
     path = f"balance-sheet-statement-growth-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -422,7 +422,7 @@ def cash_flow_statement_bulk(
     """
     path = f"cash-flow-statement-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -447,7 +447,7 @@ def cash_flow_statement_growth_bulk(
     """
     path = f"cash-flow-statement-growth-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -468,4 +468,4 @@ def eod_bulk(apikey: str, date: str) -> RootModel[typing.List[FMPBulkEOD]]:
     """
     path = f"eod-bulk"
     query_vars = {"apikey": apikey, "date": date}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

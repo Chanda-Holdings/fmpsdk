@@ -32,7 +32,7 @@ def esg_disclosures(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGFil
     """
     path = "esg-disclosures"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -54,7 +54,7 @@ def esg_ratings(apikey: str, symbol: str) -> RootModel[typing.List[FMPESGRating]
     """
     path = "esg-ratings"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -80,4 +80,4 @@ def esg_benchmark(
     query_vars = {"apikey": apikey}
     if year:
         query_vars["year"] = year
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

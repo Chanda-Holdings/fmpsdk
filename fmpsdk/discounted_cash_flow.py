@@ -26,7 +26,7 @@ def discounted_cash_flow_valuation(
     """
     path = "discounted-cash-flow"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -45,7 +45,7 @@ def discounted_cash_flow_levered(
     """
     path = "levered-discounted-cash-flow"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -143,7 +143,7 @@ def discounted_cash_flow_custom(
         query_vars["beta"] = str(beta)
     if risk_free_rate is not None:
         query_vars["riskFreeRate"] = str(risk_free_rate)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -241,4 +241,4 @@ def discounted_cash_flow_custom_levered(
         query_vars["beta"] = str(beta)
     if risk_free_rate is not None:
         query_vars["riskFreeRate"] = str(risk_free_rate)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

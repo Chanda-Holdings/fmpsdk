@@ -57,7 +57,7 @@ def income_statement(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -89,7 +89,7 @@ def balance_sheet_statement(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -121,7 +121,7 @@ def cash_flow_statement(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -152,7 +152,7 @@ def financial_statements_latest(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars=query_vars)
+    return __return_json(path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -179,7 +179,7 @@ def income_statement_ttm(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars=query_vars)
+    return __return_json(path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -206,7 +206,7 @@ def balance_sheet_statements_ttm(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars=query_vars)
+    return __return_json(path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -233,7 +233,7 @@ def cashflow_statements_ttm(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars=query_vars)
+    return __return_json(path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -268,7 +268,7 @@ def key_metrics(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -303,7 +303,7 @@ def financial_ratios(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -327,7 +327,7 @@ def key_metrics_ttm(
     """
     path = "key-metrics-ttm"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -352,7 +352,7 @@ def financial_ratios_ttm(
     """
     path = "ratios-ttm"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -377,7 +377,7 @@ def financial_scores(
     """
     path = "financial-scores"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -405,7 +405,7 @@ def owner_earnings(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -437,7 +437,7 @@ def enterprise_values(
         query_vars["limit"] = str(limit)
     if period is not None:
         query_vars["period"] = period
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -472,7 +472,7 @@ def income_statement_growth(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -505,7 +505,7 @@ def balance_sheet_statement_growth(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -538,7 +538,7 @@ def cash_flow_statement_growth(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -573,7 +573,7 @@ def financial_growth(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -598,7 +598,7 @@ def financial_reports_dates(
     """
     path = "financial-reports-dates"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -626,10 +626,12 @@ def financial_reports_json(
     """
     path = "financial-reports-json"
     query_vars = {"apikey": apikey, "symbol": symbol, "year": year, "period": period}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
-def financial_reports_xlsx(apikey: str, symbol: str, year: int, period: str) -> bytes:
+def financial_reports_xlsx(
+    apikey: str, symbol: str, year: int, period: str
+) -> typing.Optional[bytes]:
     """
     Get financial reports in XLSX format using the /stable/financial-reports-xlsx endpoint.
 
@@ -648,7 +650,7 @@ def financial_reports_xlsx(apikey: str, symbol: str, year: int, period: str) -> 
         "year": str(year),
         "period": period,
     }
-    return __return_binary_stable(path=path, query_vars=query_vars)
+    return __return_binary_stable(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -680,7 +682,7 @@ def revenue_product_segmentation(
         query_vars["period"] = period
     if structure is not None:
         query_vars["structure"] = structure
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -712,7 +714,7 @@ def revenue_geographic_segmentation(
         query_vars["period"] = period
     if structure is not None:
         query_vars["structure"] = structure
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -747,7 +749,7 @@ def income_statement_as_reported(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -782,7 +784,7 @@ def balance_sheet_statement_as_reported(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -817,7 +819,7 @@ def cash_flow_statement_as_reported(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -852,4 +854,4 @@ def financial_statement_full_as_reported(
         query_vars["period"] = period
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

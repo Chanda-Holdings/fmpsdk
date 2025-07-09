@@ -34,7 +34,7 @@ def senate_latest(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -64,7 +64,7 @@ def house_latest(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -89,7 +89,7 @@ def senate_trades(
     """
     path = "senate-trades"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -114,7 +114,7 @@ def senate_trades_by_name(
     """
     path = f"senate-trades-by-name"
     query_vars = {"apikey": apikey, "name": name}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -136,7 +136,7 @@ def house_trades(apikey: str, symbol: str) -> RootModel[typing.List[FMPPolitical
     """
     path = "house-trades"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -161,4 +161,4 @@ def house_trades_by_name(
     """
     path = f"house-trades-by-name"
     query_vars = {"apikey": apikey, "name": name}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

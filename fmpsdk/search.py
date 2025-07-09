@@ -39,7 +39,7 @@ def search_symbol(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -66,7 +66,7 @@ def search_name(
         query_vars["exchange"] = exchange
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -89,7 +89,7 @@ def search_cik(
     query_vars = {"apikey": apikey, "cik": query}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -108,7 +108,7 @@ def search_cusip(
     """
     path = "search-cusip"
     query_vars = {"apikey": apikey, "cusip": cusip}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -128,7 +128,7 @@ def search_isin(
     path = "search-isin"
     query_vars = {"apikey": apikey, "isin": isin}
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -203,7 +203,7 @@ def company_screener(
         query_vars["limit"] = str(limit)
     if include_all_share_classes is not None:
         query_vars["includeAllShareClasses"] = str(include_all_share_classes).lower()
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -222,4 +222,4 @@ def search_exchange_variants(
     """
     path = "search-exchange-variants"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

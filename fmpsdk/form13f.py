@@ -38,7 +38,7 @@ def institutional_ownership_latest(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -67,7 +67,7 @@ def institutional_ownership_extract(
     """
     path = "institutional-ownership/extract"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -89,7 +89,7 @@ def institutional_ownership_dates(
     """
     path = "institutional-ownership/dates"
     query_vars = {"apikey": apikey, "cik": cik}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -128,7 +128,7 @@ def institutional_ownership_extract_analytics_by_holder(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -154,7 +154,7 @@ def institutional_ownership_holder_performance_summary(
     query_vars = {"apikey": apikey, "cik": cik}
     if page is not None:
         query_vars["page"] = str(page)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -180,7 +180,7 @@ def institutional_ownership_holder_industry_breakdown(
     """
     path = "institutional-ownership/holder-industry-breakdown"
     query_vars = {"apikey": apikey, "cik": cik, "year": year, "quarter": quarter}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -206,7 +206,7 @@ def institutional_ownership_positions_summary(
     """
     path = "institutional-ownership/symbol-positions-summary"
     query_vars = {"apikey": apikey, "symbol": symbol, "year": year, "quarter": quarter}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -230,4 +230,4 @@ def institutional_ownership_industry_summary(
     """
     path = "institutional-ownership/industry-summary"
     query_vars = {"apikey": apikey, "year": year, "quarter": quarter}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

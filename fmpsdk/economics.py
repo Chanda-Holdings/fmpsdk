@@ -39,7 +39,7 @@ def treasury_rates(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -71,7 +71,7 @@ def economic_indicators(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -101,7 +101,7 @@ def economic_calendar(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -121,4 +121,4 @@ def market_risk_premium(apikey: str) -> RootModel[typing.List[FMPMarketRiskPremi
     """
     path = "market-risk-premium"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

@@ -42,7 +42,7 @@ def commitment_of_traders_report(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -76,7 +76,7 @@ def commitment_of_traders_report_analysis(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -98,4 +98,4 @@ def commitment_of_traders_report_list(
     """
     path = "commitment-of-traders-list"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

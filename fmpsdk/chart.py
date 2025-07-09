@@ -29,7 +29,7 @@ def historical_price_eod_light(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -51,7 +51,7 @@ def historical_price_eod(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -72,7 +72,7 @@ def historical_price_eod_non_split_adjusted(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -93,7 +93,7 @@ def historical_price_eod_dividend_adjusted(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -124,4 +124,4 @@ def historical_chart(
         )
     path = f"historical-chart/{interval}"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

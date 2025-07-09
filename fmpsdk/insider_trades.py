@@ -46,7 +46,7 @@ def insider_trading(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -83,7 +83,7 @@ def insider_trading_latest(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -104,7 +104,7 @@ def insider_trading_reporting_name(apikey: str, name: str) -> RootModel[typing.A
     """
     path = f"insider-trading/reporting-name"
     query_vars = {"apikey": apikey, "name": name}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -125,7 +125,7 @@ def insider_trading_transaction_type(
     """
     path = f"insider-trading-transaction-type"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -142,7 +142,7 @@ def insider_trading_statistics(
     path = "insider-trading/statistics"
     query_vars = {"apikey": apikey, "symbol": symbol}
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -164,4 +164,4 @@ def acquisition_ownership(
     if page is not None:
         query_vars["page"] = str(page)
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

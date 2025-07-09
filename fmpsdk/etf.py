@@ -26,7 +26,7 @@ def etf_info(apikey: str, symbol: str) -> RootModel[typing.List[FMPFundInfo]]:
     """
     path = "etf/info"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -51,7 +51,7 @@ def etf_holdings(
     """
     path = "etf/holdings"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -76,7 +76,7 @@ def etf_asset_exposure(
     """
     path = "etf/asset-exposure"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -92,7 +92,7 @@ def etf_country_weightings(
     """
     path = "etf/country-weightings"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -108,4 +108,4 @@ def etf_sector_weightings(
     """
     path = "etf/sector-weightings"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

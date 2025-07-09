@@ -33,7 +33,7 @@ def quote(
     """
     path = "quote"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -56,7 +56,7 @@ def quote_short(
     """
     path = "quote-short"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -79,7 +79,7 @@ def aftermarket_trade(
     """
     path = "aftermarket-trade"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -102,7 +102,7 @@ def aftermarket_quote(
     """
     path = "aftermarket-quote"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -127,7 +127,7 @@ def stock_price_change(
     """
     path = "stock-price-change"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -152,7 +152,7 @@ def stock_batch_quote(
     """
     path = "batch-quote"
     query_vars = {"apikey": apikey, "symbols": ",".join(symbols)}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -177,7 +177,7 @@ def batch_quote_short(
     """
     path = "batch-quote-short"
     query_vars = {"apikey": apikey, "symbols": ",".join(symbols)}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -202,7 +202,7 @@ def batch_aftermarket_trade(
     """
     path = "batch-aftermarket-trade"
     query_vars = {"apikey": apikey, "symbols": ",".join(symbols)}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -227,7 +227,7 @@ def batch_aftermarket_quote(
     """
     path = "batch-aftermarket-quote"
     query_vars = {"apikey": apikey, "symbols": ",".join(symbols)}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -252,7 +252,7 @@ def batch_exchange_quote(
     """
     path = "batch-exchange-quote"
     query_vars = {"apikey": apikey, "symbols": ",".join(symbols)}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -273,7 +273,7 @@ def batch_mutual_fund_quote(
     query_vars = {"apikey": apikey}
     if short is not None:
         query_vars["short"] = str(short).lower()
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -294,7 +294,7 @@ def batch_etf_quote(
     query_vars = {"apikey": apikey}
     if short is not None:
         query_vars["short"] = str(short).lower()
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -315,7 +315,7 @@ def batch_commodity_quote(
     query_vars = {"apikey": apikey}
     if short is not None:
         query_vars["short"] = str(short).lower()
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -336,7 +336,7 @@ def batch_crypto_quote(
     query_vars = {"apikey": apikey}
     if short is not None:
         query_vars["short"] = str(short).lower()
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -357,7 +357,7 @@ def batch_forex_quote(
     query_vars = {"apikey": apikey}
     if short is not None:
         query_vars["short"] = str(short).lower()
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -378,4 +378,4 @@ def batch_index_quote(
     query_vars = {"apikey": apikey}
     if short is not None:
         query_vars["short"] = str(short).lower()
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

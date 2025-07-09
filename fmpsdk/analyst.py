@@ -37,7 +37,7 @@ def analyst_estimates(
         query_vars["limit"] = str(limit)
     if page is not None:
         query_vars["page"] = str(page)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -58,7 +58,7 @@ def ratings_snapshot(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -82,7 +82,7 @@ def ratings_historical(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -100,7 +100,7 @@ def price_target_summary(
     """
     path = "price-target-summary"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -118,7 +118,7 @@ def price_target_consensus(
     """
     path = "price-target-consensus"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -134,7 +134,7 @@ def stock_grades(apikey: str, symbol: str) -> RootModel[typing.List[FMPStockGrad
     """
     path = "grades"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -155,7 +155,7 @@ def historical_stock_grades(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -173,4 +173,4 @@ def stock_grades_summary(
     """
     path = "grades-consensus"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

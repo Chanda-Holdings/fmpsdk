@@ -29,7 +29,7 @@ def index_list(
     """
     path = "index-list"
     query_vars = {"apikey": apikey}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -42,7 +42,7 @@ def available_sectors(apikey: str) -> RootModel[typing.List[FMPSector]]:
     """
     path = "sectors-list"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -64,7 +64,7 @@ def index_constituents(
 
     path = f"{index}-constituent"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -85,4 +85,4 @@ def index_constituents_historical(
 
     path = f"historical-{index}-constituent"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

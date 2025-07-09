@@ -36,7 +36,7 @@ def news_stock_latest(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -68,7 +68,7 @@ def company_press_releases_latest(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -110,7 +110,7 @@ def news_general_latest(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -153,7 +153,7 @@ def news_crypto_latest(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -196,7 +196,7 @@ def news_forex(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -220,7 +220,7 @@ def price_target_news(
         query_vars["limit"] = str(limit)
     if page is not None:
         query_vars["page"] = str(page)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -241,7 +241,7 @@ def price_target_latest_news(
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit:
         query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -276,7 +276,7 @@ def news_stock(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -311,7 +311,7 @@ def company_press_releases(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -358,7 +358,7 @@ def news_crypto(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -382,7 +382,7 @@ def stock_grade_news(
         query_vars["limit"] = str(limit)
     if page is not None:
         query_vars["page"] = str(page)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -405,4 +405,4 @@ def stock_grade_latest_news(
         query_vars["limit"] = str(limit)
     if page is not None:
         query_vars["page"] = str(page)
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

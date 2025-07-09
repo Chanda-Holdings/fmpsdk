@@ -62,4 +62,4 @@ def technical_indicators(
     if to_date:
         query_vars["to"] = to_date
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

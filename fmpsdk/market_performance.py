@@ -41,7 +41,7 @@ def sector_performance_snapshot(
         query_vars["exchange"] = exchange
     if sector:
         query_vars["sector"] = sector
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -68,7 +68,7 @@ def industry_performance_snapshot(
         query_vars["exchange"] = exchange
     if industry:
         query_vars["industry"] = industry
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -99,7 +99,7 @@ def historical_sector_performance(
         query_vars["to"] = to_date
     if exchange:
         query_vars["exchange"] = exchange
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -130,7 +130,7 @@ def historical_industry_performance(
         query_vars["to"] = to_date
     if exchange:
         query_vars["exchange"] = exchange
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -157,7 +157,7 @@ def sector_pe_snapshot(
         query_vars["exchange"] = exchange
     if sector:
         query_vars["sector"] = sector
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -184,7 +184,7 @@ def industry_pe_snapshot(
         query_vars["exchange"] = exchange
     if industry:
         query_vars["industry"] = industry
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -216,7 +216,7 @@ def historical_sector_pe(
     if exchange:
         query_vars["exchange"] = exchange
 
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -247,7 +247,7 @@ def historical_industry_pe(
         query_vars["to"] = to_date
     if exchange:
         query_vars["exchange"] = exchange
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -264,7 +264,7 @@ def biggest_gainers(
     """
     path = "biggest-gainers"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -281,7 +281,7 @@ def biggest_losers(
     """
     path = "biggest-losers"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -298,4 +298,4 @@ def most_active_stocks(
     """
     path = "most-actives"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

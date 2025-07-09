@@ -39,7 +39,7 @@ def crowdfunding_offerings_latest(
         query_vars["page"] = str(page)
     if limit is not None:
         query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -64,7 +64,7 @@ def crowdfunding_offerings_search(
     path = f"crowdfunding-offerings-search"
     query_vars = {"apikey": apikey, "name": name}
 
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -88,7 +88,7 @@ def crowdfunding_offerings(
     """
     path = "crowdfunding-offerings"
     query_vars = {"apikey": apikey, "cik": cik}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -123,7 +123,7 @@ def fundraising_latest(
     if limit is not None:
         query_vars["limit"] = str(limit)
 
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -147,7 +147,7 @@ def fundraising_search(
     """
     path = f"fundraising-search"
     query_vars = {"apikey": apikey, "name": name}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -169,4 +169,4 @@ def fundraising(apikey: str, cik: str) -> RootModel[typing.List[FMPEquityOfferin
     """
     path = "fundraising"
     query_vars = {"apikey": apikey, "cik": cik}
-    return __return_json(path, query_vars)
+    return __return_json(path, query_vars)  # type: ignore[no-any-return]

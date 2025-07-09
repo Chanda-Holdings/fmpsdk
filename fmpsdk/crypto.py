@@ -19,4 +19,4 @@ def cryptocurrency_list(
     """
     path = "cryptocurrency-list"
     query_vars = {"apikey": apikey}
-    return __return_json(path=path, query_vars=query_vars)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
