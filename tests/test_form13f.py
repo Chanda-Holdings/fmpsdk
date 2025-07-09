@@ -58,8 +58,6 @@ class TestForm13F:
             apikey=api_key, cik="0001067983", year=2023, quarter=4
         )
 
-        # This is a premium endpoint - expect 402 status or error dict
-
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
@@ -94,8 +92,6 @@ class TestForm13F:
         """Test institutional ownership dates endpoint."""
         # Use Berkshire Hathaway's CIK
         result = form13f.institutional_ownership_dates(apikey=api_key, cik="0001067983")
-
-        # This is a premium endpoint - expect 402 status or error dict
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
@@ -161,8 +157,6 @@ class TestForm13F:
             apikey=api_key, cik="0001067983", page=0
         )
 
-        # This is a premium endpoint - expect 402 status or error dict
-
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
@@ -189,8 +183,6 @@ class TestForm13F:
             apikey=api_key, cik="0001067983", year=2023, quarter=4
         )
 
-        # This is a premium endpoint - expect 402 status or error dict
-
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
@@ -215,8 +207,6 @@ class TestForm13F:
         result = form13f.institutional_ownership_positions_summary(
             apikey=api_key, symbol="AAPL", year=2023, quarter=4
         )
-
-        # This is a premium endpoint - expect 402 status or error dict
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
@@ -244,8 +234,6 @@ class TestForm13F:
         result = form13f.institutional_ownership_industry_summary(
             apikey=api_key, year=2023, quarter=4
         )
-
-        # This is a premium endpoint - expect 402 status or error dict
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:

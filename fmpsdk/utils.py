@@ -70,6 +70,10 @@ def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
                 result = model(raw)
             # Do NOT unwrap __root__ or root; always return the model instance
             return result
-        return raw
+        else:
+            raise ValueError(
+                f"No model found for endpoint: {func.__name__}. "
+                "Ensure the endpoint is registered in ENDPOINT_MODEL_MAP."
+            )
 
     return wrapper

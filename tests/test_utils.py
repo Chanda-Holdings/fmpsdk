@@ -83,17 +83,24 @@ class TestUtilityFunctions:
 
     def test_parse_response_decorator(self):
         """Test parse_response decorator functionality."""
-
-        # This is a decorator, so we need to test it by applying it to a function
+        
+        # Test that the decorator raises an error for unknown functions
         @parse_response
         def mock_api_function():
             return {"symbol": "AAPL", "price": 150.0}
 
-        result = mock_api_function()
+        # Should raise ValueError for unknown endpoint
+        with pytest.raises(ValueError, match="No model found for endpoint: mock_api_function"):
+            mock_api_function()
 
-        # The decorator should pass through the result
-        # (actual parsing logic would depend on implementation details)
-        assert result is not None
+        # Test error response passthrough
+        @parse_response
+        def mock_error_function():
+            return {"Error Message": "Invalid API key"}
+        
+        result = mock_error_function()
+        assert isinstance(result, dict)
+        assert "Error Message" in result
 
     def test_iterate_over_pages_with_args_modification(self):
         """Test that iterate_over_pages properly modifies args with page parameter."""

@@ -657,53 +657,53 @@ class FMPDcfValuation(BaseModel):
 
 
 class FMPDCFCustomValuation(BaseModel):
-    year: Optional[str] = None
+    year: str
     symbol: str
-    revenue: Optional[int] = None
-    revenuePercentage: Optional[float] = None
-    ebitda: Optional[int] = None
+    revenue: int
+    revenuePercentage: float
+    ebitda: Optional[float] = None
     ebitdaPercentage: Optional[float] = None
-    ebit: Optional[int] = None
+    ebit: Optional[float] = None
     ebitPercentage: Optional[float] = None
-    depreciation: Optional[int] = None
+    depreciation: Optional[float] = None
     depreciationPercentage: Optional[float] = None
-    totalCash: Optional[int] = None
+    totalCash: Optional[float] = None
     totalCashPercentage: Optional[float] = None
-    receivables: Optional[int] = None
+    receivables: Optional[float] = None
     receivablesPercentage: Optional[float] = None
-    inventories: Optional[int] = None
+    inventories: Optional[float] = None
     inventoriesPercentage: Optional[float] = None
-    payable: Optional[int] = None
+    payable: Optional[float] = None
     payablePercentage: Optional[float] = None
-    capitalExpenditure: Optional[int] = None
-    capitalExpenditurePercentage: Optional[float] = None
-    price: Optional[float] = None
-    beta: Optional[float] = None
-    dilutedSharesOutstanding: Optional[int] = None
-    costofDebt: Optional[float] = None
-    taxRate: Optional[float] = None
-    afterTaxCostOfDebt: Optional[float] = None
-    riskFreeRate: Optional[float] = None
-    marketRiskPremium: Optional[float] = None
-    costOfEquity: Optional[float] = None
-    totalDebt: Optional[int] = None
-    totalEquity: Optional[int] = None
-    totalCapital: Optional[int] = None
-    debtWeighting: Optional[float] = None
-    equityWeighting: Optional[float] = None
-    wacc: Optional[float] = None
+    capitalExpenditure: Optional[float] = None
+    capitalExpenditurePercentage: float
+    price: float
+    beta: float
+    dilutedSharesOutstanding: int
+    costofDebt: float
+    taxRate: float
+    afterTaxCostOfDebt: float
+    riskFreeRate: float
+    marketRiskPremium: float
+    costOfEquity: float
+    totalDebt: int
+    totalEquity: int
+    totalCapital: int
+    debtWeighting: float
+    equityWeighting: float
+    wacc: float
     taxRateCash: Optional[int] = None
-    ebiat: Optional[int] = None
+    ebiat: Optional[float] = None
     ufcf: Optional[int] = None
     sumPvUfcf: Optional[int] = None
-    longTermGrowthRate: Optional[float] = None
-    terminalValue: Optional[int] = None
-    presentTerminalValue: Optional[int] = None
-    enterpriseValue: Optional[int] = None
-    netDebt: Optional[int] = None
-    equityValue: Optional[int] = None
-    equityValuePerShare: Optional[float] = None
-    freeCashFlowT1: Optional[int] = None
+    longTermGrowthRate: float
+    terminalValue: int
+    presentTerminalValue: int
+    enterpriseValue: int
+    netDebt: int
+    equityValue: int
+    equityValuePerShare: float
+    freeCashFlowT1: int
 
 
 class FMPTreasuryRates(BaseModel):
@@ -803,9 +803,9 @@ class FMPFundInfoSectorsListItem(BaseModel):
 class FMPCommodityListItem(BaseModel):
     symbol: str
     name: str
-    exchange: str
+    exchange: Optional[str] = None
     tradeMonth: str
-    currency: float
+    currency: Optional[str] = None
 
 
 class FMPCryptocurrencyListItem(BaseModel):
@@ -1399,7 +1399,7 @@ class FMPIndexConstituent(BaseModel):
     sector: str
     subSector: str
     headQuarter: str
-    dateFirstAdded: str
+    dateFirstAdded: Optional[str] = None
     cik: str
     founded: str
 
@@ -1407,11 +1407,11 @@ class FMPIndexConstituent(BaseModel):
 class FMPHistoricalIndexConstituent(BaseModel):
     dateAdded: str
     addedSecurity: str
-    removedTicker: str
-    removedSecurity: str
+    removedTicker: Optional[str] = None
+    removedSecurity: Optional[str] = None
     date: str
     symbol: str
-    reason: str
+    reason: Optional[str] = None
 
 
 class FMPInsiderTrade(BaseModel):
@@ -1460,11 +1460,11 @@ class FMPAcquisitionOwnership(BaseModel):
     acceptedDate: str
     cusip: str
     nameOfReportingPerson: str
-    citizenshipOrPlaceOfOrganization: str
-    soleVotingPower: str
-    sharedVotingPower: str
-    soleDispositivePower: str
-    sharedDispositivePower: str
+    citizenshipOrPlaceOfOrganization: Optional[str] = None
+    soleVotingPower: Optional[str] = None
+    sharedVotingPower: Optional[str] = None
+    soleDispositivePower: Optional[str] = None
+    sharedDispositivePower: Optional[str] = None
     amountBeneficiallyOwned: str
     percentOfClass: str
     typeOfReportingPerson: str
@@ -1622,7 +1622,7 @@ class FMPCompanySECFilings(BaseModel):
 
 
 class FMPIndustryClassification(BaseModel):
-    office: str
+    office: Optional[str] = None
     sicCode: str
     industryTitle: str
 

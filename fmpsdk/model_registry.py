@@ -36,6 +36,7 @@ from .models import (
     FMPCrowdfundingSearch,
     FMPCryptocurrencyListItem,
     FMPCusipSearch,
+    FMPDCFCustomValuation,
     FMPDcfValuation,
     FMPDelistedCompany,
     FMPDisclosureFiling,
@@ -167,6 +168,7 @@ ENDPOINT_MODEL_MAP = {
     "available_sectors": RootModel[List[FMPSector]],
     "available_industries": RootModel[List[FMPIndustry]],
     "available_countries": RootModel[List[FMPCountry]],
+    "available_indexes": RootModel[List[FMPSymbolAndNameList]],
     # Analyst
     "analyst_estimates": RootModel[List[FMPAnalystEstimates]],
     "ratings_snapshot": RootModel[List[FMPRatingSnapshot]],
@@ -175,16 +177,14 @@ ENDPOINT_MODEL_MAP = {
     "price_target_consensus": RootModel[List[FMPPriceTargetConsensus]],
     "price_target_news": RootModel[List[FMPPriceTargetNews]],
     "price_target_latest_news": RootModel[List[FMPPriceTargetNews]],
-    "grades": RootModel[List[FMPStockGrade]],
-    "grades_historical": RootModel[List[FMPHistoricalStockGrade]],
-    "grades_consensus": RootModel[List[FMPStockGradeSummary]],
-    "grades_news": RootModel[List[FMPStockGradeNews]],
-    "grades_latest_news": RootModel[List[FMPStockGradeNews]],
+    "stock_grades": RootModel[List[FMPStockGrade]],
+    "historical_stock_grades": RootModel[List[FMPHistoricalStockGrade]],
+    "stock_grades_summary": RootModel[List[FMPStockGradeSummary]],
+    "stock_grade_news": RootModel[List[FMPStockGradeNews]],
+    "stock_grade_latest_news": RootModel[List[FMPStockGradeNews]],
     # Calendar
     "dividends": RootModel[List[FMPDividend]],
-    "historical_stock_dividend": RootModel[List[FMPDividend]],
     "dividends_calendar": RootModel[List[FMPDividendCalendarEvent]],
-    "earnings": RootModel[List[FMPEarningsReport]],
     "earnings_calendar": RootModel[List[FMPEarningsCalendarEvent]],
     "ipos_calendar": RootModel[List[FMPUpcomingIPO]],
     "ipos_disclosure": RootModel[List[FMPDisclosureFiling]],
@@ -193,25 +193,18 @@ ENDPOINT_MODEL_MAP = {
     "splits_calendar": RootModel[List[FMPStockSplit]],
     # Chart
     "historical_price_eod_light": RootModel[List[FMPHistoricalDataPointLight]],
-    "historical_price_eod_full": RootModel[List[FMPHistoricalDataPointFull]],
+    "historical_price_eod": RootModel[List[FMPHistoricalDataPointFull]],
     "historical_price_eod_non_split_adjusted": RootModel[
         List[FMPHistoricalDataPointFull]
     ],
     "historical_price_eod_dividend_adjusted": RootModel[
         List[FMPHistoricalDataPointFull]
     ],
-    "historical_chart_1min": RootModel[List[FMPIntradayDataPoint]],
-    "historical_chart_5min": RootModel[List[FMPIntradayDataPoint]],
-    "historical_chart_15min": RootModel[List[FMPIntradayDataPoint]],
-    "historical_chart_30min": RootModel[List[FMPIntradayDataPoint]],
-    "historical_chart_1hour": RootModel[List[FMPIntradayDataPoint]],
-    "historical_chart_4hour": RootModel[List[FMPIntradayDataPoint]],
+    "historical_chart": RootModel[List[FMPIntradayDataPoint]],
     # Company
     "company_profile": RootModel[List[FMPCompanyProfile]],
     "company_profile_cik": RootModel[List[FMPCompanyProfile]],
     "company_notes": RootModel[List[FMPCompanyNote]],
-    "social_sentiment": RootModel[List[Any]],
-    "trending_sentiment": RootModel[List[Any]],
     "stock_peers": RootModel[List[FMPStockPeer]],
     "delisted_companies": RootModel[List[FMPDelistedCompany]],
     "employee_count": RootModel[List[FMPEmployeeCount]],
@@ -221,20 +214,22 @@ ENDPOINT_MODEL_MAP = {
     "historical_market_capitalization": RootModel[List[FMPMarketCap]],
     "shares_float": RootModel[List[FMPShareFloat]],
     "shares_float_all": RootModel[List[FMPShareFloat]],
-    "mergers_acquisitions_latest": RootModel[List[FMPMergerAcquisition]],
+    "mergers_acquisitions": RootModel[List[FMPMergerAcquisition]],
     "mergers_acquisitions_search": RootModel[List[FMPMergerAcquisition]],
     "key_executives": RootModel[List[FMPExecutiveProfile]],
-    "governance_executive_compensation": RootModel[List[FMPExecutiveCompensation]],
+    "key_executives_compensation": RootModel[List[FMPExecutiveCompensation]],
     "executive_compensation_benchmark": RootModel[
         List[FMPExecutiveCompensationBenchmark]
     ],
     # Commitment Of Traders
     "commitment_of_traders_report": RootModel[List[FMPCommitmentOfTradersReport]],
-    "commitment_of_traders_analysis": RootModel[List[FMPCommitmentOfTradersAnalysis]],
-    "commitment_of_traders_list": RootModel[List[FMPSymbolAndNameList]],
+    "commitment_of_traders_report_analysis": RootModel[List[FMPCommitmentOfTradersAnalysis]],
+    "commitment_of_traders_report_list": RootModel[List[FMPSymbolAndNameList]],
     # Discounted Cash Flow
-    "discounted_cash_flow": RootModel[List[FMPDcfValuation]],
-    "levered_discounted_cash_flow": RootModel[List[FMPDcfValuation]],
+    "discounted_cash_flow_valuation": RootModel[List[FMPDcfValuation]],
+    "discounted_cash_flow_levered": RootModel[List[FMPDcfValuation]],
+    "discounted_cash_flow_custom": RootModel[List[FMPDCFCustomValuation]],
+    "discounted_cash_flow_custom_levered": RootModel[List[FMPDCFCustomValuation]],
     # Economics
     "treasury_rates": RootModel[List[FMPTreasuryRates]],
     "economic_indicators": RootModel[List[FMPEconomicIndicator]],
@@ -255,8 +250,7 @@ ENDPOINT_MODEL_MAP = {
     "funds_disclosure_holders_search": RootModel[List[FMPFundDisclosureNameSearch]],
     "funds_disclosure_dates": RootModel[List[FMPFundDisclosureDate]],
     # Commodity
-    "commodities_list": RootModel[List[FMPCommodityListItem]],
-    "batch_commodity_quotes": RootModel[List[FMPQuoteFull]],
+    "commodity_list": RootModel[List[FMPCommodityListItem]],
     # Fundraisers
     "crowdfunding_offerings_latest": RootModel[List[FMPCrowdfundingCampaign]],
     "crowdfunding_offerings_search": RootModel[List[FMPCrowdfundingSearch]],
@@ -266,22 +260,20 @@ ENDPOINT_MODEL_MAP = {
     "fundraising": RootModel[List[FMPEquityOffering]],
     # Crypto
     "cryptocurrency_list": RootModel[List[FMPCryptocurrencyListItem]],
-    "batch_crypto_quotes": RootModel[List[FMPQuoteFull]],
     # Forex
     "forex_list": RootModel[List[FMPForexPair]],
-    "batch_forex_quotes": RootModel[List[FMPQuoteFull]],
     # Statements
     "income_statement": RootModel[List[FMPIncomeStatement]],
     "balance_sheet_statement": RootModel[List[FMPBalanceSheetStatement]],
     "cash_flow_statement": RootModel[List[FMPCashFlowStatement]],
-    "latest_financial_statements": RootModel[List[FMPLatestFinancialStatement]],
+    "financial_statements_latest": RootModel[List[FMPLatestFinancialStatement]],
     "income_statement_ttm": RootModel[List[FMPIncomeStatement]],
-    "balance_sheet_statement_ttm": RootModel[List[FMPBalanceSheetStatement]],
-    "cash_flow_statement_ttm": RootModel[List[FMPCashFlowStatement]],
+    "balance_sheet_statements_ttm": RootModel[List[FMPBalanceSheetStatement]],
+    "cashflow_statements_ttm": RootModel[List[FMPCashFlowStatement]],
     "key_metrics": RootModel[List[FMPKeyMetrics]],
-    "ratios": RootModel[List[FMPFinancialRatios]],
+    "financial_ratios": RootModel[List[FMPFinancialRatios]],
     "key_metrics_ttm": RootModel[List[FMPKeyMetricsTTM]],
-    "ratios_ttm": RootModel[List[FMPFinancialRatiosTTM]],
+    "financial_ratios_ttm": RootModel[List[FMPFinancialRatiosTTM]],
     "financial_scores": RootModel[List[FMPFinancialScores]],
     "owner_earnings": RootModel[List[FMPOwnerEarnings]],
     "enterprise_values": RootModel[List[FMPEnterpriseValue]],
@@ -301,7 +293,7 @@ ENDPOINT_MODEL_MAP = {
     "institutional_ownership_latest": RootModel[List[FMPForm13FFiling]],
     "institutional_ownership_extract": RootModel[List[FMPForm13FExtract]],
     "institutional_ownership_dates": RootModel[List[FMPForm13FDate]],
-    "institutional_ownership_extract_analytics_holder": RootModel[
+    "institutional_ownership_extract_analytics_by_holder": RootModel[
         List[FMPForm13FAnalytics]
     ],
     "institutional_ownership_holder_performance_summary": RootModel[
@@ -310,7 +302,7 @@ ENDPOINT_MODEL_MAP = {
     "institutional_ownership_holder_industry_breakdown": RootModel[
         List[FMPHolderIndustryBreakdown]
     ],
-    "institutional_ownership_symbol_positions_summary": RootModel[
+    "institutional_ownership_positions_summary": RootModel[
         List[FMPPositionSummary]
     ],
     "institutional_ownership_industry_summary": RootModel[
@@ -318,20 +310,15 @@ ENDPOINT_MODEL_MAP = {
     ],
     # Indexes
     "index_list": RootModel[List[FMPIndexListItem]],
-    "batch_index_quotes": RootModel[List[FMPQuoteFull]],
-    "sp500_constituent": RootModel[List[FMPIndexConstituent]],
-    "nasdaq_constituent": RootModel[List[FMPIndexConstituent]],
-    "dowjones_constituent": RootModel[List[FMPIndexConstituent]],
-    "historical_sp500_constituent": RootModel[List[FMPHistoricalIndexConstituent]],
-    "historical_nasdaq_constituent": RootModel[List[FMPHistoricalIndexConstituent]],
-    "historical_dowjones_constituent": RootModel[List[FMPHistoricalIndexConstituent]],
+    "index_constituents": RootModel[List[FMPIndexConstituent]],
+    "index_constituents_historical": RootModel[List[FMPHistoricalIndexConstituent]],
     # Insider Trades
+    "insider_trading": RootModel[List[FMPInsiderTrade]],
     "insider_trading_latest": RootModel[List[FMPInsiderTrade]],
-    "insider_trading_search": RootModel[List[FMPInsiderTrade]],
     "insider_trading_reporting_name": RootModel[List[Any]],
     "insider_trading_transaction_type": RootModel[List[FMPInsiderTransactionType]],
     "insider_trading_statistics": RootModel[List[FMPInsiderTradeStatistics]],
-    "acquisition_of_beneficial_ownership": RootModel[List[FMPAcquisitionOwnership]],
+    "acquisition_ownership": RootModel[List[FMPAcquisitionOwnership]],
     # Market Performance
     "sector_performance_snapshot": RootModel[List[FMPSectorPerformanceSnapshot]],
     "industry_performance_snapshot": RootModel[List[FMPIndustryPerformanceSnapshot]],
@@ -348,16 +335,16 @@ ENDPOINT_MODEL_MAP = {
     "most_active_stocks": RootModel[List[FMPMarketMover]],
     # Market Hours
     "exchange_market_hours": RootModel[List[Any]],
+    "holidays_by_exchange": RootModel[List[Any]],
     "all_exchange_market_hours": RootModel[List[FMPExchangeMarketHours]],
     # News
-    "fmp_articles": RootModel[List[Any]],
-    "company_news": RootModel[List[FMPNewsArticle]],
-    "company_news_latest": RootModel[List[FMPNewsArticle]],
+    "news_stock": RootModel[List[FMPNewsArticle]],
+    "news_stock_latest": RootModel[List[FMPNewsArticle]],
     "company_press_releases": RootModel[List[FMPNewsArticle]],
     "company_press_releases_latest": RootModel[List[FMPNewsArticle]],
     "news_general_latest": RootModel[List[FMPNewsArticle]],
-    "news_stock": RootModel[List[FMPNewsArticle]],
     "news_crypto": RootModel[List[FMPNewsArticle]],
+    "news_crypto_latest": RootModel[List[FMPNewsArticle]],
     "news_forex": RootModel[List[FMPNewsArticle]],
     # Technical Indicators
     "technical_indicators": RootModel[List[FMPTechnicalIndicator]],
@@ -379,6 +366,7 @@ ENDPOINT_MODEL_MAP = {
     "batch_forex_quote": RootModel[List[FMPQuoteShort]],
     "batch_index_quote": RootModel[List[FMPQuoteShort]],
     # SEC Filings
+    "sec_rss_feeds": RootModel[List[Any]],
     "sec_filings_8k": RootModel[List[Any]],
     "sec_filings_financials": RootModel[List[Any]],
     "sec_filings_search_form_type": RootModel[List[Any]],
@@ -388,22 +376,19 @@ ENDPOINT_MODEL_MAP = {
     "sec_filings_company_search_symbol": RootModel[List[FMPCompanySECFilings]],
     "sec_filings_company_search_cik": RootModel[List[FMPCompanySECFilings]],
     "sec_profile": RootModel[List[FMPCompanyProfile]],
-    "standard_industrial_classification_list": RootModel[
-        List[FMPIndustryClassification]
-    ],
+    "industry_classification_list": RootModel[List[FMPIndustryClassification]],
     "industry_classification_search": RootModel[List[FMPIndustryClassificationSearch]],
-    "all_industry_classification": RootModel[List[FMPIndustryClassification]],
+    "industry_classification_all": RootModel[List[FMPIndustryClassification]],
     # Earnings Transcript
-    "earning_call_transcript_latest": RootModel[List[Any]],
-    "earning_call_transcript": RootModel[List[FMPEarningsTranscript]],
-    "earning_call_transcript_dates": RootModel[List[FMPEarningsTranscriptDate]],
     # Senate
     "senate_latest": RootModel[List[FMPPoliticalTrade]],
     "house_latest": RootModel[List[FMPPoliticalTrade]],
     "senate_trades": RootModel[List[FMPPoliticalTrade]],
     "senate_trades_by_name": RootModel[List[FMPPoliticalTrade]],
     "house_trades": RootModel[List[FMPPoliticalTrade]],
+    "house_trades_by_name": RootModel[List[FMPPoliticalTrade]],
     # Bulk
+    "bulk_profiles": RootModel[List[FMPCompanyProfile]],
     "profile_bulk": RootModel[List[FMPCompanyProfile]],
     "rating_bulk": RootModel[List[FMPBulkRating]],
     "dcf_bulk": RootModel[List[FMPBulkDCF]],

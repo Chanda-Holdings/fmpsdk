@@ -565,10 +565,11 @@ class TestInsiderTradesPremiumEndpoints:
             apikey=api_key, symbol="AAPL", transactionType="P-Purchase", limit=100
         )
 
-        assert isinstance(result, list)
-        if result:
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+        if result_list:
             # Premium endpoint might return more detailed data
-            first_item = result[0]
+            first_item = result_list[0]
             if isinstance(first_item, dict):
                 # Check for additional premium fields
                 premium_fields = ["url", "securityName", "typeOfOwner"]
