@@ -1,8 +1,8 @@
 import os
 import sys
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, RootModel
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
@@ -68,7 +68,7 @@ class FMPCompanyProfile(BaseModel):
     symbol: str
     price: Optional[float] = None
     beta: Optional[float] = None
-    volAvg: Optional[int] = None
+    volAvg: Optional[float] = None
     mktCap: Optional[float] = None
     lastDiv: Optional[float] = None
     range: Optional[str] = None
@@ -110,14 +110,14 @@ class FMPSymbolAndCompanyNameList(BaseModel):
 
 class FMPSymbolAndNameList(BaseModel):
     symbol: str
-    name: str
+    name: Optional[str] = None
 
 
 class FMPFinancialStatementSymbolList(BaseModel):
     symbol: str
     companyName: str
     tradingCurrency: str
-    reportingCurrency: str
+    reportingCurrency: Optional[str] = None
 
 
 class FMPSymbolAndCIKList(BaseModel):
@@ -144,7 +144,8 @@ class FMPExchangeInfo(BaseModel):
     countryName: str
     countryCode: str
     symbolSuffix: str
-    delay: Optional[str] = None
+    isMarketOpen: bool
+    delay: str
 
 
 class FMPSector(BaseModel):
@@ -214,7 +215,7 @@ class FMPPriceTargetConsensus(BaseModel):
     targetHigh: int
     targetLow: int
     targetConsensus: float
-    targetMedian: int
+    targetMedian: float
 
 
 class FMPPriceTargetNews(BaseModel):
@@ -347,11 +348,11 @@ class FMPProspectusFiling(BaseModel):
     ipoDate: str
     cik: str
     pricePublicPerShare: float
-    pricePublicTotal: int
+    pricePublicTotal: float
     discountsAndCommissionsPerShare: float
-    discountsAndCommissionsTotal: int
+    discountsAndCommissionsTotal: float
     proceedsBeforeExpensesPerShare: float
-    proceedsBeforeExpensesTotal: int
+    proceedsBeforeExpensesTotal: float
     form: str
     url: str
 
@@ -359,15 +360,8 @@ class FMPProspectusFiling(BaseModel):
 class FMPStockSplit(BaseModel):
     symbol: str
     date: str
-    numerator: int
-    denominator: int
-
-
-class FMPStockSplitCalendarEvent(BaseModel):
-    symbol: str
-    date: str
-    numerator: int
-    denominator: int
+    numerator: float
+    denominator: float
 
 
 class FMPHistoricalDataPointLight(BaseModel):
@@ -565,7 +559,7 @@ class FMPCommitmentOfTradersReport(BaseModel):
     pctOfOiTotReptShortAll: float
     pctOfOiNonreptLongAll: float
     pctOfOiNonreptShortAll: float
-    pctOfOpenInterestOl: int
+    pctOfOpenInterestOl: float
     pctOfOiNoncommLongOl: float
     pctOfOiNoncommShortOl: float
     pctOfOiNoncommSpreadOl: float
@@ -575,16 +569,16 @@ class FMPCommitmentOfTradersReport(BaseModel):
     pctOfOiTotReptShortOl: float
     pctOfOiNonreptLongOl: float
     pctOfOiNonreptShortOl: float
-    pctOfOpenInterestOther: int
-    pctOfOiNoncommLongOther: int
-    pctOfOiNoncommShortOther: int
-    pctOfOiNoncommSpreadOther: int
-    pctOfOiCommLongOther: int
-    pctOfOiCommShortOther: int
-    pctOfOiTotReptLongOther: int
-    pctOfOiTotReptShortOther: int
-    pctOfOiNonreptLongOther: int
-    pctOfOiNonreptShortOther: int
+    pctOfOpenInterestOther: float
+    pctOfOiNoncommLongOther: float
+    pctOfOiNoncommShortOther: float
+    pctOfOiNoncommSpreadOther: float
+    pctOfOiCommLongOther: float
+    pctOfOiCommShortOther: float
+    pctOfOiTotReptLongOther: float
+    pctOfOiTotReptShortOther: float
+    pctOfOiNonreptLongOther: float
+    pctOfOiNonreptShortOther: float
     tradersTotAll: int
     tradersNoncommLongAll: int
     tradersNoncommShortAll: int
@@ -625,14 +619,14 @@ class FMPCommitmentOfTradersReport(BaseModel):
     concNetLe4TdrShortOl: float
     concNetLe8TdrLongOl: float
     concNetLe8TdrShortOl: float
-    concGrossLe4TdrLongOther: int
-    concGrossLe4TdrShortOther: int
-    concGrossLe8TdrLongOther: int
-    concGrossLe8TdrShortOther: int
-    concNetLe4TdrLongOther: int
-    concNetLe4TdrShortOther: int
-    concNetLe8TdrLongOther: int
-    concNetLe8TdrShortOther: int
+    concGrossLe4TdrLongOther: float
+    concGrossLe4TdrShortOther: float
+    concGrossLe8TdrLongOther: float
+    concGrossLe8TdrShortOther: float
+    concNetLe4TdrLongOther: float
+    concNetLe4TdrShortOther: float
+    concNetLe8TdrLongOther: float
+    concNetLe8TdrShortOther: float
     contractUnits: str
 
 
@@ -659,57 +653,57 @@ class FMPDcfValuation(BaseModel):
     symbol: str
     date: str
     dcf: float
-    Stock_Price: float
+    Stock_Price: float = Field(alias="Stock Price")
 
 
 class FMPDCFCustomValuation(BaseModel):
-    year: str
+    year: Optional[str] = None
     symbol: str
-    revenue: int
-    revenuePercentage: float
-    ebitda: int
-    ebitdaPercentage: float
-    ebit: int
-    ebitPercentage: float
-    depreciation: int
-    depreciationPercentage: float
-    totalCash: int
-    totalCashPercentage: float
-    receivables: int
-    receivablesPercentage: float
-    inventories: int
-    inventoriesPercentage: float
-    payable: int
-    payablePercentage: float
-    capitalExpenditure: int
-    capitalExpenditurePercentage: float
-    price: float
-    beta: float
-    dilutedSharesOutstanding: int
-    costofDebt: float
-    taxRate: float
-    afterTaxCostOfDebt: float
-    riskFreeRate: float
-    marketRiskPremium: float
-    costOfEquity: float
-    totalDebt: int
-    totalEquity: int
-    totalCapital: int
-    debtWeighting: float
-    equityWeighting: float
-    wacc: float
-    taxRateCash: int
-    ebiat: int
-    ufcf: int
-    sumPvUfcf: int
-    longTermGrowthRate: float
-    terminalValue: int
-    presentTerminalValue: int
-    enterpriseValue: int
-    netDebt: int
-    equityValue: int
-    equityValuePerShare: float
-    freeCashFlowT1: int
+    revenue: Optional[int] = None
+    revenuePercentage: Optional[float] = None
+    ebitda: Optional[int] = None
+    ebitdaPercentage: Optional[float] = None
+    ebit: Optional[int] = None
+    ebitPercentage: Optional[float] = None
+    depreciation: Optional[int] = None
+    depreciationPercentage: Optional[float] = None
+    totalCash: Optional[int] = None
+    totalCashPercentage: Optional[float] = None
+    receivables: Optional[int] = None
+    receivablesPercentage: Optional[float] = None
+    inventories: Optional[int] = None
+    inventoriesPercentage: Optional[float] = None
+    payable: Optional[int] = None
+    payablePercentage: Optional[float] = None
+    capitalExpenditure: Optional[int] = None
+    capitalExpenditurePercentage: Optional[float] = None
+    price: Optional[float] = None
+    beta: Optional[float] = None
+    dilutedSharesOutstanding: Optional[int] = None
+    costofDebt: Optional[float] = None
+    taxRate: Optional[float] = None
+    afterTaxCostOfDebt: Optional[float] = None
+    riskFreeRate: Optional[float] = None
+    marketRiskPremium: Optional[float] = None
+    costOfEquity: Optional[float] = None
+    totalDebt: Optional[int] = None
+    totalEquity: Optional[int] = None
+    totalCapital: Optional[int] = None
+    debtWeighting: Optional[float] = None
+    equityWeighting: Optional[float] = None
+    wacc: Optional[float] = None
+    taxRateCash: Optional[int] = None
+    ebiat: Optional[int] = None
+    ufcf: Optional[int] = None
+    sumPvUfcf: Optional[int] = None
+    longTermGrowthRate: Optional[float] = None
+    terminalValue: Optional[int] = None
+    presentTerminalValue: Optional[int] = None
+    enterpriseValue: Optional[int] = None
+    netDebt: Optional[int] = None
+    equityValue: Optional[int] = None
+    equityValuePerShare: Optional[float] = None
+    freeCashFlowT1: Optional[int] = None
 
 
 class FMPTreasuryRates(BaseModel):
@@ -739,10 +733,10 @@ class FMPEconomicCalendarEvent(BaseModel):
     country: str
     event: str
     currency: str
-    previous: Optional[str] = None
-    estimate: Optional[str] = None
-    actual: Optional[str] = None
-    change: Optional[str] = None
+    previous: Optional[float] = None
+    estimate: Optional[float] = None
+    actual: Optional[float] = None
+    change: Optional[float] = None
     impact: str
     changePercentage: Optional[float] = None
     unit: Optional[str] = None
@@ -804,6 +798,30 @@ class FMPFundHolding(BaseModel):
 class FMPFundInfoSectorsListItem(BaseModel):
     industry: str
     exposure: float
+
+
+class FMPCommodityListItem(BaseModel):
+    symbol: str
+    name: str
+    exchange: str
+    tradeMonth: str
+    currency: float
+
+
+class FMPCryptocurrencyListItem(BaseModel):
+    symbol: str
+    name: str
+    exchange: str
+    icoDate: Optional[str] = None
+    circulatingSupply: Optional[float] = None
+    totalSupply: Optional[float] = None
+
+
+class FMPIndexListItem(BaseModel):
+    symbol: str
+    name: str
+    exchange: str
+    currency: str
 
 
 class FMPFundInfo(BaseModel):
@@ -957,7 +975,7 @@ class FMPCrowdfundingCampaign(BaseModel):
 class FMPCrowdfundingSearch(BaseModel):
     cik: str
     name: str
-    date: str
+    date: Optional[str] = None
 
 
 class FMPEquityOffering(BaseModel):
@@ -1028,65 +1046,110 @@ class FMPFinancialReportDate(BaseModel):
     linkXlsx: str
 
 
+# Root model for each dictionary item in a section
+class FinancialSectionEntry(RootModel[Dict[str, List[Union[str, float, int, None]]]]):
+    pass
+
+
+# Root model for a section (which is a list of entries)
+class FinancialSection(RootModel[List[FinancialSectionEntry]]):
+    pass
+
+
 class FMPFullFinancialReport(BaseModel):
     symbol: str
-    period: str
-    year: str
-    Cover_Page: List[Any]
-    Auditor_Information: List[Any]
-    CONSOLIDATED_STATEMENTS_OF_OPER: List[Any]
-    CONSOLIDATED_STATEMENTS_OF_COMP: List[Any]
-    CONSOLIDATED_BALANCE_SHEETS: List[Any]
-    CONSOLIDATED_BALANCE_SHEETS_Pa: List[Any]
-    CONSOLIDATED_STATEMENTS_OF_SHAR: List[Any]
-    CONSOLIDATED_STATEMENTS_OF_CASH: List[Any]
-    Summary_of_Significant_Accounti: List[Any]
-    Revenue: List[Any]
-    Financial_Instruments: List[Any]
-    Consolidated_Financial_Statemen: List[Any]
-    Income_Taxes: List[Any]
-    Leases: List[Any]
-    Debt: List[Any]
-    Shareholders_Equity: List[Any]
-    Benefit_Plans: List[Any]
-    Commitments_and_Contingencies: List[Any]
-    Segment_Information_and_Geograp: List[Any]
-    Summary_of_Significant_Accoun_2: List[Any]
-    Summary_of_Significant_Accoun_3: List[Any]
-    Revenue__Tables_: List[Any]
-    Revenue___Additional_Informatio: List[Any]
-    Revenue___Deferred_Revenue__Exp: List[Any]
-    Financial_Instruments___Cash__C: List[Any]
-    Financial_Instruments___Non_Cur: List[Any]
-    Financial_Instruments___Additio: List[Any]
-    Financial_Instruments___Notiona: List[Any]
-    Financial_Instruments___Gross_F: List[Any]
-    Financial_Instruments___Derivat: List[Any]
-    Consolidated_Financial_Statem_2: List[Any]
-    Consolidated_Financial_Statem_3: List[Any]
-    Consolidated_Financial_Statem_4: List[Any]
-    Income_Taxes__Tables_: List[Any]
-    Income_Taxes___Reconciliation_o: List[Any]
-    Income_Taxes___Significant_Comp: List[Any]
-    Income_Taxes___Aggregate_Change: List[Any]
-    Leases__Tables_: List[Any]
-    Leases___ROU_Assets_and_Lease_L: List[Any]
-    Leases___Lease_Liability_Maturi: List[Any]
-    Debt__Tables_: List[Any]
-    Debt___Summary_of_Cash_Flows_As: List[Any]
-    Debt___Summary_of_Term_Debt__De: List[Any]
-    Debt___Future_Principal_Payment: List[Any]
-    Shareholders_Equity__Tables_: List[Any]
-    Shareholders_Equity___Shares_o: List[Any]
-    Benefit_Plans__Tables_: List[Any]
-    Benefit_Plans___Restricted_Stoc: List[Any]
-    Benefit_Plans___Summary_of_Shar: List[Any]
-    Commitments_and_Contingencies__: List[Any]
-    Segment_Information_and_Geogr_2: List[Any]
-    Segment_Information_and_Geogr_3: List[Any]
-    Segment_Information_and_Geogr_4: List[Any]
-    Summary_of_Significant_Accoun_4: List[Any]
-    Summary_of_Significant_Accoun_5: List[Any]
+    period: Optional[str] = None
+    year: Optional[str] = None
+
+    # Use model_config to allow extra fields for all the financial sections
+    model_config = {"extra": "allow"}
+
+    @property
+    def sections(self) -> Dict[str, Any]:
+        """Get all the financial statement sections (excluding symbol, period, year)."""
+        return {
+            k: v
+            for k, v in self.__dict__.items()
+            if k not in {"symbol", "period", "year"}
+        }
+
+    @classmethod
+    def from_raw(
+        cls,
+        raw: Dict[str, Union[str, List[Dict[str, List[Union[str, int, float, None]]]]]],
+    ):
+        fixed_fields = {
+            "symbol": raw.get("symbol"),
+            "period": raw.get("period"),
+            "year": raw.get("year"),
+        }
+        sections = {
+            k: FinancialSection([FinancialSectionEntry(entry) for entry in v])
+            for k, v in raw.items()
+            if k not in {"symbol", "period", "year"}
+        }
+        return cls(**fixed_fields, sections=sections)
+
+
+# class FMPFullFinancialReport(BaseModel):
+#     symbol: str
+#     period: str
+#     year: str
+#     Cover_Page: List[Any]
+#     Auditor_Information: List[Any]
+#     CONSOLIDATED_STATEMENTS_OF_OPER: List[Any]
+#     CONSOLIDATED_STATEMENTS_OF_COMP: List[Any]
+#     CONSOLIDATED_BALANCE_SHEETS: List[Any]
+#     CONSOLIDATED_BALANCE_SHEETS_Pa: List[Any]
+#     CONSOLIDATED_STATEMENTS_OF_SHAR: List[Any]
+#     CONSOLIDATED_STATEMENTS_OF_CASH: List[Any]
+#     Summary_of_Significant_Accounti: List[Any]
+#     Revenue: List[Any]
+#     Financial_Instruments: List[Any]
+#     Consolidated_Financial_Statemen: List[Any]
+#     Income_Taxes: List[Any]
+#     Leases: List[Any]
+#     Debt: List[Any]
+#     Shareholders_Equity: List[Any]
+#     Benefit_Plans: List[Any]
+#     Commitments_and_Contingencies: List[Any]
+#     Segment_Information_and_Geograp: List[Any]
+#     Summary_of_Significant_Accoun_2: List[Any]
+#     Summary_of_Significant_Accoun_3: List[Any]
+#     Revenue__Tables_: List[Any]
+#     Revenue___Additional_Informatio: List[Any]
+#     Revenue___Deferred_Revenue__Exp: List[Any]
+#     Financial_Instruments___Cash__C: List[Any]
+#     Financial_Instruments___Non_Cur: List[Any]
+#     Financial_Instruments___Additio: List[Any]
+#     Financial_Instruments___Notiona: List[Any]
+#     Financial_Instruments___Gross_F: List[Any]
+#     Financial_Instruments___Derivat: List[Any]
+#     Consolidated_Financial_Statem_2: List[Any]
+#     Consolidated_Financial_Statem_3: List[Any]
+#     Consolidated_Financial_Statem_4: List[Any]
+#     Income_Taxes__Tables_: List[Any]
+#     Income_Taxes___Reconciliation_o: List[Any]
+#     Income_Taxes___Significant_Comp: List[Any]
+#     Income_Taxes___Aggregate_Change: List[Any]
+#     Leases__Tables_: List[Any]
+#     Leases___ROU_Assets_and_Lease_L: List[Any]
+#     Leases___Lease_Liability_Maturi: List[Any]
+#     Debt__Tables_: List[Any]
+#     Debt___Summary_of_Cash_Flows_As: List[Any]
+#     Debt___Summary_of_Term_Debt__De: List[Any]
+#     Debt___Future_Principal_Payment: List[Any]
+#     Shareholders_Equity__Tables_: List[Any]
+#     Shareholders_Equity___Shares_o: List[Any]
+#     Benefit_Plans__Tables_: List[Any]
+#     Benefit_Plans___Restricted_Stoc: List[Any]
+#     Benefit_Plans___Summary_of_Shar: List[Any]
+#     Commitments_and_Contingencies__: List[Any]
+#     Segment_Information_and_Geogr_2: List[Any]
+#     Segment_Information_and_Geogr_3: List[Any]
+#     Segment_Information_and_Geogr_4: List[Any]
+#     Summary_of_Significant_Accoun_4: List[Any]
+#     Summary_of_Significant_Accoun_5: List[Any]
 
 
 class FMPRevenueSegmentation(BaseModel):
@@ -1095,48 +1158,7 @@ class FMPRevenueSegmentation(BaseModel):
     period: str
     reportedCurrency: Optional[str] = None
     date: str
-    data: Optional[dict[str, int]] = None
-
-
-class FMPAsReportedIncomeStatementData(BaseModel):
-    revenuefromcontractwithcustomerexcludingassessedtax: int
-    costofgoodsandservicessold: int
-    grossprofit: int
-    researchanddevelopmentexpense: int
-    sellinggeneralandadministrativeexpense: int
-    operatingexpenses: int
-    operatingincomeloss: int
-    nonoperatingincomeexpense: int
-    incomelossfromcontinuingoperationsbeforeincometaxesextraordinaryitemsnoncontrollinginterest: (
-        int
-    )
-    incometaxexpensebenefit: int
-    netincomeloss: int
-    earningspersharebasic: float
-    earningspersharediluted: float
-    weightedaveragenumberofsharesoutstandingbasic: int
-    weightedaveragenumberofdilutedsharesoutstanding: int
-    othercomprehensiveincomelossforeigncurrencytransactionandtranslationadjustmentnetoftax: (
-        int
-    )
-    othercomprehensiveincomelossderivativeinstrumentgainlossbeforereclassificationaftertax: (
-        int
-    )
-    othercomprehensiveincomelossderivativeinstrumentgainlossreclassificationaftertax: (
-        int
-    )
-    othercomprehensiveincomelossderivativeinstrumentgainlossafterreclassificationandtax: (
-        int
-    )
-    othercomprehensiveincomeunrealizedholdinggainlossonsecuritiesarisingduringperiodnetoftax: (
-        int
-    )
-    othercomprehensiveincomelossreclassificationadjustmentfromaociforsaleofsecuritiesnetoftax: (
-        int
-    )
-    othercomprehensiveincomelossavailableforsalesecuritiesadjustmentnetoftax: int
-    othercomprehensiveincomelossnetoftaxportionattributabletoparent: int
-    comprehensiveincomenetoftax: int
+    data: Optional[Dict[str, int]] = None
 
 
 class FMPAsReportedIncomeStatement(BaseModel):
@@ -1145,41 +1167,9 @@ class FMPAsReportedIncomeStatement(BaseModel):
     period: str
     reportedCurrency: Optional[str] = None
     date: str
-    data: FMPAsReportedIncomeStatementData
-
-
-class FMPAsReportedBalanceSheetData(BaseModel):
-    cashandcashequivalentsatcarryingvalue: int
-    marketablesecuritiescurrent: int
-    accountsreceivablenetcurrent: int
-    nontradereceivablescurrent: int
-    inventorynet: int
-    otherassetscurrent: int
-    assetscurrent: int
-    marketablesecuritiesnoncurrent: int
-    propertyplantandequipmentnet: int
-    otherassetsnoncurrent: int
-    assetsnoncurrent: int
-    assets: int
-    accountspayablecurrent: int
-    otherliabilitiescurrent: int
-    contractwithcustomerliabilitycurrent: int
-    commercialpaper: int
-    longtermdebtcurrent: int
-    liabilitiescurrent: int
-    longtermdebtnoncurrent: int
-    otherliabilitiesnoncurrent: int
-    liabilitiesnoncurrent: int
-    liabilities: int
-    commonstocksharesoutstanding: int
-    commonstocksharesissued: int
-    commonstocksincludingadditionalpaidincapital: int
-    retainedearningsaccumulateddeficit: int
-    accumulatedothercomprehensiveincomelossnetoftax: int
-    stockholdersequity: int
-    liabilitiesandstockholdersequity: int
-    commonstockparorstatedvaluepershare: float
-    commonstocksharesauthorized: int
+    data: Dict[
+        str, Any
+    ]  # This can be a complex structure, so using Any for flexibility
 
 
 class FMPAsReportedBalanceSheet(BaseModel):
@@ -1188,39 +1178,9 @@ class FMPAsReportedBalanceSheet(BaseModel):
     period: str
     reportedCurrency: Optional[str] = None
     date: str
-    data: FMPAsReportedBalanceSheetData
-
-
-class FMPAsReportedCashFlowStatementData(BaseModel):
-    cashcashequivalentsrestrictedcashandrestrictedcashequivalents: int
-    netincomeloss: int
-    depreciationdepletionandamortization: int
-    sharebasedcompensation: int
-    othernoncashincomeexpense: int
-    increasedecreaseinaccountsreceivable: int
-    increasedecreaseinotherreceivables: int
-    increasedecreaseininventories: int
-    increasedecreaseinotheroperatingassets: int
-    increasedecreaseinaccountspayable: int
-    increasedecreaseinotheroperatingliabilities: int
-    netcashprovidedbyusedinoperatingactivities: int
-    paymentstoacquireavailableforsalesecuritiesdebt: int
-    proceedsfrommaturitiesprepaymentsandcallsofavailableforsalesecurities: int
-    proceedsfromsaleofavailableforsalesecuritiesdebt: int
-    paymentstoacquirepropertyplantandequipment: int
-    paymentsforproceedsfromotherinvestingactivities: int
-    netcashprovidedbyusedininvestingactivities: int
-    paymentsrelatedtotaxwithholdingforsharebasedcompensation: int
-    paymentsofdividends: int
-    paymentsforrepurchaseofcommonstock: int
-    repaymentsoflongtermdebt: int
-    proceedsfromrepaymentsofcommercialpaper: int
-    proceedsfrompaymentsforotherfinancingactivities: int
-    netcashprovidedbyusedinfinancingactivities: int
-    cashcashequivalentsrestrictedcashandrestrictedcashequivalentsperiodincreasedecreaseincludingexchangerateeffect: (
-        int
-    )
-    incometaxespaidnet: int
+    data: Dict[
+        str, Any
+    ]  # This can be a complex structure, so using Any for flexibility
 
 
 class FMPAsReportedCashFlowStatement(BaseModel):
@@ -1229,371 +1189,9 @@ class FMPAsReportedCashFlowStatement(BaseModel):
     period: str
     reportedCurrency: Optional[str] = None
     date: str
-    data: FMPAsReportedCashFlowStatementData
-
-
-class FMPAsReportedFullStatementData(BaseModel):
-    documenttype: str
-    documentannualreport: str
-    currentfiscalyearenddate: str
-    documentperiodenddate: str
-    documenttransitionreport: str
-    entityfilenumber: str
-    entityregistrantname: str
-    entityincorporationstatecountrycode: str
-    entitytaxidentificationnumber: str
-    entityaddressaddressline1: str
-    entityaddresscityortown: str
-    entityaddressstateorprovince: str
-    entityaddresspostalzipcode: int
-    cityareacode: int
-    localphonenumber: str
-    security12btitle: str
-    tradingsymbol: str
-    notradingsymbolflag: str
-    securityexchangename: str
-    entitywellknownseasonedissuer: str
-    entityvoluntaryfilers: str
-    entitycurrentreportingstatus: str
-    entityinteractivedatacurrent: str
-    entityfilercategory: str
-    entitysmallbusiness: str
-    entityemerginggrowthcompany: str
-    icfrauditorattestationflag: str
-    documentfinstmterrorcorrectionflag: str
-    entityshellcompany: str
-    amendmentflag: str
-    documentfiscalyearfocus: int
-    documentfiscalperiodfocus: str
-    entitycentralindexkey: int
-    auditorname: str
-    auditorlocation: str
-    auditorfirmid: int
-    revenuefromcontractwithcustomerexcludingassessedtax: int
-    costofgoodsandservicessold: int
-    grossprofit: int
-    researchanddevelopmentexpense: int
-    sellinggeneralandadministrativeexpense: int
-    operatingexpenses: int
-    operatingincomeloss: int
-    nonoperatingincomeexpense: int
-    incomelossfromcontinuingoperationsbeforeincometaxesextraordinaryitemsnoncontrollinginterest: (
-        int
-    )
-    incometaxexpensebenefit: int
-    netincomeloss: int
-    earningspersharebasic: float
-    earningspersharediluted: float
-    weightedaveragenumberofsharesoutstandingbasic: int
-    weightedaveragenumberofdilutedsharesoutstanding: int
-    othercomprehensiveincomelossforeigncurrencytransactionandtranslationadjustmentnetoftax: (
-        int
-    )
-    othercomprehensiveincomelossderivativeinstrumentgainlossbeforereclassificationaftertax: (
-        int
-    )
-    othercomprehensiveincomelossderivativeinstrumentgainlossreclassificationaftertax: (
-        int
-    )
-    othercomprehensiveincomelossderivativeinstrumentgainlossafterreclassificationandtax: (
-        int
-    )
-    othercomprehensiveincomeunrealizedholdinggainlossonsecuritiesarisingduringperiodnetoftax: (
-        int
-    )
-    othercomprehensiveincomelossreclassificationadjustmentfromaociforsaleofsecuritiesnetoftax: (
-        int
-    )
-    othercomprehensiveincomelossavailableforsalesecuritiesadjustmentnetoftax: int
-    othercomprehensiveincomelossnetoftaxportionattributabletoparent: int
-    comprehensiveincomenetoftax: int
-    cashandcashequivalentsatcarryingvalue: int
-    marketablesecuritiescurrent: int
-    accountsreceivablenetcurrent: int
-    nontradereceivablescurrent: int
-    inventorynet: int
-    otherassetscurrent: int
-    assetscurrent: int
-    marketablesecuritiesnoncurrent: int
-    propertyplantandequipmentnet: int
-    otherassetsnoncurrent: int
-    assetsnoncurrent: int
-    assets: int
-    accountspayablecurrent: int
-    otherliabilitiescurrent: int
-    contractwithcustomerliabilitycurrent: int
-    commercialpaper: int
-    longtermdebtcurrent: int
-    liabilitiescurrent: int
-    longtermdebtnoncurrent: int
-    otherliabilitiesnoncurrent: int
-    liabilitiesnoncurrent: int
-    liabilities: int
-    commonstocksharesoutstanding: int
-    commonstocksharesissued: int
-    commonstocksincludingadditionalpaidincapital: int
-    retainedearningsaccumulateddeficit: int
-    accumulatedothercomprehensiveincomelossnetoftax: int
-    stockholdersequity: int
-    liabilitiesandstockholdersequity: int
-    commonstockparorstatedvaluepershare: float
-    commonstocksharesauthorized: int
-    stockissuedduringperiodvaluenewissues: int
-    adjustmentsrelatedtotaxwithholdingforsharebasedcompensation: int
-    adjustmentstoadditionalpaidincapitalsharebasedcompensationrequisiteserviceperiodrecognitionvalue: (
-        int
-    )
-    dividends: int
-    stockrepurchasedandretiredduringperiodvalue: int
-    commonstockdividendspersharedeclared: float
-    cashcashequivalentsrestrictedcashandrestrictedcashequivalents: int
-    depreciationdepletionandamortization: int
-    sharebasedcompensation: int
-    othernoncashincomeexpense: int
-    increasedecreaseinaccountsreceivable: int
-    increasedecreaseinotherreceivables: int
-    increasedecreaseininventories: int
-    increasedecreaseinotheroperatingassets: int
-    increasedecreaseinaccountspayable: int
-    increasedecreaseinotheroperatingliabilities: int
-    netcashprovidedbyusedinoperatingactivities: int
-    paymentstoacquireavailableforsalesecuritiesdebt: int
-    proceedsfrommaturitiesprepaymentsandcallsofavailableforsalesecurities: int
-    proceedsfromsaleofavailableforsalesecuritiesdebt: int
-    paymentstoacquirepropertyplantandequipment: int
-    paymentsforproceedsfromotherinvestingactivities: int
-    netcashprovidedbyusedininvestingactivities: int
-    paymentsrelatedtotaxwithholdingforsharebasedcompensation: int
-    paymentsofdividends: int
-    paymentsforrepurchaseofcommonstock: int
-    repaymentsoflongtermdebt: int
-    proceedsfromrepaymentsofcommercialpaper: int
-    proceedsfrompaymentsforotherfinancingactivities: int
-    netcashprovidedbyusedinfinancingactivities: int
-    cashcashequivalentsrestrictedcashandrestrictedcashequivalentsperiodincreasedecreaseincludingexchangerateeffect: (
-        int
-    )
-    incometaxespaidnet: int
-    commercialpapercashflowsummarytabletextblock: str
-    contractwithcustomerliabilityrevenuerecognized: int
-    contractwithcustomerliability: int
-    revenueremainingperformanceobligationpercentage: float
-    revenueremainingperformanceobligationexpectedtimingofsatisfactionperiod1: str
-    incrementalcommonsharesattributabletosharebasedpaymentarrangements: int
-    cash: int
-    equitysecuritiesfvnicost: int
-    equitysecuritiesfvniaccumulatedgrossunrealizedgainbeforetax: int
-    equitysecuritiesfvniaccumulatedgrossunrealizedlossbeforetax: int
-    equitysecuritiesfvnicurrentandnoncurrent: int
-    availableforsaledebtsecuritiesamortizedcostbasis: int
-    availableforsaledebtsecuritiesaccumulatedgrossunrealizedgainbeforetax: int
-    availableforsaledebtsecuritiesaccumulatedgrossunrealizedlossbeforetax: int
-    availableforsalesecuritiesdebtsecurities: int
-    cashcashequivalentsandmarketablesecuritiescost: int
-    cashequivalentsandmarketablesecuritiesaccumulatedgrossunrealizedgainbeforetax: int
-    cashequivalentsandmarketablesecuritiesaccumulatedgrossunrealizedlossbeforetax: int
-    cashcashequivalentsandmarketablesecurities: int
-    restrictedcashandcashequivalents: int
-    debtsecuritiesavailableforsalerestricted: int
-    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingafteronethroughfiveyearspercentage: (
-        float
-    )
-    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingafterfivethroughtenyearspercentage: (
-        float
-    )
-    debtsecuritiesavailableforsalematurityallocatedandsinglematuritydaterollingaftertenyearspercentage: (
-        float
-    )
-    maximumlengthoftimeforeigncurrencycashflowhedge: str
-    concentrationriskpercentage1: float
-    numberofsignificantvendors: int
-    derivativenotionalamount: int
-    hedgedassetstatementoffinancialpositionextensibleenumeration: str
-    hedgedliabilityfairvaluehedge: int
-    hedgedliabilitystatementoffinancialpositionextensibleenumeration: str
-    propertyplantandequipmentgross: int
-    accumulateddepreciationdepletionandamortizationpropertyplantandequipment: int
-    depreciation: int
-    deferredincometaxassetsnet: int
-    otherassetsmiscellaneousnoncurrent: int
-    accruedincometaxescurrent: int
-    otheraccruedliabilitiescurrent: int
-    accruedincometaxesnoncurrent: int
-    otheraccruedliabilitiesnoncurrent: int
-    totalrestrictedcashcashequivalentsandavailableforsaledebtsecurities: int
-    currentforeigntaxexpensebenefit: int
-    currentfederaltaxexpensebenefitcontinuingoperations: int
-    unrecognizedtaxbenefitsdecreasesresultingfromsettlementswithtaxingauthorities: int
-    incomelossfromcontinuingoperationsbeforeincometaxesforeign: int
-    effectiveincometaxratereconciliationatfederalstatutoryincometaxrate: float
-    deferredtaxassetstaxcreditcarryforwardsforeign: int
-    deferredtaxassetstaxcreditcarryforwardsresearch: int
-    unrecognizedtaxbenefits: int
-    unrecognizedtaxbenefitsthatwouldimpacteffectivetaxrate: int
-    decreaseinunrecognizedtaxbenefitsisreasonablypossible: int
-    deferredfederalincometaxexpensebenefit: int
-    federalincometaxexpensebenefitcontinuingoperations: int
-    currentstateandlocaltaxexpensebenefit: int
-    deferredstateandlocalincometaxexpensebenefit: int
-    stateandlocalincometaxexpensebenefitcontinuingoperations: int
-    deferredforeignincometaxexpensebenefit: int
-    foreignincometaxexpensebenefitcontinuingoperations: int
-    incometaxreconciliationincometaxexpensebenefitatfederalstatutoryincometaxrate: int
-    incometaxreconciliationstateandlocalincometaxes: int
-    effectiveincometaxratereconciliationimpactofthestateaiddecisionamount: int
-    incometaxreconciliationforeignincometaxratedifferential: int
-    incometaxreconciliationtaxcreditsresearch: int
-    effectiveincometaxratereconciliationsharebasedcompensationexcesstaxbenefitamount: (
-        int
-    )
-    incometaxreconciliationotheradjustments: int
-    effectiveincometaxratecontinuingoperations: float
-    deferredtaxassetscapitalizedresearchanddevelopment: int
-    deferredtaxassetstaxcreditcarryforwards: int
-    deferredtaxassetstaxdeferredexpensereservesandaccruals: int
-    deferredtaxassetsdeferredincome: int
-    deferredtaxassetsleaseliabilities: int
-    deferredtaxassetsothercomprehensiveloss: int
-    deferredtaxassetsother: int
-    deferredtaxassetsgross: int
-    deferredtaxassetsvaluationallowance: int
-    deferredtaxassetsnet: int
-    deferredtaxliabilitiespropertyplantandequipment: int
-    deferredtaxliabilitiesleasingarrangements: int
-    deferredtaxliabilitiesminimumtaxonforeignearnings: int
-    deferredtaxliabilitiesother: int
-    deferredincometaxliabilities: int
-    deferredtaxassetsliabilitiesnet: int
-    unrecognizedtaxbenefitsincreasesresultingfrompriorperiodtaxpositions: int
-    unrecognizedtaxbenefitsdecreasesresultingfrompriorperiodtaxpositions: int
-    unrecognizedtaxbenefitsincreasesresultingfromcurrentperiodtaxpositions: int
-    unrecognizedtaxbenefitsreductionsresultingfromlapseofapplicablestatuteoflimitations: (
-        int
-    )
-    lesseeoperatingandfinanceleasetermofcontract: str
-    operatingleasecost: int
-    variableleasecost: int
-    operatingleasepayments: int
-    rightofuseassetsobtainedinexchangeforoperatingandfinanceleaseliabilities: int
-    operatingandfinanceleaseweightedaverageremainingleaseterm: str
-    operatingandfinanceleaseweightedaveragediscountratepercent: float
-    unrecordedunconditionalpurchaseobligationbalancesheetamount: int
-    lesseeoperatingandfinanceleaseleasenotyetcommencedtermofcontract: str
-    operatingleaserightofuseasset: int
-    operatingleaserightofuseassetstatementoffinancialpositionextensiblelist: str
-    financeleaserightofuseasset: int
-    financeleaserightofuseassetstatementoffinancialpositionextensiblelist: str
-    operatingandfinanceleaserightofuseasset: int
-    operatingleaseliabilitycurrent: int
-    operatingleaseliabilitycurrentstatementoffinancialpositionextensiblelist: str
-    operatingleaseliabilitynoncurrent: int
-    operatingleaseliabilitynoncurrentstatementoffinancialpositionextensiblelist: str
-    financeleaseliabilitycurrent: int
-    financeleaseliabilitycurrentstatementoffinancialpositionextensiblelist: str
-    financeleaseliabilitynoncurrent: int
-    financeleaseliabilitynoncurrentstatementoffinancialpositionextensiblelist: str
-    operatingandfinanceleaseliability: int
-    lesseeoperatingleaseliabilitypaymentsduenexttwelvemonths: int
-    lesseeoperatingleaseliabilitypaymentsdueyeartwo: int
-    lesseeoperatingleaseliabilitypaymentsdueyearthree: int
-    lesseeoperatingleaseliabilitypaymentsdueyearfour: int
-    lesseeoperatingleaseliabilitypaymentsdueyearfive: int
-    lesseeoperatingleaseliabilitypaymentsdueafteryearfive: int
-    lesseeoperatingleaseliabilitypaymentsdue: int
-    lesseeoperatingleaseliabilityundiscountedexcessamount: int
-    operatingleaseliability: int
-    financeleaseliabilitypaymentsduenexttwelvemonths: int
-    financeleaseliabilitypaymentsdueyeartwo: int
-    financeleaseliabilitypaymentsdueyearthree: int
-    financeleaseliabilitypaymentsdueyearfour: int
-    financeleaseliabilitypaymentsdueyearfive: int
-    financeleaseliabilitypaymentsdueafteryearfive: int
-    financeleaseliabilitypaymentsdue: int
-    financeleaseliabilityundiscountedexcessamount: int
-    financeleaseliability: int
-    lesseeoperatingandfinanceleaseliabilitytobepaidyearone: int
-    lesseeoperatingandfinanceleaseliabilitytobepaidyeartwo: int
-    lesseeoperatingandfinanceleaseliabilitytobepaidyearthree: int
-    lesseeoperatingandfinanceleaseliabilitytobepaidyearfour: int
-    lesseeoperatingandfinanceleaseliabilitytobepaidyearfive: int
-    lesseeoperatingandfinanceleaseliabilitytobepaidafteryearfive: int
-    lesseeoperatingandfinanceleaseliabilitytobepaid: int
-    lesseeoperatingandfinanceleaseliabilityundiscountedexcessamount: int
-    debtinstrumentterm: str
-    shorttermdebtweightedaverageinterestrate: float
-    longtermdebtfairvalue: int
-    proceedsfromrepaymentsofshorttermdebtmaturinginthreemonthsorless: int
-    debtinstrumentcarryingamount: int
-    debtinstrumentunamortizeddiscountpremiumanddebtissuancecostsnet: int
-    hedgeaccountingadjustmentsrelatedtolongtermdebt: int
-    longtermdebt: int
-    debtinstrumentmaturityyearrangestart: int
-    debtinstrumentmaturityyearrangeend: int
-    debtinstrumentinterestratestatedpercentage: float
-    debtinstrumentinterestrateeffectivepercentage: float
-    longtermdebtmaturitiesrepaymentsofprincipalinnexttwelvemonths: int
-    longtermdebtmaturitiesrepaymentsofprincipalinyeartwo: int
-    longtermdebtmaturitiesrepaymentsofprincipalinyearthree: int
-    longtermdebtmaturitiesrepaymentsofprincipalinyearfour: int
-    longtermdebtmaturitiesrepaymentsofprincipalinyearfive: int
-    longtermdebtmaturitiesrepaymentsofprincipalafteryearfive: int
-    stockrepurchasedandretiredduringperiodshares: int
-    stockissuedduringperiodsharessharebasedpaymentarrangementnetofshareswithheldfortaxes: (
-        int
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardawardvestingperiod1: str
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnumberofsharesofcommonstockissuedperunituponvesting: (
-        int
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiodtotalfairvalue: (
-        int
-    )
-    sharespaidfortaxwithholdingforsharebasedcompensation: int
-    employeeservicesharebasedcompensationnonvestedawardstotalcompensationcostnotyetrecognized: (
-        int
-    )
-    employeeservicesharebasedcompensationnonvestedawardstotalcompensationcostnotyetrecognizedperiodforrecognition1: (
-        str
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnonvestednumber: (
-        int
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsgrantsinperiod: (
-        int
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiod: (
-        int
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsforfeitedinperiod: (
-        int
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsnonvestedweightedaveragegrantdatefairvalue: (
-        float
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsgrantsinperiodweightedaveragegrantdatefairvalue: (
-        float
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsvestedinperiodweightedaveragegrantdatefairvalue: (
-        float
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsforfeituresweightedaveragegrantdatefairvalue: (
-        float
-    )
-    sharebasedcompensationarrangementbysharebasedpaymentawardequityinstrumentsotherthanoptionsaggregateintrinsicvaluenonvested: (
-        int
-    )
-    allocatedsharebasedcompensationexpense: int
-    employeeservicesharebasedcompensationtaxbenefitfromcompensationexpense: int
-    unrecordedunconditionalpurchaseobligationbalanceonfirstanniversary: int
-    unrecordedunconditionalpurchaseobligationbalanceonsecondanniversary: int
-    unrecordedunconditionalpurchaseobligationbalanceonthirdanniversary: int
-    unrecordedunconditionalpurchaseobligationbalanceonfourthanniversary: int
-    unrecordedunconditionalpurchaseobligationbalanceonfifthanniversary: int
-    unrecordedunconditionalpurchaseobligationdueafterfiveyears: int
-    othergeneralandadministrativeexpense: int
-    noncurrentassets: int
-    trdarrsecuritiesaggavailamt: int
-    insidertrdpoliciesprocadoptedflag: bool
+    data: Dict[
+        str, Any
+    ]  # This can be a complex structure, so using Any for flexibility
 
 
 class FMPAsReportedFullStatement(BaseModel):
@@ -1602,7 +1200,9 @@ class FMPAsReportedFullStatement(BaseModel):
     period: str
     reportedCurrency: Optional[str] = None
     date: str
-    data: FMPAsReportedFullStatementData
+    data: Dict[
+        str, Any
+    ]  # This can be a complex structure, so using Any for flexibility
 
 
 class FMPForm13FFiling(BaseModel):
@@ -1812,13 +1412,13 @@ class FMPInsiderTrade(BaseModel):
     reportingCik: str
     companyCik: str
     transactionType: str
-    securitiesOwned: int
+    securitiesOwned: float
     reportingName: str
     typeOfOwner: str
     acquisitionOrDisposition: str
-    directOrIndirect: str
+    directOrIndirect: Optional[str] = None
     formType: str
-    securitiesTransacted: int
+    securitiesTransacted: float
     price: float
     securityName: str
     url: str
@@ -1905,6 +1505,13 @@ class FmpFinancialStatementSymbolsListResponse(BaseModel):
     period: str
     date: str
     dateAdded: str
+
+
+class FmpFinancialReportDatesListResponse(BaseModel):
+    date: str
+    period: str
+    linkCalendarYear: Optional[str] = None
+    filedDate: Optional[str] = None
 
 
 class FMPQuoteFull(BaseModel):
@@ -2002,7 +1609,7 @@ class FMPCompanySECFilings(BaseModel):
     sicCode: str
     industryTitle: str
     businessAddress: str
-    phoneNumber: str
+    phoneNumber: Optional[str] = None
 
 
 class FMPIndustryClassification(BaseModel):
@@ -2121,7 +1728,7 @@ class FMPBulkEarningsSurprise(BaseModel):
     lastUpdated: str
 
 
-class FMPBulkIncomeStatement(BaseModel):
+class FMPBalanceSheetStatement(BaseModel):
     date: str
     symbol: str
     reportedCurrency: str
@@ -2130,172 +1737,116 @@ class FMPBulkIncomeStatement(BaseModel):
     acceptedDate: str
     fiscalYear: str
     period: str
-    revenue: str
-    costOfRevenue: str
-    grossProfit: str
-    researchAndDevelopmentExpenses: str
-    generalAndAdministrativeExpenses: str
-    sellingAndMarketingExpenses: str
-    sellingGeneralAndAdministrativeExpenses: str
-    otherExpenses: str
-    operatingExpenses: str
-    costAndExpenses: str
-    netInterestIncome: Optional[str] = None
-    interestIncome: str
-    interestExpense: str
-    depreciationAndAmortization: str
-    ebitda: str
-    ebit: Optional[str] = None
-    nonOperatingIncomeExcludingInterest: Optional[str] = None
-    operatingIncome: str
-    totalOtherIncomeExpensesNet: str
-    incomeBeforeTax: str
-    incomeTaxExpense: str
-    netIncomeFromContinuingOperations: Optional[str] = None
-    netIncomeFromDiscontinuedOperations: Optional[str] = None
-    otherAdjustmentsToNetIncome: Optional[str] = None
-    netIncome: str
-    netIncomeDeductions: Optional[str] = None
-    bottomLineNetIncome: Optional[str] = None
-    eps: str
-    epsDiluted: str
-    weightedAverageShsOut: str
-    weightedAverageShsOutDil: str
+    cashAndCashEquivalents: float
+    shortTermInvestments: float
+    cashAndShortTermInvestments: float
+    netReceivables: float
+    accountsReceivables: float
+    inventory: float
+    prepaids: float
+    otherCurrentAssets: float
+    totalCurrentAssets: float
+    propertyPlantEquipmentNet: float
+    goodwill: float
+    intangibleAssets: float
+    goodwillAndIntangibleAssets: float
+    longTermInvestments: float
+    taxAssets: float
+    otherNonCurrentAssets: float
+    totalNonCurrentAssets: float
+    otherAssets: float
+    totalAssets: float
+    accountPayables: float
+    otherPayables: float
+    accruedExpenses: float
+    shortTermDebt: float
+    capitalLeaseObligationsCurrent: float
+    taxPayables: float
+    deferredRevenue: float
+    otherCurrentLiabilities: float
+    totalCurrentLiabilities: float
+    longTermDebt: float
+    deferredRevenueNonCurrent: float
+    deferredTaxLiabilitiesNonCurrent: float
+    otherNonCurrentLiabilities: float
+    totalNonCurrentLiabilities: float
+    otherLiabilities: float
+    capitalLeaseObligations: float
+    totalLiabilities: float
+    treasuryStock: float
+    preferredStock: float
+    commonStock: float
+    retainedEarnings: float
+    accumulatedOtherComprehensiveIncomeLoss: float
+    otherTotalStockholdersEquity: float
+    totalStockholdersEquity: float
+    totalEquity: float
+    minorityInterest: float
+    totalLiabilitiesAndTotalEquity: float
+    totalInvestments: float
+    totalDebt: float
+    netDebt: float
 
 
-class FMPBulkIncomeStatementGrowth(BaseModel):
+class FMPBalanceSheetGrowth(BaseModel):
     symbol: str
     date: str
     fiscalYear: str
     period: str
     reportedCurrency: str
-    growthRevenue: str
-    growthCostOfRevenue: str
-    growthGrossProfit: str
-    growthGrossProfitRatio: str
-    growthResearchAndDevelopmentExpenses: str
-    growthGeneralAndAdministrativeExpenses: str
-    growthSellingAndMarketingExpenses: str
-    growthOtherExpenses: str
-    growthOperatingExpenses: str
-    growthCostAndExpenses: str
-    growthInterestIncome: str
-    growthInterestExpense: str
-    growthDepreciationAndAmortization: str
-    growthEBITDA: str
-    growthOperatingIncome: str
-    growthIncomeBeforeTax: str
-    growthIncomeTaxExpense: str
-    growthNetIncome: str
-    growthEPS: str
-    growthEPSDiluted: str
-    growthWeightedAverageShsOut: str
-    growthWeightedAverageShsOutDil: str
+    growthCashAndCashEquivalents: float
+    growthShortTermInvestments: float
+    growthCashAndShortTermInvestments: float
+    growthNetReceivables: float
+    growthInventory: float
+    growthOtherCurrentAssets: float
+    growthTotalCurrentAssets: float
+    growthPropertyPlantEquipmentNet: float
+    growthGoodwill: float
+    growthIntangibleAssets: float
+    growthGoodwillAndIntangibleAssets: float
+    growthLongTermInvestments: float
+    growthTaxAssets: float
+    growthOtherNonCurrentAssets: float
+    growthTotalNonCurrentAssets: float
+    growthOtherAssets: float
+    growthTotalAssets: float
+    growthAccountPayables: float
+    growthShortTermDebt: float
+    growthTaxPayables: float
+    growthDeferredRevenue: float
+    growthOtherCurrentLiabilities: float
+    growthTotalCurrentLiabilities: float
+    growthLongTermDebt: float
+    growthDeferredRevenueNonCurrent: float
+    growthDeferredTaxLiabilitiesNonCurrent: float
+    growthOtherNonCurrentLiabilities: float
+    growthTotalNonCurrentLiabilities: float
+    growthOtherLiabilities: float
+    growthTotalLiabilities: float
+    growthPreferredStock: float
+    growthCommonStock: float
+    growthRetainedEarnings: float
+    growthAccumulatedOtherComprehensiveIncomeLoss: float
+    growthOthertotalStockholdersEquity: float
+    growthTotalStockholdersEquity: float
+    growthMinorityInterest: float
+    growthTotalEquity: float
+    growthTotalLiabilitiesAndStockholdersEquity: float
+    growthTotalInvestments: float
+    growthTotalDebt: float
+    growthNetDebt: float
+    growthAccountsReceivables: float
+    growthOtherReceivables: float
+    growthPrepaids: float
+    growthTotalPayables: float
+    growthAccruedExpenses: float
+    growthCapitalLeaseObligationsCurrent: float
+    growthAdditionalPaidInCapital: float
+    growthTreasuryStock: float
 
 
-class FMPBulkBalanceSheetStatement(BaseModel):
-    date: str
-    symbol: str
-    reportedCurrency: str
-    cik: str
-    filingDate: str
-    acceptedDate: str
-    fiscalYear: str
-    period: str
-    cashAndCashEquivalents: str
-    shortTermInvestments: str
-    cashAndShortTermInvestments: str
-    netReceivables: str
-    inventory: str
-    otherCurrentAssets: str
-    totalCurrentAssets: str
-    propertyPlantEquipmentNet: str
-    goodwill: str
-    intangibleAssets: str
-    goodwillAndIntangibleAssets: str
-    longTermInvestments: str
-    taxAssets: str
-    otherNonCurrentAssets: str
-    totalNonCurrentAssets: str
-    otherAssets: str
-    totalAssets: str
-    accountPayables: str
-    shortTermDebt: str
-    taxPayables: str
-    deferredRevenue: str
-    otherCurrentLiabilities: str
-    totalCurrentLiabilities: str
-    longTermDebt: str
-    otherNonCurrentLiabilities: str
-    totalNonCurrentLiabilities: str
-    otherLiabilities: str
-    capitalLeaseObligations: str
-    totalLiabilities: str
-    preferredStock: str
-    commonStock: str
-    retainedEarnings: str
-    accumulatedOtherComprehensiveIncomeLoss: str
-    otherTotalStockholdersEquity: str
-    totalStockholdersEquity: str
-    totalEquity: str
-    minorityInterest: str
-    totalLiabilitiesAndTotalEquity: str
-    totalInvestments: str
-    totalDebt: str
-    netDebt: str
-
-
-class FMPBulkBalanceSheetGrowth(BaseModel):
-    symbol: str
-    date: str
-    fiscalYear: str
-    period: str
-    reportedCurrency: str
-    growthCashAndCashEquivalents: str
-    growthShortTermInvestments: str
-    growthCashAndShortTermInvestments: str
-    growthNetReceivables: str
-    growthInventory: str
-    growthOtherCurrentAssets: str
-    growthTotalCurrentAssets: str
-    growthPropertyPlantEquipmentNet: str
-    growthGoodwill: str
-    growthIntangibleAssets: str
-    growthGoodwillAndIntangibleAssets: str
-    growthLongTermInvestments: str
-    growthTaxAssets: str
-    growthOtherNonCurrentAssets: str
-    growthTotalNonCurrentAssets: str
-    growthOtherAssets: str
-    growthTotalAssets: str
-    growthAccountPayables: str
-    growthShortTermDebt: str
-    growthTaxPayables: str
-    growthDeferredRevenue: str
-    growthOtherCurrentLiabilities: str
-    growthTotalCurrentLiabilities: str
-    growthLongTermDebt: str
-    growthDeferredRevenueNonCurrent: str
-    growthDeferredTaxLiabilitiesNonCurrent: str
-    growthOtherNonCurrentLiabilities: str
-    growthTotalNonCurrentLiabilities: str
-    growthOtherLiabilities: str
-    growthTotalLiabilities: str
-    growthPreferredStock: str
-    growthCommonStock: str
-    growthRetainedEarnings: str
-    growthAccumulatedOtherComprehensiveIncomeLoss: str
-    growthOthertotalStockholdersEquity: str
-    growthTotalStockholdersEquity: str
-    growthMinorityInterest: str
-    growthTotalEquity: str
-    growthTotalLiabilitiesAndStockholdersEquity: str
-    growthTotalInvestments: str
-    growthTotalDebt: str
-    growthNetDebt: str
-
-
-class FMPBulkCashFlowStatement(BaseModel):
+class FMPCashFlowStatement(BaseModel):
     date: str
     symbol: str
     reportedCurrency: str
@@ -2304,67 +1855,92 @@ class FMPBulkCashFlowStatement(BaseModel):
     acceptedDate: str
     fiscalYear: str
     period: str
-    netIncome: str
-    depreciationAndAmortization: str
-    deferredIncomeTax: str
-    stockBasedCompensation: str
-    changeInWorkingCapital: str
-    otherNonCashItems: str
-    netCashProvidedByOperatingActivities: str
-    investmentsInPropertyPlantAndEquipment: str
-    acquisitionsNet: str
-    purchasesOfInvestments: str
-    salesMaturitiesOfInvestments: str
-    otherInvestingActivities: str
-    netCashProvidedByInvestingActivities: str
-    commonStockRepurchased: str
-    netDividendsPaid: str
-    otherFinancingActivities: str
-    netCashProvidedByFinancingActivities: str
-    effectOfForexChangesOnCash: str
-    netChangeInCash: str
-    cashAtEndOfPeriod: str
-    cashAtBeginningOfPeriod: str
-    operatingCashFlow: str
-    capitalExpenditure: str
-    freeCashFlow: str
+    netIncome: int
+    depreciationAndAmortization: int
+    deferredIncomeTax: int
+    stockBasedCompensation: int
+    changeInWorkingCapital: int
+    accountsReceivables: int
+    inventory: int
+    accountsPayables: int
+    otherWorkingCapital: int
+    otherNonCashItems: int
+    netCashProvidedByOperatingActivities: int
+    investmentsInPropertyPlantAndEquipment: int
+    acquisitionsNet: int
+    purchasesOfInvestments: int
+    salesMaturitiesOfInvestments: int
+    otherInvestingActivities: int
+    netCashProvidedByInvestingActivities: int
+    netDebtIssuance: int
+    longTermNetDebtIssuance: int
+    shortTermNetDebtIssuance: int
+    netStockIssuance: int
+    netCommonStockIssuance: int
+    commonStockIssuance: int
+    commonStockRepurchased: int
+    netPreferredStockIssuance: int
+    netDividendsPaid: int
+    commonDividendsPaid: int
+    preferredDividendsPaid: int
+    otherFinancingActivities: int
+    netCashProvidedByFinancingActivities: int
+    effectOfForexChangesOnCash: int
+    netChangeInCash: int
+    cashAtEndOfPeriod: int
+    cashAtBeginningOfPeriod: int
+    operatingCashFlow: int
+    capitalExpenditure: int
+    freeCashFlow: int
+    incomeTaxesPaid: int
+    interestPaid: int
 
 
-class FMPBulkCashFlowGrowth(BaseModel):
+class FMPCashFlowGrowth(BaseModel):
     symbol: str
     date: str
     fiscalYear: str
     period: str
     reportedCurrency: str
-    growthNetIncome: str
-    growthDepreciationAndAmortization: str
-    growthDeferredIncomeTax: str
-    growthStockBasedCompensation: str
-    growthChangeInWorkingCapital: str
-    growthOtherNonCashItems: str
-    growthNetCashProvidedByOperatingActivites: str
-    growthInvestmentsInPropertyPlantAndEquipment: str
-    growthAcquisitionsNet: str
-    growthPurchasesOfInvestments: str
-    growthSalesMaturitiesOfInvestments: str
-    growthOtherInvestingActivites: str
-    growthNetCashUsedForInvestingActivites: str
-    growthDebtRepayment: str
-    growthCommonStockIssued: str
-    growthCommonStockRepurchased: str
-    growthDividendsPaid: str
-    growthOtherFinancingActivites: str
-    growthNetCashUsedProvidedByFinancingActivities: str
-    growthEffectOfForexChangesOnCash: str
-    growthNetChangeInCash: str
-    growthCashAtEndOfPeriod: str
-    growthCashAtBeginningOfPeriod: str
-    growthOperatingCashFlow: str
-    growthCapitalExpenditure: str
-    growthFreeCashFlow: str
+    growthNetIncome: float
+    growthDepreciationAndAmortization: float
+    growthDeferredIncomeTax: float
+    growthStockBasedCompensation: float
+    growthChangeInWorkingCapital: float
+    growthAccountsReceivables: float
+    growthInventory: float
+    growthAccountsPayables: float
+    growthOtherNonCashItems: float
+    growthNetCashProvidedByOperatingActivites: float
+    growthInvestmentsInPropertyPlantAndEquipment: float
+    growthAcquisitionsNet: float
+    growthPurchasesOfInvestments: float
+    growthSalesMaturitiesOfInvestments: float
+    growthOtherInvestingActivites: float
+    growthNetCashUsedForInvestingActivites: float
+    growthDebtRepayment: float
+    growthCommonStockIssued: float
+    growthCommonStockRepurchased: float
+    growthDividendsPaid: float
+    growthOtherFinancingActivites: float
+    growthNetCashUsedProvidedByFinancingActivities: float
+    growthEffectOfForexChangesOnCash: float
+    growthNetChangeInCash: float
+    growthCashAtEndOfPeriod: float
+    growthCashAtBeginningOfPeriod: float
+    growthOperatingCashFlow: float
+    growthCapitalExpenditure: float
+    growthFreeCashFlow: float
+    growthNetDebtIssuance: float
+    growthLongTermNetDebtIssuance: float
+    growthShortTermNetDebtIssuance: float
+    growthNetStockIssuance: float
+    growthPreferredDividendsPaid: float
+    growthIncomeTaxesPaid: float
+    growthInterestPaid: float
 
 
-class FMPFinancialStatement(BaseModel):
+class FMPIncomeStatement(BaseModel):
     date: str
     symbol: str
     reportedCurrency: str
@@ -2404,225 +1980,6 @@ class FMPFinancialStatement(BaseModel):
     epsDiluted: float
     weightedAverageShsOut: int
     weightedAverageShsOutDil: int
-    # Balance Sheet Fields
-    cashAndCashEquivalents: Optional[int] = None
-    shortTermInvestments: Optional[int] = None
-    cashAndShortTermInvestments: Optional[int] = None
-    netReceivables: Optional[int] = None
-    accountsReceivables: Optional[str] = None
-    otherReceivables: Optional[str] = None
-    inventory: Optional[int] = None
-    prepaids: Optional[str] = None
-    otherCurrentAssets: Optional[int] = None
-    totalCurrentAssets: Optional[int] = None
-    propertyPlantEquipmentNet: Optional[int] = None
-    goodwill: Optional[int] = None
-    intangibleAssets: Optional[int] = None
-    goodwillAndIntangibleAssets: Optional[int] = None
-    longTermInvestments: Optional[int] = None
-    taxAssets: Optional[int] = None
-    otherNonCurrentAssets: Optional[int] = None
-    totalNonCurrentAssets: Optional[int] = None
-    otherAssets: Optional[int] = None
-    totalAssets: Optional[int] = None
-    totalPayables: Optional[str] = None
-    accountPayables: Optional[str] = None
-    otherPayables: Optional[str] = None
-    accruedExpenses: Optional[str] = None
-    shortTermDebt: Optional[int] = None
-    capitalLeaseObligationsCurrent: Optional[str] = None
-    taxPayables: Optional[str] = None
-    deferredRevenue: Optional[int] = None
-    otherCurrentLiabilities: Optional[int] = None
-    totalCurrentLiabilities: Optional[int] = None
-    longTermDebt: Optional[int] = None
-    capitalLeaseObligationsNonCurrent: Optional[str] = None
-    deferredRevenueNonCurrent: Optional[int] = None
-    deferredTaxLiabilitiesNonCurrent: Optional[int] = None
-    otherNonCurrentLiabilities: Optional[int] = None
-    totalNonCurrentLiabilities: Optional[int] = None
-    otherLiabilities: Optional[int] = None
-    capitalLeaseObligations: Optional[str] = None
-    totalLiabilities: Optional[int] = None
-    treasuryStock: Optional[str] = None
-    preferredStock: Optional[int] = None
-    commonStock: Optional[int] = None
-    retainedEarnings: Optional[int] = None
-    additionalPaidInCapital: Optional[str] = None
-    accumulatedOtherComprehensiveIncomeLoss: Optional[int] = None
-    otherTotalStockholdersEquity: Optional[int] = None
-    totalStockholdersEquity: Optional[int] = None
-    totalEquity: Optional[int] = None
-    minorityInterest: Optional[int] = None
-    totalLiabilitiesAndTotalEquity: Optional[int] = None
-    totalInvestments: Optional[int] = None
-    totalDebt: Optional[int] = None
-    netDebt: Optional[int] = None
-    # Cash Flow Fields
-    deferredIncomeTax: Optional[int] = None
-    stockBasedCompensation: Optional[int] = None
-    changeInWorkingCapital: Optional[int] = None
-    otherNonCashItems: Optional[int] = None
-    netCashProvidedByOperatingActivities: Optional[int] = None
-    investmentsInPropertyPlantAndEquipment: Optional[int] = None
-    acquisitionsNet: Optional[int] = None
-    purchasesOfInvestments: Optional[int] = None
-    salesMaturitiesOfInvestments: Optional[int] = None
-    otherInvestingActivities: Optional[int] = None
-    netCashProvidedByInvestingActivities: Optional[int] = None
-    netDebtIssuance: Optional[str] = None
-    longTermNetDebtIssuance: Optional[str] = None
-    shortTermNetDebtIssuance: Optional[str] = None
-    netStockIssuance: Optional[str] = None
-    netCommonStockIssuance: Optional[str] = None
-    commonStockIssuance: Optional[int] = None
-    commonStockRepurchased: Optional[int] = None
-    netPreferredStockIssuance: Optional[str] = None
-    netDividendsPaid: Optional[int] = None
-    commonDividendsPaid: Optional[str] = None
-    preferredDividendsPaid: Optional[str] = None
-    otherFinancingActivities: Optional[int] = None
-    netCashProvidedByFinancingActivities: Optional[int] = None
-    effectOfForexChangesOnCash: Optional[int] = None
-    netChangeInCash: Optional[int] = None
-    cashAtEndOfPeriod: Optional[int] = None
-    cashAtBeginningOfPeriod: Optional[int] = None
-    operatingCashFlow: Optional[int] = None
-    capitalExpenditure: Optional[int] = None
-    freeCashFlow: Optional[int] = None
-    incomeTaxesPaid: Optional[str] = None
-    interestPaid: Optional[str] = None
-
-
-class FMPFinancialStatementTTM(BaseModel):
-    date: str
-    symbol: str
-    reportedCurrency: str
-    cik: str
-    filingDate: str
-    acceptedDate: str
-    fiscalYear: str
-    period: str
-    revenue: int
-    costOfRevenue: int
-    grossProfit: int
-    researchAndDevelopmentExpenses: int
-    generalAndAdministrativeExpenses: int
-    sellingAndMarketingExpenses: int
-    sellingGeneralAndAdministrativeExpenses: int
-    otherExpenses: int
-    operatingExpenses: int
-    costAndExpenses: int
-    netInterestIncome: int
-    interestIncome: int
-    interestExpense: int
-    depreciationAndAmortization: int
-    ebitda: int
-    ebit: int
-    nonOperatingIncomeExcludingInterest: int
-    operatingIncome: int
-    totalOtherIncomeExpensesNet: int
-    incomeBeforeTax: int
-    incomeTaxExpense: int
-    netIncomeFromContinuingOperations: int
-    netIncomeFromDiscontinuedOperations: int
-    otherAdjustmentsToNetIncome: int
-    netIncome: int
-    netIncomeDeductions: int
-    bottomLineNetIncome: int
-    eps: float
-    epsDiluted: float
-    weightedAverageShsOut: int
-    weightedAverageShsOutDil: int
-    # Balance Sheet Fields
-    cashAndCashEquivalents: Optional[int] = None
-    shortTermInvestments: Optional[int] = None
-    cashAndShortTermInvestments: Optional[int] = None
-    netReceivables: Optional[int] = None
-    accountsReceivables: Optional[int] = None
-    otherReceivables: Optional[int] = None
-    inventory: Optional[int] = None
-    prepaids: Optional[int] = None
-    otherCurrentAssets: Optional[int] = None
-    totalCurrentAssets: Optional[int] = None
-    propertyPlantEquipmentNet: Optional[int] = None
-    goodwill: Optional[int] = None
-    intangibleAssets: Optional[int] = None
-    goodwillAndIntangibleAssets: Optional[int] = None
-    longTermInvestments: Optional[int] = None
-    taxAssets: Optional[int] = None
-    otherNonCurrentAssets: Optional[int] = None
-    totalNonCurrentAssets: Optional[int] = None
-    otherAssets: Optional[int] = None
-    totalAssets: Optional[int] = None
-    totalPayables: Optional[int] = None
-    accountPayables: Optional[int] = None
-    otherPayables: Optional[int] = None
-    accruedExpenses: Optional[int] = None
-    shortTermDebt: Optional[int] = None
-    capitalLeaseObligationsCurrent: Optional[int] = None
-    taxPayables: Optional[int] = None
-    deferredRevenue: Optional[int] = None
-    otherCurrentLiabilities: Optional[int] = None
-    totalCurrentLiabilities: Optional[int] = None
-    longTermDebt: Optional[int] = None
-    deferredRevenueNonCurrent: Optional[int] = None
-    deferredTaxLiabilitiesNonCurrent: Optional[int] = None
-    otherNonCurrentLiabilities: Optional[int] = None
-    totalNonCurrentLiabilities: Optional[int] = None
-    otherLiabilities: Optional[int] = None
-    capitalLeaseObligations: Optional[int] = None
-    totalLiabilities: Optional[int] = None
-    treasuryStock: Optional[int] = None
-    preferredStock: Optional[int] = None
-    commonStock: Optional[int] = None
-    retainedEarnings: Optional[int] = None
-    additionalPaidInCapital: Optional[int] = None
-    accumulatedOtherComprehensiveIncomeLoss: Optional[int] = None
-    otherTotalStockholdersEquity: Optional[int] = None
-    totalStockholdersEquity: Optional[int] = None
-    totalEquity: Optional[int] = None
-    minorityInterest: Optional[int] = None
-    totalLiabilitiesAndTotalEquity: Optional[int] = None
-    totalInvestments: Optional[int] = None
-    totalDebt: Optional[int] = None
-    netDebt: Optional[int] = None
-    # Cash Flow Fields
-    deferredIncomeTax: Optional[int] = None
-    stockBasedCompensation: Optional[int] = None
-    changeInWorkingCapital: Optional[int] = None
-    accountsPayables: Optional[int] = None
-    otherWorkingCapital: Optional[int] = None
-    otherNonCashItems: Optional[int] = None
-    netCashProvidedByOperatingActivities: Optional[int] = None
-    investmentsInPropertyPlantAndEquipment: Optional[int] = None
-    acquisitionsNet: Optional[int] = None
-    purchasesOfInvestments: Optional[int] = None
-    salesMaturitiesOfInvestments: Optional[int] = None
-    otherInvestingActivities: Optional[int] = None
-    netCashProvidedByInvestingActivities: Optional[int] = None
-    netDebtIssuance: Optional[int] = None
-    longTermNetDebtIssuance: Optional[int] = None
-    shortTermNetDebtIssuance: Optional[int] = None
-    netStockIssuance: Optional[int] = None
-    netCommonStockIssuance: Optional[int] = None
-    commonStockIssuance: Optional[int] = None
-    commonStockRepurchased: Optional[int] = None
-    netPreferredStockIssuance: Optional[int] = None
-    netDividendsPaid: Optional[int] = None
-    commonDividendsPaid: Optional[int] = None
-    preferredDividendsPaid: Optional[int] = None
-    otherFinancingActivities: Optional[int] = None
-    netCashProvidedByFinancingActivities: Optional[int] = None
-    effectOfForexChangesOnCash: Optional[int] = None
-    netChangeInCash: Optional[int] = None
-    cashAtEndOfPeriod: Optional[int] = None
-    cashAtBeginningOfPeriod: Optional[int] = None
-    operatingCashFlow: Optional[int] = None
-    capitalExpenditure: Optional[int] = None
-    freeCashFlow: Optional[int] = None
-    incomeTaxesPaid: Optional[int] = None
-    interestPaid: Optional[int] = None
 
 
 class FMPLatestFinancialStatement(BaseModel):
@@ -2639,8 +1996,8 @@ class FMPKeyMetrics(BaseModel):
     fiscalYear: str
     period: str
     reportedCurrency: str
-    marketCap: int
-    enterpriseValue: int
+    marketCap: Optional[float] = None
+    enterpriseValue: Optional[float] = None
     evToSales: float
     evToOperatingCashFlow: float
     evToFreeCashFlow: float
@@ -2665,12 +2022,12 @@ class FMPKeyMetrics(BaseModel):
     capexToOperatingCashFlow: float
     capexToDepreciation: float
     capexToRevenue: float
-    salesGeneralAndAdministrativeToRevenue: int
+    salesGeneralAndAdministrativeToRevenue: Optional[float] = None
     researchAndDevelopementToRevenue: float
     stockBasedCompensationToRevenue: float
-    intangiblesToTotalAssets: int
-    averageReceivables: int
-    averagePayables: int
+    intangiblesToTotalAssets: Optional[float] = None
+    averageReceivables: float
+    averagePayables: float
     averageInventory: int
     daysOfSalesOutstanding: float
     daysOfPayablesOutstanding: float
@@ -2681,6 +2038,52 @@ class FMPKeyMetrics(BaseModel):
     freeCashFlowToFirm: float
     tangibleAssetValue: int
     netCurrentAssetValue: int
+
+
+class FMPKeyMetricsTTM(BaseModel):
+    symbol: str
+    marketCap: Optional[float] = None
+    enterpriseValueTTM: Optional[float] = None
+    evToSalesTTM: float
+    evToOperatingCashFlowTTM: float
+    evToFreeCashFlowTTM: float
+    evToEBITDATTM: float
+    netDebtToEBITDATTM: float
+    currentRatioTTM: float
+    incomeQualityTTM: float
+    grahamNumberTTM: float
+    grahamNetNetTTM: float
+    taxBurdenTTM: float
+    interestBurdenTTM: float
+    workingCapitalTTM: int
+    investedCapitalTTM: int
+    returnOnAssetsTTM: float
+    operatingReturnOnAssetsTTM: float
+    returnOnTangibleAssetsTTM: float
+    returnOnEquityTTM: float
+    returnOnInvestedCapitalTTM: float
+    returnOnCapitalEmployedTTM: float
+    earningsYieldTTM: float
+    freeCashFlowYieldTTM: float
+    capexToOperatingCashFlowTTM: float
+    capexToDepreciationTTM: float
+    capexToRevenueTTM: float
+    salesGeneralAndAdministrativeToRevenueTTM: Optional[float] = None
+    researchAndDevelopementToRevenueTTM: float
+    stockBasedCompensationToRevenueTTM: float
+    intangiblesToTotalAssetsTTM: Optional[float] = None
+    averageReceivablesTTM: float
+    averagePayablesTTM: float
+    averageInventoryTTM: int
+    daysOfSalesOutstandingTTM: float
+    daysOfPayablesOutstandingTTM: float
+    daysOfInventoryOutstandingTTM: float
+    operatingCycleTTM: float
+    cashConversionCycleTTM: float
+    freeCashFlowToEquityTTM: int
+    freeCashFlowToFirmTTM: float
+    tangibleAssetValueTTM: int
+    netCurrentAssetValueTTM: int
 
 
 class FMPFinancialRatios(BaseModel):
@@ -2723,7 +2126,7 @@ class FMPFinancialRatios(BaseModel):
     operatingCashFlowSalesRatio: float
     freeCashFlowOperatingCashFlowRatio: float
     debtServiceCoverageRatio: float
-    interestCoverageRatio: int
+    interestCoverageRatio: float
     shortTermOperatingCashFlowCoverageRatio: float
     operatingCashFlowCoverageRatio: float
     capitalExpenditureCoverageRatio: float
@@ -2750,46 +2153,107 @@ class FMPFinancialRatios(BaseModel):
     dividendPerShare: float
 
 
-class FMPFinancialStatementGrowth(BaseModel):
+class FMPFinancialRatiosTTM(BaseModel):
+    symbol: str
+    grossProfitMarginTTM: float
+    ebitMarginTTM: float
+    ebitdaMarginTTM: float
+    operatingProfitMarginTTM: float
+    pretaxProfitMarginTTM: float
+    continuousOperationsProfitMarginTTM: float
+    netProfitMarginTTM: float
+    bottomLineProfitMarginTTM: float
+    receivablesTurnoverTTM: float
+    payablesTurnoverTTM: float
+    inventoryTurnoverTTM: float
+    fixedAssetTurnoverTTM: float
+    assetTurnoverTTM: float
+    currentRatioTTM: float
+    quickRatioTTM: float
+    solvencyRatioTTM: float
+    cashRatioTTM: float
+    priceToEarningsRatioTTM: float
+    priceToEarningsGrowthRatioTTM: float
+    forwardPriceToEarningsGrowthRatioTTM: float
+    priceToBookRatioTTM: float
+    priceToSalesRatioTTM: float
+    priceToFreeCashFlowRatioTTM: float
+    priceToOperatingCashFlowRatioTTM: float
+    debtToAssetsRatioTTM: float
+    debtToEquityRatioTTM: float
+    debtToCapitalRatioTTM: float
+    longTermDebtToCapitalRatioTTM: float
+    financialLeverageRatioTTM: float
+    workingCapitalTurnoverRatioTTM: float
+    operatingCashFlowRatioTTM: float
+    operatingCashFlowSalesRatioTTM: float
+    freeCashFlowOperatingCashFlowRatioTTM: float
+    debtServiceCoverageRatioTTM: float
+    interestCoverageRatioTTM: float
+    shortTermOperatingCashFlowCoverageRatioTTM: float
+    operatingCashFlowCoverageRatioTTM: float
+    capitalExpenditureCoverageRatioTTM: float
+    dividendPaidAndCapexCoverageRatioTTM: float
+    dividendPayoutRatioTTM: float
+    dividendYieldTTM: float
+    revenuePerShareTTM: float
+    netIncomePerShareTTM: float
+    interestDebtPerShareTTM: float
+    cashPerShareTTM: float
+    bookValuePerShareTTM: float
+    tangibleBookValuePerShareTTM: float
+    shareholdersEquityPerShareTTM: float
+    operatingCashFlowPerShareTTM: float
+    capexPerShareTTM: float
+    freeCashFlowPerShareTTM: float
+    netIncomePerEBTTTM: float
+    ebtPerEbitTTM: float
+    priceToFairValueTTM: float
+    debtToMarketCapTTM: float
+    effectiveTaxRateTTM: float
+    enterpriseValueMultipleTTM: float
+
+
+class FMPIncomeStatementGrowth(BaseModel):
     symbol: str
     date: str
     fiscalYear: str
     period: str
     reportedCurrency: str
-    revenueGrowth: float
-    grossProfitGrowth: float
-    ebitgrowth: float
-    operatingIncomeGrowth: float
-    netIncomeGrowth: float
-    epsgrowth: float
-    epsdilutedGrowth: float
-    weightedAverageSharesGrowth: float
-    weightedAverageSharesDilutedGrowth: float
-    dividendsPerShareGrowth: float
-    operatingCashFlowGrowth: float
-    receivablesGrowth: float
-    inventoryGrowth: float
-    assetGrowth: float
-    bookValueperShareGrowth: float
-    debtGrowth: float
-    rdexpenseGrowth: float
-    sgaexpensesGrowth: float
-    freeCashFlowGrowth: float
-    tenYRevenueGrowthPerShare: float
-    fiveYRevenueGrowthPerShare: float
-    threeYRevenueGrowthPerShare: float
-    tenYOperatingCFGrowthPerShare: float
-    fiveYOperatingCFGrowthPerShare: float
-    threeYOperatingCFGrowthPerShare: float
-    tenYNetIncomeGrowthPerShare: float
-    fiveYNetIncomeGrowthPerShare: float
-    threeYNetIncomeGrowthPerShare: float
-    tenYShareholdersEquityGrowthPerShare: float
-    fiveYShareholdersEquityGrowthPerShare: float
-    threeYShareholdersEquityGrowthPerShare: float
-    tenYDividendperShareGrowthPerShare: float
-    fiveYDividendperShareGrowthPerShare: float
-    threeYDividendperShareGrowthPerShare: float
+    revenueGrowth: Optional[float] = None
+    grossProfitGrowth: Optional[float] = None
+    ebitgrowth: Optional[float] = None
+    operatingIncomeGrowth: Optional[float] = None
+    netIncomeGrowth: Optional[float] = None
+    epsgrowth: Optional[float] = None
+    epsdilutedGrowth: Optional[float] = None
+    weightedAverageSharesGrowth: Optional[float] = None
+    weightedAverageSharesDilutedGrowth: Optional[float] = None
+    dividendsPerShareGrowth: Optional[float] = None
+    operatingCashFlowGrowth: Optional[float] = None
+    receivablesGrowth: Optional[float] = None
+    inventoryGrowth: Optional[float] = None
+    assetGrowth: Optional[float] = None
+    bookValueperShareGrowth: Optional[float] = None
+    debtGrowth: Optional[float] = None
+    rdexpenseGrowth: Optional[float] = None
+    sgaexpensesGrowth: Optional[float] = None
+    freeCashFlowGrowth: Optional[float] = None
+    tenYRevenueGrowthPerShare: Optional[float] = None
+    fiveYRevenueGrowthPerShare: Optional[float] = None
+    threeYRevenueGrowthPerShare: Optional[float] = None
+    tenYOperatingCFGrowthPerShare: Optional[float] = None
+    fiveYOperatingCFGrowthPerShare: Optional[float] = None
+    threeYOperatingCFGrowthPerShare: Optional[float] = None
+    tenYNetIncomeGrowthPerShare: Optional[float] = None
+    fiveYNetIncomeGrowthPerShare: Optional[float] = None
+    threeYNetIncomeGrowthPerShare: Optional[float] = None
+    tenYShareholdersEquityGrowthPerShare: Optional[float] = None
+    fiveYShareholdersEquityGrowthPerShare: Optional[float] = None
+    threeYShareholdersEquityGrowthPerShare: Optional[float] = None
+    tenYDividendperShareGrowthPerShare: Optional[float] = None
+    fiveYDividendperShareGrowthPerShare: Optional[float] = None
+    threeYDividendperShareGrowthPerShare: Optional[float] = None
     ebitdaGrowth: Optional[float] = None
     growthCapitalExpenditure: Optional[float] = None
     tenYBottomLineNetIncomeGrowthPerShare: Optional[float] = None
@@ -2800,14 +2264,19 @@ class FMPFinancialStatementGrowth(BaseModel):
 # Market Performance Models
 class FMPSectorPerformanceSnapshot(BaseModel):
     sector: str
-    changesPercentage: str
+    date: str
+    exchange: str
+    changesPercentage: float = Field(alias="averageChange")
 
 
 class FMPIndustryPerformanceSnapshot(BaseModel):
     industry: str
-    changesPercentage: str
-    marketCap: float
-    numberOfSymbols: int
+    date: str
+    exchange: str
+    averageChange: float
+    changesPercentage: Optional[float] = None
+    marketCap: Optional[float] = None
+    numberOfSymbols: Optional[int] = None
 
 
 class FMPHistoricalSectorPerformance(BaseModel):
@@ -2824,14 +2293,18 @@ class FMPHistoricalIndustryPerformance(BaseModel):
 
 class FMPSectorPESnapshot(BaseModel):
     sector: str
+    date: str
+    exchange: str
     pe: float
-    marketCap: int
+    marketCap: Optional[int] = None
 
 
 class FMPIndustryPESnapshot(BaseModel):
+    date: str
     industry: str
+    exchange: str
     pe: float
-    marketCap: int
+    marketCap: Optional[float] = None
 
 
 class FMPHistoricalSectorPE(BaseModel):
@@ -2859,3 +2332,43 @@ class FMPMarketMover(BaseModel):
 class Error(BaseModel):
     error: str
     details: str
+
+
+# Market Hours Models
+class FMPExchangeMarketHours(BaseModel):
+    exchange: str
+    name: str
+    openingHour: str
+    closingHour: str
+    timezone: str
+    isMarketOpen: bool
+
+
+class FMPExchangeHoliday(BaseModel):
+    date: str
+    name: str
+    exchange: Optional[str] = None
+
+
+class FMPOwnerEarnings(BaseModel):
+    symbol: str
+    reportedCurrency: str
+    fiscalYear: str
+    period: str
+    date: str
+    averagePPE: float
+    maintenanceCapex: float
+    ownersEarnings: float
+    growthCapex: float
+    ownersEarningsPerShare: float
+
+
+class FMPEnterpriseValue(BaseModel):
+    symbol: str
+    date: str
+    stockPrice: float
+    numberOfShares: int
+    marketCapitalization: int
+    minusCashAndCashEquivalents: int
+    addTotalDebt: int
+    enterpriseValue: int

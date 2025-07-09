@@ -7,24 +7,31 @@ from .models import (
     FMPAsReportedCashFlowStatement,
     FMPAsReportedFullStatement,
     FMPAsReportedIncomeStatement,
+    FMPBalanceSheetGrowth,
+    FMPBalanceSheetStatement,
+    FMPCashFlowGrowth,
+    FMPCashFlowStatement,
+    FMPEnterpriseValue,
     FMPFinancialRatios,
-    FMPFinancialStatement,
-    FMPFinancialStatementGrowth,
+    FMPFinancialRatiosTTM,
+    FmpFinancialReportDatesListResponse,
     FmpFinancialStatementSymbolsListResponse,
+    FMPFullFinancialReport,
+    FMPIncomeStatement,
+    FMPIncomeStatementGrowth,
     FMPKeyMetrics,
+    FMPKeyMetricsTTM,
+    FMPOwnerEarnings,
+    FMPRevenueSegmentation,
 )
-from .url_methods import (
-    __return_binary_stable,
-    __return_json,
-    __validate_period,
-)
+from .url_methods import __return_binary_stable, __return_json
 from .utils import parse_response
 
 
 @parse_response
 def income_statement(
     apikey: str, symbol: str, period: str = None, limit: int = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPIncomeStatement]]:
     """
     Retrieve the income statement for a given symbol.
 
@@ -49,14 +56,14 @@ def income_statement(
     if period is not None:
         query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
 @parse_response
 def balance_sheet_statement(
     apikey: str, symbol: str, period: str = None, limit: int = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPBalanceSheetStatement]]:
     """
     Retrieve the balance sheet statement for a given symbol.
 
@@ -81,14 +88,14 @@ def balance_sheet_statement(
     if period is not None:
         query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
 @parse_response
 def cash_flow_statement(
     apikey: str, symbol: str, period: str = None, limit: int = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPCashFlowStatement]]:
     """
     Retrieve the cash flow statement for a given symbol.
 
@@ -113,7 +120,7 @@ def cash_flow_statement(
     if period is not None:
         query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -142,16 +149,16 @@ def financial_statements_latest(
     path = "latest-financial-statements"
     query_vars = {"apikey": apikey}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars=query_vars)
 
 
 @parse_response
 def income_statement_ttm(
     apikey: str, symbol: str, limit: int = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPIncomeStatement]]:
     """
     Retrieve the trailing twelve months (TTM) income statement for a given symbol.
     Parameters
@@ -171,14 +178,14 @@ def income_statement_ttm(
     path = "income-statement-ttm"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars=query_vars)
 
 
 @parse_response
 def balance_sheet_statements_ttm(
     apikey: str, symbol: str, limit: int = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPBalanceSheetStatement]]:
     """
     Retrieve the trailing twelve months (TTM) balance sheet statement for a given symbol.
     Parameters
@@ -198,14 +205,14 @@ def balance_sheet_statements_ttm(
     path = "balance-sheet-statement-ttm"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars=query_vars)
 
 
 @parse_response
 def cashflow_statements_ttm(
     apikey: str, symbol: str, limit: int = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPCashFlowStatement]]:
     """
     Retrieve the trailing twelve months (TTM) cash flow statement for a given symbol.
     Parameters
@@ -225,7 +232,7 @@ def cashflow_statements_ttm(
     path = "cash-flow-statement-ttm"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars=query_vars)
 
 
@@ -258,9 +265,9 @@ def key_metrics(
     path = "key-metrics"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -293,14 +300,16 @@ def financial_ratios(
     path = "ratios"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
-def key_metrics_ttm(apikey: str, symbol: str) -> RootModel[typing.List[FMPKeyMetrics]]:
+def key_metrics_ttm(
+    apikey: str, symbol: str
+) -> RootModel[typing.List[FMPKeyMetricsTTM]]:
     """
     Retrieve trailing twelve months (TTM) key metrics for a company.
 
@@ -325,7 +334,7 @@ def key_metrics_ttm(apikey: str, symbol: str) -> RootModel[typing.List[FMPKeyMet
 def financial_ratios_ttm(
     apikey: str,
     symbol: str,
-) -> RootModel[typing.List[FMPFinancialRatios]]:
+) -> RootModel[typing.List[FMPFinancialRatiosTTM]]:
     """
     Retrieve financial ratios for a company.
 
@@ -350,7 +359,7 @@ def financial_ratios_ttm(
 def financial_scores(
     apikey: str,
     symbol: str,
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPIncomeStatement]]:
     """
     Retrieve financial scores for a company.
 
@@ -374,7 +383,7 @@ def financial_scores(
 @parse_response
 def owner_earnings(
     apikey: str, symbol: str, limit: int = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPOwnerEarnings]]:
     """
     Retrieve owner earnings for a company.
 
@@ -395,14 +404,14 @@ def owner_earnings(
     path = "owner-earnings"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
 @parse_response
 def enterprise_values(
     apikey: str, symbol: str, limit: int = None, period: str = None
-) -> RootModel[typing.List[FMPFinancialStatement]]:
+) -> RootModel[typing.List[FMPEnterpriseValue]]:
     """
     Retrieve enterprise values for a company.
 
@@ -419,15 +428,15 @@ def enterprise_values(
 
     Returns
     -------
-    FmpFinancialStatementSymbolsListResponse
+    FMPEnterpriseValue
         List of enterprise values as a Pydantic model.
     """
     path = "enterprise-values"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -437,7 +446,7 @@ def income_statement_growth(
     symbol: str,
     period: str = None,
     limit: int = None,
-) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
+) -> RootModel[typing.List[FMPIncomeStatementGrowth]]:
     """
     Retrieve income statement growth statistics for a company.
 
@@ -460,9 +469,9 @@ def income_statement_growth(
     path = "income-statement-growth"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -472,7 +481,7 @@ def balance_sheet_statement_growth(
     symbol: str,
     period: str = None,
     limit: int = None,
-) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
+) -> RootModel[typing.List[FMPBalanceSheetGrowth]]:
     """
     Retrieve balance sheet statement growth statistics for a company.
 
@@ -487,15 +496,15 @@ def balance_sheet_statement_growth(
 
     Returns
     -------
-    FmpFinancialStatementSymbolsListResponse
+    FMPBalanceSheetStatementGrowth
         List of balance sheet statement growth data as a Pydantic model.
     """
     path = "balance-sheet-statement-growth"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -505,7 +514,7 @@ def cash_flow_statement_growth(
     symbol: str,
     period: str = None,
     limit: int = None,
-) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
+) -> RootModel[typing.List[FMPCashFlowGrowth]]:
     """
     Retrieve cash flow statement growth statistics for a company.
 
@@ -526,9 +535,9 @@ def cash_flow_statement_growth(
     path = "cash-flow-statement-growth"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -538,7 +547,7 @@ def financial_growth(
     symbol: str,
     period: str = None,
     limit: int = None,
-) -> RootModel[typing.List[FMPFinancialStatementGrowth]]:
+) -> RootModel[typing.List[FMPIncomeStatementGrowth]]:
     """
     Retrieve financial growth statistics for a company.
 
@@ -561,9 +570,9 @@ def financial_growth(
     path = "financial-growth"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -595,7 +604,7 @@ def financial_reports_dates(
 @parse_response
 def financial_reports_json(
     apikey: str, symbol: str, year: str, period: str
-) -> RootModel[typing.List[FmpFinancialReportDatesListResponse]]:
+) -> RootModel[typing.List[FMPFullFinancialReport]]:
     """
     Retrieve financial report dates for a company.
 
@@ -668,7 +677,7 @@ def revenue_product_segmentation(
     path = "revenue-product-segmentation"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if structure is not None:
         query_vars["structure"] = structure
     return __return_json(path, query_vars)
@@ -700,7 +709,7 @@ def revenue_geographic_segmentation(
     path = "revenue-geographic-segmentation"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if period is not None:
-        query_vars["period"] = __validate_period(value=period)
+        query_vars["period"] = period
     if structure is not None:
         query_vars["structure"] = structure
     return __return_json(path, query_vars)
@@ -737,7 +746,7 @@ def income_statement_as_reported(
     if period is not None:
         query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -772,7 +781,7 @@ def balance_sheet_statement_as_reported(
     if period is not None:
         query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -807,7 +816,7 @@ def cash_flow_statement_as_reported(
     if period is not None:
         query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -842,5 +851,5 @@ def financial_statement_full_as_reported(
     if period is not None:
         query_vars["period"] = period
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)

@@ -42,9 +42,9 @@ def insider_trading(
     if transactionType:
         query_vars["transactionType"] = transactionType
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path=path, query_vars=query_vars)
 
@@ -80,9 +80,9 @@ def insider_trading_latest(
     if date is not None:
         query_vars["date"] = date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -162,6 +162,6 @@ def acquisition_ownership(
     path = "acquisition-of-beneficial-ownership"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
 
     return __return_json(path=path, query_vars=query_vars)

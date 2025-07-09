@@ -9,7 +9,6 @@ from .models import (
     FMPEarningsCalendarEvent,
     FMPProspectusFiling,
     FMPStockSplit,
-    FMPStockSplitCalendarEvent,
     FMPUpcomingIPO,
 )
 from .url_methods import (  # Correct import for stable request function
@@ -188,7 +187,7 @@ def splits_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-) -> RootModel[typing.List[FMPStockSplitCalendarEvent]]:
+) -> RootModel[typing.List[FMPStockSplit]]:
     """
     Get splits calendar using the /stable/splits-calendar endpoint.
 

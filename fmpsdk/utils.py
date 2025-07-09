@@ -29,7 +29,7 @@ def iterate_over_pages(
 
         page += 1
 
-    if len(data_list) == 0:
+    if len(data_list) == 0 and len(data_dict) > 0:
         return data_dict
     else:
         return data_list
@@ -43,6 +43,10 @@ def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         raw = func(*args, **kwargs)
+
+        # Check for HTTP Response objects (e.g., 402 for premium endpoints)
+        if hasattr(raw, "status_code"):
+            return raw  # Return response object as-is for premium endpoint detection
 
         # Check for API error responses and return them as-is
         if isinstance(raw, dict) and "Error Message" in raw:

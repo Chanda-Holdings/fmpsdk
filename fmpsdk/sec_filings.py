@@ -56,11 +56,11 @@ def sec_filings_8k(
         List of SEC 8-K filings.
     """
     path = "sec-filings-8k"
-    query_vars = {"apikey": apikey, "from_date": from_date, "to_date": to_date}
+    query_vars = {"apikey": apikey, "from": from_date, "to": to_date}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -88,11 +88,11 @@ def sec_filings_financials(
         List of SEC financial filings.
     """
     path = "sec-filings-financials"
-    query_vars = {"apikey": apikey, "from_date": from_date, "to_date": to_date}
+    query_vars = {"apikey": apikey, "from": from_date, "to": to_date}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -129,14 +129,14 @@ def sec_filings_search_form_type(
     path = f"sec-filings-search/form-type"
     query_vars = {
         "apikey": apikey,
-        "from_date": from_date,
-        "to_date": to_date,
-        "form_type": form_type,
+        "from": from_date,
+        "to": to_date,
+        "formType": form_type,
     }
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -175,13 +175,13 @@ def sec_filings_search_symbol(
     query_vars = {
         "apikey": apikey,
         "symbol": symbol,
-        "from_date": from_date,
-        "to_date": to_date,
+        "from": from_date,
+        "to": to_date,
     }
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -220,13 +220,13 @@ def sec_filings_search_cik(
     query_vars = {
         "apikey": apikey,
         "cik": cik,
-        "from_date": from_date,
-        "to_date": to_date,
+        "from": from_date,
+        "to": to_date,
     }
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -265,13 +265,13 @@ def sec_filings_company_search_name(
     query_vars = {
         "apikey": apikey,
         "company": company,
-        "from_date": from_date,
-        "to_date": to_date,
+        "from": from_date,
+        "to": to_date,
     }
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -310,13 +310,13 @@ def sec_filings_company_search_symbol(
     query_vars = {
         "apikey": apikey,
         "symbol": symbol,
-        "from_date": from_date,
-        "to_date": to_date,
+        "from": from_date,
+        "to": to_date,
     }
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -454,7 +454,7 @@ def industry_classification_all(
     path = "all-industry-classification"
     query_vars = {"apikey": apikey}
     if page:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)

@@ -31,9 +31,9 @@ def senate_latest(
     path = "senate-latest"
     query_vars = {"apikey": apikey}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -61,9 +61,9 @@ def house_latest(
     path = "house-latest"
     query_vars = {"apikey": apikey}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 

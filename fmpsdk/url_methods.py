@@ -1,22 +1,12 @@
 import csv
 import io
+import json
 import logging
 import typing
 
 import requests
 
-from .settings import (
-    BASE_URL_STABLE,
-    BASE_URL_V4,
-    ECONOMIC_INDICATOR_VALUES,
-    INDUSTRY_VALUES,
-    PERIOD_VALUES,
-    SECTOR_VALUES,
-    SERIES_TYPE_VALUES,
-    STATISTICS_TYPE_VALUES,
-    TECHNICAL_INDICATORS_TIME_DELTA_VALUES,
-    TIME_DELTA_VALUES,
-)
+from .settings import BASE_URL_STABLE, BASE_URL_V4
 
 CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
@@ -30,7 +20,8 @@ def __get_base_url(version: str) -> str:
     """
     Get the base URL for the API requests.
     """
-    return BASE_URL_V4 if version == "v4" else BASE_URL_STABLE
+    result: str = BASE_URL_V4 if version == "v4" else BASE_URL_STABLE
+    return result
 
 
 def __return_json(
@@ -51,6 +42,37 @@ def __return_json(
         response = requests.get(
             url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
         )
+
+        # Check for premium endpoint response (402 status code)
+        if response.status_code == 402:
+            return response  # Return the response object so premium detection can work
+
+        # Check for other non-200 status codes and return error response
+        if response.status_code != 200:
+            error_msg = f"API request failed with status code {response.status_code}"
+            if response.content:
+                try:
+                    error_content = response.content.decode("utf-8")
+                    error_msg += f": {error_content}"
+                    # Try to parse as JSON and return it
+                    try:
+                        error_json = json.loads(error_content)
+                        logging.error(
+                            f"{error_msg}\nURL: {url}\nQuery variables: {query_vars}"
+                        )
+                        return error_json  # Return the error response as JSON
+                    except json.JSONDecodeError:
+                        pass
+                except UnicodeDecodeError:
+                    error_msg += f": {response.content}"
+
+            logging.error(f"{error_msg}\nURL: {url}\nQuery variables: {query_vars}")
+
+            # Return a generic error message dict
+            return {
+                "Error Message": f"API request failed with status code {response.status_code}"
+            }
+
         if len(response.content) > 0:
             if query_vars.get("datatype") == "csv":
                 content = response.content.decode("utf-8")
@@ -71,19 +93,30 @@ def __return_json(
 
     except requests.Timeout:
         logging.error(f"Connection to {url} timed out.")
+        raise
     except requests.ConnectionError:
         logging.error(
             f"Connection to {url} failed:  DNS failure, refused connection or some other connection related "
             f"issue."
         )
+        raise
     except requests.TooManyRedirects:
         logging.error(
             f"Request to {url} exceeds the maximum number of predefined redirections."
         )
+        raise
+    except requests.HTTPError as e:
+        logging.error(f"HTTP error occurred: {e}")
+        raise
     except Exception as e:
         logging.error(
             f"A requests exception has occurred that we have not yet detailed an 'except' clause for.  "
-            f"Error: {e}"
+            f"Error: {e}\n"
+            f"URL: {url}\n"
+            f"Query variables: {query_vars}\n"
+            f"Response status code: {response.status_code if response else 'No response'}\n"
+            f"Response content: {response.content if response else 'No response'}\n"
+            f"Response text: {response.text if response else 'No response text'}"
         )
     return return_var
 
@@ -132,122 +165,3 @@ def __return_binary_stable(
             f"Error: {e}"
         )
     return return_var
-
-
-def __validate_period(value: str) -> str:
-    """
-    Check to see if passed string is in the list of possible time periods.
-    :param value: Period name.
-    :return: Passed value or No Return
-    """
-    valid_values = PERIOD_VALUES
-    if value in valid_values:
-        return value
-    else:
-        logging.error(f"Invalid period value: {value}.  Valid options: {valid_values}")
-        return value  # Return the value anyway to avoid breaking
-
-
-def __validate_sector(value: str) -> str:
-    """
-    Check to see if passed string is in the list of possible Sectors.
-    :param value: Sector name.
-    :return: Passed value or No Return
-    """
-    valid_values = SECTOR_VALUES
-    if value in valid_values:
-        return value
-    else:
-        logging.error(f"Invalid sector value: {value}.  Valid options: {valid_values}")
-        return value  # Return the value anyway to avoid breaking
-
-
-def __validate_industry(value: str) -> str:
-    """
-    Check to see if passed string is in the list of possible Industries.
-    :param value: Industry name.
-    :return: Passed value or No Return
-    """
-    valid_values = INDUSTRY_VALUES
-    if value in valid_values:
-        return value
-    else:
-        logging.error(
-            f"Invalid industry value: {value}.  Valid options: {valid_values}"
-        )
-        return value  # Return the value anyway to avoid breaking
-
-
-def __validate_time_delta(value: str) -> str:
-    """
-    Check to see if passed string is in the list of possible Time Deltas.
-    :param value: Time Delta name.
-    :return: Passed value or No Return
-    """
-    valid_values = TIME_DELTA_VALUES
-    if value in valid_values:
-        return value
-    else:
-        logging.error(
-            f"Invalid time_delta value: {value}.  Valid options: {valid_values}"
-        )
-        return value  # Return the value anyway to avoid breaking
-
-
-def __validate_series_type(value: str) -> str:
-    """
-    Check to see if passed string is in the list of possible Series Type.
-    :param value: Series Type name.
-    :return: Passed value or No Return
-    """
-    valid_values = SERIES_TYPE_VALUES
-    if value in valid_values:
-        return value
-    else:
-        logging.error(
-            f"Invalid series_type value: {value}.  Valid options: {valid_values}"
-        )
-        return value  # Return the value anyway to avoid breaking
-
-
-def __validate_statistics_type(value: str) -> str:
-    """
-    Check to see if passed string is in the list of possible Statistics Type.
-    :param value: Statistics Type name.
-    :return: Passed value or No Return
-    """
-    valid_values = STATISTICS_TYPE_VALUES
-    if value in valid_values:
-        return value
-    else:
-        logging.error(
-            f"Invalid statistics_type value: {value}.  Valid options: {valid_values}"
-        )
-        return value  # Return the value anyway to avoid breaking
-
-
-def __validate_technical_indicators_time_delta(value: str) -> str:
-    """Exactly like set_time_delta() method but adds 'daily' as an option.
-    :param value: Indicators Time Delta name.
-    :return: Passed value or No Return
-    """
-    valid_values = TECHNICAL_INDICATORS_TIME_DELTA_VALUES
-    if value in valid_values:
-        return value
-    else:
-        logging.error(
-            f"Invalid time_delta value: {value}.  Valid options: {valid_values}"
-        )
-        return value  # Return the value anyway to avoid breaking
-
-
-def __validate_economic_indicator(value: str) -> str:
-    """
-    Validate economic indicator value.
-
-    :param value: Value to validate
-    :return: Validated value
-    """
-    if value not in ECONOMIC_INDICATOR_VALUES:
-        raise ValueError(f"'{value}' not in {ECONOMIC_INDICATOR_VALUES}")
-    return value

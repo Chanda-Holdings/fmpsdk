@@ -35,9 +35,9 @@ def institutional_ownership_latest(
     path = "institutional-ownership/latest"
     query_vars = {"apikey": apikey}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -125,9 +125,9 @@ def institutional_ownership_extract_analytics_by_holder(
     path = "institutional-ownership/extract-analystics/holder"
     query_vars = {"apikey": apikey, "symbol": symbol, "year": year, "quarter": quarter}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -153,7 +153,7 @@ def institutional_ownership_holder_performance_summary(
     path = "institutional-ownership/holder-performance-summary"
     query_vars = {"apikey": apikey, "cik": cik}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     return __return_json(path, query_vars)
 
 

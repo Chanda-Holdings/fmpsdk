@@ -4,24 +4,24 @@ import typing
 from pydantic import RootModel
 
 from .models import (
-    FMPBulkBalanceSheetGrowth,
-    FMPBulkBalanceSheetStatement,
-    FMPBulkCashFlowGrowth,
-    FMPBulkCashFlowStatement,
+    FMPBalanceSheetGrowth,
+    FMPBalanceSheetStatement,
     FMPBulkDCF,
     FMPBulkEarningsSurprise,
     FMPBulkEOD,
     FMPBulkETFHolder,
-    FMPBulkIncomeStatement,
-    FMPBulkIncomeStatementGrowth,
     FMPBulkPriceTargetSummary,
     FMPBulkRating,
     FMPBulkStockPeers,
     FMPBulkUpgradeDowngradeConsensus,
+    FMPCashFlowGrowth,
+    FMPCashFlowStatement,
     FMPCompanyProfile,
     FMPFinancialRatios,
     FMPFinancialScores,
-    FMPKeyMetrics,
+    FMPIncomeStatement,
+    FMPIncomeStatementGrowth,
+    FMPKeyMetricsTTM,
 )
 from .url_methods import __return_json
 from .utils import parse_response
@@ -219,7 +219,7 @@ def etf_holder_bulk(apikey: str, part: str) -> RootModel[typing.List[FMPBulkETFH
 
 
 @parse_response
-def key_metrics_ttm_bulk(apikey: str) -> RootModel[typing.List[FMPKeyMetrics]]:
+def key_metrics_ttm_bulk(apikey: str) -> RootModel[typing.List[FMPKeyMetricsTTM]]:
     """
     Get bulk key metrics TTM for a list of symbols.
 
@@ -303,7 +303,7 @@ def earnings_surprises_bulk(
 @parse_response
 def income_statement_bulk(
     apikey: str, year: str, period: str
-) -> RootModel[typing.List[FMPBulkIncomeStatement]]:
+) -> RootModel[typing.List[FMPIncomeStatement]]:
     """
     Get bulk income statements for a list of symbols.
 
@@ -328,7 +328,7 @@ def income_statement_bulk(
 @parse_response
 def income_statement_growth_bulk(
     apikey: str, year: str, period: str
-) -> RootModel[typing.List[FMPBulkIncomeStatementGrowth]]:
+) -> RootModel[typing.List[FMPIncomeStatementGrowth]]:
     """
     Get bulk income statement growth for a list of symbols.
 
@@ -353,7 +353,7 @@ def income_statement_growth_bulk(
 @parse_response
 def balance_sheet_statement_bulk(
     apikey: str, year: str, period: str
-) -> RootModel[typing.List[FMPBulkBalanceSheetStatement]]:
+) -> RootModel[typing.List[FMPBalanceSheetStatement]]:
     """
     Get bulk balance sheet statements for a list of symbols.
 
@@ -378,7 +378,7 @@ def balance_sheet_statement_bulk(
 @parse_response
 def balance_sheet_statement_growth_bulk(
     apikey: str, year: str, period: str
-) -> RootModel[typing.List[FMPBulkBalanceSheetGrowth]]:
+) -> RootModel[typing.List[FMPBalanceSheetGrowth]]:
     """
     Get bulk balance sheet statement growth for a list of symbols.
 
@@ -403,7 +403,7 @@ def balance_sheet_statement_growth_bulk(
 @parse_response
 def cash_flow_statement_bulk(
     apikey: str, year: str, period: str
-) -> RootModel[typing.List[FMPBulkCashFlowStatement]]:
+) -> RootModel[typing.List[FMPCashFlowStatement]]:
     """
     Get bulk cash flow statements for a list of symbols.
 
@@ -428,7 +428,7 @@ def cash_flow_statement_bulk(
 @parse_response
 def cash_flow_statement_growth_bulk(
     apikey: str, year: str, period: str
-) -> RootModel[typing.List[FMPBulkCashFlowGrowth]]:
+) -> RootModel[typing.List[FMPCashFlowGrowth]]:
     """
     Get bulk cash flow statement growth for a list of symbols.
 

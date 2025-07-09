@@ -32,9 +32,9 @@ def news_stock_latest(
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path=path, query_vars=query_vars)
 
@@ -64,9 +64,9 @@ def company_press_releases_latest(
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path=path, query_vars=query_vars)
 
@@ -107,9 +107,9 @@ def news_general_latest(
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -149,9 +149,9 @@ def news_crypto_latest(
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path, query_vars)
 
@@ -192,9 +192,9 @@ def news_forex(
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path, query_vars)
 
@@ -247,7 +247,7 @@ def price_target_latest_news(
 @parse_response
 def news_stock(
     apikey: str,
-    symbols: list[str],
+    symbols: typing.List[str],
     from_date: str = None,
     to_date: str = None,
     page: int = None,
@@ -264,17 +264,17 @@ def news_stock(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    symbols = ",".join(symbols)
+    symbols_str = ",".join(symbols)
     path = "news/stock"
-    query_vars = {"apikey": apikey, "symbols": symbols}
+    query_vars = {"apikey": apikey, "symbols": symbols_str}
     if from_date:
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path=path, query_vars=query_vars)
 
@@ -282,7 +282,7 @@ def news_stock(
 @parse_response
 def company_press_releases(
     apikey: str,
-    symbols: list[str],
+    symbols: typing.List[str],
     from_date: str = None,
     to_date: str = None,
     page: int = None,
@@ -299,17 +299,17 @@ def company_press_releases(
     :param limit: Number of rows to return.
     :return: A list of dictionaries.
     """
-    symbols = ",".join(symbols)
+    symbols_str = ",".join(symbols)
     path = "news/press-releases"
-    query_vars = {"apikey": apikey, "symbols": symbols}
+    query_vars = {"apikey": apikey, "symbols": symbols_str}
     if from_date:
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path=path, query_vars=query_vars)
 
@@ -317,7 +317,7 @@ def company_press_releases(
 @parse_response
 def news_crypto(
     apikey: str,
-    symbols: list[str],
+    symbols: typing.List[str],
     from_date: str = None,
     to_date: str = None,
     page: int = None,
@@ -330,7 +330,7 @@ def news_crypto(
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list[str]
+    symbols : typing.List[str]
         List of crypto symbols (e.g., ['BTC', 'ETH']).
     from_date : str, optional
         The starting time for the API ("yyyy-mm-dd").
@@ -346,17 +346,17 @@ def news_crypto(
     list
         List of latest crypto news.
     """
-    symbols = ",".join(symbols)
+    symbols_str = ",".join(symbols)
     path = "news/crypto"
-    query_vars = {"apikey": apikey, "symbols": symbols}
+    query_vars = {"apikey": apikey, "symbols": symbols_str}
     if from_date:
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path, query_vars)
 

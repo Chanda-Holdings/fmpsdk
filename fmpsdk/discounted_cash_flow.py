@@ -102,45 +102,47 @@ def discounted_cash_flow_custom(
     path = "custom-discounted-cash-flow"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if revenue_growth_pct is not None:
-        query_vars["revenueGrowthPct"] = revenue_growth_pct
+        query_vars["revenueGrowthPct"] = str(revenue_growth_pct)
     if ebidta_pct is not None:
-        query_vars["ebidtaPct"] = ebidta_pct
+        query_vars["ebidtaPct"] = str(ebidta_pct)
     if depreciation_and_amortization_pct is not None:
-        query_vars["depreciationAndAmortizationPct"] = depreciation_and_amortization_pct
+        query_vars["depreciationAndAmortizationPct"] = str(
+            depreciation_and_amortization_pct
+        )
     if cash_and_short_term_investments_pct is not None:
-        query_vars["cashAndShortTermInvestmentsPct"] = (
+        query_vars["cashAndShortTermInvestmentsPct"] = str(
             cash_and_short_term_investments_pct
         )
     if receivables_pct is not None:
-        query_vars["receivablesPct"] = receivables_pct
+        query_vars["receivablesPct"] = str(receivables_pct)
     if inventories_pct is not None:
-        query_vars["inventoriesPct"] = inventories_pct
+        query_vars["inventoriesPct"] = str(inventories_pct)
     if payable_pct is not None:
-        query_vars["payablePct"] = payable_pct
+        query_vars["payablePct"] = str(payable_pct)
     if ebit_pct is not None:
-        query_vars["ebitPct"] = ebit_pct
+        query_vars["ebitPct"] = str(ebit_pct)
     if capital_expenditure_pct is not None:
-        query_vars["capitalExpenditurePct"] = capital_expenditure_pct
+        query_vars["capitalExpenditurePct"] = str(capital_expenditure_pct)
     if operating_cash_flow_pct is not None:
-        query_vars["operatingCashFlowPct"] = operating_cash_flow_pct
+        query_vars["operatingCashFlowPct"] = str(operating_cash_flow_pct)
     if selling_general_and_administrative_expenses_pct is not None:
-        query_vars["sellingGeneralAndAdministrativeExpensesPct"] = (
+        query_vars["sellingGeneralAndAdministrativeExpensesPct"] = str(
             selling_general_and_administrative_expenses_pct
         )
     if tax_rate is not None:
-        query_vars["taxRate"] = tax_rate
+        query_vars["taxRate"] = str(tax_rate)
     if long_term_growth_rate is not None:
-        query_vars["longTermGrowthRate"] = long_term_growth_rate
+        query_vars["longTermGrowthRate"] = str(long_term_growth_rate)
     if cost_of_debt is not None:
-        query_vars["costOfDebt"] = cost_of_debt
+        query_vars["costOfDebt"] = str(cost_of_debt)
     if cost_of_equity is not None:
-        query_vars["costOfEquity"] = cost_of_equity
+        query_vars["costOfEquity"] = str(cost_of_equity)
     if market_risk_premium is not None:
-        query_vars["marketRiskPremium"] = market_risk_premium
+        query_vars["marketRiskPremium"] = str(market_risk_premium)
     if beta is not None:
-        query_vars["beta"] = beta
+        query_vars["beta"] = str(beta)
     if risk_free_rate is not None:
-        query_vars["riskFreeRate"] = risk_free_rate
+        query_vars["riskFreeRate"] = str(risk_free_rate)
     return __return_json(path=path, query_vars=query_vars)
 
 
@@ -198,43 +200,45 @@ def discounted_cash_flow_custom_levered(
     path = "custom-levered-discounted-cash-flow"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if revenue_growth_pct is not None:
-        query_vars["revenueGrowthPct"] = revenue_growth_pct
+        query_vars["revenueGrowthPct"] = str(revenue_growth_pct)
     if ebidta_pct is not None:
-        query_vars["ebidtaPct"] = ebidta_pct
+        query_vars["ebidtaPct"] = str(ebidta_pct)
     if depreciation_and_amortization_pct is not None:
-        query_vars["depreciationAndAmortizationPct"] = depreciation_and_amortization_pct
+        query_vars["depreciationAndAmortizationPct"] = str(
+            depreciation_and_amortization_pct
+        )
     if cash_and_short_term_investments_pct is not None:
-        query_vars["cashAndShortTermInvestmentsPct"] = (
+        query_vars["cashAndShortTermInvestmentsPct"] = str(
             cash_and_short_term_investments_pct
         )
     if receivables_pct is not None:
-        query_vars["receivablesPct"] = receivables_pct
+        query_vars["receivablesPct"] = str(receivables_pct)
     if inventories_pct is not None:
-        query_vars["inventoriesPct"] = inventories_pct
+        query_vars["inventoriesPct"] = str(inventories_pct)
     if payable_pct is not None:
-        query_vars["payablePct"] = payable_pct
+        query_vars["payablePct"] = str(payable_pct)
     if ebit_pct is not None:
-        query_vars["ebitPct"] = ebit_pct
+        query_vars["ebitPct"] = str(ebit_pct)
     if capital_expenditure_pct is not None:
-        query_vars["capitalExpenditurePct"] = capital_expenditure_pct
+        query_vars["capitalExpenditurePct"] = str(capital_expenditure_pct)
     if operating_cash_flow_pct is not None:
-        query_vars["operatingCashFlowPct"] = operating_cash_flow_pct
+        query_vars["operatingCashFlowPct"] = str(operating_cash_flow_pct)
     if selling_general_and_administrative_expenses_pct is not None:
-        query_vars["sellingGeneralAndAdministrativeExpensesPct"] = (
+        query_vars["sellingGeneralAndAdministrativeExpensesPct"] = str(
             selling_general_and_administrative_expenses_pct
         )
     if tax_rate is not None:
-        query_vars["taxRate"] = tax_rate
+        query_vars["taxRate"] = str(tax_rate)
     if long_term_growth_rate is not None:
-        query_vars["longTermGrowthRate"] = long_term_growth_rate
+        query_vars["longTermGrowthRate"] = str(long_term_growth_rate)
     if cost_of_debt is not None:
-        query_vars["costOfDebt"] = cost_of_debt
+        query_vars["costOfDebt"] = str(cost_of_debt)
     if cost_of_equity is not None:
-        query_vars["costOfEquity"] = cost_of_equity
+        query_vars["costOfEquity"] = str(cost_of_equity)
     if market_risk_premium is not None:
-        query_vars["marketRiskPremium"] = market_risk_premium
+        query_vars["marketRiskPremium"] = str(market_risk_premium)
     if beta is not None:
-        query_vars["beta"] = beta
+        query_vars["beta"] = str(beta)
     if risk_free_rate is not None:
-        query_vars["riskFreeRate"] = risk_free_rate
+        query_vars["riskFreeRate"] = str(risk_free_rate)
     return __return_json(path=path, query_vars=query_vars)

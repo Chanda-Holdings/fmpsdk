@@ -1,605 +1,801 @@
-"""
-Comprehensive tests for fmpsdk.technical_indicators module.
-Tests all technical indicator functions including validation and error handling.
-"""
-
-import os
+from datetime import datetime
 
 import pytest
 
-import fmpsdk as ti
-from fmpsdk.models import *
+from fmpsdk.models import FMPTechnicalIndicator
+from fmpsdk.technical_indicators import technical_indicators
 
-API_KEY = os.getenv("FMP_API_KEY")
+from .conftest import extract_data_list
 
 
-class TestTechnicalIndicatorsGeneral:
-    """Test the general technical indicators function."""
+def get_field_value(item, field_name):
+    """Helper function to safely get field value from dict or model."""
+    if isinstance(item, dict):
+        return item.get(field_name)
+    else:
+        return getattr(item, field_name, None)
 
-    def test_technical_indicators_default_parameters(self):
-        """Test technical indicators with default parameters."""
-        result = ti.technical_indicators(apikey=API_KEY, symbol="AAPL")
-        assert result is not None
 
-    def test_technical_indicators_custom_parameters(self):
-        """Test technical indicators with custom parameters."""
-        result = ti.technical_indicators(
-            apikey=API_KEY,
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestTechnicalIndicators:
+    """Test class for technical indicators functionality."""
+
+    def test_sma_indicator(self, api_key):
+        """Test Simple Moving Average indicator."""
+        result = technical_indicators(
+            apikey=api_key,
             symbol="AAPL",
-            period=20,
-            statistics_type="EMA",
-            time_delta="daily",
+            indicator="sma",
+            periodLength=20,
+            timeframe="1day",
         )
-        assert result is not None
 
-    def test_technical_indicators_intraday_time_deltas(self):
-        """Test technical indicators with different intraday time deltas."""
-        time_deltas = ["1min", "5min", "15min", "30min", "1hour", "4hour"]
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
 
-        for time_delta in time_deltas:
-            result = ti.technical_indicators(
-                apikey=API_KEY, symbol="AAPL", time_delta=time_delta
+        # Note: Technical indicators may return empty results due to API limitations or plan restrictions
+        if len(result_list) > 0:
+            # Validate first item
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                validated = FMPTechnicalIndicator.model_validate(first_item)
+            else:
+                validated = first_item
+
+            assert validated.date is not None
+            assert validated.open > 0
+            assert validated.high > 0
+            assert validated.low > 0
+            assert validated.close > 0
+            assert validated.volume >= 0
+            assert validated.sma is not None
+            assert validated.sma > 0
+
+            # OHLC relationships should be valid
+            assert validated.high >= validated.open
+            assert validated.high >= validated.close
+            assert validated.low <= validated.open
+            assert validated.low <= validated.close
+        else:
+            # API may not provide technical indicators data - test API response structure
+            assert result_list == []
+
+    def test_ema_indicator(self, api_key):
+        """Test Exponential Moving Average indicator."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="ema",
+            periodLength=12,
+            timeframe="1day",
+        )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
             )
-            assert result is not None
 
-    def test_technical_indicators_different_statistics_types(self):
-        """Test technical indicators with different statistics types."""
-        statistics_types = [
+            assert validated.ema is not None
+            assert validated.ema > 0
+        else:
+            assert result_list == []
+
+    def test_rsi_indicator(self, api_key):
+        """Test Relative Strength Index indicator."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="rsi",
+            periodLength=14,
+            timeframe="1day",
+        )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
+            )
+
+            assert validated.rsi is not None
+            # RSI should be between 0 and 100
+            assert 0 <= validated.rsi <= 100
+        else:
+            assert result_list == []
+
+    def test_williams_indicator(self, api_key):
+        """Test Williams %R indicator."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="williams",
+            periodLength=14,
+            timeframe="1day",
+        )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
+            )
+
+            assert validated.williams is not None
+            # Williams %R should be between -100 and 0
+            assert -100 <= validated.williams <= 0
+        else:
+            assert result_list == []
+
+    def test_adx_indicator(self, api_key):
+        """Test Average Directional Index indicator."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="adx",
+            periodLength=14,
+            timeframe="1day",
+        )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
+            )
+
+            assert validated.adx is not None
+            # ADX should be between 0 and 100
+            assert 0 <= validated.adx <= 100
+        else:
+            assert result_list == []
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestAllTechnicalIndicators:
+    """Test class for all supported technical indicators."""
+
+    def test_all_supported_indicators(self, api_key):
+        """Test all supported technical indicators."""
+        valid_indicators = [
             "sma",
             "ema",
             "wma",
             "dema",
             "tema",
-            "williams",
             "rsi",
+            "standarddeviation",
+            "williams",
             "adx",
-            "standardDeviation",
         ]
-
-        for stats_type in statistics_types:
-            result = ti.technical_indicators(
-                apikey=API_KEY, symbol="AAPL", statistics_type=stats_type
-            )
-            assert result is not None
-
-    def test_technical_indicators_different_periods(self):
-        """Test technical indicators with different periods."""
-        periods = [5, 10, 14, 20, 50, 100, 200]
-
-        for period in periods:
-            result = ti.technical_indicators(
-                apikey=API_KEY, symbol="AAPL", period=period
-            )
-            assert result is not None
-
-    def test_technical_indicators_invalid_statistics_type(self):
-        """Test technical indicators with invalid statistics type."""
-        # This should handle invalid types gracefully
-        result = ti.technical_indicators(
-            apikey=API_KEY, symbol="AAPL", statistics_type="INVALID_TYPE"
-        )
-        # Should still return a result, the validation happens internally
-        assert result is not None
-
-    def test_technical_indicators_invalid_time_delta(self):
-        """Test technical indicators with invalid time delta."""
-        # This should handle invalid time deltas gracefully
-        result = ti.technical_indicators(
-            apikey=API_KEY, symbol="AAPL", time_delta="INVALID_DELTA"
-        )
-        # Should still return a result, the validation happens internally
-        assert result is not None
-
-
-class TestSMAIndicator:
-    """Test Simple Moving Average (SMA) indicator."""
-
-    def test_technical_indicators_sma_daily(self):
-        """Test SMA with daily interval."""
-        result = ti.technical_indicators_sma(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=20
-        )
-        assert result is not None
-
-    def test_technical_indicators_sma_different_intervals(self):
-        """Test SMA with different intervals."""
-        intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour", "daily"]
-
-        for interval in intervals:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol="AAPL", interval=interval, time_period=20
-            )
-            assert result is not None
-
-    def test_technical_indicators_sma_different_time_periods(self):
-        """Test SMA with different time periods."""
-        time_periods = [5, 10, 14, 20, 50, 100, 200]
-
-        for period in time_periods:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-    def test_technical_indicators_sma_different_symbols(self):
-        """Test SMA with different symbols."""
-        symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "SPY"]
-
-        for symbol in symbols:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol=symbol, interval="daily", time_period=20
-            )
-            assert result is not None
-
-
-class TestEMAIndicator:
-    """Test Exponential Moving Average (EMA) indicator."""
-
-    def test_technical_indicators_ema_daily(self):
-        """Test EMA with daily interval."""
-        result = ti.technical_indicators_ema(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=20
-        )
-        assert result is not None
-
-    def test_technical_indicators_ema_different_intervals(self):
-        """Test EMA with different intervals."""
-        intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour", "daily"]
-
-        for interval in intervals:
-            result = ti.technical_indicators_ema(
-                apikey=API_KEY, symbol="AAPL", interval=interval, time_period=20
-            )
-            assert result is not None
-
-    def test_technical_indicators_ema_different_time_periods(self):
-        """Test EMA with different time periods."""
-        time_periods = [5, 10, 12, 21, 26, 50, 100, 200]
-
-        for period in time_periods:
-            result = ti.technical_indicators_ema(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-
-class TestDEMAIndicator:
-    """Test Double Exponential Moving Average (DEMA) indicator."""
-
-    def test_technical_indicators_dema_daily(self):
-        """Test DEMA with daily interval."""
-        result = ti.technical_indicators_dema(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=20
-        )
-        assert result is not None
-
-    def test_technical_indicators_dema_different_intervals(self):
-        """Test DEMA with different intervals."""
-        intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour", "daily"]
-
-        for interval in intervals:
-            result = ti.technical_indicators_dema(
-                apikey=API_KEY, symbol="AAPL", interval=interval, time_period=20
-            )
-            assert result is not None
-
-    def test_technical_indicators_dema_different_time_periods(self):
-        """Test DEMA with different time periods."""
-        time_periods = [10, 14, 20, 21, 50, 100]
-
-        for period in time_periods:
-            result = ti.technical_indicators_dema(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-
-class TestRSIIndicator:
-    """Test Relative Strength Index (RSI) indicator."""
-
-    def test_technical_indicators_rsi_daily(self):
-        """Test RSI with daily interval."""
-        result = ti.technical_indicators_rsi(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=14
-        )
-        assert result is not None
-
-    def test_technical_indicators_rsi_different_intervals(self):
-        """Test RSI with different intervals."""
-        intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour", "daily"]
-
-        for interval in intervals:
-            result = ti.technical_indicators_rsi(
-                apikey=API_KEY, symbol="AAPL", interval=interval, time_period=14
-            )
-            assert result is not None
-
-    def test_technical_indicators_rsi_different_time_periods(self):
-        """Test RSI with different time periods."""
-        time_periods = [9, 14, 21, 25]  # Common RSI periods
-
-        for period in time_periods:
-            result = ti.technical_indicators_rsi(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-    def test_technical_indicators_rsi_crypto_symbols(self):
-        """Test RSI with cryptocurrency symbols."""
-        crypto_symbols = ["BTCUSD", "ETHUSD", "ADAUSD"]
-
-        for symbol in crypto_symbols:
-            result = ti.technical_indicators_rsi(
-                apikey=API_KEY, symbol=symbol, interval="daily", time_period=14
-            )
-            assert result is not None
-
-
-class TestStandardDeviationIndicator:
-    """Test Standard Deviation indicator."""
-
-    def test_technical_indicators_standarddeviation_daily(self):
-        """Test Standard Deviation with daily interval."""
-        result = ti.technical_indicators_standarddeviation(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=20
-        )
-        assert result is not None
-
-    def test_technical_indicators_standarddeviation_different_intervals(self):
-        """Test Standard Deviation with different intervals."""
-        intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour", "daily"]
-
-        for interval in intervals:
-            result = ti.technical_indicators_standarddeviation(
-                apikey=API_KEY, symbol="AAPL", interval=interval, time_period=20
-            )
-            assert result is not None
-
-    def test_technical_indicators_standarddeviation_different_time_periods(self):
-        """Test Standard Deviation with different time periods."""
-        time_periods = [10, 14, 20, 30, 50]
-
-        for period in time_periods:
-            result = ti.technical_indicators_standarddeviation(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-
-class TestWilliamsIndicator:
-    """Test Williams %R indicator."""
-
-    def test_technical_indicators_williams_daily(self):
-        """Test Williams %R with daily interval."""
-        result = ti.technical_indicators_williams(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=14
-        )
-        assert result is not None
-
-    def test_technical_indicators_williams_different_intervals(self):
-        """Test Williams %R with different intervals."""
-        intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour", "daily"]
-
-        for interval in intervals:
-            result = ti.technical_indicators_williams(
-                apikey=API_KEY, symbol="AAPL", interval=interval, time_period=14
-            )
-            assert result is not None
-
-    def test_technical_indicators_williams_different_time_periods(self):
-        """Test Williams %R with different time periods."""
-        time_periods = [7, 14, 21, 28]  # Common Williams %R periods
-
-        for period in time_periods:
-            result = ti.technical_indicators_williams(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-
-class TestADXIndicator:
-    """Test Average Directional Index (ADX) indicator."""
-
-    def test_technical_indicators_adx_daily(self):
-        """Test ADX with daily interval."""
-        result = ti.technical_indicators_adx(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=14
-        )
-        assert result is not None
-
-    def test_technical_indicators_adx_different_intervals(self):
-        """Test ADX with different intervals."""
-        intervals = ["1min", "5min", "15min", "30min", "1hour", "4hour", "daily"]
-
-        for interval in intervals:
-            result = ti.technical_indicators_adx(
-                apikey=API_KEY, symbol="AAPL", interval=interval, time_period=14
-            )
-            assert result is not None
-
-    def test_technical_indicators_adx_different_time_periods(self):
-        """Test ADX with different time periods."""
-        time_periods = [7, 14, 21, 28]  # Common ADX periods
-
-        for period in time_periods:
-            result = ti.technical_indicators_adx(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-
-class TestTechnicalIndicatorsErrorHandling:
-    """Test error handling for technical indicators."""
-
-    def test_technical_indicators_invalid_api_key(self):
-        """Test technical indicators with invalid API key."""
-        result = ti.technical_indicators_sma(
-            apikey="invalid_key", symbol="AAPL", interval="daily", time_period=20
-        )
-        # Should handle gracefully, not crash
-        assert result is not None or result is None
-
-    def test_technical_indicators_invalid_symbol(self):
-        """Test technical indicators with invalid symbol."""
-        result = ti.technical_indicators_sma(
-            apikey=API_KEY, symbol="INVALID123", interval="daily", time_period=20
-        )
-        # Should handle gracefully
-        assert result is not None
-
-    def test_technical_indicators_invalid_interval(self):
-        """Test technical indicators with invalid interval."""
-        result = ti.technical_indicators_sma(
-            apikey=API_KEY, symbol="AAPL", interval="invalid_interval", time_period=20
-        )
-        # Should handle gracefully
-        assert result is not None
-
-    def test_technical_indicators_invalid_time_period(self):
-        """Test technical indicators with invalid time period."""
-        invalid_periods = [0, -1, -10]
-
-        for period in invalid_periods:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            # Should handle gracefully
-            assert result is not None
-
-    def test_technical_indicators_extreme_time_periods(self):
-        """Test technical indicators with extreme time periods."""
-        extreme_periods = [1, 2, 500, 1000]
-
-        for period in extreme_periods:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
-
-
-class TestTechnicalIndicatorsCombinations:
-    """Test combinations of technical indicators parameters."""
-
-    def test_all_indicators_same_symbol(self):
-        """Test all indicator types for the same symbol."""
         symbol = "AAPL"
-        interval = "daily"
-        time_period = 20
+        period_length = 20
+        timeframe = "1day"
 
-        indicators = [
-            ti.technical_indicators_sma,
-            ti.technical_indicators_ema,
-            ti.technical_indicators_dema,
-            ti.technical_indicators_rsi,
-            ti.technical_indicators_standarddeviation,
-            ti.technical_indicators_williams,
-            ti.technical_indicators_adx,
-        ]
-
-        for indicator_func in indicators:
-            result = indicator_func(
-                apikey=API_KEY,
+        for indicator in valid_indicators:
+            result = technical_indicators(
+                apikey=api_key,
                 symbol=symbol,
-                interval=interval,
-                time_period=time_period,
+                indicator=indicator,
+                periodLength=period_length,
+                timeframe=timeframe,
             )
-            assert result is not None
 
-    def test_multiple_symbols_same_indicator(self):
-        """Test multiple symbols with the same indicator."""
-        symbols = ["AAPL", "MSFT", "GOOGL", "TSLA"]
+            result_list = extract_data_list(result)
+            assert isinstance(
+                result_list, list
+            ), f"Result should be list for {indicator}"
 
-        for symbol in symbols:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol=symbol, interval="daily", time_period=20
+            # Technical indicators may return empty results due to API limitations
+            if len(result_list) > 0:
+                # Validate structure
+                first_item = result_list[0]
+                validated = (
+                    FMPTechnicalIndicator.model_validate(first_item)
+                    if isinstance(first_item, dict)
+                    else first_item
+                )
+
+                assert (
+                    validated.date is not None
+                ), f"Date should be present for {indicator}"
+                assert (
+                    validated.close > 0
+                ), f"Close price should be positive for {indicator}"
+
+                # Check that the specific indicator field is populated
+                indicator_value = getattr(validated, indicator, None)
+                if indicator == "standarddeviation":
+                    indicator_value = getattr(validated, "standardDeviation", None)
+
+                assert (
+                    indicator_value is not None
+                ), f"Indicator value should be present for {indicator}"
+
+                # Value range checks for specific indicators
+                if indicator == "rsi":
+                    assert (
+                        0 <= indicator_value <= 100
+                    ), f"RSI should be 0-100, got {indicator_value}"
+                elif indicator == "williams":
+                    assert (
+                        -100 <= indicator_value <= 0
+                    ), f"Williams %R should be -100 to 0, got {indicator_value}"
+                elif indicator == "adx":
+                    assert (
+                        0 <= indicator_value <= 100
+                    ), f"ADX should be 0-100, got {indicator_value}"
+                else:
+                    assert (
+                        indicator_value > 0
+                    ), f"{indicator} should be positive, got {indicator_value}"
+            else:
+                # Empty result is acceptable due to API limitations
+                assert (
+                    result_list == []
+                ), f"Empty result should be empty list for {indicator}"
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestTechnicalIndicatorParameters:
+    """Test class for technical indicator parameter variations."""
+
+    def test_different_period_lengths(self, api_key):
+        """Test technical indicators with different period lengths."""
+        period_lengths = [5, 10, 14, 20, 50, 100]
+
+        for period in period_lengths:
+            result = technical_indicators(
+                apikey=api_key,
+                symbol="AAPL",
+                indicator="sma",
+                periodLength=period,
+                timeframe="1day",
             )
-            assert result is not None
 
-    def test_forex_symbols_technical_indicators(self):
-        """Test technical indicators with forex symbols."""
-        forex_symbols = ["EURUSD", "GBPUSD", "USDJPY"]
+            result_list = extract_data_list(result)
+            assert isinstance(
+                result_list, list
+            ), f"Result should be list for period {period}"
 
-        for symbol in forex_symbols:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol=symbol, interval="daily", time_period=20
+            # Skip this period if no data available
+            if len(result_list) == 0:
+                continue
+
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
             )
-            assert result is not None
+            assert (
+                validated.sma is not None
+            ), f"SMA should be present for period {period}"
 
-    def test_commodity_symbols_technical_indicators(self):
-        """Test technical indicators with commodity symbols."""
-        commodity_symbols = ["GCUSD", "CLUSD", "NQUSD"]  # Gold, Oil, Natural Gas
+    def test_different_timeframes(self, api_key):
+        """Test technical indicators with different timeframes."""
+        timeframes = ["1min", "1hour", "1day"]
 
-        for symbol in commodity_symbols:
-            result = ti.technical_indicators_rsi(
-                apikey=API_KEY, symbol=symbol, interval="daily", time_period=14
+        for timeframe in timeframes:
+            result = technical_indicators(
+                apikey=api_key,
+                symbol="AAPL",
+                indicator="sma",
+                periodLength=20,
+                timeframe=timeframe,
             )
-            assert result is not None
 
+            result_list = extract_data_list(result)
+            assert isinstance(
+                result_list, list
+            ), f"Result should be list for timeframe {timeframe}"
 
-class TestTechnicalIndicatorsDataTypes:
-    """Test data types and return values of technical indicators."""
+            # Skip this timeframe if no data available
+            if len(result_list) == 0:
+                continue
 
-    def test_technical_indicators_return_types(self):
-        """Test that technical indicators return proper types."""
-        result = ti.technical_indicators_sma(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=20
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
+            )
+            assert (
+                validated.sma is not None
+            ), f"SMA should be present for timeframe {timeframe}"
+
+    def test_intraday_timeframes(self, api_key):
+        """Test technical indicators with intraday timeframes."""
+        intraday_timeframes = ["1min", "5min", "15min", "30min", "1hour", "4hour"]
+
+        for timeframe in intraday_timeframes:
+            result = technical_indicators(
+                apikey=api_key,
+                symbol="AAPL",
+                indicator="sma",
+                periodLength=20,
+                timeframe=timeframe,
+            )
+
+            result_list = extract_data_list(result)
+            assert isinstance(
+                result_list, list
+            ), f"Result should be list for timeframe {timeframe}"
+
+            # Intraday data might be limited, but structure should be valid
+            if len(result_list) > 0:
+                first_item = result_list[0]
+                validated = (
+                    FMPTechnicalIndicator.model_validate(first_item)
+                    if isinstance(first_item, dict)
+                    else first_item
+                )
+                assert (
+                    validated.date is not None
+                ), f"Date should be present for timeframe {timeframe}"
+
+    def test_with_date_range(self, api_key):
+        """Test technical indicators with date range filtering."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="sma",
+            periodLength=20,
+            timeframe="1day",
+            from_date="2024-01-01",
+            to_date="2024-02-29",
         )
 
-        # Should return a list-like object or None
-        assert result is None or hasattr(result, "__iter__")
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+        assert len(result_list) > 0
 
-    def test_technical_indicators_parameter_types(self):
-        """Test that technical indicators handle parameter types correctly."""
-        # Test with string time_period (should be converted to int internally)
-        result = ti.technical_indicators_sma(
-            apikey=API_KEY, symbol="AAPL", interval="daily", time_period=20  # int
-        )
-        assert result is not None
+        start_date = datetime.strptime("2024-01-01", "%Y-%m-%d")
+        end_date = datetime.strptime("2024-02-29", "%Y-%m-%d")
+
+        for item in result_list:
+            date_value = get_field_value(item, "date")
+            item_date = datetime.strptime(date_value, "%Y-%m-%d %H:%M:%S")
+
+            assert (
+                start_date <= item_date <= end_date
+            ), f"Date {date_value} should be within range {start_date.date()} to {end_date.date()}"
 
 
-class TestTechnicalIndicatorsPerformance:
-    """Test performance aspects of technical indicators."""
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestTechnicalIndicatorAssetTypes:
+    """Test class for technical indicators across different asset types."""
 
-    def test_technical_indicators_bulk_requests(self):
-        """Test making multiple technical indicator requests."""
-        symbols = ["AAPL", "MSFT", "GOOGL"]
-        indicators = [
-            ti.technical_indicators_sma,
-            ti.technical_indicators_ema,
-            ti.technical_indicators_rsi,
+    def test_technical_indicators_multiple_asset_types(self, api_key, test_symbols):
+        """Test technical indicators for different asset types."""
+        test_cases = [
+            ("large_cap", "AAPL", "stock"),
+            ("etf", "SPY", "ETF"),
+            # Note: Technical indicators may not be available for all asset types
         ]
 
-        results = []
-        for symbol in symbols:
-            for indicator_func in indicators:
-                result = indicator_func(
-                    apikey=API_KEY, symbol=symbol, interval="daily", time_period=20
+        for asset_category, symbol, asset_name in test_cases:
+            if symbol in test_symbols[asset_category]:
+                result = technical_indicators(
+                    apikey=api_key,
+                    symbol=symbol,
+                    indicator="sma",
+                    periodLength=20,
+                    timeframe="1day",
                 )
-                results.append(result)
 
-        # All requests should succeed
-        assert all(result is not None for result in results)
+                result_list = extract_data_list(result)
+                assert isinstance(
+                    result_list, list
+                ), f"Result should be list for {asset_name}"
 
-    def test_technical_indicators_different_time_periods_performance(self):
-        """Test technical indicators with different time periods for performance."""
-        time_periods = [5, 10, 20, 50, 100, 200]
+                if len(result_list) > 0:
+                    first_item = result_list[0]
+                    validated = (
+                        FMPTechnicalIndicator.model_validate(first_item)
+                        if isinstance(first_item, dict)
+                        else first_item
+                    )
+                    assert (
+                        validated.sma is not None
+                    ), f"SMA should be present for {asset_name}"
 
-        for period in time_periods:
-            result = ti.technical_indicators_sma(
-                apikey=API_KEY, symbol="AAPL", interval="daily", time_period=period
-            )
-            assert result is not None
+    def test_high_volume_stocks(self, api_key):
+        """Test technical indicators for high volume stocks."""
+        high_volume_symbols = ["AAPL", "MSFT", "SPY", "QQQ"]
 
-
-class TestParameterizedExtremeCases:
-    """Test extreme parameter values and edge cases."""
-
-    @pytest.mark.parametrize(
-        "period,scenario",
-        [
-            (1, "MINIMUM_PERIOD"),
-            (2, "VERY_SHORT_PERIOD"),
-            (500, "VERY_LONG_PERIOD"),
-            (1000, "EXTREME_PERIOD"),
-            (9999, "MAXIMUM_PERIOD"),
-            (0, "ZERO_PERIOD"),
-            (-1, "NEGATIVE_PERIOD"),
-            (-10, "VERY_NEGATIVE_PERIOD"),
-        ],
-    )
-    def test_extreme_period_values(self, period, scenario):
-        """Test technical indicators with extreme period values."""
-        try:
-            result = ti.technical_indicators(
-                apikey=API_KEY, symbol="AAPL", period=period, statistics_type="sma"
+        for symbol in high_volume_symbols:
+            result = technical_indicators(
+                apikey=api_key,
+                symbol=symbol,
+                indicator="rsi",
+                periodLength=14,
+                timeframe="1day",
             )
 
-            if scenario in ["ZERO_PERIOD", "NEGATIVE_PERIOD", "VERY_NEGATIVE_PERIOD"]:
-                # These might return None or handle gracefully
-                assert result is None or isinstance(result, (list, dict))
-            else:
-                assert result is not None
-        except Exception as e:
-            # Some extreme values might raise exceptions
-            assert scenario in [
-                "ZERO_PERIOD",
-                "NEGATIVE_PERIOD",
-                "VERY_NEGATIVE_PERIOD",
-                "MAXIMUM_PERIOD",
-            ]
+            result_list = extract_data_list(result)
+            assert isinstance(result_list, list), f"Result should be list for {symbol}"
 
+            # Skip this symbol if no data available
+            if len(result_list) == 0:
+                continue
 
-class TestParameterizedVolatilityScenarios:
-    """Test technical indicators on stocks with different volatility profiles."""
-
-    @pytest.mark.parametrize(
-        "symbol,volatility_profile",
-        [
-            # High volatility stocks
-            ("TSLA", "HIGH_VOLATILITY"),
-            ("NVDA", "TECH_VOLATILITY"),
-            ("GME", "MEME_STOCK"),
-            ("AMC", "RETAIL_FAVORITE"),
-            # Low volatility stocks
-            ("KO", "STABLE_DIVIDEND"),
-            ("PG", "DEFENSIVE"),
-            ("JNJ", "HEALTHCARE_STABLE"),
-            ("WMT", "CONSUMER_STAPLES"),
-            # Medium volatility
-            ("AAPL", "LARGE_CAP_TECH"),
-            ("MSFT", "ENTERPRISE_TECH"),
-            ("JPM", "FINANCIAL"),
-            ("XOM", "ENERGY"),
-            # Special cases
-            ("BRK.A", "ULTRA_HIGH_PRICE"),
-            ("BRK.B", "HIGH_PRICE"),
-            ("SIRI", "LOW_PRICE"),
-        ],
-    )
-    def test_volatility_profile_indicators(self, symbol, volatility_profile):
-        """Test technical indicators across different volatility profiles."""
-        # Test multiple indicators on each symbol
-        indicators = ["sma", "ema", "rsi", "williams"]
-
-        for indicator in indicators:
-            result = ti.technical_indicators(
-                apikey=API_KEY, symbol=symbol, statistics_type=indicator, period=14
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
             )
-            assert result is not None
+            assert validated.rsi is not None, f"RSI should be present for {symbol}"
+            assert 0 <= validated.rsi <= 100, f"RSI should be 0-100 for {symbol}"
 
 
-class TestParameterizedTimeFrameCombinations:
-    """Test all combinations of time frames and indicators."""
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestTechnicalIndicatorErrorHandling:
+    """Test class for technical indicator error handling."""
 
-    @pytest.mark.parametrize(
-        "time_delta,indicator,period",
-        [
-            # Intraday combinations
-            ("1min", "sma", 20),
-            ("5min", "ema", 10),
-            ("15min", "rsi", 14),
-            ("30min", "williams", 14),
-            ("1hour", "adx", 14),
-            ("4hour", "standardDeviation", 20),
-            # Daily combinations
-            ("daily", "sma", 50),
-            ("daily", "ema", 200),
-            ("daily", "rsi", 14),
-            ("daily", "williams", 14),
-            ("daily", "adx", 14),
-            # Edge case combinations
-            ("1min", "sma", 200),  # Very long period on short timeframe
-            ("daily", "sma", 5),  # Very short period on long timeframe
-            ("4hour", "rsi", 2),  # Minimal period
-        ],
-    )
-    def test_timeframe_indicator_combinations(self, time_delta, indicator, period):
-        """Test various combinations of timeframes, indicators, and periods."""
-        result = ti.technical_indicators(
-            apikey=API_KEY,
-            symbol="AAPL",
-            time_delta=time_delta,
-            statistics_type=indicator,
-            period=period,
+    def test_invalid_indicator_type(self, api_key):
+        """Test technical indicators with invalid indicator type."""
+        with pytest.raises(ValueError, match="Invalid indicator type"):
+            technical_indicators(
+                apikey=api_key,
+                symbol="AAPL",
+                indicator="invalid_indicator",
+                periodLength=20,
+                timeframe="1day",
+            )
+
+    def test_invalid_symbol(self, api_key):
+        """Test technical indicators with invalid symbol."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="INVALID_XYZ",
+            indicator="sma",
+            periodLength=20,
+            timeframe="1day",
         )
+
+        # Should return empty list or error response
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+        else:
+            result_list = extract_data_list(result)
+            assert isinstance(result_list, list)
+
+    def test_invalid_api_key(self):
+        """Test technical indicators with invalid API key."""
+        result = technical_indicators(
+            apikey="invalid_key",
+            symbol="AAPL",
+            indicator="sma",
+            periodLength=20,
+            timeframe="1day",
+        )
+
+        # Should return error response
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_invalid_period_length(self, api_key):
+        """Test technical indicators with invalid period length."""
+        # Very small period length might cause issues
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="sma",
+            periodLength=1,
+            timeframe="1day",
+        )
+
+        # Should handle gracefully
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+    def test_invalid_timeframe(self, api_key):
+        """Test technical indicators with invalid timeframe (daily instead of 1day)."""
+        with pytest.raises(ValueError, match="Invalid timeframe"):
+            technical_indicators(
+                apikey=api_key,
+                symbol="AAPL",
+                indicator="sma",
+                periodLength=20,
+                timeframe="daily",  # Invalid: should be "1day"
+            )
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestTechnicalIndicatorDataConsistency:
+    """Test class for technical indicator data consistency validation."""
+
+    def test_moving_average_relationships(self, api_key):
+        """Test relationships between different moving averages."""
+
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="sma",
+            periodLength=20,
+            timeframe="1day",
+            from_date="2024-01-01",
+            to_date="2024-01-10",
+        )
+
+        result_list = extract_data_list(result)
+        assert len(result_list) > 0
+
+        for item in result_list:
+            validated = (
+                FMPTechnicalIndicator.model_validate(item)
+                if isinstance(item, dict)
+                else item
+            )
+
+            # SMA should be within reasonable range of the price
+            price_range = [validated.low, validated.high]
+            # SMA might be outside daily range but should be reasonable
+            assert validated.sma > 0, "SMA should be positive"
+            assert (
+                validated.sma < validated.high * 2
+            ), "SMA should not be excessively high"
+            assert (
+                validated.sma > validated.low * 0.5
+            ), "SMA should not be excessively low"
+
+    def test_rsi_oscillator_behavior(self, api_key):
+        """Test RSI oscillator behavior and constraints."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="rsi",
+            periodLength=14,
+            timeframe="1day",
+            from_date="2024-01-01",
+            to_date="2024-01-31",
+        )
+
+        result_list = extract_data_list(result)
+        assert len(result_list) > 0
+
+        rsi_values = []
+        for item in result_list:
+            validated = (
+                FMPTechnicalIndicator.model_validate(item)
+                if isinstance(item, dict)
+                else item
+            )
+            assert (
+                0 <= validated.rsi <= 100
+            ), f"RSI should be 0-100, got {validated.rsi}"
+            rsi_values.append(validated.rsi)
+
+        # RSI should show some variation over time
+        if len(rsi_values) > 5:
+            rsi_range = max(rsi_values) - min(rsi_values)
+            assert rsi_range > 0, "RSI should show some variation over the period"
+
+    def test_williams_oscillator_behavior(self, api_key):
+        """Test Williams %R oscillator behavior and constraints."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="williams",
+            periodLength=14,
+            timeframe="1day",
+            from_date="2024-01-01",
+            to_date="2024-01-15",
+        )
+
+        result_list = extract_data_list(result)
+        assert len(result_list) > 0
+
+        for item in result_list:
+            validated = (
+                FMPTechnicalIndicator.model_validate(item)
+                if isinstance(item, dict)
+                else item
+            )
+            assert (
+                -100 <= validated.williams <= 0
+            ), f"Williams %R should be -100 to 0, got {validated.williams}"
+
+    def test_standard_deviation_behavior(self, api_key):
+        """Test standard deviation indicator behavior."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="standarddeviation",
+            periodLength=20,
+            timeframe="1day",
+            from_date="2024-01-01",
+            to_date="2024-01-15",
+        )
+
+        result_list = extract_data_list(result)
+        assert len(result_list) > 0
+
+        for item in result_list:
+            validated = (
+                FMPTechnicalIndicator.model_validate(item)
+                if isinstance(item, dict)
+                else item
+            )
+            # Standard deviation should be positive
+            assert (
+                validated.standardDeviation >= 0
+            ), f"Standard deviation should be non-negative, got {validated.standardDeviation}"
+            # Should be reasonable relative to price
+            assert (
+                validated.standardDeviation < validated.close
+            ), f"Standard deviation {validated.standardDeviation} seems too high relative to price {validated.close}"
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestTechnicalIndicatorResponseTimes:
+    """Test class for technical indicator response time validation."""
+
+    def test_technical_indicator_response_time(self, api_key, test_config):
+        """Test that technical indicator responses are within acceptable time limits."""
+        import time
+
+        start_time = time.time()
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="sma",
+            periodLength=20,
+            timeframe="1day",
+        )
+        response_time = time.time() - start_time
+
         assert result is not None
+        assert (
+            response_time < test_config["max_response_time"]
+        ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
+
+    def test_complex_indicator_response_time(self, api_key, test_config):
+        """Test response time for more complex indicators."""
+        import time
+
+        start_time = time.time()
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="adx",
+            periodLength=14,
+            timeframe="1day",
+        )
+        response_time = time.time() - start_time
+
+        assert result is not None
+        assert (
+            response_time < test_config["max_response_time"]
+        ), f"ADX response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestTechnicalIndicatorEdgeCases:
+    """Test class for technical indicator edge cases."""
+
+    def test_short_period_lengths(self, api_key):
+        """Test technical indicators with very short period lengths."""
+        short_periods = [2, 3, 5]
+
+        for period in short_periods:
+            result = technical_indicators(
+                apikey=api_key,
+                symbol="AAPL",
+                indicator="sma",
+                periodLength=period,
+                timeframe="1day",
+            )
+
+            result_list = extract_data_list(result)
+            assert isinstance(
+                result_list, list
+            ), f"Result should be list for period {period}"
+
+            if len(result_list) > 0:
+                first_item = result_list[0]
+                validated = (
+                    FMPTechnicalIndicator.model_validate(first_item)
+                    if isinstance(first_item, dict)
+                    else first_item
+                )
+                assert (
+                    validated.sma is not None
+                ), f"SMA should be present for short period {period}"
+
+    def test_long_period_lengths(self, api_key):
+        """Test technical indicators with very long period lengths."""
+        long_periods = [100, 200]
+
+        for period in long_periods:
+            result = technical_indicators(
+                apikey=api_key,
+                symbol="AAPL",
+                indicator="sma",
+                periodLength=period,
+                timeframe="1day",
+            )
+
+            result_list = extract_data_list(result)
+            assert isinstance(
+                result_list, list
+            ), f"Result should be list for period {period}"
+
+            # Long periods might have limited data
+            if len(result_list) > 0:
+                first_item = result_list[0]
+                validated = (
+                    FMPTechnicalIndicator.model_validate(first_item)
+                    if isinstance(first_item, dict)
+                    else first_item
+                )
+                assert (
+                    validated.sma is not None
+                ), f"SMA should be present for long period {period}"
+
+    def test_data_sufficiency(self, api_key):
+        """Test that sufficient data is available for indicator calculation."""
+        result = technical_indicators(
+            apikey=api_key,
+            symbol="AAPL",
+            indicator="sma",
+            periodLength=50,
+            timeframe="1day",
+            from_date="2024-01-01",
+            to_date="2024-03-31",
+        )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        # For a 50-period SMA, we need at least 50 data points
+        # The result should either have sufficient data or handle gracefully
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            validated = (
+                FMPTechnicalIndicator.model_validate(first_item)
+                if isinstance(first_item, dict)
+                else first_item
+            )
+
+            # All basic OHLCV data should be present
+            assert validated.open > 0
+            assert validated.high > 0
+            assert validated.low > 0
+            assert validated.close > 0
+            assert validated.volume >= 0

@@ -86,7 +86,7 @@ def search_cik(
         List of dictionaries with CIK search results.
     """
     path = "search-cik"
-    query_vars = {"apikey": apikey, "query": query}
+    query_vars = {"apikey": apikey, "cik": query}
     if limit:
         query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)

@@ -2,13 +2,15 @@ import typing
 
 from pydantic import RootModel
 
-from .models import FMPSymbolAndNameList
+from .models import FMPCryptocurrencyListItem
 from .url_methods import __return_json
 from .utils import parse_response
 
 
 @parse_response
-def cryptocurrency_list(apikey: str) -> RootModel[typing.List[FMPSymbolAndNameList]]:
+def cryptocurrency_list(
+    apikey: str,
+) -> RootModel[typing.List[FMPCryptocurrencyListItem]]:
     """
     Query FMP /cryptocurrency-list endpoint.
 

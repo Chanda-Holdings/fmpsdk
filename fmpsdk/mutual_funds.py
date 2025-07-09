@@ -6,7 +6,6 @@ from .models import (
     FMPFundDisclosure,
     FMPFundDisclosureDate,
     FMPFundHolder,
-    FMPSymbolAndNameList,
 )
 from .url_methods import __return_json
 from .utils import parse_response

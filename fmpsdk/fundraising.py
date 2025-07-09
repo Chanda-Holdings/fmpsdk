@@ -36,9 +36,9 @@ def crowdfunding_offerings_latest(
     path = "crowdfunding-offerings-latest"
     query_vars = {"apikey": apikey}
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)
 
 
@@ -119,9 +119,9 @@ def fundraising_latest(
     if cik:
         query_vars["cik"] = cik
     if page is not None:
-        query_vars["page"] = page
+        query_vars["page"] = str(page)
     if limit is not None:
-        query_vars["limit"] = limit
+        query_vars["limit"] = str(limit)
 
     return __return_json(path, query_vars)
 
