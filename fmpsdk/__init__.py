@@ -7,10 +7,10 @@ financial statements, market data, and more.
 
 Usage:
     from fmpsdk import company_profile, financial_ratios
-    
+
     # Get company profile
     profile = company_profile(apikey="your_api_key", symbol="AAPL")
-    
+
     # Get financial ratios
     ratios = financial_ratios(apikey="your_api_key", symbol="AAPL")
 """
@@ -114,7 +114,6 @@ from .directory import (
     available_industries,
     available_sectors,
     cik_list,
-    earnings_transcript_list,
     etf_list,
     financial_statement_symbol_list,
     stock_list,
@@ -127,6 +126,14 @@ from .discounted_cash_flow import (
     discounted_cash_flow_custom_levered,
     discounted_cash_flow_levered,
     discounted_cash_flow_valuation,
+)
+
+# Earnings functions
+from .earnings_transcript import (
+    earnings_transcript,
+    earnings_transcript_by_symbol,
+    earnings_transcript_latest,
+    earnings_transcript_list,
 )
 
 # Economics functions
@@ -331,6 +338,7 @@ from .statements import (
 
 # Technical indicators functions
 from .technical_indicators import technical_indicators
+from .utils import iterate_over_pages
 
 # Make all functions available at package level
 __all__ = [
@@ -412,7 +420,6 @@ __all__ = [
     "available_industries",
     "available_sectors",
     "cik_list",
-    "earnings_transcript_list",
     "etf_list",
     "financial_statement_symbol_list",
     "stock_list",
@@ -422,6 +429,11 @@ __all__ = [
     "discounted_cash_flow_custom_levered",
     "discounted_cash_flow_levered",
     "discounted_cash_flow_valuation",
+    # Earnings
+    "earnings_transcript_latest",
+    "earnings_transcript",
+    "earnings_transcript_by_symbol",
+    "earnings_transcript_list",
     # Economics
     "economic_calendar",
     "economic_indicators",
@@ -575,4 +587,6 @@ __all__ = [
     "revenue_product_segmentation",
     # Technical Indicators
     "technical_indicators",
+    # Utils
+    "iterate_over_pages",
 ]

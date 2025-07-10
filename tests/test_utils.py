@@ -83,21 +83,23 @@ class TestUtilityFunctions:
 
     def test_parse_response_decorator(self):
         """Test parse_response decorator functionality."""
-        
+
         # Test that the decorator raises an error for unknown functions
         @parse_response
         def mock_api_function():
             return {"symbol": "AAPL", "price": 150.0}
 
         # Should raise ValueError for unknown endpoint
-        with pytest.raises(ValueError, match="No model found for endpoint: mock_api_function"):
+        with pytest.raises(
+            ValueError, match="No model found for endpoint: mock_api_function"
+        ):
             mock_api_function()
 
         # Test error response passthrough
         @parse_response
         def mock_error_function():
             return {"Error Message": "Invalid API key"}
-        
+
         result = mock_error_function()
         assert isinstance(result, dict)
         assert "Error Message" in result

@@ -43,9 +43,8 @@ from .models import (
     FMPDividend,
     FMPDividendCalendarEvent,
     FMPEarningsCalendarEvent,
-    FMPEarningsReport,
     FMPEarningsTranscript,
-    FMPEarningsTranscriptDate,
+    FMPEarningsTranscriptBySymbol,
     FMPEarningsTranscriptList,
     FMPEconomicCalendarEvent,
     FMPEconomicIndicator,
@@ -89,6 +88,7 @@ from .models import (
     FMPHistoricalIndustryPerformance,
     FMPHistoricalSectorPE,
     FMPHistoricalSectorPerformance,
+    FMPHistoricalSentiment,
     FMPHistoricalStockGrade,
     FMPHolderIndustryBreakdown,
     FMPHolderPerformance,
@@ -144,6 +144,7 @@ from .models import (
     FMPSymbolSearch,
     FMPTechnicalIndicator,
     FMPTreasuryRates,
+    FMPTrendingSentiment,
     FMPUpcomingIPO,
 )
 
@@ -163,7 +164,6 @@ ENDPOINT_MODEL_MAP = {
     "symbol_change": RootModel[List[FMPSymbolChange]],
     "etf_list": RootModel[List[FMPSymbolAndNameList]],
     "actively_trading_list": RootModel[List[FMPSymbolAndNameList]],
-    "earnings_transcript_list": RootModel[List[FMPEarningsTranscriptList]],
     "available_exchanges": RootModel[List[FMPExchangeInfo]],
     "available_sectors": RootModel[List[FMPSector]],
     "available_industries": RootModel[List[FMPIndustry]],
@@ -223,7 +223,9 @@ ENDPOINT_MODEL_MAP = {
     ],
     # Commitment Of Traders
     "commitment_of_traders_report": RootModel[List[FMPCommitmentOfTradersReport]],
-    "commitment_of_traders_report_analysis": RootModel[List[FMPCommitmentOfTradersAnalysis]],
+    "commitment_of_traders_report_analysis": RootModel[
+        List[FMPCommitmentOfTradersAnalysis]
+    ],
     "commitment_of_traders_report_list": RootModel[List[FMPSymbolAndNameList]],
     # Discounted Cash Flow
     "discounted_cash_flow_valuation": RootModel[List[FMPDcfValuation]],
@@ -302,9 +304,7 @@ ENDPOINT_MODEL_MAP = {
     "institutional_ownership_holder_industry_breakdown": RootModel[
         List[FMPHolderIndustryBreakdown]
     ],
-    "institutional_ownership_positions_summary": RootModel[
-        List[FMPPositionSummary]
-    ],
+    "institutional_ownership_positions_summary": RootModel[List[FMPPositionSummary]],
     "institutional_ownership_industry_summary": RootModel[
         List[FMPIndustryPerformanceSummary]
     ],
@@ -346,6 +346,8 @@ ENDPOINT_MODEL_MAP = {
     "news_crypto": RootModel[List[FMPNewsArticle]],
     "news_crypto_latest": RootModel[List[FMPNewsArticle]],
     "news_forex": RootModel[List[FMPNewsArticle]],
+    "social_sentiment": RootModel[List[FMPHistoricalSentiment]],
+    "social_sentiment_trending": RootModel[List[FMPTrendingSentiment]],
     # Technical Indicators
     "technical_indicators": RootModel[List[FMPTechnicalIndicator]],
     # Quote
@@ -380,6 +382,10 @@ ENDPOINT_MODEL_MAP = {
     "industry_classification_search": RootModel[List[FMPIndustryClassificationSearch]],
     "industry_classification_all": RootModel[List[FMPIndustryClassification]],
     # Earnings Transcript
+    "earnings_transcript_latest": RootModel[List[FMPEarningsTranscript]],
+    "earnings_transcript": RootModel[List[FMPEarningsTranscript]],
+    "earnings_transcript_by_symbol": RootModel[List[FMPEarningsTranscriptBySymbol]],
+    "earnings_transcript_list": RootModel[List[FMPEarningsTranscriptList]],
     # Senate
     "senate_latest": RootModel[List[FMPPoliticalTrade]],
     "house_latest": RootModel[List[FMPPoliticalTrade]],

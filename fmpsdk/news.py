@@ -2,7 +2,13 @@ import typing
 
 from pydantic import RootModel
 
-from .models import FMPNewsArticle, FMPPriceTargetNews, FMPStockGradeNews
+from .models import (
+    FMPHistoricalSentiment,
+    FMPNewsArticle,
+    FMPPriceTargetNews,
+    FMPStockGradeNews,
+    FMPTrendingSentiment,
+)
 from .url_methods import __return_json
 from .utils import parse_response
 
@@ -406,3 +412,37 @@ def stock_grade_latest_news(
     if page is not None:
         query_vars["page"] = str(page)
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
+
+
+@parse_response
+def social_sentiment(
+    apikey: str, symbol: str, page: int = 0
+) -> RootModel[typing.List[FMPHistoricalSentiment]]:
+    """
+    Query FMP /historical/social-sentiment/ API
+
+    :param apikey: Your API key.
+    :param symbol: Company ticker.
+    :param page: Page number.
+    :return: A list of dictionaries.
+    """
+    path = "historical/social-sentiment"
+    query_vars = {"apikey": apikey, "symbol": symbol, "page": page}
+    return __return_json(path=path, query_vars=query_vars, version="v4")
+
+
+@parse_response
+def trending_sentiment(
+    apikey: str, type: str, source: str = "stocktwits"
+) -> RootModel[typing.List[FMPTrendingSentiment]]:
+    """
+    Query FMP /social-sentiments/trending API
+
+    :param apikey: Your API key.
+    :param type: 'bearish' or 'bullish'.
+    :param source: Source of the sentiment (e.g., 'stocktwits').
+    :return: A list of dictionaries.
+    """
+    path = "social-sentiments/trending"
+    query_vars = {"apikey": apikey, "type": type, "source": source}
+    return __return_json(path=path, query_vars=query_vars, version="v4")

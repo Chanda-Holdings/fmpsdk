@@ -96,8 +96,7 @@ def __return_json(
         raise
     except requests.ConnectionError:
         logging.error(
-            f"Connection to {url} failed:  DNS failure, refused connection or some other connection related "
-            f"issue."
+            f"Connection to {url} failed:  DNS failure, refused connection or some other connection related issues."
         )
         raise
     except requests.TooManyRedirects:

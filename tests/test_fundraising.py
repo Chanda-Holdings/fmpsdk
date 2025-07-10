@@ -1,8 +1,13 @@
 from typing import Dict
 
-import pytest
-
-from fmpsdk import fundraising
+from fmpsdk.fundraising import (
+    crowdfunding_offerings,
+    crowdfunding_offerings_latest,
+    crowdfunding_offerings_search,
+    fundraising,
+    fundraising_latest,
+    fundraising_search,
+)
 from fmpsdk.models import (
     FMPCrowdfundingCampaign,
     FMPCrowdfundingSearch,
@@ -17,7 +22,7 @@ class TestCrowdfundingOfferingsLatest:
 
     def test_crowdfunding_offerings_latest_basic(self, api_key):
         """Test basic latest crowdfunding offerings."""
-        result = fundraising.crowdfunding_offerings_latest(apikey=api_key, limit=10)
+        result = crowdfunding_offerings_latest(apikey=api_key, limit=10)
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
@@ -52,13 +57,9 @@ class TestCrowdfundingOfferingsLatest:
 
     def test_crowdfunding_offerings_latest_pagination(self, api_key):
         """Test pagination in latest crowdfunding offerings."""
-        result_page1 = fundraising.crowdfunding_offerings_latest(
-            apikey=api_key, page=0, limit=5
-        )
+        result_page1 = crowdfunding_offerings_latest(apikey=api_key, page=0, limit=5)
 
-        result_page2 = fundraising.crowdfunding_offerings_latest(
-            apikey=api_key, page=1, limit=5
-        )
+        result_page2 = crowdfunding_offerings_latest(apikey=api_key, page=1, limit=5)
 
         result_list1 = extract_data_list(result_page1)
         result_list2 = extract_data_list(result_page2)
@@ -68,7 +69,7 @@ class TestCrowdfundingOfferingsLatest:
     def test_crowdfunding_offerings_latest_error_handling(self, api_key):
         """Test error handling with invalid API key."""
         invalid_api_key = "invalid_key_123"
-        result = fundraising.crowdfunding_offerings_latest(apikey=invalid_api_key)
+        result = crowdfunding_offerings_latest(apikey=invalid_api_key)
 
         # API returns error dict instead of raising exception
         assert isinstance(result, dict)
@@ -81,7 +82,7 @@ class TestCrowdfundingOfferingsSearch:
 
     def test_crowdfunding_offerings_search_basic(self, api_key):
         """Test basic crowdfunding offerings search."""
-        result = fundraising.crowdfunding_offerings_search(
+        result = crowdfunding_offerings_search(
             apikey=api_key, name="Republic"  # Popular crowdfunding platform
         )
 
@@ -117,9 +118,7 @@ class TestCrowdfundingOfferingsSearch:
         search_terms = ["Technology", "Software", "Gaming"]
 
         for term in search_terms:
-            result = fundraising.crowdfunding_offerings_search(
-                apikey=api_key, name=term
-            )
+            result = crowdfunding_offerings_search(apikey=api_key, name=term)
 
             # Check if result is error dict
             if isinstance(result, dict) and "Error Message" in result:
@@ -130,7 +129,7 @@ class TestCrowdfundingOfferingsSearch:
 
     def test_crowdfunding_offerings_search_invalid_name(self, api_key):
         """Test crowdfunding search with invalid name."""
-        result = fundraising.crowdfunding_offerings_search(
+        result = crowdfunding_offerings_search(
             apikey=api_key, name="INVALID_COMPANY_NAME_XYZ_123"
         )
 
@@ -142,9 +141,7 @@ class TestCrowdfundingOfferingsSearch:
     def test_crowdfunding_offerings_search_error_handling(self, api_key):
         """Test error handling with invalid API key."""
         invalid_api_key = "invalid_key_123"
-        result = fundraising.crowdfunding_offerings_search(
-            apikey=invalid_api_key, name="Republic"
-        )
+        result = crowdfunding_offerings_search(apikey=invalid_api_key, name="Republic")
 
         # API returns error dict instead of raising exception
         assert isinstance(result, dict)
@@ -158,9 +155,7 @@ class TestCrowdfundingOfferings:
     def test_crowdfunding_offerings_basic(self, api_key):
         """Test crowdfunding offerings by CIK."""
         # Use a known CIK that might have crowdfunding data
-        result = fundraising.crowdfunding_offerings(
-            apikey=api_key, cik="0001798024"  # Example CIK
-        )
+        result = crowdfunding_offerings(apikey=api_key, cik="0001798024")  # Example CIK
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
@@ -179,9 +174,7 @@ class TestCrowdfundingOfferings:
 
     def test_crowdfunding_offerings_invalid_cik(self, api_key):
         """Test crowdfunding offerings with invalid CIK."""
-        result = fundraising.crowdfunding_offerings(
-            apikey=api_key, cik="9999999999"  # Invalid CIK
-        )
+        result = crowdfunding_offerings(apikey=api_key, cik="9999999999")  # Invalid CIK
 
         result_list = extract_data_list(result)
         # Should return empty list for invalid CIK
@@ -191,9 +184,7 @@ class TestCrowdfundingOfferings:
     def test_crowdfunding_offerings_error_handling(self, api_key):
         """Test error handling with invalid API key."""
         invalid_api_key = "invalid_key_123"
-        result = fundraising.crowdfunding_offerings(
-            apikey=invalid_api_key, cik="0001798024"
-        )
+        result = crowdfunding_offerings(apikey=invalid_api_key, cik="0001798024")
 
         # API returns error dict instead of raising exception
         assert isinstance(result, dict)
@@ -206,7 +197,7 @@ class TestFundraisingLatest:
 
     def test_fundraising_latest_basic(self, api_key):
         """Test basic latest fundraising data."""
-        result = fundraising.fundraising_latest(apikey=api_key, limit=10)
+        result = fundraising_latest(apikey=api_key, limit=10)
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
@@ -241,9 +232,7 @@ class TestFundraisingLatest:
 
     def test_fundraising_latest_with_cik(self, api_key):
         """Test latest fundraising with specific CIK filter."""
-        result = fundraising.fundraising_latest(
-            apikey=api_key, cik="0001798024", limit=5
-        )
+        result = fundraising_latest(apikey=api_key, cik="0001798024", limit=5)
 
         # Check if result is error dict
         if isinstance(result, dict) and "Error Message" in result:
@@ -260,10 +249,10 @@ class TestFundraisingLatest:
                     assert item.cik == "0001798024"
 
     def test_fundraising_latest_pagination(self, api_key):
-        """Test pagination in latest fundraising."""
-        result_page1 = fundraising.fundraising_latest(apikey=api_key, page=0, limit=5)
+        """Test pagination in latest"""
+        result_page1 = fundraising_latest(apikey=api_key, page=0, limit=5)
 
-        result_page2 = fundraising.fundraising_latest(apikey=api_key, page=1, limit=5)
+        result_page2 = fundraising_latest(apikey=api_key, page=1, limit=5)
 
         result_list1 = extract_data_list(result_page1)
         result_list2 = extract_data_list(result_page2)
@@ -273,7 +262,7 @@ class TestFundraisingLatest:
     def test_fundraising_latest_error_handling(self, api_key):
         """Test error handling with invalid API key."""
         invalid_api_key = "invalid_key_123"
-        result = fundraising.fundraising_latest(apikey=invalid_api_key)
+        result = fundraising_latest(apikey=invalid_api_key)
 
         # API returns error dict instead of raising exception
         assert isinstance(result, dict)
@@ -286,7 +275,7 @@ class TestFundraisingSearch:
 
     def test_fundraising_search_basic(self, api_key):
         """Test basic fundraising search."""
-        result = fundraising.fundraising_search(apikey=api_key, name="Technology")
+        result = fundraising_search(apikey=api_key, name="Technology")
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
@@ -320,7 +309,7 @@ class TestFundraisingSearch:
         search_terms = ["Software", "Healthcare", "Fintech"]
 
         for term in search_terms:
-            result = fundraising.fundraising_search(apikey=api_key, name=term)
+            result = fundraising_search(apikey=api_key, name=term)
 
             # Check if result is error dict
             if isinstance(result, dict) and "Error Message" in result:
@@ -331,9 +320,7 @@ class TestFundraisingSearch:
 
     def test_fundraising_search_invalid_name(self, api_key):
         """Test fundraising search with invalid name."""
-        result = fundraising.fundraising_search(
-            apikey=api_key, name="INVALID_COMPANY_NAME_XYZ_123"
-        )
+        result = fundraising_search(apikey=api_key, name="INVALID_COMPANY_NAME_XYZ_123")
 
         result_list = extract_data_list(result)
         # Should return empty list for invalid name
@@ -343,9 +330,7 @@ class TestFundraisingSearch:
     def test_fundraising_search_error_handling(self, api_key):
         """Test error handling with invalid API key."""
         invalid_api_key = "invalid_key_123"
-        result = fundraising.fundraising_search(
-            apikey=invalid_api_key, name="Technology"
-        )
+        result = fundraising_search(apikey=invalid_api_key, name="Technology")
 
         # API returns error dict instead of raising exception
         assert isinstance(result, dict)
@@ -359,9 +344,7 @@ class TestFundraising:
     def test_fundraising_basic(self, api_key):
         """Test fundraising by CIK."""
         # Use a known CIK that might have fundraising data
-        result = fundraising.fundraising(
-            apikey=api_key, cik="0001798024"  # Example CIK
-        )
+        result = fundraising(apikey=api_key, cik="0001798024")  # Example CIK
 
         # Check if result is error dict (invalid API key)
         if isinstance(result, dict) and "Error Message" in result:
@@ -383,7 +366,7 @@ class TestFundraising:
         ciks = ["0001798024", "0001559720", "0001652044"]
 
         for cik in ciks:
-            result = fundraising.fundraising(apikey=api_key, cik=cik)
+            result = fundraising(apikey=api_key, cik=cik)
 
             # Check if result is error dict
             if isinstance(result, dict) and "Error Message" in result:
@@ -401,9 +384,7 @@ class TestFundraising:
 
     def test_fundraising_invalid_cik(self, api_key):
         """Test fundraising with invalid CIK."""
-        result = fundraising.fundraising(
-            apikey=api_key, cik="9999999999"  # Invalid CIK
-        )
+        result = fundraising(apikey=api_key, cik="9999999999")  # Invalid CIK
 
         result_list = extract_data_list(result)
         # Should return empty list for invalid CIK
@@ -413,7 +394,7 @@ class TestFundraising:
     def test_fundraising_error_handling(self, api_key):
         """Test error handling with invalid API key."""
         invalid_api_key = "invalid_key_123"
-        result = fundraising.fundraising(apikey=invalid_api_key, cik="0001798024")
+        result = fundraising(apikey=invalid_api_key, cik="0001798024")
 
         # API returns error dict instead of raising exception
         assert isinstance(result, dict)
@@ -426,7 +407,7 @@ class TestFundraisingDataQuality:
 
     def test_crowdfunding_campaign_data_quality(self, api_key):
         """Test data quality in crowdfunding campaigns."""
-        result = fundraising.crowdfunding_offerings_latest(apikey=api_key, limit=5)
+        result = crowdfunding_offerings_latest(apikey=api_key, limit=5)
 
         # Check if result is error dict
         if isinstance(result, dict) and "Error Message" in result:
@@ -474,7 +455,7 @@ class TestFundraisingDataQuality:
 
     def test_equity_offering_data_quality(self, api_key):
         """Test data quality in equity offerings."""
-        result = fundraising.fundraising_latest(apikey=api_key, limit=5)
+        result = fundraising_latest(apikey=api_key, limit=5)
 
         # Check if result is error dict
         if isinstance(result, dict) and "Error Message" in result:

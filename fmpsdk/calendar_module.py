@@ -7,6 +7,7 @@ from .models import (
     FMPDividend,
     FMPDividendCalendarEvent,
     FMPEarningsCalendarEvent,
+    FMPEarningsReport,
     FMPProspectusFiling,
     FMPStockSplit,
     FMPUpcomingIPO,
@@ -62,6 +63,29 @@ def dividends_calendar(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
+
+
+@parse_response
+def earnings(
+    apikey: str,
+    symbol: str,
+    limit: str = None,
+) -> RootModel[typing.List[FMPEarningsReport]]:
+    """
+    Get earnings using the /stable/earnings endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get earnings for.
+        limit (str, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with earnings.
+    """
+    path = "earnings"
+    query_vars = {"apikey": apikey, "symbol": symbol}
+    if limit:
+        query_vars["limit"] = limit
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 

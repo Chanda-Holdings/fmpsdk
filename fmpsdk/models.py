@@ -1100,67 +1100,6 @@ class FMPFullFinancialReport(BaseModel):
         return instance
 
 
-# class FMPFullFinancialReport(BaseModel):
-#     symbol: str
-#     period: str
-#     year: str
-#     Cover_Page: List[Any]
-#     Auditor_Information: List[Any]
-#     CONSOLIDATED_STATEMENTS_OF_OPER: List[Any]
-#     CONSOLIDATED_STATEMENTS_OF_COMP: List[Any]
-#     CONSOLIDATED_BALANCE_SHEETS: List[Any]
-#     CONSOLIDATED_BALANCE_SHEETS_Pa: List[Any]
-#     CONSOLIDATED_STATEMENTS_OF_SHAR: List[Any]
-#     CONSOLIDATED_STATEMENTS_OF_CASH: List[Any]
-#     Summary_of_Significant_Accounti: List[Any]
-#     Revenue: List[Any]
-#     Financial_Instruments: List[Any]
-#     Consolidated_Financial_Statemen: List[Any]
-#     Income_Taxes: List[Any]
-#     Leases: List[Any]
-#     Debt: List[Any]
-#     Shareholders_Equity: List[Any]
-#     Benefit_Plans: List[Any]
-#     Commitments_and_Contingencies: List[Any]
-#     Segment_Information_and_Geograp: List[Any]
-#     Summary_of_Significant_Accoun_2: List[Any]
-#     Summary_of_Significant_Accoun_3: List[Any]
-#     Revenue__Tables_: List[Any]
-#     Revenue___Additional_Informatio: List[Any]
-#     Revenue___Deferred_Revenue__Exp: List[Any]
-#     Financial_Instruments___Cash__C: List[Any]
-#     Financial_Instruments___Non_Cur: List[Any]
-#     Financial_Instruments___Additio: List[Any]
-#     Financial_Instruments___Notiona: List[Any]
-#     Financial_Instruments___Gross_F: List[Any]
-#     Financial_Instruments___Derivat: List[Any]
-#     Consolidated_Financial_Statem_2: List[Any]
-#     Consolidated_Financial_Statem_3: List[Any]
-#     Consolidated_Financial_Statem_4: List[Any]
-#     Income_Taxes__Tables_: List[Any]
-#     Income_Taxes___Reconciliation_o: List[Any]
-#     Income_Taxes___Significant_Comp: List[Any]
-#     Income_Taxes___Aggregate_Change: List[Any]
-#     Leases__Tables_: List[Any]
-#     Leases___ROU_Assets_and_Lease_L: List[Any]
-#     Leases___Lease_Liability_Maturi: List[Any]
-#     Debt__Tables_: List[Any]
-#     Debt___Summary_of_Cash_Flows_As: List[Any]
-#     Debt___Summary_of_Term_Debt__De: List[Any]
-#     Debt___Future_Principal_Payment: List[Any]
-#     Shareholders_Equity__Tables_: List[Any]
-#     Shareholders_Equity___Shares_o: List[Any]
-#     Benefit_Plans__Tables_: List[Any]
-#     Benefit_Plans___Restricted_Stoc: List[Any]
-#     Benefit_Plans___Summary_of_Shar: List[Any]
-#     Commitments_and_Contingencies__: List[Any]
-#     Segment_Information_and_Geogr_2: List[Any]
-#     Segment_Information_and_Geogr_3: List[Any]
-#     Segment_Information_and_Geogr_4: List[Any]
-#     Summary_of_Significant_Accoun_4: List[Any]
-#     Summary_of_Significant_Accoun_5: List[Any]
-
-
 class FMPRevenueSegmentation(BaseModel):
     symbol: str
     fiscalYear: int
@@ -1640,13 +1579,13 @@ class FMPIndustryClassificationSearch(BaseModel):
 class FMPEarningsTranscript(BaseModel):
     symbol: str
     period: str
-    year: int
+    fiscalYear: int
     date: str
-    content: str
+    content: Optional[str] = None
 
 
-class FMPEarningsTranscriptDate(BaseModel):
-    quarter: int
+class FMPEarningsTranscriptBySymbol(BaseModel):
+    quarter: str
     fiscalYear: int
     date: str
 
@@ -2381,3 +2320,26 @@ class FMPEnterpriseValue(BaseModel):
     minusCashAndCashEquivalents: int
     addTotalDebt: int
     enterpriseValue: int
+
+
+class FMPTrendingSentiment(BaseModel):
+    symbol: str
+    name: str
+    rank: int
+    sentiment: float
+    lastSentiment: float
+
+
+class FMPHistoricalSentiment(BaseModel):
+    symbol: str
+    name: str
+    stocktwitsPosts: int
+    twitterPosts: int
+    stocktwitsComments: int
+    twitterComments: int
+    stocktwitsLikes: int
+    twitterLikes: int
+    stocktwitsImpressions: int
+    twitterImpressions: int
+    stocktwitsSentiment: float
+    twitterSentiment: float

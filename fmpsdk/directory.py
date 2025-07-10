@@ -165,31 +165,6 @@ def actively_trading_list(
 
 
 @parse_response
-def earnings_transcript_list(
-    apikey: str,
-    symbol: str = None,
-    limit: int = None,
-) -> RootModel[typing.List[FMPEarningsTranscriptList]]:
-    """
-    Get a list of earnings transcripts using the /stable/earnings-transcript-list endpoint.
-
-    Parameters:
-        apikey (str): Your API key.
-        symbol (str, optional): Filter by symbol.
-        limit (int, optional): Limit the number of results.
-    Returns:
-        List of dictionaries with earnings transcript list results.
-    """
-    path = "earnings-transcript-list"
-    query_vars = {"apikey": apikey}
-    if symbol:
-        query_vars["symbol"] = symbol
-    if limit:
-        query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
-
-
-@parse_response
 def available_exchanges(
     apikey: str,
 ) -> RootModel[typing.List[FMPExchangeInfo]]:
