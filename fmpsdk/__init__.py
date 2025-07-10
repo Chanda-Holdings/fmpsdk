@@ -244,8 +244,10 @@ from .news import (
     news_stock_latest,
     price_target_latest_news,
     price_target_news,
+    social_sentiment,
     stock_grade_latest_news,
     stock_grade_news,
+    trending_sentiment,
 )
 
 # Quote functions
@@ -512,6 +514,8 @@ __all__ = [
     "price_target_news",
     "stock_grade_latest_news",
     "stock_grade_news",
+    "social_sentiment",
+    "trending_sentiment",
     # Quote
     "aftermarket_quote",
     "aftermarket_trade",
