@@ -577,7 +577,11 @@ class TestNewsAdditionalEndpoints:
         """Test stock news with date range and multiple symbols."""
         symbols = ["AAPL", "TSLA"]
         result = news.news_stock(
-            apikey=api_key, symbols=symbols, from_date=older_date, to_date=recent_date, limit=5
+            apikey=api_key,
+            symbols=symbols,
+            from_date=older_date,
+            to_date=recent_date,
+            limit=5,
         )
 
         if isinstance(result, dict) and "Error Message" in result:
@@ -660,7 +664,9 @@ class TestNewsAdditionalEndpoints:
 
     def test_trending_sentiment_bullish(self, api_key):
         """Test getting trending bullish sentiment."""
-        result = news.trending_sentiment(apikey=api_key, type="bullish", source="stocktwits")
+        result = news.trending_sentiment(
+            apikey=api_key, type="bullish", source="stocktwits"
+        )
 
         if isinstance(result, dict) and "Error Message" in result:
             pytest.skip("API key might be invalid or endpoint requires premium access")
@@ -670,7 +676,9 @@ class TestNewsAdditionalEndpoints:
 
     def test_trending_sentiment_bearish(self, api_key):
         """Test getting trending bearish sentiment."""
-        result = news.trending_sentiment(apikey=api_key, type="bearish", source="stocktwits")
+        result = news.trending_sentiment(
+            apikey=api_key, type="bearish", source="stocktwits"
+        )
 
         if isinstance(result, dict) and "Error Message" in result:
             pytest.skip("API key might be invalid or endpoint requires premium access")
@@ -685,11 +693,7 @@ class TestNewsParameterValidation:
     def test_news_forex_with_all_parameters(self, api_key, recent_date, older_date):
         """Test forex news with all optional parameters."""
         result = news.news_forex(
-            apikey=api_key,
-            from_date=older_date,
-            to_date=recent_date,
-            page=0,
-            limit=5
+            apikey=api_key, from_date=older_date, to_date=recent_date, page=0, limit=5
         )
 
         if isinstance(result, dict) and "Error Message" in result:
@@ -700,12 +704,7 @@ class TestNewsParameterValidation:
 
     def test_price_target_news_with_pagination(self, api_key):
         """Test price target news with pagination."""
-        result = news.price_target_news(
-            apikey=api_key, 
-            symbol="AAPL", 
-            page=0, 
-            limit=5
-        )
+        result = news.price_target_news(apikey=api_key, symbol="AAPL", page=0, limit=5)
 
         if isinstance(result, dict) and "Error Message" in result:
             pytest.skip("API key might be invalid or endpoint requires premium access")
@@ -715,12 +714,7 @@ class TestNewsParameterValidation:
 
     def test_stock_grade_news_with_pagination(self, api_key):
         """Test stock grade news with pagination parameters."""
-        result = news.stock_grade_news(
-            apikey=api_key, 
-            symbol="MSFT", 
-            page=0, 
-            limit=5
-        )
+        result = news.stock_grade_news(apikey=api_key, symbol="MSFT", page=0, limit=5)
 
         if isinstance(result, dict) and "Error Message" in result:
             pytest.skip("API key might be invalid or endpoint requires premium access")
@@ -730,11 +724,7 @@ class TestNewsParameterValidation:
 
     def test_stock_grade_latest_news_with_pagination(self, api_key):
         """Test latest stock grade news with pagination."""
-        result = news.stock_grade_latest_news(
-            apikey=api_key, 
-            page=0, 
-            limit=5
-        )
+        result = news.stock_grade_latest_news(apikey=api_key, page=0, limit=5)
 
         if isinstance(result, dict) and "Error Message" in result:
             pytest.skip("API key might be invalid or endpoint requires premium access")
@@ -766,7 +756,7 @@ class TestNewsParameterValidation:
             from_date=older_date,
             to_date=recent_date,
             page=0,
-            limit=5
+            limit=5,
         )
 
         if isinstance(result, dict) and "Error Message" in result:
@@ -784,7 +774,7 @@ class TestNewsParameterValidation:
             from_date=older_date,
             to_date=recent_date,
             page=0,
-            limit=5
+            limit=5,
         )
 
         if isinstance(result, dict) and "Error Message" in result:

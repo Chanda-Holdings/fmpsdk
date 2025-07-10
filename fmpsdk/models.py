@@ -158,7 +158,7 @@ class FMPIndustry(BaseModel):
 
 class FMPCountry(BaseModel):
     country: str
-    
+
     @property
     def name(self) -> str:
         """Alias for country field to match expected interface."""

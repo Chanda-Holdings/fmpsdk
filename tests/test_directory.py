@@ -5,15 +5,15 @@ import pytest
 
 from fmpsdk import directory
 from fmpsdk.models import (
+    FMPCountry,
+    FMPExchangeInfo,
     FMPFinancialStatementSymbolList,
+    FMPIndustry,
+    FMPSector,
     FMPSymbolAndCIKList,
     FMPSymbolAndCompanyNameList,
     FMPSymbolAndNameList,
     FMPSymbolChange,
-    FMPExchangeInfo,
-    FMPSector,
-    FMPIndustry,
-    FMPCountry,
 )
 from tests.conftest import extract_data_list
 
@@ -213,7 +213,9 @@ class TestDirectoryBasic:
     def test_actively_trading_list_with_exchange(self, api_key):
         """Test getting actively trading list filtered by exchange."""
         start_time = time.time()
-        result = directory.actively_trading_list(apikey=api_key, exchange="NASDAQ", limit=10)
+        result = directory.actively_trading_list(
+            apikey=api_key, exchange="NASDAQ", limit=10
+        )
         response_time = time.time() - start_time
 
         # Response time validation
@@ -853,8 +855,10 @@ class TestDirectoryAvailableEndpointsDataQuality:
         countries = directory.available_countries(apikey=api_key)
 
         # Skip if any have errors
-        if any(isinstance(data, dict) and "Error Message" in data 
-               for data in [exchanges, sectors, industries, countries]):
+        if any(
+            isinstance(data, dict) and "Error Message" in data
+            for data in [exchanges, sectors, industries, countries]
+        ):
             return
 
         exchanges_data = extract_data_list(exchanges)
@@ -889,12 +893,14 @@ class TestDirectoryAvailableEndpointsDataQuality:
         # Should have multiple indexes
         if data:
             assert len(data) > 5  # Should have multiple indexes
-            
+
             # Check for major index symbols
-            symbols = [item.symbol if hasattr(item, 'symbol') else item.get('symbol', '') 
-                      for item in data]
-            major_indexes = ['SPX', 'DJI', 'IXIC', 'RUT']
-            
+            symbols = [
+                item.symbol if hasattr(item, "symbol") else item.get("symbol", "")
+                for item in data
+            ]
+            major_indexes = ["SPX", "DJI", "IXIC", "RUT"]
+
             # Should contain at least one major index (flexible test)
             has_major_index = any(idx in symbols for idx in major_indexes)
             # Note: Not asserting this as index availability may vary

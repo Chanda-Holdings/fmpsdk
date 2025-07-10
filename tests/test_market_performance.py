@@ -93,10 +93,7 @@ class TestSectorPerformance:
         from_date = "2023-01-01"
         to_date = "2023-03-31"
         result = market_performance.historical_sector_performance(
-            apikey=api_key, 
-            sector="Technology", 
-            from_date=from_date, 
-            to_date=to_date
+            apikey=api_key, sector="Technology", from_date=from_date, to_date=to_date
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
@@ -104,9 +101,7 @@ class TestSectorPerformance:
     def test_historical_sector_performance_with_exchange(self, api_key):
         """Test historical sector performance with exchange."""
         result = market_performance.historical_sector_performance(
-            apikey=api_key, 
-            sector="Technology", 
-            exchange="NASDAQ"
+            apikey=api_key, sector="Technology", exchange="NASDAQ"
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
@@ -171,10 +166,7 @@ class TestSectorPerformance:
         from_date = "2023-01-01"
         to_date = "2023-03-31"
         result = market_performance.historical_sector_pe(
-            apikey=api_key, 
-            sector="Technology", 
-            from_date=from_date, 
-            to_date=to_date
+            apikey=api_key, sector="Technology", from_date=from_date, to_date=to_date
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
@@ -182,9 +174,7 @@ class TestSectorPerformance:
     def test_historical_sector_pe_with_exchange(self, api_key):
         """Test historical sector PE with exchange."""
         result = market_performance.historical_sector_pe(
-            apikey=api_key, 
-            sector="Technology", 
-            exchange="NASDAQ"
+            apikey=api_key, sector="Technology", exchange="NASDAQ"
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
@@ -255,10 +245,7 @@ class TestIndustryPerformance:
         from_date = "2023-01-01"
         to_date = "2023-03-31"
         result = market_performance.historical_industry_performance(
-            apikey=api_key, 
-            industry="Software", 
-            from_date=from_date, 
-            to_date=to_date
+            apikey=api_key, industry="Software", from_date=from_date, to_date=to_date
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
@@ -266,9 +253,7 @@ class TestIndustryPerformance:
     def test_historical_industry_performance_with_exchange(self, api_key):
         """Test historical industry performance with exchange."""
         result = market_performance.historical_industry_performance(
-            apikey=api_key, 
-            industry="Software", 
-            exchange="NASDAQ"
+            apikey=api_key, industry="Software", exchange="NASDAQ"
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
@@ -333,10 +318,7 @@ class TestIndustryPerformance:
         from_date = "2023-01-01"
         to_date = "2023-03-31"
         result = market_performance.historical_industry_pe(
-            apikey=api_key, 
-            industry="Software", 
-            from_date=from_date, 
-            to_date=to_date
+            apikey=api_key, industry="Software", from_date=from_date, to_date=to_date
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
@@ -344,9 +326,7 @@ class TestIndustryPerformance:
     def test_historical_industry_pe_with_exchange(self, api_key):
         """Test historical industry PE with exchange."""
         result = market_performance.historical_industry_pe(
-            apikey=api_key, 
-            industry="Software", 
-            exchange="NASDAQ"
+            apikey=api_key, industry="Software", exchange="NASDAQ"
         )
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
