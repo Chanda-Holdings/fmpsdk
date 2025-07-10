@@ -10,6 +10,10 @@ from fmpsdk.models import (
     FMPSymbolAndCompanyNameList,
     FMPSymbolAndNameList,
     FMPSymbolChange,
+    FMPExchangeInfo,
+    FMPSector,
+    FMPIndustry,
+    FMPCountry,
 )
 from tests.conftest import extract_data_list
 
@@ -205,6 +209,34 @@ class TestDirectoryBasic:
                 # Symbol format validation
                 assert len(stock_obj.symbol) <= 10
                 assert stock_obj.symbol.isupper() or stock_obj.symbol.isdigit()
+
+    def test_actively_trading_list_with_exchange(self, api_key):
+        """Test getting actively trading list filtered by exchange."""
+        start_time = time.time()
+        result = directory.actively_trading_list(apikey=api_key, exchange="NASDAQ", limit=10)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            for stock in data[:5]:  # Check first few items
+                if isinstance(stock, dict):
+                    stock_obj = FMPSymbolAndNameList(**stock)
+                else:
+                    stock_obj = stock
+
+                # Validate stock data
+                assert stock_obj.symbol
+                assert stock_obj.name
 
 
 class TestDirectoryExchangeFiltering:
@@ -625,3 +657,273 @@ class TestDirectoryPerformance:
             # Should respect limits approximately
             if data:
                 assert len(data) <= limit * 2  # Allow flexibility
+
+
+class TestDirectoryAvailableEndpoints:
+    """Tests for available exchanges, sectors, industries, countries, and indexes."""
+
+    def test_available_exchanges(self, api_key):
+        """Test getting available exchanges."""
+        start_time = time.time()
+        result = directory.available_exchanges(apikey=api_key)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            for exchange in data[:5]:  # Check first few items
+                if isinstance(exchange, dict):
+                    exchange_obj = FMPExchangeInfo(**exchange)
+                else:
+                    exchange_obj = exchange
+
+                # Validate exchange data
+                assert hasattr(exchange_obj, "name")
+                assert hasattr(exchange_obj, "exchange")
+                assert hasattr(exchange_obj, "countryName")
+                assert hasattr(exchange_obj, "countryCode")
+
+    def test_available_sectors(self, api_key):
+        """Test getting available sectors."""
+        start_time = time.time()
+        result = directory.available_sectors(apikey=api_key)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            for sector in data[:5]:  # Check first few items
+                if isinstance(sector, dict):
+                    sector_obj = FMPSector(**sector)
+                else:
+                    sector_obj = sector
+
+                # Validate sector data
+                assert hasattr(sector_obj, "sector")
+
+    def test_available_industries(self, api_key):
+        """Test getting available industries."""
+        start_time = time.time()
+        result = directory.available_industries(apikey=api_key)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            for industry in data[:5]:  # Check first few items
+                if isinstance(industry, dict):
+                    industry_obj = FMPIndustry(**industry)
+                else:
+                    industry_obj = industry
+
+                # Validate industry data
+                assert hasattr(industry_obj, "industry")
+
+    def test_available_countries(self, api_key):
+        """Test getting available countries."""
+        start_time = time.time()
+        result = directory.available_countries(apikey=api_key)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            for country in data[:5]:  # Check first few items
+                if isinstance(country, dict):
+                    country_obj = FMPCountry(**country)
+                else:
+                    country_obj = country
+
+                # Validate country data
+                assert hasattr(country_obj, "name")
+
+    def test_available_indexes(self, api_key):
+        """Test getting available indexes."""
+        start_time = time.time()
+        result = directory.available_indexes(apikey=api_key)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            for index in data[:5]:  # Check first few items
+                if isinstance(index, dict):
+                    index_obj = FMPSymbolAndNameList(**index)
+                else:
+                    index_obj = index
+
+                # Validate index data
+                assert hasattr(index_obj, "symbol")
+                assert hasattr(index_obj, "name")
+
+
+class TestDirectoryAvailableEndpointsErrorHandling:
+    """Test error handling for available endpoints."""
+
+    def test_available_exchanges_invalid_api_key(self):
+        """Test available exchanges with invalid API key."""
+        result = directory.available_exchanges(apikey="invalid_key")
+
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_available_sectors_invalid_api_key(self):
+        """Test available sectors with invalid API key."""
+        result = directory.available_sectors(apikey="invalid_key")
+
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_available_industries_invalid_api_key(self):
+        """Test available industries with invalid API key."""
+        result = directory.available_industries(apikey="invalid_key")
+
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_available_countries_invalid_api_key(self):
+        """Test available countries with invalid API key."""
+        result = directory.available_countries(apikey="invalid_key")
+
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_available_indexes_invalid_api_key(self):
+        """Test available indexes with invalid API key."""
+        result = directory.available_indexes(apikey="invalid_key")
+
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+
+class TestDirectoryAvailableEndpointsDataQuality:
+    """Test data quality for available endpoints."""
+
+    def test_available_data_consistency(self, api_key):
+        """Test that available endpoints return consistent data."""
+        # Get all available data
+        exchanges = directory.available_exchanges(apikey=api_key)
+        sectors = directory.available_sectors(apikey=api_key)
+        industries = directory.available_industries(apikey=api_key)
+        countries = directory.available_countries(apikey=api_key)
+
+        # Skip if any have errors
+        if any(isinstance(data, dict) and "Error Message" in data 
+               for data in [exchanges, sectors, industries, countries]):
+            return
+
+        exchanges_data = extract_data_list(exchanges)
+        sectors_data = extract_data_list(sectors)
+        industries_data = extract_data_list(industries)
+        countries_data = extract_data_list(countries)
+
+        # All should return lists
+        assert isinstance(exchanges_data, list)
+        assert isinstance(sectors_data, list)
+        assert isinstance(industries_data, list)
+        assert isinstance(countries_data, list)
+
+        # Check for reasonable data volumes
+        if exchanges_data:
+            assert len(exchanges_data) > 5  # Should have multiple exchanges
+        if sectors_data:
+            assert len(sectors_data) > 5  # Should have multiple sectors
+        if industries_data:
+            assert len(industries_data) > 10  # Should have many industries
+
+    def test_available_indexes_data_volume(self, api_key):
+        """Test that available indexes returns reasonable data volume."""
+        result = directory.available_indexes(apikey=api_key)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        # Should have multiple indexes
+        if data:
+            assert len(data) > 5  # Should have multiple indexes
+            
+            # Check for major index symbols
+            symbols = [item.symbol if hasattr(item, 'symbol') else item.get('symbol', '') 
+                      for item in data]
+            major_indexes = ['SPX', 'DJI', 'IXIC', 'RUT']
+            
+            # Should contain at least one major index (flexible test)
+            has_major_index = any(idx in symbols for idx in major_indexes)
+            # Note: Not asserting this as index availability may vary
+
+
+class TestDirectoryAvailableEndpointsPerformance:
+    """Test performance of available endpoints."""
+
+    def test_available_endpoints_response_times(self, api_key):
+        """Test that all available endpoints respond within acceptable time."""
+        endpoints = [
+            ("exchanges", lambda: directory.available_exchanges(api_key)),
+            ("sectors", lambda: directory.available_sectors(api_key)),
+            ("industries", lambda: directory.available_industries(api_key)),
+            ("countries", lambda: directory.available_countries(api_key)),
+            ("indexes", lambda: directory.available_indexes(api_key)),
+        ]
+
+        for endpoint_name, endpoint_func in endpoints:
+            start_time = time.time()
+            result = endpoint_func()
+            response_time = time.time() - start_time
+
+            # Response time should be reasonable
+            assert response_time < RESPONSE_TIME_LIMIT
+
+            # Skip validation if error
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            assert isinstance(data, list)

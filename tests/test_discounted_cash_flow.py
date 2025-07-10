@@ -545,3 +545,244 @@ class TestDCFPerformance:
 
         data = extract_data_list(result)
         assert isinstance(data, list)
+
+
+class TestDCFCustom:
+    """Tests for custom DCF calculation functions."""
+
+    def test_custom_dcf_basic(self, api_key):
+        """Test custom DCF calculation with basic parameters."""
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey=api_key, symbol="AAPL"
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:
+            for item in data[:3]:
+                assert isinstance(item, FMPDCFCustomValuation)
+                assert hasattr(item, "symbol")
+
+    def test_custom_dcf_with_all_parameters(self, api_key):
+        """Test custom DCF with all optional parameters to cover missing lines."""
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey=api_key,
+            symbol="AAPL",
+            revenue_growth_pct=0.15,
+            ebidta_pct=0.25,
+            depreciation_and_amortization_pct=0.05,
+            cash_and_short_term_investments_pct=0.10,
+            receivables_pct=0.08,
+            inventories_pct=0.05,
+            payable_pct=0.12,
+            ebit_pct=0.20,
+            capital_expenditure_pct=0.06,
+            operating_cash_flow_pct=0.18,
+            selling_general_and_administrative_expenses_pct=0.15,
+            tax_rate=0.21,
+            long_term_growth_rate=0.03,
+            cost_of_debt=0.04,
+            cost_of_equity=0.09,
+            market_risk_premium=0.06,
+            beta=1.2,
+            risk_free_rate=0.02,
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+    def test_custom_dcf_partial_parameters(self, api_key):
+        """Test custom DCF with subset of parameters."""
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey=api_key,
+            symbol="MSFT",
+            revenue_growth_pct=0.12,
+            tax_rate=0.21,
+            long_term_growth_rate=0.03,
+            beta=1.1,
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+    def test_custom_levered_dcf_basic(self, api_key):
+        """Test custom levered DCF calculation with basic parameters."""
+        result = discounted_cash_flow.discounted_cash_flow_custom_levered(
+            apikey=api_key, symbol="TSLA"
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:
+            for item in data[:3]:
+                assert isinstance(item, FMPDCFCustomValuation)
+                assert hasattr(item, "symbol")
+
+    def test_custom_levered_dcf_with_all_parameters(self, api_key):
+        """Test custom levered DCF with all optional parameters to cover missing lines."""
+        result = discounted_cash_flow.discounted_cash_flow_custom_levered(
+            apikey=api_key,
+            symbol="GOOGL",
+            revenue_growth_pct=0.18,
+            ebidta_pct=0.30,
+            depreciation_and_amortization_pct=0.06,
+            cash_and_short_term_investments_pct=0.15,
+            receivables_pct=0.07,
+            inventories_pct=0.02,
+            payable_pct=0.10,
+            ebit_pct=0.25,
+            capital_expenditure_pct=0.08,
+            operating_cash_flow_pct=0.22,
+            selling_general_and_administrative_expenses_pct=0.12,
+            tax_rate=0.21,
+            long_term_growth_rate=0.04,
+            cost_of_debt=0.03,
+            cost_of_equity=0.10,
+            market_risk_premium=0.07,
+            beta=1.3,
+            risk_free_rate=0.025,
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+    def test_custom_levered_dcf_partial_parameters(self, api_key):
+        """Test custom levered DCF with subset of parameters."""
+        result = discounted_cash_flow.discounted_cash_flow_custom_levered(
+            apikey=api_key,
+            symbol="META",
+            revenue_growth_pct=0.10,
+            ebidta_pct=0.35,
+            tax_rate=0.21,
+            cost_of_debt=0.035,
+            cost_of_equity=0.095,
+            beta=1.25,
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+
+class TestDCFParameterValidation:
+    """Test parameter validation and edge cases for DCF functions."""
+
+    def test_custom_dcf_invalid_api_key(self):
+        """Test custom DCF with invalid API key."""
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey="invalid_key", symbol="AAPL"
+        )
+
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_custom_levered_dcf_invalid_api_key(self):
+        """Test custom levered DCF with invalid API key."""
+        result = discounted_cash_flow.discounted_cash_flow_custom_levered(
+            apikey="invalid_key", symbol="AAPL"
+        )
+
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_custom_dcf_extreme_parameters(self, api_key):
+        """Test custom DCF with extreme parameter values."""
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey=api_key,
+            symbol="AAPL",
+            revenue_growth_pct=1.0,  # 100% growth
+            tax_rate=0.5,  # 50% tax rate
+            beta=2.0,  # High beta
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+    def test_custom_dcf_zero_parameters(self, api_key):
+        """Test custom DCF with zero values for parameters."""
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey=api_key,
+            symbol="AAPL",
+            revenue_growth_pct=0.0,
+            tax_rate=0.0,
+            risk_free_rate=0.0,
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+    def test_custom_dcf_negative_parameters(self, api_key):
+        """Test custom DCF with negative parameter values."""
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey=api_key,
+            symbol="AAPL",
+            revenue_growth_pct=-0.05,  # Negative growth
+            long_term_growth_rate=-0.01,
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+
+class TestDCFPerformance:
+    """Test DCF endpoint performance."""
+
+    def test_custom_dcf_response_time(self, api_key):
+        """Test that custom DCF responds within acceptable time."""
+        start_time = time.time()
+        result = discounted_cash_flow.discounted_cash_flow_custom(
+            apikey=api_key, symbol="AAPL", revenue_growth_pct=0.15
+        )
+        response_time = time.time() - start_time
+
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        if isinstance(result, dict) and "Error Message" in result:
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+    def test_custom_levered_dcf_response_time(self, api_key):
+        """Test that custom levered DCF responds within acceptable time."""
+        start_time = time.time()
+        result = discounted_cash_flow.discounted_cash_flow_custom_levered(
+            apikey=api_key, symbol="MSFT", cost_of_equity=0.10
+        )
+        response_time = time.time() - start_time
+
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        if isinstance(result, dict) and "Error Message" in result:
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)

@@ -60,6 +60,15 @@ class TestSectorPerformance:
         result_list = extract_data_list(result)
         assert isinstance(result_list, list), "Response should be a list"
 
+    def test_sector_performance_with_sector_filter(self, api_key):
+        """Test sector performance with sector filter."""
+        test_date = get_test_date()
+        result = market_performance.sector_performance_snapshot(
+            apikey=api_key, date=test_date, sector="Technology"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
     def test_historical_sector_performance(self, api_key):
         """Test historical sector performance."""
         result = market_performance.historical_sector_performance(
@@ -79,6 +88,29 @@ class TestSectorPerformance:
                 historical_data, "sector"
             ), "Should have date or sector field"
 
+    def test_historical_sector_performance_with_dates(self, api_key):
+        """Test historical sector performance with date range."""
+        from_date = "2023-01-01"
+        to_date = "2023-03-31"
+        result = market_performance.historical_sector_performance(
+            apikey=api_key, 
+            sector="Technology", 
+            from_date=from_date, 
+            to_date=to_date
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
+    def test_historical_sector_performance_with_exchange(self, api_key):
+        """Test historical sector performance with exchange."""
+        result = market_performance.historical_sector_performance(
+            apikey=api_key, 
+            sector="Technology", 
+            exchange="NASDAQ"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
     def test_sector_pe_snapshot(self, api_key):
         """Test sector PE snapshot."""
         test_date = get_test_date()
@@ -96,6 +128,24 @@ class TestSectorPerformance:
             assert hasattr(pe_data, "sector") or hasattr(
                 pe_data, "pe"
             ), "Should have sector or PE field"
+
+    def test_sector_pe_snapshot_with_exchange(self, api_key):
+        """Test sector PE snapshot with exchange filter."""
+        test_date = get_test_date()
+        result = market_performance.sector_pe_snapshot(
+            apikey=api_key, date=test_date, exchange="NASDAQ"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
+    def test_sector_pe_snapshot_with_sector_filter(self, api_key):
+        """Test sector PE snapshot with sector filter."""
+        test_date = get_test_date()
+        result = market_performance.sector_pe_snapshot(
+            apikey=api_key, date=test_date, sector="Technology"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
 
     def test_historical_sector_pe(self, api_key):
         """Test historical sector PE."""
@@ -115,6 +165,29 @@ class TestSectorPerformance:
             assert hasattr(historical_pe, "date") or hasattr(
                 historical_pe, "sector"
             ), "Should have date or sector field"
+
+    def test_historical_sector_pe_with_dates(self, api_key):
+        """Test historical sector PE with date range."""
+        from_date = "2023-01-01"
+        to_date = "2023-03-31"
+        result = market_performance.historical_sector_pe(
+            apikey=api_key, 
+            sector="Technology", 
+            from_date=from_date, 
+            to_date=to_date
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
+    def test_historical_sector_pe_with_exchange(self, api_key):
+        """Test historical sector PE with exchange."""
+        result = market_performance.historical_sector_pe(
+            apikey=api_key, 
+            sector="Technology", 
+            exchange="NASDAQ"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
 
 
 class TestIndustryPerformance:
@@ -140,6 +213,24 @@ class TestIndustryPerformance:
                 industry_data, "industryName"
             ), "Should have industry field"
 
+    def test_industry_performance_with_exchange(self, api_key):
+        """Test industry performance with exchange filter."""
+        test_date = get_test_date()
+        result = market_performance.industry_performance_snapshot(
+            apikey=api_key, date=test_date, exchange="NASDAQ"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
+    def test_industry_performance_with_industry_filter(self, api_key):
+        """Test industry performance with industry filter."""
+        test_date = get_test_date()
+        result = market_performance.industry_performance_snapshot(
+            apikey=api_key, date=test_date, industry="Software"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
     def test_historical_industry_performance(self, api_key):
         """Test historical industry performance."""
         result = market_performance.historical_industry_performance(
@@ -159,6 +250,29 @@ class TestIndustryPerformance:
                 historical_data, "industry"
             ), "Should have date or industry field"
 
+    def test_historical_industry_performance_with_dates(self, api_key):
+        """Test historical industry performance with date range."""
+        from_date = "2023-01-01"
+        to_date = "2023-03-31"
+        result = market_performance.historical_industry_performance(
+            apikey=api_key, 
+            industry="Software", 
+            from_date=from_date, 
+            to_date=to_date
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
+    def test_historical_industry_performance_with_exchange(self, api_key):
+        """Test historical industry performance with exchange."""
+        result = market_performance.historical_industry_performance(
+            apikey=api_key, 
+            industry="Software", 
+            exchange="NASDAQ"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
     def test_industry_pe_snapshot(self, api_key):
         """Test industry PE snapshot."""
         test_date = get_test_date()
@@ -176,6 +290,24 @@ class TestIndustryPerformance:
             assert hasattr(pe_data, "industry") or hasattr(
                 pe_data, "pe"
             ), "Should have industry or PE field"
+
+    def test_industry_pe_snapshot_with_exchange(self, api_key):
+        """Test industry PE snapshot with exchange filter."""
+        test_date = get_test_date()
+        result = market_performance.industry_pe_snapshot(
+            apikey=api_key, date=test_date, exchange="NASDAQ"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
+    def test_industry_pe_snapshot_with_industry_filter(self, api_key):
+        """Test industry PE snapshot with industry filter."""
+        test_date = get_test_date()
+        result = market_performance.industry_pe_snapshot(
+            apikey=api_key, date=test_date, industry="Software"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
 
     def test_historical_industry_pe(self, api_key):
         """Test historical industry PE."""
@@ -195,6 +327,29 @@ class TestIndustryPerformance:
             assert hasattr(historical_pe, "date") or hasattr(
                 historical_pe, "industry"
             ), "Should have date or industry field"
+
+    def test_historical_industry_pe_with_dates(self, api_key):
+        """Test historical industry PE with date range."""
+        from_date = "2023-01-01"
+        to_date = "2023-03-31"
+        result = market_performance.historical_industry_pe(
+            apikey=api_key, 
+            industry="Software", 
+            from_date=from_date, 
+            to_date=to_date
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
+
+    def test_historical_industry_pe_with_exchange(self, api_key):
+        """Test historical industry PE with exchange."""
+        result = market_performance.historical_industry_pe(
+            apikey=api_key, 
+            industry="Software", 
+            exchange="NASDAQ"
+        )
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), "Response should be a list"
 
 
 class TestMarketMovers:

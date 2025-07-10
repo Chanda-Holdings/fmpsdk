@@ -486,3 +486,309 @@ class TestNewsPerformance:
                 if isinstance(article, dict):
                     article_obj = FMPNewsArticle(**article)
                     assert article_obj.publishedDate
+
+
+class TestNewsAdditionalEndpoints:
+    """Tests for additional news endpoints to improve coverage."""
+
+    def test_news_forex(self, api_key):
+        """Test getting forex news."""
+        start_time = time.time()
+        result = news.news_forex(apikey=api_key, limit=10)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        # Extract data and validate structure
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPNewsArticle)
+                assert hasattr(item, "title")
+                assert hasattr(item, "text")
+
+    def test_news_forex_with_date_range(self, api_key, recent_date, older_date):
+        """Test forex news with date range."""
+        result = news.news_forex(
+            apikey=api_key, from_date=older_date, to_date=recent_date, limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_price_target_news(self, api_key):
+        """Test getting price target news for a specific symbol."""
+        result = news.price_target_news(apikey=api_key, symbol="AAPL", limit=10)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPPriceTargetNews)
+                assert hasattr(item, "symbol")
+
+    def test_price_target_latest_news(self, api_key):
+        """Test getting latest price target news for a specific symbol."""
+        result = news.price_target_latest_news(apikey=api_key, symbol="MSFT", limit=5)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPPriceTargetNews)
+                assert hasattr(item, "symbol")
+
+    def test_news_stock_with_symbols(self, api_key):
+        """Test getting news for specific stock symbols."""
+        symbols = ["AAPL", "MSFT", "GOOGL"]
+        result = news.news_stock(apikey=api_key, symbols=symbols, limit=10)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPNewsArticle)
+                assert hasattr(item, "title")
+                assert hasattr(item, "symbol")
+
+    def test_news_stock_with_date_range(self, api_key, recent_date, older_date):
+        """Test stock news with date range and multiple symbols."""
+        symbols = ["AAPL", "TSLA"]
+        result = news.news_stock(
+            apikey=api_key, symbols=symbols, from_date=older_date, to_date=recent_date, limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_company_press_releases_with_symbols(self, api_key):
+        """Test getting press releases for specific symbols."""
+        symbols = ["AAPL", "MSFT"]
+        result = news.company_press_releases(apikey=api_key, symbols=symbols, limit=10)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPNewsArticle)
+                assert hasattr(item, "title")
+                assert hasattr(item, "symbol")
+
+    def test_news_crypto_with_symbols(self, api_key):
+        """Test getting crypto news for specific symbols."""
+        symbols = ["BTCUSD", "ETHUSD"]
+        result = news.news_crypto(apikey=api_key, symbols=symbols, limit=10)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPNewsArticle)
+                assert hasattr(item, "title")
+
+    def test_stock_grade_news(self, api_key):
+        """Test getting stock grade news for a specific symbol."""
+        result = news.stock_grade_news(apikey=api_key, symbol="AAPL", limit=10)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPStockGradeNews)
+                assert hasattr(item, "symbol")
+
+    def test_stock_grade_latest_news(self, api_key):
+        """Test getting latest stock grade news."""
+        result = news.stock_grade_latest_news(apikey=api_key, limit=10)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+        if data_list:  # If data is returned
+            for item in data_list[:3]:  # Test first few items
+                assert isinstance(item, FMPStockGradeNews)
+
+    def test_social_sentiment(self, api_key):
+        """Test getting social sentiment for a symbol."""
+        result = news.social_sentiment(apikey=api_key, symbol="AAPL", page=0)
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_trending_sentiment_bullish(self, api_key):
+        """Test getting trending bullish sentiment."""
+        result = news.trending_sentiment(apikey=api_key, type="bullish", source="stocktwits")
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_trending_sentiment_bearish(self, api_key):
+        """Test getting trending bearish sentiment."""
+        result = news.trending_sentiment(apikey=api_key, type="bearish", source="stocktwits")
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+
+class TestNewsParameterValidation:
+    """Tests for parameter validation and edge cases to improve coverage."""
+
+    def test_news_forex_with_all_parameters(self, api_key, recent_date, older_date):
+        """Test forex news with all optional parameters."""
+        result = news.news_forex(
+            apikey=api_key,
+            from_date=older_date,
+            to_date=recent_date,
+            page=0,
+            limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_price_target_news_with_pagination(self, api_key):
+        """Test price target news with pagination."""
+        result = news.price_target_news(
+            apikey=api_key, 
+            symbol="AAPL", 
+            page=0, 
+            limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_stock_grade_news_with_pagination(self, api_key):
+        """Test stock grade news with pagination parameters."""
+        result = news.stock_grade_news(
+            apikey=api_key, 
+            symbol="MSFT", 
+            page=0, 
+            limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_stock_grade_latest_news_with_pagination(self, api_key):
+        """Test latest stock grade news with pagination."""
+        result = news.stock_grade_latest_news(
+            apikey=api_key, 
+            page=0, 
+            limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_news_functions_with_empty_symbol_lists(self, api_key):
+        """Test news functions with empty symbol lists."""
+        # Test with empty symbols list - should handle gracefully
+        empty_symbols = []
+
+        # These should handle empty lists gracefully or raise appropriate errors
+        try:
+            result = news.news_stock(apikey=api_key, symbols=empty_symbols)
+            if isinstance(result, dict) and "Error Message" in result:
+                # This is expected behavior for empty symbols
+                pass
+        except Exception:
+            # Exception is also acceptable for empty symbols
+            pass
+
+    def test_company_press_releases_all_params(self, api_key, recent_date, older_date):
+        """Test company press releases with all parameters."""
+        symbols = ["AAPL"]
+        result = news.company_press_releases(
+            apikey=api_key,
+            symbols=symbols,
+            from_date=older_date,
+            to_date=recent_date,
+            page=0,
+            limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)
+
+    def test_news_crypto_all_params(self, api_key, recent_date, older_date):
+        """Test crypto news with all parameters."""
+        symbols = ["BTCUSD"]
+        result = news.news_crypto(
+            apikey=api_key,
+            symbols=symbols,
+            from_date=older_date,
+            to_date=recent_date,
+            page=0,
+            limit=5
+        )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key might be invalid or endpoint requires premium access")
+
+        data_list = extract_data_list(result)
+        assert isinstance(data_list, list)

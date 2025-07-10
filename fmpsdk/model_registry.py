@@ -348,6 +348,7 @@ ENDPOINT_MODEL_MAP = {
     "news_forex": RootModel[List[FMPNewsArticle]],
     "social_sentiment": RootModel[List[FMPHistoricalSentiment]],
     "social_sentiment_trending": RootModel[List[FMPTrendingSentiment]],
+    "trending_sentiment": RootModel[List[FMPTrendingSentiment]],
     # Technical Indicators
     "technical_indicators": RootModel[List[FMPTechnicalIndicator]],
     # Quote

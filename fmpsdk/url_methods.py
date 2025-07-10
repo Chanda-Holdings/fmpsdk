@@ -6,7 +6,8 @@ import typing
 
 import requests
 
-from .settings import BASE_URL_STABLE, BASE_URL_V4
+BASE_URL_STABLE: str = "https://financialmodelingprep.com/stable/"
+BASE_URL_V4: str = "https://financialmodelingprep.com/api/v4/"
 
 CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
@@ -113,9 +114,9 @@ def __return_json(
             f"Error: {e}\n"
             f"URL: {url}\n"
             f"Query variables: {query_vars}\n"
-            f"Response status code: {response.status_code if response else 'No response'}\n"
-            f"Response content: {repr(response.content) if response else 'No response'}\n"
-            f"Response text: {response.text if response else 'No response text'}"
+            f"Response status code: {response.status_code if 'response' in locals() and response else 'No response'}\n"
+            f"Response content: {repr(response.content) if 'response' in locals() and response else 'No response'}\n"
+            f"Response text: {response.text if 'response' in locals() and response else 'No response text'}"
         )
     return return_var
 

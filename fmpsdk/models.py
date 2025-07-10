@@ -144,8 +144,8 @@ class FMPExchangeInfo(BaseModel):
     countryName: str
     countryCode: str
     symbolSuffix: str
-    isMarketOpen: bool
-    delay: str
+    isMarketOpen: Optional[bool] = None
+    delay: Optional[str] = None
 
 
 class FMPSector(BaseModel):
@@ -158,6 +158,11 @@ class FMPIndustry(BaseModel):
 
 class FMPCountry(BaseModel):
     country: str
+    
+    @property
+    def name(self) -> str:
+        """Alias for country field to match expected interface."""
+        return self.country
 
 
 class FMPAnalystEstimates(BaseModel):
@@ -224,8 +229,8 @@ class FMPPriceTargetNews(BaseModel):
     newsURL: str
     newsTitle: str
     analystName: str
-    priceTarget: int
-    adjPriceTarget: int
+    priceTarget: float
+    adjPriceTarget: float
     priceWhenPosted: float
     newsPublisher: str
     newsBaseURL: str
@@ -269,7 +274,7 @@ class FMPStockGradeNews(BaseModel):
     newsBaseURL: str
     newsPublisher: str
     newGrade: str
-    previousGrade: str
+    previousGrade: Optional[str] = None
     gradingCompany: str
     action: str
     priceWhenPosted: float
@@ -2331,8 +2336,8 @@ class FMPTrendingSentiment(BaseModel):
 
 
 class FMPHistoricalSentiment(BaseModel):
+    date: str
     symbol: str
-    name: str
     stocktwitsPosts: int
     twitterPosts: int
     stocktwitsComments: int
