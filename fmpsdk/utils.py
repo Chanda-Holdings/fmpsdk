@@ -82,58 +82,56 @@ def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
 
 def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
     """
-    Convert FMP endpoint response to a list of dictionaries.
+    Convert FMP data to a list of dictionaries.
     
-    This function is optimized for FMP API responses which are always
-    RootModel[List[FMP_OBJECT]] instances from endpoints decorated with @parse_response.
+    This function is designed for the primary use case: converting a List[FMPObject] 
+    (list of Pydantic model instances) to a list of dictionaries.
     
     Args:
-        response: The API response from any FMP endpoint (RootModel[List[FMP_OBJECT]])
+        response: The data to convert - typically List[FMPObject] from FMP API calls
         
     Returns:
         List of dictionaries representing the FMP data objects
         
     Examples:
-        >>> from fmpsdk import company_profile, to_dict_list
-        >>> response = company_profile(apikey="your_key", symbol="AAPL")
-        >>> data = to_dict_list(response)
+        >>> objects = [CompanyProfile(...), CompanyProfile(...)]
+        >>> data = to_dict_list(objects)
         >>> print(data[0]['symbol'])  # 'AAPL'
     """
-    # Handle error responses (dict with "Error Message")
+    # Handle None or empty responses
+    if response is None:
+        return []
+    
+    # Handle direct List[FMPObject] - primary use case
+    if isinstance(response, list):
+        if not response:  # Empty list
+            return []
+        return [
+            item.model_dump() if hasattr(item, "model_dump") else item
+            for item in response
+        ]
+    
+    # Handle error responses (dict with "Error Message") - for compatibility
     if isinstance(response, dict) and "Error Message" in response:
         return [response]
     
-    # Handle HTTP Response objects (premium endpoint errors)
+    # Handle HTTP Response objects (premium endpoint errors) - for compatibility  
     if hasattr(response, "status_code"):
         return [{"status_code": response.status_code, "error": "HTTP response object"}]
     
-    # Handle the expected case: RootModel[List[FMP_OBJECT]]
-    if hasattr(response, "root") and isinstance(response.root, list):
-        return [
-            item.model_dump() if hasattr(item, "model_dump") else item
-            for item in response.root
-        ]
-    
-    # Handle empty responses
-    elif response is None or (hasattr(response, "root") and response.root is None):
-        return []
-    
-    # Fallback for unexpected types (should rarely happen with @parse_response)
-    else:
-        return [{"unexpected_response": str(response), "type": str(type(response))}]
+    # Fallback for unexpected types
+    return [{"unexpected_response": str(response), "type": str(type(response))}]
 
 
 def to_dataframe(response: Any, **kwargs) -> Any:
     """
-    Convert FMP endpoint response to a pandas DataFrame.
+    Convert FMP data to a pandas DataFrame.
     
-    This function is optimized for FMP API responses which are always
-    RootModel[List[FMP_OBJECT]] instances from endpoints decorated with @parse_response.
-    It first converts the response to a list of dictionaries using to_dict_list(),
-    then creates a pandas DataFrame from that data.
+    This function is designed for the primary use case: converting a List[FMPObject] 
+    (list of Pydantic model instances) to a pandas DataFrame.
     
     Args:
-        response: The API response from any FMP endpoint (RootModel[List[FMP_OBJECT]])
+        response: The data to convert - typically List[FMPObject] from FMP API calls
         **kwargs: Additional arguments to pass to pandas.DataFrame constructor
         
     Returns:
@@ -143,15 +141,8 @@ def to_dataframe(response: Any, **kwargs) -> Any:
         ImportError: If pandas is not installed
         
     Examples:
-        >>> from fmpsdk import company_profile, to_dataframe
-        >>> response = company_profile(apikey="your_key", symbol="AAPL")
-        >>> df = to_dataframe(response)
-        >>> print(df.columns.tolist())
-        >>> print(df.head())
-        
-        >>> # Multiple symbols
-        >>> response = company_profile(apikey="your_key", symbol="AAPL,MSFT,GOOGL")
-        >>> df = to_dataframe(response)
+        >>> objects = [CompanyProfile(...), CompanyProfile(...)]
+        >>> df = to_dataframe(objects)
         >>> print(df[['symbol', 'companyName', 'sector']])
     """
     
@@ -162,8 +153,7 @@ def to_dataframe(response: Any, **kwargs) -> Any:
     if not dict_list:
         return pd.DataFrame()
     
-    # Since we know the structure is consistent (RootModel[List[FMP_OBJECT]]),
-    # we can create the DataFrame directly without complex error handling
+    # Create DataFrame from list of dictionaries
     try:
         df = pd.DataFrame(dict_list, **kwargs)
         return df
