@@ -1,10 +1,11 @@
-import pytest
-from unittest.mock import Mock, patch
-import pandas as pd
-from pydantic import BaseModel, RootModel
 from typing import List
+from unittest.mock import Mock, patch
 
-from fmpsdk.utils import iterate_over_pages, parse_response, to_dict_list, to_dataframe
+import pandas as pd
+import pytest
+from pydantic import BaseModel, RootModel
+
+from fmpsdk.utils import iterate_over_pages, parse_response, to_dataframe, to_dict_list
 
 
 # Mock FMP model classes for testing
@@ -279,7 +280,7 @@ class TestUtilsPerformance:
 
         # Should convert list of Pydantic objects to pandas DataFrame
         assert isinstance(result, pd.DataFrame)
-        assert result.shape == (2, 4) # 2 rows, 4 columns
+        assert result.shape == (2, 4)  # 2 rows, 4 columns
         assert result.iloc[0]["symbol"] == "AAPL"
         assert result.iloc[1]["price"] == 250.0
 
@@ -319,31 +320,41 @@ class TestToDictList:
     def test_to_dict_list_with_direct_list(self):
         """Test to_dict_list with direct List[FMPObject] - most common use case."""
         mock_objects = [
-            MockFMPObject(symbol="AAPL", companyName="Apple Inc.", sector="Technology", price=150.0),
-            MockFMPObject(symbol="MSFT", companyName="Microsoft Corp.", sector="Technology", price=300.0)
+            MockFMPObject(
+                symbol="AAPL",
+                companyName="Apple Inc.",
+                sector="Technology",
+                price=150.0,
+            ),
+            MockFMPObject(
+                symbol="MSFT",
+                companyName="Microsoft Corp.",
+                sector="Technology",
+                price=300.0,
+            ),
         ]
-        
+
         result = to_dict_list(mock_objects)
-        
+
         assert isinstance(result, list)
         assert len(result) == 2
         assert result[0] == {
             "symbol": "AAPL",
             "companyName": "Apple Inc.",
-            "sector": "Technology", 
-            "price": 150.0
+            "sector": "Technology",
+            "price": 150.0,
         }
         assert result[1] == {
             "symbol": "MSFT",
             "companyName": "Microsoft Corp.",
             "sector": "Technology",
-            "price": 300.0
+            "price": 300.0,
         }
 
     def test_to_dict_list_with_empty_list(self):
         """Test to_dict_list with empty list."""
         result = to_dict_list([])
-        
+
         assert isinstance(result, list)
         assert len(result) == 0
 
@@ -354,12 +365,12 @@ class TestToDictList:
                 symbol="AAPL",
                 data={"revenue": 1000, "profit": 200},
                 metrics=["metric1", "metric2"],
-                nestedObject={"key": "value"}
+                nestedObject={"key": "value"},
             )
         ]
-        
+
         result = to_dict_list(mock_objects)
-        
+
         assert isinstance(result, list)
         assert len(result) == 1
         assert result[0]["symbol"] == "AAPL"
@@ -370,9 +381,9 @@ class TestToDictList:
     def test_to_dict_list_with_unexpected_type(self):
         """Test to_dict_list with unexpected response type."""
         unexpected_response = "unexpected string response"
-        
+
         result = to_dict_list(unexpected_response)
-        
+
         assert isinstance(result, list)
         assert len(result) == 1
         assert "unexpected_response" in result[0]
@@ -382,9 +393,9 @@ class TestToDictList:
     def test_to_dict_list_with_error_response(self):
         """Test to_dict_list with error response dict."""
         error_response = {"Error Message": "Invalid API KEY"}
-        
+
         result = to_dict_list(error_response)
-        
+
         assert isinstance(result, list)
         assert len(result) == 1
         assert result[0] == {"Error Message": "Invalid API KEY"}
@@ -393,9 +404,9 @@ class TestToDictList:
         """Test to_dict_list with HTTP response object."""
         mock_response = Mock()
         mock_response.status_code = 402
-        
+
         result = to_dict_list(mock_response)
-        
+
         assert isinstance(result, list)
         assert len(result) == 1
         assert result[0] == {"status_code": 402, "error": "HTTP response object"}
@@ -403,7 +414,7 @@ class TestToDictList:
     def test_to_dict_list_with_none_response(self):
         """Test to_dict_list with None response."""
         result = to_dict_list(None)
-        
+
         assert isinstance(result, list)
         assert len(result) == 0
 
@@ -414,13 +425,28 @@ class TestToDataFrame:
     def test_to_dataframe_with_direct_list(self):
         """Test to_dataframe with direct List[FMPObject] - most common use case."""
         mock_objects = [
-            MockFMPObject(symbol="AAPL", companyName="Apple Inc.", sector="Technology", price=150.0),
-            MockFMPObject(symbol="MSFT", companyName="Microsoft Corp.", sector="Technology", price=300.0),
-            MockFMPObject(symbol="GOOGL", companyName="Alphabet Inc.", sector="Technology", price=2500.0)
+            MockFMPObject(
+                symbol="AAPL",
+                companyName="Apple Inc.",
+                sector="Technology",
+                price=150.0,
+            ),
+            MockFMPObject(
+                symbol="MSFT",
+                companyName="Microsoft Corp.",
+                sector="Technology",
+                price=300.0,
+            ),
+            MockFMPObject(
+                symbol="GOOGL",
+                companyName="Alphabet Inc.",
+                sector="Technology",
+                price=2500.0,
+            ),
         ]
-        
+
         result = to_dataframe(mock_objects)
-        
+
         assert isinstance(result, pd.DataFrame)
         assert result.shape == (3, 4)  # 3 rows, 4 columns
         assert list(result.columns) == ["symbol", "companyName", "sector", "price"]
@@ -432,7 +458,7 @@ class TestToDataFrame:
     def test_to_dataframe_with_empty_list(self):
         """Test to_dataframe with empty list."""
         result = to_dataframe([])
-        
+
         assert isinstance(result, pd.DataFrame)
         assert result.empty
         assert result.shape == (0, 0)
@@ -440,13 +466,23 @@ class TestToDataFrame:
     def test_to_dataframe_with_kwargs(self):
         """Test to_dataframe with additional DataFrame constructor kwargs."""
         mock_objects = [
-            MockFMPObject(symbol="AAPL", companyName="Apple Inc.", sector="Technology", price=150.0),
-            MockFMPObject(symbol="MSFT", companyName="Microsoft Corp.", sector="Technology", price=300.0)
+            MockFMPObject(
+                symbol="AAPL",
+                companyName="Apple Inc.",
+                sector="Technology",
+                price=150.0,
+            ),
+            MockFMPObject(
+                symbol="MSFT",
+                companyName="Microsoft Corp.",
+                sector="Technology",
+                price=300.0,
+            ),
         ]
-        
+
         # Test with index parameter
         result = to_dataframe(mock_objects, index=[10, 20])
-        
+
         assert isinstance(result, pd.DataFrame)
         assert result.shape == (2, 4)
         assert result.index.tolist() == [10, 20]
@@ -458,18 +494,18 @@ class TestToDataFrame:
                 symbol="AAPL",
                 data={"revenue": 1000, "profit": 200},
                 metrics=["metric1", "metric2"],
-                nestedObject={"key": "value"}
+                nestedObject={"key": "value"},
             ),
             MockComplexFMPObject(
                 symbol="MSFT",
-                data={"revenue": 2000, "profit": 400}, 
+                data={"revenue": 2000, "profit": 400},
                 metrics=["metric3", "metric4"],
-                nestedObject={"key2": "value2"}
-            )
+                nestedObject={"key2": "value2"},
+            ),
         ]
-        
+
         result = to_dataframe(mock_objects)
-        
+
         assert isinstance(result, pd.DataFrame)
         assert result.shape == (2, 4)
         assert "symbol" in result.columns
@@ -487,12 +523,12 @@ class TestToDataFrame:
                 symbol="TEST",
                 data={"deeply": {"nested": {"structure": "value"}}},
                 metrics=["metric1"],
-                nestedObject={"list_in_dict": ["a", "b", "c"]}
+                nestedObject={"list_in_dict": ["a", "b", "c"]},
             )
         ]
-        
+
         result = to_dataframe(mock_objects)
-        
+
         # Should handle complex structures gracefully
         assert isinstance(result, pd.DataFrame)
         assert result.shape[0] == 1  # Should have 1 row
@@ -503,22 +539,32 @@ class TestToDataFrame:
         """Test to_dataframe when DataFrame creation fails."""
         # Mock a scenario where DataFrame creation fails
         import fmpsdk.utils
+
         original_dataframe = fmpsdk.utils.pd.DataFrame
-        
-        with patch('fmpsdk.utils.pd.DataFrame') as mock_df:
+
+        with patch("fmpsdk.utils.pd.DataFrame") as mock_df:
             # First call fails, second call (in error handling) also fails, third succeeds for error DataFrame
-            mock_error_df = original_dataframe([{"error": "mocked error", "data_type": "test", "data_length": 1}])
+            mock_error_df = original_dataframe(
+                [{"error": "mocked error", "data_type": "test", "data_length": 1}]
+            )
             mock_df.side_effect = [
-                Exception("DataFrame creation failed"), 
-                Exception("Cleanup failed"), 
-                mock_error_df
+                Exception("DataFrame creation failed"),
+                Exception("Cleanup failed"),
+                mock_error_df,
             ]
-            
-            mock_objects = [MockFMPObject(symbol="AAPL", companyName="Apple Inc.", sector="Technology", price=150.0)]
+
+            mock_objects = [
+                MockFMPObject(
+                    symbol="AAPL",
+                    companyName="Apple Inc.",
+                    sector="Technology",
+                    price=150.0,
+                )
+            ]
             root_model = RootModel[List[MockFMPObject]](mock_objects)
-            
+
             result = to_dataframe(root_model)
-            
+
             # Should return error DataFrame
             assert isinstance(result, original_dataframe)
             assert "error" in result.columns
@@ -527,7 +573,7 @@ class TestToDataFrame:
     def test_to_dataframe_with_none_response(self):
         """Test to_dataframe with None response."""
         result = to_dataframe(None)
-        
+
         assert isinstance(result, pd.DataFrame)
         assert result.empty
         assert result.shape == (0, 0)
@@ -535,9 +581,9 @@ class TestToDataFrame:
     def test_to_dataframe_with_error_response(self):
         """Test to_dataframe with error response dict."""
         error_response = {"Error Message": "Invalid API KEY"}
-        
+
         result = to_dataframe(error_response)
-        
+
         assert isinstance(result, pd.DataFrame)
         assert result.shape == (1, 1)
         assert "Error Message" in result.columns
@@ -547,9 +593,9 @@ class TestToDataFrame:
         """Test to_dataframe with HTTP response object."""
         mock_response = Mock()
         mock_response.status_code = 402
-        
+
         result = to_dataframe(mock_response)
-        
+
         assert isinstance(result, pd.DataFrame)
         assert result.shape == (1, 2)
         assert "status_code" in result.columns
@@ -563,32 +609,47 @@ class TestUtilityFunctionIntegration:
     def test_to_dict_list_to_dataframe_pipeline(self):
         """Test pipeline: List[FMPObject] -> to_dict_list -> to_dataframe."""
         mock_objects = [
-            MockFMPObject(symbol="AAPL", companyName="Apple Inc.", sector="Technology", price=150.0),
-            MockFMPObject(symbol="MSFT", companyName="Microsoft Corp.", sector="Technology", price=300.0)
+            MockFMPObject(
+                symbol="AAPL",
+                companyName="Apple Inc.",
+                sector="Technology",
+                price=150.0,
+            ),
+            MockFMPObject(
+                symbol="MSFT",
+                companyName="Microsoft Corp.",
+                sector="Technology",
+                price=300.0,
+            ),
         ]
-        
+
         # Step 1: Convert to dict list
         dict_list = to_dict_list(mock_objects)
-        
+
         # Step 2: Convert dict list to DataFrame manually
         df_from_dict_list = pd.DataFrame(dict_list)
-        
+
         # Step 3: Convert List[FMPObject] directly to DataFrame
         df_direct = to_dataframe(mock_objects)
-        
+
         # Both DataFrames should be identical
         pd.testing.assert_frame_equal(df_from_dict_list, df_direct)
 
     def test_consistency_across_utility_functions(self):
         """Test that utility functions are consistent with each other."""
         mock_objects = [
-            MockFMPObject(symbol="AAPL", companyName="Apple Inc.", sector="Technology", price=150.0)
+            MockFMPObject(
+                symbol="AAPL",
+                companyName="Apple Inc.",
+                sector="Technology",
+                price=150.0,
+            )
         ]
-        
+
         # Get results from both functions
         dict_list = to_dict_list(mock_objects)
         df = to_dataframe(mock_objects)
-        
+
         # Verify consistency
         assert len(dict_list) == len(df)
         assert dict_list[0]["symbol"] == df.iloc[0]["symbol"]
@@ -599,10 +660,10 @@ class TestUtilityFunctionIntegration:
     def test_empty_response_consistency(self):
         """Test that both functions handle empty responses consistently."""
         empty_list = []
-        
+
         dict_list = to_dict_list(empty_list)
         df = to_dataframe(empty_list)
-        
+
         assert len(dict_list) == 0
         assert df.empty
         assert len(df) == 0
@@ -610,10 +671,10 @@ class TestUtilityFunctionIntegration:
     def test_error_response_consistency(self):
         """Test that both functions handle error responses consistently."""
         error_response = {"Error Message": "Invalid API KEY"}
-        
+
         dict_list = to_dict_list(error_response)
         df = to_dataframe(error_response)
-        
+
         assert len(dict_list) == 1
         assert len(df) == 1
         assert dict_list[0]["Error Message"] == df.iloc[0]["Error Message"]

@@ -1,5 +1,6 @@
 import typing
 from typing import Any, Callable, TypeVar
+
 import pandas as pd
 
 T = TypeVar("T")
@@ -83,16 +84,16 @@ def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
 def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
     """
     Convert FMP data to a list of dictionaries.
-    
-    This function is designed for the primary use case: converting a List[FMPObject] 
+
+    This function is designed for the primary use case: converting a List[FMPObject]
     (list of Pydantic model instances) to a list of dictionaries.
-    
+
     Args:
         response: The data to convert - typically List[FMPObject] from FMP API calls
-        
+
     Returns:
         List of dictionaries representing the FMP data objects
-        
+
     Examples:
         >>> objects = [CompanyProfile(...), CompanyProfile(...)]
         >>> data = to_dict_list(objects)
@@ -101,7 +102,7 @@ def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
     # Handle None or empty responses
     if response is None:
         return []
-    
+
     # Handle direct List[FMPObject] - primary use case
     if isinstance(response, list):
         if not response:  # Empty list
@@ -110,15 +111,15 @@ def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
             item.model_dump() if hasattr(item, "model_dump") else item
             for item in response
         ]
-    
+
     # Handle error responses (dict with "Error Message") - for compatibility
     if isinstance(response, dict) and "Error Message" in response:
         return [response]
-    
-    # Handle HTTP Response objects (premium endpoint errors) - for compatibility  
+
+    # Handle HTTP Response objects (premium endpoint errors) - for compatibility
     if hasattr(response, "status_code"):
         return [{"status_code": response.status_code, "error": "HTTP response object"}]
-    
+
     # Fallback for unexpected types
     return [{"unexpected_response": str(response), "type": str(type(response))}]
 
@@ -126,33 +127,33 @@ def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
 def to_dataframe(response: Any, **kwargs) -> Any:
     """
     Convert FMP data to a pandas DataFrame.
-    
-    This function is designed for the primary use case: converting a List[FMPObject] 
+
+    This function is designed for the primary use case: converting a List[FMPObject]
     (list of Pydantic model instances) to a pandas DataFrame.
-    
+
     Args:
         response: The data to convert - typically List[FMPObject] from FMP API calls
         **kwargs: Additional arguments to pass to pandas.DataFrame constructor
-        
+
     Returns:
         pandas.DataFrame containing the FMP data objects as rows
-        
+
     Raises:
         ImportError: If pandas is not installed
-        
+
     Examples:
         >>> objects = [CompanyProfile(...), CompanyProfile(...)]
         >>> df = to_dataframe(objects)
         >>> print(df[['symbol', 'companyName', 'sector']])
     """
-    
+
     # Convert response to list of dictionaries
     dict_list = to_dict_list(response)
-    
+
     # Handle empty responses
     if not dict_list:
         return pd.DataFrame()
-    
+
     # Create DataFrame from list of dictionaries
     try:
         df = pd.DataFrame(dict_list, **kwargs)
@@ -172,13 +173,17 @@ def to_dataframe(response: Any, **kwargs) -> Any:
                     else:
                         cleaned_item[key] = value
                 cleaned_list.append(cleaned_item)
-            
+
             df = pd.DataFrame(cleaned_list, **kwargs)
             return df
         except Exception:
             # Final fallback: return error info in DataFrame
-            return pd.DataFrame([{
-                "error": f"Failed to create DataFrame: {str(e)}", 
-                "data_type": str(type(response)),
-                "data_length": len(dict_list)
-            }])
+            return pd.DataFrame(
+                [
+                    {
+                        "error": f"Failed to create DataFrame: {str(e)}",
+                        "data_type": str(type(response)),
+                        "data_length": len(dict_list),
+                    }
+                ]
+            )
