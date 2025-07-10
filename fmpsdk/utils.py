@@ -1,5 +1,6 @@
 import typing
 from typing import Any, Callable, TypeVar
+import pandas as pd
 
 T = TypeVar("T")
 
@@ -77,3 +78,117 @@ def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
             )
 
     return wrapper
+
+
+def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
+    """
+    Convert FMP endpoint response to a list of dictionaries.
+    
+    This function is optimized for FMP API responses which are always
+    RootModel[List[FMP_OBJECT]] instances from endpoints decorated with @parse_response.
+    
+    Args:
+        response: The API response from any FMP endpoint (RootModel[List[FMP_OBJECT]])
+        
+    Returns:
+        List of dictionaries representing the FMP data objects
+        
+    Examples:
+        >>> from fmpsdk import company_profile, to_dict_list
+        >>> response = company_profile(apikey="your_key", symbol="AAPL")
+        >>> data = to_dict_list(response)
+        >>> print(data[0]['symbol'])  # 'AAPL'
+    """
+    # Handle error responses (dict with "Error Message")
+    if isinstance(response, dict) and "Error Message" in response:
+        return [response]
+    
+    # Handle HTTP Response objects (premium endpoint errors)
+    if hasattr(response, "status_code"):
+        return [{"status_code": response.status_code, "error": "HTTP response object"}]
+    
+    # Handle the expected case: RootModel[List[FMP_OBJECT]]
+    if hasattr(response, "root") and isinstance(response.root, list):
+        return [
+            item.model_dump() if hasattr(item, "model_dump") else item
+            for item in response.root
+        ]
+    
+    # Handle empty responses
+    elif response is None or (hasattr(response, "root") and response.root is None):
+        return []
+    
+    # Fallback for unexpected types (should rarely happen with @parse_response)
+    else:
+        return [{"unexpected_response": str(response), "type": str(type(response))}]
+
+
+def to_dataframe(response: Any, **kwargs) -> Any:
+    """
+    Convert FMP endpoint response to a pandas DataFrame.
+    
+    This function is optimized for FMP API responses which are always
+    RootModel[List[FMP_OBJECT]] instances from endpoints decorated with @parse_response.
+    It first converts the response to a list of dictionaries using to_dict_list(),
+    then creates a pandas DataFrame from that data.
+    
+    Args:
+        response: The API response from any FMP endpoint (RootModel[List[FMP_OBJECT]])
+        **kwargs: Additional arguments to pass to pandas.DataFrame constructor
+        
+    Returns:
+        pandas.DataFrame containing the FMP data objects as rows
+        
+    Raises:
+        ImportError: If pandas is not installed
+        
+    Examples:
+        >>> from fmpsdk import company_profile, to_dataframe
+        >>> response = company_profile(apikey="your_key", symbol="AAPL")
+        >>> df = to_dataframe(response)
+        >>> print(df.columns.tolist())
+        >>> print(df.head())
+        
+        >>> # Multiple symbols
+        >>> response = company_profile(apikey="your_key", symbol="AAPL,MSFT,GOOGL")
+        >>> df = to_dataframe(response)
+        >>> print(df[['symbol', 'companyName', 'sector']])
+    """
+    
+    # Convert response to list of dictionaries
+    dict_list = to_dict_list(response)
+    
+    # Handle empty responses
+    if not dict_list:
+        return pd.DataFrame()
+    
+    # Since we know the structure is consistent (RootModel[List[FMP_OBJECT]]),
+    # we can create the DataFrame directly without complex error handling
+    try:
+        df = pd.DataFrame(dict_list, **kwargs)
+        return df
+    except Exception as e:
+        # If DataFrame creation fails, it's likely due to inconsistent data types
+        # or nested structures in the FMP objects. Handle gracefully.
+        try:
+            # Convert problematic columns to strings
+            cleaned_list = []
+            for item in dict_list:
+                cleaned_item = {}
+                for key, value in item.items():
+                    # Convert complex types to strings
+                    if isinstance(value, (dict, list)):
+                        cleaned_item[key] = str(value)
+                    else:
+                        cleaned_item[key] = value
+                cleaned_list.append(cleaned_item)
+            
+            df = pd.DataFrame(cleaned_list, **kwargs)
+            return df
+        except Exception:
+            # Final fallback: return error info in DataFrame
+            return pd.DataFrame([{
+                "error": f"Failed to create DataFrame: {str(e)}", 
+                "data_type": str(type(response)),
+                "data_length": len(dict_list)
+            }])

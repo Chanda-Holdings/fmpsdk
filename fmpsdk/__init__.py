@@ -340,7 +340,9 @@ from .statements import (
 
 # Technical indicators functions
 from .technical_indicators import technical_indicators
-from .utils import iterate_over_pages
+
+# Utility functions
+from .utils import iterate_over_pages, to_dataframe, to_dict_list
 
 # Make all functions available at package level
 __all__ = [
@@ -593,4 +595,7 @@ __all__ = [
     "technical_indicators",
     # Utils
     "iterate_over_pages",
+    "to_dataframe",
+    "to_dict_list",
+    "to_list",
 ]
