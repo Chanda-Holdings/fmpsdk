@@ -61,7 +61,7 @@ def crowdfunding_offerings_search(
     FmpCrowdfundingOfferingsResponse
         Crowdfunding offerings matching the query as a Pydantic model.
     """
-    path = f"crowdfunding-offerings-search"
+    path = "crowdfunding-offerings-search"
     query_vars = {"apikey": apikey, "name": name}
 
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
@@ -145,7 +145,7 @@ def fundraising_search(
     FmpFundraisingResponse
         Fundraising data matching the query as a Pydantic model.
     """
-    path = f"fundraising-search"
+    path = "fundraising-search"
     query_vars = {"apikey": apikey, "name": name}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 

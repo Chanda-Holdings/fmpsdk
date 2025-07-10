@@ -102,7 +102,7 @@ def insider_trading_reporting_name(apikey: str, name: str) -> RootModel[typing.A
     list
         Insider trading data for the reporting name.
     """
-    path = f"insider-trading/reporting-name"
+    path = "insider-trading/reporting-name"
     query_vars = {"apikey": apikey, "name": name}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -123,7 +123,7 @@ def insider_trading_transaction_type(
     list
         Insider trading data for the transaction type.
     """
-    path = f"insider-trading-transaction-type"
+    path = "insider-trading-transaction-type"
     query_vars = {"apikey": apikey}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 

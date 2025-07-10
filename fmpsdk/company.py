@@ -64,7 +64,7 @@ def company_profile_cik(
     FmpCikSearchResponse
         Company profile data as a Pydantic model.
     """
-    path = f"profile-cik"
+    path = "profile-cik"
     query_vars = {"apikey": apikey, "cik": cik}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 

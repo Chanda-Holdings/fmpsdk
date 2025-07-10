@@ -126,7 +126,7 @@ def sec_filings_search_form_type(
     list
         List of SEC filings for the form type.
     """
-    path = f"sec-filings-search/form-type"
+    path = "sec-filings-search/form-type"
     query_vars = {
         "apikey": apikey,
         "from": from_date,
@@ -216,7 +216,7 @@ def sec_filings_search_cik(
     list
         List of SEC filings for the company CIK.
     """
-    path = f"sec-filings-search/cik"
+    path = "sec-filings-search/cik"
     query_vars = {
         "apikey": apikey,
         "cik": cik,
@@ -261,7 +261,7 @@ def sec_filings_company_search_name(
     list
         List of SEC filings for the company name.
     """
-    path = f"sec-filings-company-search/name"
+    path = "sec-filings-company-search/name"
     query_vars = {
         "apikey": apikey,
         "company": company,
@@ -338,7 +338,7 @@ def sec_filings_company_search_cik(
     list
         List of SEC filings for the company CIK.
     """
-    path = f"sec-filings-company-search/cik"
+    path = "sec-filings-company-search/cik"
     query_vars = {"apikey": apikey, "cik": cik}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 

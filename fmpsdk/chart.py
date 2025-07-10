@@ -66,7 +66,7 @@ def historical_price_eod_non_split_adjusted(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of historical EOD prices (non-split-adjusted).
     """
-    path = f"historical-price-eod/non-split-adjusted"
+    path = "historical-price-eod/non-split-adjusted"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if from_date:
         query_vars["from"] = from_date
@@ -87,7 +87,7 @@ def historical_price_eod_dividend_adjusted(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: List of historical EOD prices (dividend-adjusted).
     """
-    path = f"historical-price-eod/dividend-adjusted"
+    path = "historical-price-eod/dividend-adjusted"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if from_date:
         query_vars["from"] = from_date

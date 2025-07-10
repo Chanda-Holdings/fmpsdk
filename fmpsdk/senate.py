@@ -112,7 +112,7 @@ def senate_trades_by_name(
     list
         List of Senate trades for the given name.
     """
-    path = f"senate-trades-by-name"
+    path = "senate-trades-by-name"
     query_vars = {"apikey": apikey, "name": name}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -159,6 +159,6 @@ def house_trades_by_name(
     list
         List of House trades for the given name.
     """
-    path = f"house-trades-by-name"
+    path = "house-trades-by-name"
     query_vars = {"apikey": apikey, "name": name}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
