@@ -23,7 +23,7 @@ def historical_price_eod_light(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: FmpHistoricalPriceEodLightResponse.
     """
-    path = f"historical-price-eod/light"
+    path = "historical-price-eod/light"
     query_vars = {"apikey": apikey, "symbol": symbol}
     if from_date:
         query_vars["from"] = from_date
@@ -44,7 +44,7 @@ def historical_price_eod(
     :param to_date: Optional end date (YYYY-MM-DD).
     :return: FmpHistoricalPriceEodFullResponse.
     """
-    path = f"historical-price-eod/full"
+    path = "historical-price-eod/full"
     query_vars = {"apikey": apikey, "symbol": symbol}
 
     if from_date:

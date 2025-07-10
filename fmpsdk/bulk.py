@@ -213,7 +213,7 @@ def etf_holder_bulk(apikey: str, part: str) -> RootModel[typing.List[FMPBulkETFH
     FmpCompanySymbolsListResponse
         List of ETF holders as Pydantic models.
     """
-    path = f"etf-holder-bulk"
+    path = "etf-holder-bulk"
     query_vars = {"apikey": apikey, "part": part}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -295,7 +295,7 @@ def earnings_surprises_bulk(
     FmpCompanySymbolsListResponse
         List of earnings surprises data as Pydantic models.
     """
-    path = f"earnings-surprises-bulk"
+    path = "earnings-surprises-bulk"
     query_vars = {"apikey": apikey, "year": year}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -320,7 +320,7 @@ def income_statement_bulk(
     FmpCompanySymbolsListResponse
         List of income statements as Pydantic models.
     """
-    path = f"income-statement-bulk"
+    path = "income-statement-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -345,7 +345,7 @@ def income_statement_growth_bulk(
     FmpCompanySymbolsListResponse
         List of income statement growth data as Pydantic models.
     """
-    path = f"income-statement-growth-bulk"
+    path = "income-statement-growth-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -370,7 +370,7 @@ def balance_sheet_statement_bulk(
     FmpCompanySymbolsListResponse
         List of balance sheet statements as Pydantic models.
     """
-    path = f"balance-sheet-statement-bulk"
+    path = "balance-sheet-statement-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -395,7 +395,7 @@ def balance_sheet_statement_growth_bulk(
     FmpCompanySymbolsListResponse
         List of balance sheet statement growth data as Pydantic models.
     """
-    path = f"balance-sheet-statement-growth-bulk"
+    path = "balance-sheet-statement-growth-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -420,7 +420,7 @@ def cash_flow_statement_bulk(
     FmpCompanySymbolsListResponse
         List of cash flow statements as Pydantic models.
     """
-    path = f"cash-flow-statement-bulk"
+    path = "cash-flow-statement-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -445,7 +445,7 @@ def cash_flow_statement_growth_bulk(
     FmpCompanySymbolsListResponse
         List of cash flow statement growth data as Pydantic models.
     """
-    path = f"cash-flow-statement-growth-bulk"
+    path = "cash-flow-statement-growth-bulk"
     query_vars = {"apikey": apikey, "year": year, "period": period}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
@@ -466,6 +466,6 @@ def eod_bulk(apikey: str, date: str) -> RootModel[typing.List[FMPBulkEOD]]:
     FmpCompanySymbolsListResponse
         List of EOD data as Pydantic models.
     """
-    path = f"eod-bulk"
+    path = "eod-bulk"
     query_vars = {"apikey": apikey, "date": date}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
