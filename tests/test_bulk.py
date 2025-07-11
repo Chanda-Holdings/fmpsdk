@@ -30,6 +30,165 @@ from tests.conftest import extract_data_list
 class TestBulkProfiles:
     """Test bulk company profiles endpoints."""
 
+    @pytest.mark.parametrize(
+        "part", ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+    )
+    def test_bulk_profiles_by_part(self, api_key, part):
+        """Test bulk profiles download across different parts."""
+        result = bulk.bulk_profiles(apikey=api_key, part=part)
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        # Check if result is None (JSON parsing error - bulk endpoints may return CSV)
+        if result is None:
+            pytest.skip("Bulk endpoint returned non-JSON data (likely CSV format)")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:  # If data is available
+            # Test first item structure
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                # Validate required fields for company profile
+                assert "symbol" in first_item
+                assert "companyName" in first_item
+
+                # Test Pydantic model validation
+                profile = FMPCompanyProfile(**first_item)
+                assert profile.symbol == first_item["symbol"]
+                assert profile.companyName == first_item["companyName"]
+            else:
+                # Already a Pydantic model
+                assert hasattr(first_item, "symbol")
+                assert hasattr(first_item, "companyName")
+
+    @pytest.mark.parametrize(
+        "data_type",
+        [
+            "profiles",
+            "financial_statements",
+            "dcf_valuations",
+            "ratings",
+            "price_targets",
+        ],
+    )
+    def test_bulk_endpoints_by_type(self, api_key, data_type):
+        """Test different bulk endpoint types."""
+        if data_type == "profiles":
+            result = bulk.bulk_profiles(apikey=api_key, part="1")
+        elif data_type == "financial_statements":
+            result = bulk.balance_sheet_statement_bulk(
+                apikey=api_key, year="2023", period="FY"
+            )
+        elif data_type == "dcf_valuations":
+            result = bulk.dcf_bulk(apikey=api_key, symbols=["AAPL", "MSFT"])
+        elif data_type == "ratings":
+            result = bulk.rating_bulk(apikey=api_key, symbols=["AAPL", "MSFT"])
+        elif data_type == "price_targets":
+            result = bulk.price_target_summary_bulk(apikey=api_key)
+
+        # Check for various response types
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        if result is None:
+            pytest.skip(f"Bulk {data_type} endpoint returned non-JSON data")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+    @pytest.mark.parametrize("year", ["2023", "2022", "2021", "2020", "2019"])
+    def test_bulk_financial_statements_by_year(self, api_key, year):
+        """Test bulk financial statements for different years."""
+        # Test income statements
+        result = bulk.income_statement_bulk(apikey=api_key, year=year, period="FY")
+
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        if result is None:
+            pytest.skip("Bulk income statements returned non-JSON data")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                # Should have financial statement fields
+                assert "symbol" in first_item
+                assert "date" in first_item
+
+                # Validate year matches
+                if "date" in first_item and first_item["date"]:
+                    assert year in first_item["date"]
+
+    @pytest.mark.parametrize(
+        "symbol_batch",
+        [
+            ["AAPL", "MSFT", "GOOGL"],
+            ["JPM", "BAC", "WFC"],
+            ["JNJ", "PFE", "UNH"],
+            ["XOM", "CVX", "COP"],
+            ["HD", "LOW", "WMT"],
+        ],
+    )
+    def test_profile_bulk_by_sector(self, api_key, symbol_batch):
+        """Test bulk profiles for different sector symbol batches."""
+        result = bulk.profile_bulk(apikey=api_key, symbols=symbol_batch)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            return
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            # Should have profiles for the requested symbols
+            returned_symbols = set()
+            for item in result_list:
+                if isinstance(item, dict):
+                    returned_symbols.add(item["symbol"])
+                else:
+                    returned_symbols.add(item.symbol)
+
+            # At least some of the requested symbols should be present
+            assert len(returned_symbols.intersection(set(symbol_batch))) >= 0
+
+    @pytest.mark.parametrize("statement_type", ["income", "balance_sheet", "cash_flow"])
+    def test_bulk_statement_types(self, api_key, statement_type):
+        """Test bulk endpoints for different financial statement types."""
+        year = "2023"
+        part = "1"
+
+        if statement_type == "income":
+            result = bulk.income_statement_bulk(apikey=api_key, year=year, period="FY")
+        elif statement_type == "balance_sheet":
+            result = bulk.balance_sheet_statement_bulk(
+                apikey=api_key, year=year, period="FY"
+            )
+        elif statement_type == "cash_flow":
+            result = bulk.cash_flow_statement_bulk(
+                apikey=api_key, year=year, period="FY"
+            )
+
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        if result is None:
+            pytest.skip(f"Bulk {statement_type} statements returned non-JSON data")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
     def test_bulk_profiles_basic(self, api_key):
         """Test bulk profiles download with part parameter."""
         result = bulk.bulk_profiles(

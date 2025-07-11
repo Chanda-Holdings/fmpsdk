@@ -32,6 +32,201 @@ def recent_date():
 class TestDirectoryBasic:
     """Basic functionality tests for directory endpoints."""
 
+    @pytest.mark.parametrize(
+        "exchange",
+        [
+            # Major US Exchanges
+            "NASDAQ",
+            "NYSE",
+            "AMEX",
+            "OTC",
+            # International Exchanges
+            "TSX",  # Toronto Stock Exchange
+            "LSE",  # London Stock Exchange
+            "FRA",  # Frankfurt Stock Exchange
+            "EPA",  # Euronext Paris
+            "TYO",  # Tokyo Stock Exchange
+            "HKG",  # Hong Kong Stock Exchange
+            "SHA",  # Shanghai Stock Exchange
+            "SHE",  # Shenzhen Stock Exchange
+            "BSE",  # Bombay Stock Exchange
+            "NSE",  # National Stock Exchange of India
+            "ASX",  # Australian Securities Exchange
+            "JSE",  # Johannesburg Stock Exchange
+            "SWX",  # SIX Swiss Exchange
+            "CPH",  # Copenhagen Stock Exchange
+            "HEL",  # Helsinki Stock Exchange
+            "OSL",  # Oslo Stock Exchange
+            "STO",  # Stockholm Stock Exchange
+            "VIE",  # Vienna Stock Exchange
+            "WSE",  # Warsaw Stock Exchange
+            "BUD",  # Budapest Stock Exchange
+            "PRA",  # Prague Stock Exchange
+            "IST",  # Istanbul Stock Exchange
+            "TAE",  # Tel Aviv Stock Exchange
+            "MCX",  # Moscow Exchange
+            "SGX",  # Singapore Exchange
+            "KRX",  # Korea Exchange
+            "TPE",  # Taiwan Stock Exchange
+            "BKK",  # Stock Exchange of Thailand
+            "KLS",  # Bursa Malaysia
+            "JKT",  # Indonesia Stock Exchange
+        ],
+    )
+    def test_stock_list_by_exchange(self, api_key, exchange):
+        """Test stock list for various global exchanges."""
+        start_time = time.time()
+        result = directory.stock_list(apikey=api_key, exchange=exchange, limit=50)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have stocks for this exchange
+            stock = data[0]
+
+            # Validate against model
+            if isinstance(stock, dict):
+                stock_obj = FMPSymbolAndNameList(**stock)
+            else:
+                stock_obj = stock
+
+            # Basic validation
+            assert hasattr(stock_obj, "symbol")
+            assert hasattr(stock_obj, "companyName")
+
+            # Validate exchange matches requested
+            if hasattr(stock_obj, "exchange"):
+                assert exchange in stock_obj.exchange or stock_obj.exchange in exchange
+
+    @pytest.mark.parametrize("limit", [10, 25, 50, 100, 250, 500])
+    def test_stock_list_with_limits(self, api_key, limit):
+        """Test stock list with various limit parameters."""
+        result = directory.stock_list(apikey=api_key, limit=limit)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+        # Note: FMP API doesn't always respect limit parameter for stock_list
+        # so we'll just check that we get some reasonable results
+        assert len(data) > 0
+
+    @pytest.mark.parametrize(
+        "symbol_type",
+        ["stocks", "etfs", "mutual_funds", "indices", "forex", "crypto", "commodities"],
+    )
+    def test_available_symbols_by_type(self, api_key, symbol_type):
+        """Test available symbols across different asset types."""
+        type_endpoints = {
+            "stocks": lambda: directory.stock_list(apikey=api_key, limit=50),
+            "etfs": lambda: directory.etf_list(apikey=api_key, limit=50),
+            "mutual_funds": lambda: pytest.skip(
+                "mutual_fund_list not available in directory module"
+            ),
+            "indices": lambda: directory.available_indexes(apikey=api_key),
+            "forex": lambda: pytest.skip(
+                "forex_currency_pairs not available in directory module"
+            ),
+            "crypto": lambda: pytest.skip(
+                "cryptocurrencies_list not available in directory module"
+            ),
+            "commodities": lambda: pytest.skip(
+                "commodities_list not available in directory module"
+            ),
+        }
+
+        endpoint_func = type_endpoints.get(symbol_type, type_endpoints["stocks"])
+        result = endpoint_func()
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+    @pytest.mark.parametrize(
+        "market_region",
+        [
+            "north_america",
+            "europe",
+            "asia_pacific",
+            "emerging_markets",
+            "developed_markets",
+        ],
+    )
+    def test_stock_list_by_region(self, api_key, market_region):
+        """Test stock lists across different market regions."""
+        region_exchanges = {
+            "north_america": ["NASDAQ", "NYSE", "TSX"],
+            "europe": ["LSE", "FRA", "EPA", "SWX"],
+            "asia_pacific": ["TYO", "HKG", "ASX", "SGX"],
+            "emerging_markets": ["BSE", "JSE", "IST", "MCX"],
+            "developed_markets": ["NASDAQ", "LSE", "TYO", "FRA"],
+        }
+
+        exchanges = region_exchanges.get(market_region, ["NASDAQ"])
+
+        for exchange in exchanges[:2]:  # Test first 2 exchanges from each region
+            result = directory.stock_list(apikey=api_key, exchange=exchange, limit=20)
+
+            # Check if result is error dict
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            assert isinstance(data, list)
+
+    @pytest.mark.parametrize(
+        "country",
+        [
+            "US",
+            "CA",
+            "GB",
+            "DE",
+            "FR",
+            "JP",
+            "CN",
+            "HK",
+            "IN",
+            "AU",
+            "KR",
+            "BR",
+            "ZA",
+            "CH",
+            "SE",
+            "DK",
+            "NO",
+            "FI",
+            "NL",
+            "IT",
+        ],
+    )
+    def test_exchange_symbols_by_country(self, api_key, country):
+        """Test exchange symbols for different countries."""
+        result = pytest.skip("exchange_symbols not available in directory module")
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
     def test_stock_list_basic(self, api_key):
         """Test getting basic stock list."""
         start_time = time.time()

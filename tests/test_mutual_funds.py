@@ -12,6 +12,247 @@ from tests.conftest import extract_data_list
 class TestMutualFunds:
     """Test cases for mutual fund disclosure endpoints."""
 
+    @pytest.mark.parametrize(
+        "symbol",
+        [
+            # Vanguard Funds
+            "VTSAX",  # Total Stock Market Index
+            "VTIAX",  # Total International Stock Index
+            "VBTLX",  # Total Bond Market Index
+            "VFWAX",  # FTSE All-World ex-US Index
+            "VGTSX",  # Total International Stock Index (Investor Shares)
+            "VTISX",  # Total International Stock Index (Signal)
+            "VTBSX",  # Total Bond Market Index (Signal)
+            "VSGAX",  # ESG US Stock ETF
+            "VEMAX",  # Emerging Markets Stock Index
+            "VMCSX",  # Mid-Cap Index
+            # Fidelity Funds
+            "FXAIX",  # 500 Index
+            "FTIHX",  # Total International Index
+            "FXNAX",  # US Bond Index
+            "FDVV",  # High Dividend ETF
+            "FSKAX",  # Total Market Index
+            "FSMDX",  # Mid Cap Index
+            "FSSNX",  # Small Cap Index
+            "FDVV",  # High Dividend ETF
+            "FREL",  # MSCI Real Estate Index ETF
+            "FNDE",  # Fundamental Index ETF
+            # Other Major Fund Families
+            "SWPPX",  # Schwab S&P 500 Index
+            "SWTSX",  # Schwab Total Stock Market Index
+            "SWISX",  # Schwab International Index
+            "SWAGX",  # Schwab US Aggregate Bond Index
+            "SCHB",  # Schwab US Broad Market ETF
+            "SCHF",  # Schwab International Equity ETF
+            "SCHZ",  # Schwab Intermediate-Term Treasury ETF
+            "SCHA",  # Schwab US Small-Cap ETF
+            "SCHM",  # Schwab US Mid-Cap ETF
+            "SCHV",  # Schwab US Large-Cap Value ETF
+        ],
+    )
+    def test_funds_disclosure_holders_latest_comprehensive(self, api_key, symbol):
+        """Test latest fund disclosure holders for various mutual funds."""
+        result = mutual_funds.funds_disclosure_holders_latest(
+            apikey=api_key, symbol=symbol
+        )
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            holder = data[0]
+
+            # Validate against model
+            if isinstance(holder, dict):
+                holder_obj = FMPFundHolder(**holder)
+            else:
+                holder_obj = holder
+
+            # Required fields validation
+            assert hasattr(holder_obj, "cik")
+            assert hasattr(holder_obj, "holder")
+            assert hasattr(holder_obj, "shares")
+            assert hasattr(holder_obj, "dateReported")
+            assert hasattr(holder_obj, "weightPercent")
+
+            # Data quality checks
+            assert holder_obj.cik
+            assert holder_obj.holder
+            if holder_obj.shares is not None:
+                assert isinstance(holder_obj.shares, int)
+                assert holder_obj.shares >= 0
+            assert holder_obj.dateReported
+            if holder_obj.weightPercent is not None:
+                assert isinstance(holder_obj.weightPercent, float)
+                assert 0 <= holder_obj.weightPercent <= 100
+
+    @pytest.mark.parametrize(
+        "fund_family",
+        ["vanguard", "fidelity", "schwab", "blackrock", "state_street", "jp_morgan"],
+    )
+    def test_funds_disclosure_by_family(self, api_key, fund_family):
+        """Test fund disclosure by major fund families."""
+        family_symbols = {
+            "vanguard": ["VTSAX", "VTIAX", "VBTLX"],
+            "fidelity": ["FXAIX", "FTIHX", "FXNAX"],
+            "schwab": ["SWPPX", "SWTSX", "SWISX"],
+            "blackrock": ["IVV", "IEFA", "AGG"],  # ETF symbols for BlackRock
+            "state_street": ["SPY", "IWM", "EFA"],  # SPDR ETFs
+            "jp_morgan": ["JPST", "JPMB", "JPUS"],  # JPMorgan ETFs
+        }
+
+        symbols = family_symbols.get(fund_family, ["VTSAX"])
+
+        for symbol in symbols:
+            result = mutual_funds.funds_disclosure_holders_latest(
+                apikey=api_key, symbol=symbol
+            )
+
+            # Check if result is error dict (invalid API key)
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            assert isinstance(data, list)
+
+    @pytest.mark.parametrize(
+        "year,quarter",
+        [
+            ("2023", "Q4"),
+            ("2023", "Q3"),
+            ("2023", "Q2"),
+            ("2023", "Q1"),
+            ("2022", "Q4"),
+            ("2022", "Q3"),
+            ("2022", "Q2"),
+            ("2022", "Q1"),
+            ("2021", "Q4"),
+            ("2021", "Q3"),
+        ],
+    )
+    def test_funds_disclosure_historical_periods(self, api_key, year, quarter):
+        """Test fund disclosure for various historical periods."""
+        result = mutual_funds.funds_disclosure(
+            apikey=api_key, symbol="VTSAX", year=year, quarter=quarter
+        )
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            disclosure = data[0]
+
+            # Validate against model
+            if isinstance(disclosure, dict):
+                disclosure_obj = FMPFundDisclosure(**disclosure)
+            else:
+                disclosure_obj = disclosure
+
+            # Data quality checks
+            assert disclosure_obj.cik
+            assert disclosure_obj.date
+            assert disclosure_obj.symbol == "VTSAX"
+            if disclosure_obj.balance is not None:
+                assert isinstance(disclosure_obj.balance, int)
+                assert disclosure_obj.balance >= 0
+            if disclosure_obj.valUsd is not None:
+                assert isinstance(disclosure_obj.valUsd, float)
+                assert disclosure_obj.valUsd >= 0
+            if disclosure_obj.pctVal is not None:
+                assert isinstance(disclosure_obj.pctVal, float)
+                assert 0 <= disclosure_obj.pctVal <= 100
+
+    @pytest.mark.parametrize(
+        "fund_type",
+        [
+            "index_equity",
+            "index_bond",
+            "international",
+            "sector_specific",
+            "target_date",
+        ],
+    )
+    def test_funds_disclosure_by_type(self, api_key, fund_type):
+        """Test fund disclosure across different fund types."""
+        fund_type_symbols = {
+            "index_equity": ["VTSAX", "FXAIX", "SWPPX"],
+            "index_bond": ["VBTLX", "FXNAX", "SWAGX"],
+            "international": ["VTIAX", "FTIHX", "SWISX"],
+            "sector_specific": ["VGT", "XLF", "XLE"],  # Tech, Financial, Energy ETFs
+            "target_date": ["VTTSX", "FDKLX", "SWYNX"],  # Target date funds
+        }
+
+        symbols = fund_type_symbols.get(fund_type, ["VTSAX"])
+
+        for symbol in symbols:
+            result = mutual_funds.funds_disclosure_holders_latest(
+                apikey=api_key, symbol=symbol
+            )
+
+            # Check if result is error dict
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            assert isinstance(data, list)
+
+    @pytest.mark.parametrize(
+        "search_term",
+        [
+            "Vanguard",
+            "Fidelity",
+            "Schwab",
+            "BlackRock",
+            "State Street",
+            "American Funds",
+            "T. Rowe Price",
+            "Capital Group",
+            "JPMorgan",
+            "Invesco",
+        ],
+    )
+    def test_funds_disclosure_holders_search_comprehensive(self, api_key, search_term):
+        """Test fund disclosure holders search across major fund companies."""
+        result = mutual_funds.funds_disclosure_holders_search(
+            apikey=api_key, name=search_term
+        )
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            found_match = False
+            for holder in data[:5]:  # Check first few results
+                if isinstance(holder, dict):
+                    holder_obj = FMPFundHolder(**holder)
+                else:
+                    holder_obj = holder
+
+                # Should contain search term in holder name (case insensitive)
+                if (
+                    search_term.upper() in holder_obj.holder.upper()
+                    or search_term.lower() in holder_obj.holder.lower()
+                ):
+                    found_match = True
+                    break
+
+            assert found_match, f"No holders found matching '{search_term}'"
+
     def test_funds_disclosure_holders_latest(self, api_key):
         """Test latest fund disclosure holders endpoint."""
         # Use a well-known mutual fund symbol

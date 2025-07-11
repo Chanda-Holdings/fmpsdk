@@ -22,7 +22,7 @@ if [ "${CI:-false}" = "true" ]; then
     pytest -n auto --tb=short --junitxml=test-results.xml
 else
     echo "Local development - using 4 workers for optimal performance"
-    pytest -n 4 --tb=short
+    pytest -n 50 --tb=short
 fi
 
 echo "Test execution completed!"

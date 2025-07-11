@@ -150,18 +150,36 @@ class TestSECFilingsFinancials:
 class TestSECFilingsSearchFormType:
     """Test SEC filings search by form type."""
 
-    @pytest.mark.parametrize("form_type", ["10-K", "10-Q", "8-K"])
-    def test_sec_filings_search_form_type_valid_forms(self, api_key, form_type):
-        """Test SEC filings search with valid form types."""
+    @pytest.mark.parametrize(
+        "form_type,date_range_days,expected_filing_frequency",
+        [
+            ("10-K", 365, "annual"),  # Annual reports - should find some in a year
+            ("10-Q", 90, "quarterly"),  # Quarterly reports - should find recent ones
+            ("8-K", 30, "event_driven"),  # Current reports - frequent
+            ("DEF 14A", 180, "annual"),  # Proxy statements - typically annual
+            ("13F-HR", 90, "quarterly"),  # Institutional holdings - quarterly
+            ("4", 30, "insider"),  # Insider trading - frequent
+            ("3", 180, "initial"),  # Initial insider reports - less frequent
+            ("S-1", 365, "registration"),  # Registration statements - varies
+            ("424B2", 180, "prospectus"),  # Prospectus supplements - varies
+            ("6-K", 180, "foreign"),  # Foreign company reports - varies
+        ],
+    )
+    def test_sec_filings_search_form_type_comprehensive(
+        self, api_key, form_type, date_range_days, expected_filing_frequency
+    ):
+        """Test SEC filings search with comprehensive form types and appropriate date ranges."""
         end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=date_range_days)).strftime(
+            "%Y-%m-%d"
+        )
 
         result = sec_filings.sec_filings_search_form_type(
             apikey=api_key,
             form_type=form_type,
             from_date=start_date,
             to_date=end_date,
-            limit=5,
+            limit=10,
         )
 
         if hasattr(result, "root"):
@@ -169,15 +187,29 @@ class TestSECFilingsSearchFormType:
         else:
             data = result
 
-        assert data is not None
-        assert isinstance(data, list)
+        assert data is not None, f"Should get data for form type {form_type}"
+        assert isinstance(data, list), f"Result should be a list for {form_type}"
+
         if data:
-            assert len(data) <= 5
+            assert len(data) <= 10, f"Should not exceed limit for {form_type}"
 
             # Validate that results match the form type
             item = data[0]
             if isinstance(item, dict) and "form" in item:
-                assert item["form"] == form_type
+                assert (
+                    item["form"] == form_type
+                ), f"Form type should match for {form_type}"
+
+                # Validate date is within range
+                if "acceptedDate" in item:
+                    filing_date = datetime.strptime(
+                        item["acceptedDate"][:10], "%Y-%m-%d"
+                    )
+                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                    assert (
+                        start_dt <= filing_date <= end_dt
+                    ), f"Filing date should be within range for {form_type}"
 
     def test_sec_filings_search_form_type_invalid_api_key(self):
         """Test form type search with invalid API key."""
@@ -198,18 +230,41 @@ class TestSECFilingsSearchFormType:
 class TestSECFilingsSearchSymbol:
     """Test SEC filings search by symbol."""
 
-    @pytest.mark.parametrize("symbol", ["AAPL", "MSFT", "TSLA"])
-    def test_sec_filings_search_symbol_valid_symbols(self, api_key, symbol):
-        """Test SEC filings search with valid symbols."""
+    @pytest.mark.parametrize(
+        "symbol,sector,date_range_days,expected_filing_types",
+        [
+            ("AAPL", "technology", 60, ["10-Q", "8-K"]),
+            ("MSFT", "technology", 90, ["10-Q", "8-K", "DEF 14A"]),
+            ("TSLA", "automotive", 60, ["10-Q", "8-K"]),
+            ("JPM", "financial", 90, ["10-Q", "8-K", "DEF 14A"]),
+            ("JNJ", "healthcare", 120, ["10-Q", "8-K", "DEF 14A"]),
+            ("XOM", "energy", 90, ["10-Q", "8-K"]),
+            ("WMT", "retail", 60, ["10-Q", "8-K"]),
+            ("DIS", "media", 90, ["10-Q", "8-K"]),
+            ("BA", "aerospace", 120, ["10-Q", "8-K"]),
+            ("CAT", "industrial", 90, ["10-Q", "8-K"]),
+            ("AMZN", "technology", 60, ["10-Q", "8-K"]),
+            ("GOOGL", "technology", 90, ["10-Q", "8-K"]),
+            ("META", "technology", 60, ["10-Q", "8-K"]),
+            ("NFLX", "media", 90, ["10-Q", "8-K"]),
+            ("NVDA", "technology", 60, ["10-Q", "8-K"]),
+        ],
+    )
+    def test_sec_filings_search_symbol_sector_diversity(
+        self, api_key, symbol, sector, date_range_days, expected_filing_types
+    ):
+        """Test SEC filings search across diverse sectors with varying date ranges."""
         end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=date_range_days)).strftime(
+            "%Y-%m-%d"
+        )
 
         result = sec_filings.sec_filings_search_symbol(
             apikey=api_key,
             symbol=symbol,
             from_date=start_date,
             to_date=end_date,
-            limit=5,
+            limit=10,
         )
 
         if hasattr(result, "root"):
@@ -217,15 +272,36 @@ class TestSECFilingsSearchSymbol:
         else:
             data = result
 
-        assert data is not None
-        assert isinstance(data, list)
+        assert data is not None, f"Should get data for {sector} company {symbol}"
+        assert isinstance(data, list), f"Result should be a list for {symbol}"
+
         if data:
-            assert len(data) <= 5
+            assert len(data) <= 10, f"Should not exceed limit for {symbol}"
 
             # Validate that results match the symbol
             item = data[0]
             if isinstance(item, dict) and "symbol" in item:
-                assert item["symbol"] == symbol
+                assert item["symbol"] == symbol, f"Symbol should match for {symbol}"
+
+                # Check if we got expected filing types
+                if "form" in item:
+                    filing_forms = [item["form"] for item in data if "form" in item]
+                    # At least one of the expected filing types should be present
+                    has_expected_form = any(
+                        form in filing_forms for form in expected_filing_types
+                    )
+                    # Note: We don't assert this strictly as filings depend on timing
+
+                # Validate date range
+                if "acceptedDate" in item:
+                    filing_date = datetime.strptime(
+                        item["acceptedDate"][:10], "%Y-%m-%d"
+                    )
+                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                    assert (
+                        start_dt <= filing_date <= end_dt
+                    ), f"Filing date should be within range for {symbol}"
 
     def test_sec_filings_search_symbol_invalid_symbol(self, api_key):
         """Test SEC filings search with invalid symbol."""

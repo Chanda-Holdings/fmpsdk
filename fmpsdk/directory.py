@@ -4,7 +4,6 @@ from pydantic import RootModel
 
 from .models import (
     FMPCountry,
-    FMPEarningsTranscriptList,
     FMPExchangeInfo,
     FMPFinancialStatementSymbolList,
     FMPIndustry,

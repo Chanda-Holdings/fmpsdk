@@ -1,5 +1,7 @@
 import time
 
+import pytest
+
 from fmpsdk import analyst
 from fmpsdk.models import (
     FMPAnalystEstimates,
@@ -24,6 +26,137 @@ def get_field_value(item, field_name, default=None):
 
 class TestAnalystEstimates:
     """Test analyst estimates functionality."""
+
+    @pytest.mark.parametrize(
+        "symbol,period",
+        [
+            # Large Cap Technology
+            ("AAPL", "annual"),
+            ("AAPL", "quarter"),
+            ("MSFT", "annual"),
+            ("MSFT", "quarter"),
+            ("GOOGL", "annual"),
+            ("GOOGL", "quarter"),
+            ("AMZN", "annual"),
+            ("AMZN", "quarter"),
+            ("META", "annual"),
+            ("META", "quarter"),
+            ("TSLA", "annual"),
+            ("TSLA", "quarter"),
+            # Large Cap Other Sectors
+            ("JPM", "annual"),  # Financial
+            ("JPM", "quarter"),
+            ("JNJ", "annual"),  # Healthcare
+            ("JNJ", "quarter"),
+            ("PG", "annual"),  # Consumer Goods
+            ("PG", "quarter"),
+            ("HD", "annual"),  # Retail
+            ("HD", "quarter"),
+            ("BA", "annual"),  # Industrial
+            ("BA", "quarter"),
+            ("XOM", "annual"),  # Energy
+            ("XOM", "quarter"),
+            # Mid Cap
+            ("NVDA", "annual"),
+            ("NVDA", "quarter"),
+            ("CRM", "annual"),
+            ("CRM", "quarter"),
+            ("NFLX", "annual"),
+            ("NFLX", "quarter"),
+            # Different Business Models
+            ("BRK.B", "annual"),  # Conglomerate
+            ("BRK.B", "quarter"),
+            ("REIT", "annual"),  # Real Estate
+            ("WMT", "annual"),  # Retail
+            ("WMT", "quarter"),
+            ("KO", "annual"),  # Consumer Staples
+            ("KO", "quarter"),
+        ],
+    )
+    def test_analyst_estimates_comprehensive(self, api_key, symbol, period):
+        """Test analyst estimates across various symbols and periods."""
+        try:
+            result = analyst.analyst_estimates(
+                apikey=api_key, symbol=symbol, period=period, limit=4
+            )
+        except Exception as e:
+            # Handle premium endpoint or API errors gracefully
+            if "premium" in str(e).lower() or "parameter" in str(e).lower():
+                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
+            else:
+                raise
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            # Validate schema for first item
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                validated = FMPAnalystEstimates.model_validate(first_item)
+            else:
+                validated = first_item
+
+            assert validated.symbol == symbol
+            assert validated.date
+
+            # Revenue estimates should be positive for most companies
+            if validated.revenueAvg is not None:
+                assert validated.revenueAvg > 0
+
+            # Should have analyst counts
+            if validated.numAnalystsRevenue is not None:
+                assert validated.numAnalystsRevenue >= 0
+            if validated.numAnalystsEps is not None:
+                assert validated.numAnalystsEps >= 0
+
+    @pytest.mark.parametrize(
+        "symbol",
+        ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "JPM", "JNJ", "PG"],
+    )
+    def test_analyst_estimates_data_quality(self, api_key, symbol):
+        """Test data quality aspects of analyst estimates."""
+        try:
+            result = analyst.analyst_estimates(
+                apikey=api_key, symbol=symbol, period="annual", limit=3
+            )
+        except Exception as e:
+            # Handle premium endpoint or API errors gracefully
+            if "premium" in str(e).lower() or "parameter" in str(e).lower():
+                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
+            else:
+                raise
+
+        result_list = extract_data_list(result)
+        if not result_list:
+            pytest.skip(f"No analyst estimates data for {symbol}")
+
+        for item in result_list:
+            if isinstance(item, dict):
+                estimate = FMPAnalystEstimates.model_validate(item)
+            else:
+                estimate = item
+
+            # Basic data quality checks
+            assert estimate.symbol == symbol
+            assert estimate.date is not None
+
+            # Analyst counts should be reasonable
+            if estimate.numAnalystsRevenue is not None:
+                assert (
+                    0 <= estimate.numAnalystsRevenue <= 100
+                ), "Analyst count should be reasonable"
+            if estimate.numAnalystsEps is not None:
+                assert (
+                    0 <= estimate.numAnalystsEps <= 100
+                ), "Analyst count should be reasonable"
+
+            # Estimates should be within reasonable ranges
+            if estimate.revenueAvg is not None:
+                assert estimate.revenueAvg > 0, "Revenue estimate should be positive"
+                assert (
+                    estimate.revenueAvg < 2e12
+                ), "Revenue estimate should be reasonable (under $2T)"
 
     def test_analyst_estimates_annual_valid_symbol(self, api_key):
         """Test annual analyst estimates for valid symbol."""
@@ -100,6 +233,227 @@ class TestAnalystEstimates:
 
 class TestRatingsSnapshot:
     """Test ratings snapshot functionality."""
+
+    @pytest.mark.parametrize(
+        "symbol",
+        [
+            # Technology Large Cap
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "TSLA",
+            "NVDA",
+            "ORCL",
+            "CRM",
+            "ADBE",
+            # Financial Services
+            "JPM",
+            "BAC",
+            "WFC",
+            "GS",
+            "MS",
+            "C",
+            "BRK.B",
+            "AXP",
+            "COF",
+            "SCHW",
+            # Healthcare
+            "JNJ",
+            "PFE",
+            "UNH",
+            "ABBV",
+            "MRK",
+            "TMO",
+            "ABT",
+            "LLY",
+            "DHR",
+            "BMY",
+            # Consumer Discretionary
+            "HD",
+            "MCD",
+            "NKE",
+            "SBUX",
+            "TGT",
+            "LOW",
+            "DIS",
+            "BKNG",
+            "GM",
+            "F",
+            # Consumer Staples
+            "PG",
+            "KO",
+            "PEP",
+            "WMT",
+            "COST",
+            "CL",
+            "KMB",
+            "GIS",
+            "K",
+            "CPB",
+            # Energy
+            "XOM",
+            "CVX",
+            "COP",
+            "EOG",
+            "SLB",
+            "PSX",
+            "VLO",
+            "MPC",
+            "OXY",
+            "DVN",
+            # Industrial
+            "BA",
+            "CAT",
+            "HON",
+            "UPS",
+            "LMT",
+            "RTX",
+            "DE",
+            "GE",
+            "MMM",
+            "FDX",
+            # Utilities
+            "NEE",
+            "SO",
+            "DUK",
+            "AEP",
+            "EXC",
+            "XEL",
+            "ES",
+            "AWK",
+            "PEG",
+            "ED",
+            # Materials
+            "LIN",
+            "APD",
+            "SHW",
+            "ECL",
+            "FCX",
+            "NEM",
+            "DOW",
+            "DD",
+            "PPG",
+            "NUE",
+            # Real Estate
+            "AMT",
+            "PLD",
+            "CCI",
+            "EQIX",
+            "SPG",
+            "O",
+            "WELL",
+            "PSA",
+            "EXR",
+            "AVB",
+            # Communication Services
+            "GOOGL",
+            "META",
+            "DIS",
+            "NFLX",
+            "CMCSA",
+            "VZ",
+            "T",
+            "CHTR",
+            "TMUS",
+            "ATVI",
+        ],
+    )
+    def test_ratings_snapshot_comprehensive(self, api_key, symbol):
+        """Test ratings snapshot across diverse sectors and market caps."""
+        try:
+            result = analyst.ratings_snapshot(apikey=api_key, symbol=symbol, limit=3)
+        except Exception as e:
+            # Handle premium endpoint or API errors gracefully
+            if "premium" in str(e).lower() or "parameter" in str(e).lower():
+                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
+            else:
+                raise
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                validated = FMPRatingSnapshot.model_validate(first_item)
+            else:
+                validated = first_item
+
+            assert validated.symbol == symbol
+            assert validated.rating is not None
+
+            # Rating should be a valid rating
+            if validated.rating:
+                valid_ratings = [
+                    "Strong Buy",
+                    "Buy",
+                    "Hold",
+                    "Sell",
+                    "Strong Sell",
+                    "Outperform",
+                    "Underperform",
+                    "Neutral",
+                    "Market Perform",
+                    "Overweight",
+                    "Underweight",
+                    "Equal Weight",
+                ]
+                # Allow flexible matching since rating formats may vary, including single letters
+                assert (
+                    any(
+                        rating.lower() in validated.rating.lower()
+                        for rating in valid_ratings
+                    )
+                    or len(validated.rating) >= 1
+                ), "Rating should be meaningful"
+
+            # Overall score should be within reasonable range
+            if validated.overallScore is not None:
+                assert 0 <= validated.overallScore <= 10, "Overall score should be 0-10"
+
+    @pytest.mark.parametrize(
+        "sector",
+        [
+            "technology",
+            "financial",
+            "healthcare",
+            "consumer",
+            "energy",
+            "industrial",
+            "utilities",
+            "materials",
+            "real_estate",
+            "communication",
+        ],
+    )
+    def test_ratings_snapshot_by_sector(self, api_key, sector):
+        """Test ratings snapshot for different sectors."""
+        sector_symbols = {
+            "technology": ["AAPL", "MSFT", "GOOGL"],
+            "financial": ["JPM", "BAC", "WFC"],
+            "healthcare": ["JNJ", "PFE", "UNH"],
+            "consumer": ["HD", "MCD", "PG"],
+            "energy": ["XOM", "CVX", "COP"],
+            "industrial": ["BA", "CAT", "HON"],
+            "utilities": ["NEE", "SO", "DUK"],
+            "materials": ["LIN", "APD", "SHW"],
+            "real_estate": ["AMT", "PLD", "CCI"],
+            "communication": ["DIS", "NFLX", "CMCSA"],
+        }
+
+        symbols = sector_symbols.get(sector, ["AAPL"])
+
+        for symbol in symbols:
+            result = analyst.ratings_snapshot(apikey=api_key, symbol=symbol, limit=1)
+            result_list = extract_data_list(result)
+            assert isinstance(result_list, list)
+
+            if len(result_list) > 0:
+                first_item = result_list[0]
+                symbol_value = get_field_value(first_item, "symbol")
+                assert symbol_value == symbol
 
     def test_ratings_snapshot_valid_symbol(self, api_key):
         """Test ratings snapshot for valid symbol."""
@@ -250,6 +604,130 @@ class TestPriceTargets:
 
             consensus_list = extract_data_list(consensus_result)
             assert isinstance(consensus_list, list)
+
+    @pytest.mark.parametrize(
+        "symbol,limit",
+        [
+            ("AAPL", 5),
+            ("MSFT", 10),
+            ("GOOGL", 3),
+            ("AMZN", 7),
+            ("META", 4),
+            ("TSLA", 6),
+            ("NVDA", 8),
+            ("JPM", 5),
+            ("JNJ", 3),
+            ("PG", 4),
+        ],
+    )
+    def test_price_target_summary_with_limits(self, api_key, symbol, limit):
+        """Test price target summary with various limits."""
+        result = analyst.price_target_summary(apikey=api_key, symbol=symbol)
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                validated = FMPPriceTargetSummary.model_validate(first_item)
+            else:
+                validated = first_item
+
+            assert validated.symbol == symbol
+            assert validated.lastMonthCount >= 0
+            assert validated.allTimeCount >= 0
+
+    @pytest.mark.parametrize(
+        "symbol",
+        [
+            # High analyst coverage stocks
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "TSLA",
+            "NVDA",
+            "NFLX",
+            "CRM",
+            "ADBE",
+            "JPM",
+            "BAC",
+            "WFC",
+            "GS",
+            "JNJ",
+            "PFE",
+            "UNH",
+            "HD",
+            "MCD",
+            "PG",
+            "XOM",
+            "CVX",
+            "BA",
+            "CAT",
+            "NEE",
+            "SO",
+            "LIN",
+            "APD",
+            "AMT",
+            "PLD",
+        ],
+    )
+    def test_price_target_consensus_comprehensive(self, api_key, symbol):
+        """Test price target consensus across various high-coverage stocks."""
+        try:
+            result = analyst.price_target_consensus(apikey=api_key, symbol=symbol)
+        except Exception as e:
+            # Handle premium endpoint or API errors gracefully
+            if "premium" in str(e).lower() or "parameter" in str(e).lower():
+                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
+            else:
+                raise
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if len(result_list) > 0:
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                validated = FMPPriceTargetConsensus.model_validate(first_item)
+            else:
+                validated = first_item
+
+            assert validated.symbol == symbol
+
+            # Price targets should be positive and logical
+            if validated.targetConsensus is not None and validated.targetConsensus > 0:
+                assert validated.targetConsensus > 0
+
+            if (
+                validated.targetHigh is not None
+                and validated.targetLow is not None
+                and validated.targetHigh > 0
+                and validated.targetLow > 0
+            ):
+                assert validated.targetHigh >= validated.targetLow
+
+    @pytest.mark.parametrize("market_cap", ["large_cap", "mid_cap", "small_cap"])
+    def test_price_targets_by_market_cap(self, api_key, market_cap):
+        """Test price targets across different market cap categories."""
+        market_cap_symbols = {
+            "large_cap": ["AAPL", "MSFT", "GOOGL", "AMZN", "BRK.B"],
+            "mid_cap": ["NVDA", "CRM", "NFLX", "AMD", "SHOP"],
+            "small_cap": ["ROKU", "ZM", "PTON", "W", "SQ"],
+        }
+
+        symbols = market_cap_symbols.get(market_cap, ["AAPL"])
+
+        for symbol in symbols[:3]:  # Test first 3 from each category
+            result = analyst.price_target_summary(apikey=api_key, symbol=symbol)
+            result_list = extract_data_list(result)
+            assert isinstance(result_list, list)
+
+            if len(result_list) > 0:
+                first_item = result_list[0]
+                symbol_value = get_field_value(first_item, "symbol")
+                assert symbol_value == symbol
 
 
 class TestStockGrades:

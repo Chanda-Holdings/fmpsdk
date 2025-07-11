@@ -168,21 +168,21 @@ class FMPCountry(BaseModel):
 class FMPAnalystEstimates(BaseModel):
     symbol: str
     date: str
-    revenueLow: int
-    revenueHigh: int
-    revenueAvg: int
-    ebitdaLow: int
-    ebitdaHigh: int
-    ebitdaAvg: int
-    ebitLow: int
-    ebitHigh: int
-    ebitAvg: int
-    netIncomeLow: int
-    netIncomeHigh: int
-    netIncomeAvg: int
-    sgaExpenseLow: int
-    sgaExpenseHigh: int
-    sgaExpenseAvg: int
+    revenueLow: float
+    revenueHigh: float
+    revenueAvg: float
+    ebitdaLow: float
+    ebitdaHigh: float
+    ebitdaAvg: float
+    ebitLow: float
+    ebitHigh: float
+    ebitAvg: float
+    netIncomeLow: float
+    netIncomeHigh: float
+    netIncomeAvg: float
+    sgaExpenseLow: float
+    sgaExpenseHigh: float
+    sgaExpenseAvg: float
     epsAvg: float
     epsHigh: float
     epsLow: float
@@ -217,8 +217,8 @@ class FMPPriceTargetSummary(BaseModel):
 
 class FMPPriceTargetConsensus(BaseModel):
     symbol: str
-    targetHigh: int
-    targetLow: int
+    targetHigh: float
+    targetLow: float
     targetConsensus: float
     targetMedian: float
 
@@ -1432,7 +1432,7 @@ class FMPTechnicalIndicator(BaseModel):
     high: float
     low: float
     close: float
-    volume: int
+    volume: float
     sma: Optional[float] = None
     ema: Optional[float] = None
     wma: Optional[float] = None

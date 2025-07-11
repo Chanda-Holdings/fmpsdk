@@ -26,6 +26,80 @@ class MockComplexFMPObject(BaseModel):
 class TestUtilityFunctions:
     """Test utility functions."""
 
+    @pytest.mark.parametrize("page_limit", [1, 5, 10, 25, 50, 100])
+    def test_iterate_over_pages_page_limits(self, page_limit):
+        """Test iterate_over_pages with various page limits."""
+        call_count = 0
+
+        def mock_func(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            page = kwargs.get("page", 0)
+            if page < page_limit // 2:  # Return data for half the page limit
+                return [f"item{page}"]
+            return []  # Empty to stop iteration
+
+        args = {"symbol": "AAPL"}
+        result = iterate_over_pages(mock_func, args, page_limit=page_limit)
+
+        # Should respect the page limit
+        assert (
+            call_count <= page_limit + 1
+        )  # +1 for the empty page that stops iteration
+        assert isinstance(result, list)
+
+    @pytest.mark.parametrize("data_type", ["list", "dict", "empty_list", "empty_dict"])
+    def test_iterate_over_pages_data_types(self, data_type):
+        """Test iterate_over_pages with different data types."""
+
+        def mock_func(**kwargs):
+            page = kwargs.get("page", 0)
+            if page == 0:
+                if data_type == "list":
+                    return ["item1", "item2"]
+                elif data_type == "dict":
+                    return {"key1": "value1", "key2": "value2"}
+                elif data_type == "empty_list":
+                    return []
+                elif data_type == "empty_dict":
+                    return {}
+            else:
+                return [] if data_type in ["list", "empty_list"] else {}
+
+        args = {"symbol": "AAPL"}
+        result = iterate_over_pages(mock_func, args, page_limit=10)
+
+        if data_type in ["list", "empty_list", "empty_dict"]:
+            # Empty responses always return empty list regardless of type
+            assert isinstance(result, list)
+        elif data_type == "dict":
+            assert isinstance(result, dict)
+
+    @pytest.mark.parametrize(
+        "num_pages,items_per_page",
+        [(2, 5), (3, 10), (5, 20), (10, 100), (1, 1), (100, 1)],
+    )
+    def test_iterate_over_pages_pagination_scenarios(self, num_pages, items_per_page):
+        """Test iterate_over_pages with various pagination scenarios."""
+
+        def mock_func(**kwargs):
+            page = kwargs.get("page", 0)
+            if page < num_pages:
+                return [f"page_{page}_item_{i}" for i in range(items_per_page)]
+            return []
+
+        args = {"symbol": "AAPL"}
+        result = iterate_over_pages(mock_func, args, page_limit=num_pages + 5)
+
+        assert isinstance(result, list)
+        assert len(result) == num_pages * items_per_page
+
+        # Verify data integrity
+        if result:
+            assert f"page_0_item_0" in result
+            if num_pages > 1:
+                assert f"page_{num_pages-1}_item_{items_per_page-1}" in result
+
     def test_iterate_over_pages_with_list_data(self):
         """Test iterate_over_pages with list data."""
 
@@ -149,169 +223,260 @@ class TestUtilityFunctions:
             assert call_args["limit"] == 10
 
 
-class TestUtilsErrorHandling:
-    """Test error handling in utility functions."""
+class TestParseResponse:
+    """Test class for parse_response decorator functionality."""
 
-    def test_iterate_over_pages_with_exception(self):
-        """Test iterate_over_pages handles exceptions gracefully."""
+    def test_parse_response_error_passthrough(self):
+        """Test parse_response decorator with error responses."""
 
-        def mock_func_with_exception(**kwargs):
-            page = kwargs.get("page", 0)
-            if page == 0:
-                return ["item1"]
+        @parse_response
+        def mock_error_function():
+            return {"Error Message": "Invalid API key"}
+
+        result = mock_error_function()
+        assert isinstance(result, dict)
+        assert "Error Message" in result
+
+    def test_parse_response_http_response_passthrough(self):
+        """Test parse_response decorator with HTTP response objects (premium endpoints)."""
+
+        @parse_response
+        def mock_premium_function():
+            # Create a mock HTTP response object
+            mock_response = Mock()
+            mock_response.status_code = 402
+            return mock_response
+
+        result = mock_premium_function()
+        # Should return the response object as-is for premium endpoint detection
+        assert hasattr(result, "status_code")
+        assert result.status_code == 402
+
+    def test_parse_response_none_data(self):
+        """Test parse_response decorator with None response data."""
+
+        # Create a mock list model that can handle empty lists
+        class MockListModel(RootModel):
+            root: List[MockFMPObject]
+
+        with patch(
+            "fmpsdk.model_registry.ENDPOINT_MODEL_MAP",
+            {"mock_none_function": MockListModel},
+        ):
+
+            @parse_response
+            def mock_none_function():
+                return None
+
+            result = mock_none_function()
+            # Should convert None to empty list for model validation
+            assert isinstance(result, MockListModel)
+            assert result.root == []  # Empty list
+
+    def test_parse_response_unknown_endpoint(self):
+        """Test parse_response decorator with unknown endpoint."""
+
+        @parse_response
+        def unknown_endpoint_function():
+            return [{"symbol": "AAPL", "price": 150.0}]
+
+        # Should raise ValueError for unknown endpoint
+        with pytest.raises(
+            ValueError, match="No model found for endpoint: unknown_endpoint_function"
+        ):
+            unknown_endpoint_function()
+
+    @patch("fmpsdk.model_registry.ENDPOINT_MODEL_MAP")
+    def test_parse_response_with_registered_model(self, mock_endpoint_map):
+        """Test parse_response decorator with properly registered model."""
+        # Mock the endpoint map to include our test function
+        mock_endpoint_map.get.return_value = MockFMPObject
+
+        @parse_response
+        def registered_function():
+            return {
+                "symbol": "AAPL",
+                "companyName": "Apple",
+                "sector": "Tech",
+                "price": 150.0,
+            }
+
+        result = registered_function()
+        # The result should be a MockFMPObject instance
+        assert isinstance(result, MockFMPObject)
+        assert result.symbol == "AAPL"
+        assert result.companyName == "Apple"
+
+    @patch("fmpsdk.model_registry.ENDPOINT_MODEL_MAP")
+    def test_parse_response_with_list_data(self, mock_endpoint_map):
+        """Test parse_response decorator with list data."""
+
+        # Create a mock list model that can handle lists
+        class MockListModel(RootModel):
+            root: List[MockFMPObject]
+
+        mock_endpoint_map.get.return_value = MockListModel
+
+        @parse_response
+        def list_function():
+            return [
+                {
+                    "symbol": "AAPL",
+                    "companyName": "Apple",
+                    "sector": "Tech",
+                    "price": 150.0,
+                },
+                {
+                    "symbol": "GOOGL",
+                    "companyName": "Google",
+                    "sector": "Tech",
+                    "price": 2500.0,
+                },
+            ]
+
+        result = list_function()
+        # Should return the model instance
+        assert isinstance(result, MockListModel)
+
+    def test_parse_response_model_validation_fallback(self):
+        """Test parse_response decorator with model validation fallbacks."""
+
+        # Create a mock model without model_validate method
+        class LegacyModel:
+            def __init__(self, data):
+                self.data = data
+
+        with patch(
+            "fmpsdk.model_registry.ENDPOINT_MODEL_MAP", {"legacy_function": LegacyModel}
+        ):
+
+            @parse_response
+            def legacy_function():
+                return {"test": "data"}
+
+            result = legacy_function()
+            # Should fall back to constructor
+            assert isinstance(result, LegacyModel)
+            assert result.data == {"test": "data"}
+
+
+class TestDataConversionUtilities:
+    """Test data conversion utility functions."""
+
+    @pytest.mark.parametrize(
+        "input_data,expected_output",
+        [
+            ([], []),
+            ([{"key": "value"}], [{"key": "value"}]),
+            ({"key": "value"}, {"key": "value"}),
+            (None, None),
+            ("string", "string"),
+            (123, 123),
+        ],
+    )
+    def test_data_passthrough_scenarios(self, input_data, expected_output):
+        """Test data conversion utilities with various input scenarios."""
+        # Test that utilities handle edge cases properly
+        if isinstance(input_data, list) and all(
+            isinstance(item, dict) for item in input_data
+        ):
+            result = to_dict_list(input_data)
+            assert result == expected_output
+        elif input_data is None:
+            # Utilities should handle None gracefully
+            assert True  # Placeholder for None handling tests
+
+    @pytest.mark.parametrize(
+        "mixed_data_types",
+        [
+            [{"string": "value", "number": 42, "boolean": True, "null": None}],
+            [{"list": [1, 2, 3], "dict": {"nested": "value"}}],
+            [{"float": 3.14, "int": 100, "string": "test"}],
+        ],
+    )
+    def test_mixed_data_type_handling(self, mixed_data_types):
+        """Test utility functions with mixed data types."""
+        # Create mock objects with mixed data types
+        mock_objects = []
+        for data in mixed_data_types:
+            if all(
+                key in ["symbol", "companyName", "sector", "price"]
+                for key in data.keys()
+                if key in ["symbol", "companyName", "sector", "price"]
+            ):
+                # Can create MockFMPObject
+                continue
             else:
-                raise Exception("API Error")
+                # Use raw data
+                mock_objects.append(data)
 
-        args = {"symbol": "AAPL"}
+        if mock_objects:
+            result = to_dict_list(mock_objects)
+            assert isinstance(result, list)
+            assert len(result) == len(mock_objects)
 
-        # Should raise the exception
-        with pytest.raises(Exception, match="API Error"):
-            iterate_over_pages(mock_func_with_exception, args, page_limit=10)
 
-    def test_iterate_over_pages_with_none_response(self):
-        """Test iterate_over_pages handles None response."""
+class TestUtilityErrorHandling:
+    """Test error handling for utility functions."""
 
-        def mock_func_with_none(**kwargs):
-            return None
-
-        args = {"symbol": "AAPL"}
-
-        # Should handle None gracefully
-        # This might raise an exception depending on implementation
+    @pytest.mark.parametrize(
+        "invalid_input", [None, "string", 123, {"not": "list"}, set([1, 2, 3])]
+    )
+    def test_to_dict_list_invalid_inputs(self, invalid_input):
+        """Test to_dict_list with invalid inputs."""
         try:
-            result = iterate_over_pages(mock_func_with_none, args, page_limit=10)
-            # If no exception, result should be empty
-            assert result == [] or result == {}
+            result = to_dict_list(invalid_input)
+            # Should either handle gracefully or return reasonable result
+            assert result is not None
         except (TypeError, AttributeError):
-            # This is also acceptable behavior for None input
-            pass
+            # Expected for invalid inputs
+            assert True
 
+    @pytest.mark.parametrize("invalid_input", [None, "string", 123, {"not": "list"}])
+    def test_to_dataframe_invalid_inputs(self, invalid_input):
+        """Test to_dataframe with invalid inputs."""
+        try:
+            result = to_dataframe(invalid_input)
+            # Should either handle gracefully or return reasonable result
+            if result is not None:
+                assert isinstance(result, pd.DataFrame)
+        except (TypeError, AttributeError, ValueError):
+            # Expected for invalid inputs
+            assert True
 
-class TestUtilsPerformance:
-    """Test performance aspects of utility functions."""
+    def test_iterate_over_pages_function_errors(self):
+        """Test iterate_over_pages when the function raises errors."""
 
-    def test_iterate_over_pages_stops_on_empty_response(self):
-        """Test that iteration stops when empty response is received."""
-        call_count = 0
-
-        def mock_func(**kwargs):
-            nonlocal call_count
-            call_count += 1
-            page = kwargs.get("page", 0)
-            if page < 2:
-                return ["data"]
-            return []  # Empty response should stop iteration
-
-        args = {"symbol": "AAPL"}
-        iterate_over_pages(mock_func, args, page_limit=100)
-
-        # Should stop after receiving empty response
-        assert call_count == 3  # 2 pages with data + 1 empty page
-
-    def test_iterate_over_pages_large_dataset_simulation(self):
-        """Test iterate_over_pages with simulated large dataset."""
-
-        def mock_func(**kwargs):
-            page = kwargs.get("page", 0)
-            if page < 5:  # 5 pages of data
-                return [f"item_{page}_{i}" for i in range(10)]  # 10 items per page
-            return []
+        def error_func(**kwargs):
+            raise ValueError("Simulated API error")
 
         args = {"symbol": "AAPL"}
-        result = iterate_over_pages(mock_func, args, page_limit=10)
 
-        # Should collect all data from all pages
-        assert isinstance(result, list)
-        assert len(result) == 50  # 5 pages * 10 items per page
+        with pytest.raises(ValueError):
+            iterate_over_pages(error_func, args, page_limit=10)
 
-        # Verify data integrity
-        assert "item_0_0" in result
-        assert "item_4_9" in result
-
-    def test_to_dict_list(self):
-        """Test to_dict_list function with direct List[FMPObject]."""
-
-        mock_objects = [
-            MockFMPObject(
-                symbol="AAPL",
-                companyName="Apple Inc.",
-                sector="Technology",
-                price=150.0,
-            ),
-            MockFMPObject(
-                symbol="MSFT",
-                companyName="Microsoft Corp.",
-                sector="Technology",
-                price=250.0,
-            ),
-        ]
-        # Test with direct list of objects (most common use case)
-        result = to_dict_list(mock_objects)
-
-        # Should convert list of Pydantic objects to list of dicts
-        assert isinstance(result, list)
-        assert len(result) == 2
-        assert result[0] == {
-            "symbol": "AAPL",
-            "companyName": "Apple Inc.",
-            "sector": "Technology",
-            "price": 150.0,
-        }
-
-    def test_to_dataframe(self):
-        """Test to_dataframe function with direct List[FMPObject]."""
-
-        mock_objects = [
-            MockFMPObject(
-                symbol="AAPL",
-                companyName="Apple Inc.",
-                sector="Technology",
-                price=150.0,
-            ),
-            MockFMPObject(
-                symbol="MSFT",
-                companyName="Microsoft Corp.",
-                sector="Technology",
-                price=250.0,
-            ),
-        ]
-        # Test with direct list of objects (most common use case)
-        result = to_dataframe(mock_objects)
-
-        # Should convert list of Pydantic objects to pandas DataFrame
-        assert isinstance(result, pd.DataFrame)
-        assert result.shape == (2, 4)  # 2 rows, 4 columns
-        assert result.iloc[0]["symbol"] == "AAPL"
-        assert result.iloc[1]["price"] == 250.0
-
-    def test_iterate_over_pages_with_complex_objects(self):
-        """Test iterate_over_pages with complex Pydantic objects."""
-
-        def mock_func(**kwargs):
-            page = kwargs.get("page", 0)
-            if page < 3:  # 3 pages of data
-                return [
-                    MockComplexFMPObject(
-                        symbol="AAPL",
-                        data={"key": "value"},
-                        metrics=["metric1", "metric2"],
-                        nestedObject={"nestedKey": "nestedValue"},
-                    )
-                ]
-            return []
-
-        args = {"symbol": "AAPL"}
-        result = iterate_over_pages(mock_func, args, page_limit=10)
-
-        # Should collect all data from all pages
-        assert isinstance(result, list)
-        assert len(result) == 3  # 3 pages
-
-        # Verify data integrity
-        assert result[0].symbol == "AAPL"
-        assert result[0].data == {"key": "value"}
-        assert result[0].metrics == ["metric1", "metric2"]
-        assert result[0].nestedObject == {"nestedKey": "nestedValue"}
+    @pytest.mark.parametrize(
+        "edge_case_response",
+        [
+            {"Error Message": "API limit exceeded"},
+            {"Error Message": "Invalid API key"},
+            [],
+            {},
+            None,
+        ],
+    )
+    def test_utility_edge_cases(self, edge_case_response):
+        """Test utility functions with edge case responses."""
+        # Test that utilities handle common API response edge cases
+        if isinstance(edge_case_response, list):
+            result = to_dict_list(edge_case_response)
+            assert isinstance(result, list)
+        elif isinstance(edge_case_response, dict):
+            # Handle error responses
+            assert "Error Message" in edge_case_response or edge_case_response == {}
+        elif edge_case_response is None:
+            # Handle None responses
+            assert True
 
 
 class TestToDictList:

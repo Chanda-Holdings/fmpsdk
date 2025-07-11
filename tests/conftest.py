@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 
 import pytest
+import requests
 from dotenv import load_dotenv
 
 # Load environment variables from .env file at test session start
@@ -335,6 +336,7 @@ def extract_data_list(result):
                     for indicator in premium_parameter_indicators
                 ):
                     pytest.fail(f"Premium parameter restriction detected: {content}")
+                    # pytest.skip(f"Premium parameter restriction detected: {content}")
             except (UnicodeDecodeError, AttributeError):
                 pass
 
@@ -523,6 +525,25 @@ def with_rate_limit_retry(max_retries=4, cooldown_seconds=20):
                             f"Rate limiting persisted after {max_retries} retries"
                         )
 
+                except (
+                    requests.exceptions.ReadTimeout,
+                    requests.exceptions.ConnectTimeout,
+                    requests.exceptions.ConnectionError,
+                ) as e:
+                    # Handle network timeouts and connection errors with retry
+                    last_exception = e
+                    if attempt < max_retries:
+                        print(
+                            f"Network error detected on attempt {attempt + 1}/{max_retries + 1}: "
+                            f"{type(e).__name__}: {str(e)[:100]}... Retrying after short delay..."
+                        )
+                        time.sleep(2)  # Short delay for network errors
+                        continue
+                    else:
+                        pytest.skip(
+                            f"Network error persisted after {max_retries} retries: {type(e).__name__}: {str(e)}"
+                        )
+
                 except Exception as e:
                     # Check if it's a pytest.skip with rate limiting message
                     if hasattr(e, "msg") and isinstance(e.msg, str):
@@ -612,6 +633,25 @@ def rate_limit_test_wrapper(test_func):
                 else:
                     # Regular assertion error, re-raise immediately
                     raise e
+
+            except (
+                requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectTimeout,
+                requests.exceptions.ConnectionError,
+            ) as e:
+                # Handle network timeouts and connection errors with retry
+                last_exception = e
+                if attempt < max_retries:
+                    print(
+                        f"Network error detected on attempt {attempt + 1}/{max_retries + 1}: "
+                        f"{type(e).__name__}: {str(e)[:100]}... Retrying after short delay..."
+                    )
+                    time.sleep(2)  # Short delay for network errors
+                    continue
+                else:
+                    pytest.skip(
+                        f"Network error persisted after {max_retries} retries: {type(e).__name__}: {str(e)}"
+                    )
 
             except Exception as e:
                 # Be more specific about rate limit detection to avoid false positives
@@ -733,6 +773,28 @@ def pytest_collection_modifyitems(config, items):
                             else:
                                 # Regular assertion error, re-raise immediately
                                 raise e
+
+                        except (
+                            requests.exceptions.ReadTimeout,
+                            requests.exceptions.ConnectTimeout,
+                            requests.exceptions.ConnectionError,
+                        ) as e:
+                            # Handle network timeouts and connection errors with retry
+                            last_exception = e
+                            if attempt < max_retries:
+                                print(
+                                    f"Network error detected on attempt {attempt + 1}/{max_retries + 1} "
+                                    f"for {test_item.name}: {type(e).__name__}: {str(e)[:100]}... Retrying after short delay..."
+                                )
+                                time.sleep(2)  # Short delay for network errors
+                                continue
+                            else:
+                                print(
+                                    f"Network error persisted after {max_retries} retries for {test_item.name}. Skipping."
+                                )
+                                pytest.skip(
+                                    f"Network error persisted after {max_retries} retries: {type(e).__name__}: {str(e)}"
+                                )
 
                         except Exception as e:
                             # Be more specific about rate limit detection to avoid false positives

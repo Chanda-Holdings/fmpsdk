@@ -216,8 +216,15 @@ class TestEconomicsBasic:
                 assert event_obj.currency
                 assert event_obj.impact
 
-                # Impact should be one of the standard levels
-                assert event_obj.impact in ["Low", "Medium", "High", "Holiday"]
+                # Impact should be one of the standard levels (including None for unknown impact)
+                assert event_obj.impact in [
+                    "Low",
+                    "Medium",
+                    "High",
+                    "Holiday",
+                    "None",
+                    None,
+                ]
 
                 # Country should be valid country code or name
                 assert len(event_obj.country) >= 2
@@ -550,3 +557,369 @@ class TestEconomicsPerformance:
             response_time = time.time() - start_time
 
             # Skip if premium endpoint
+            assert response_time < RESPONSE_TIME_LIMIT
+
+
+class TestEconomicsComprehensive:
+    """Comprehensive tests for economics data across various dimensions."""
+
+    @pytest.mark.parametrize(
+        "date_range_days,expected_data_points,period_type,rate_environment",
+        [
+            (30, 20, "recent", "current_rates"),
+            (90, 60, "quarterly", "short_term_trend"),
+            (180, 120, "semi_annual", "medium_term_trend"),
+            (365, 250, "annual", "long_term_trend"),
+            (730, 500, "two_year", "cycle_analysis"),
+            (1095, 750, "three_year", "historical_context"),
+        ],
+    )
+    def test_treasury_rates_comprehensive_periods(
+        self,
+        api_key,
+        date_range_days,
+        expected_data_points,
+        period_type,
+        rate_environment,
+    ):
+        """Test treasury rates across comprehensive date ranges and rate environments."""
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=date_range_days)).strftime(
+            "%Y-%m-%d"
+        )
+
+        start_time = time.time()
+        result = economics.treasury_rates(
+            apikey=api_key, from_date=start_date, to_date=end_date
+        )
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert (
+            response_time < RESPONSE_TIME_LIMIT
+        ), f"Response time should be reasonable for {period_type}"
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list), f"Result should be list for {period_type}"
+
+        if data:
+            # Flexible data point validation (accounting for weekends, holidays)
+            min_expected = int(expected_data_points * 0.6)  # Allow 40% variance
+            max_expected = int(expected_data_points * 1.2)  # Allow 20% over
+            actual_count = len(data)
+
+            assert (
+                min_expected <= actual_count <= max_expected
+            ), f"{period_type} should have {min_expected}-{max_expected} data points, got {actual_count}"
+
+            # Validate treasury rate data quality
+            for rate_data in data[:10]:  # Check first 10 data points
+                if isinstance(rate_data, dict):
+                    rate_obj = FMPTreasuryRates(**rate_data)
+                else:
+                    rate_obj = rate_data
+
+                # Validate treasury rate data
+                assert rate_obj.date, f"Date should be present for {period_type}"
+                assert isinstance(
+                    rate_obj.month1, (int, float)
+                ), f"1-month rate should be numeric for {period_type}"
+                assert isinstance(
+                    rate_obj.year10, (int, float)
+                ), f"10-year rate should be numeric for {period_type}"
+
+                # Basic data quality checks
+                assert (
+                    rate_obj.month1 >= 0
+                ), f"1-month rate should be non-negative for {period_type}"
+                assert (
+                    rate_obj.year10 >= 0
+                ), f"10-year rate should be non-negative for {period_type}"
+                assert (
+                    rate_obj.year30 >= 0
+                ), f"30-year rate should be non-negative for {period_type}"
+
+                # Yield curve logic - longer terms typically have higher rates (but not always)
+                # We'll just check they're reasonable values
+                assert (
+                    rate_obj.month1 <= 20
+                ), f"1-month rate should be reasonable for {period_type}"
+                assert (
+                    rate_obj.year10 <= 20
+                ), f"10-year rate should be reasonable for {period_type}"
+                assert (
+                    rate_obj.year30 <= 20
+                ), f"30-year rate should be reasonable for {period_type}"
+
+                # Date should be within requested range
+                try:
+                    rate_date = datetime.strptime(rate_obj.date, "%Y-%m-%d")
+                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                    assert (
+                        start_dt <= rate_date <= end_dt
+                    ), f"Rate date should be within range for {period_type}"
+                except ValueError:
+                    pytest.fail(
+                        f"Invalid date format for {period_type}: {rate_obj.date}"
+                    )
+
+    @pytest.mark.parametrize(
+        "indicator,expected_frequency,data_type,economic_context",
+        [
+            ("GDP", "quarterly", "growth_rate", "economic_output"),
+            ("inflation", "monthly", "percentage", "price_stability"),
+            ("unemployment", "monthly", "percentage", "labor_market"),
+            ("retail_sales", "monthly", "percentage_change", "consumer_spending"),
+            ("industrial_production", "monthly", "percentage_change", "manufacturing"),
+            ("consumer_confidence", "monthly", "index_value", "sentiment"),
+            ("housing_starts", "monthly", "thousands_units", "real_estate"),
+            ("trade_balance", "monthly", "dollars", "international_trade"),
+        ],
+    )
+    def test_economic_indicators_comprehensive(
+        self, api_key, indicator, expected_frequency, data_type, economic_context
+    ):
+        """Test comprehensive economic indicators across different data types and contexts."""
+        # Use recent date range for economic indicators
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=365)).strftime(
+            "%Y-%m-%d"
+        )  # 1 year of data
+
+        start_time = time.time()
+        result = economics.economic_indicators(
+            apikey=api_key, name=indicator, from_date=start_date, to_date=end_date
+        )
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert (
+            response_time < RESPONSE_TIME_LIMIT
+        ), f"Response time should be reasonable for {indicator}"
+
+        # Check if result is error dict or if indicator is not supported
+        if isinstance(result, dict) and "Error Message" in result:
+            # Some indicators might not be available or supported
+            pytest.skip(
+                f"Economic indicator {indicator} not available or not supported"
+            )
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list), f"Result should be list for {indicator}"
+
+        if data:
+            # Validate data frequency expectations
+            data_count = len(data)
+            if expected_frequency == "monthly":
+                # Monthly data should have roughly 12 data points per year
+                assert (
+                    6 <= data_count <= 18
+                ), f"Monthly {indicator} should have 6-18 data points per year"
+            elif expected_frequency == "quarterly":
+                # Quarterly data should have roughly 4 data points per year
+                assert (
+                    2 <= data_count <= 8
+                ), f"Quarterly {indicator} should have 2-8 data points per year"
+
+            # Validate economic indicator data quality
+            for econ_data in data[:5]:  # Check first 5 data points
+                if isinstance(econ_data, dict):
+                    econ_obj = FMPEconomicIndicator(**econ_data)
+                else:
+                    econ_obj = econ_data
+
+                # Validate economic indicator data
+                assert econ_obj.date, f"Date should be present for {indicator}"
+                assert (
+                    econ_obj.value is not None
+                ), f"Value should be present for {indicator}"
+
+                # Data type-specific validation
+                if data_type == "percentage":
+                    # Percentages should be reasonable (allowing for extreme cases)
+                    assert (
+                        -50 <= econ_obj.value <= 100
+                    ), f"{indicator} percentage should be reasonable"
+                elif data_type == "growth_rate":
+                    # Growth rates should be reasonable (allowing for recessions/booms)
+                    # Note: GDP might return absolute values instead of growth rates
+                    if indicator.upper() == "GDP":
+                        # GDP values are typically in billions/trillions
+                        assert econ_obj.value >= 0, f"{indicator} should be positive"
+                        assert (
+                            econ_obj.value <= 100000
+                        ), f"{indicator} should be within reasonable range"
+                    else:
+                        assert (
+                            -20 <= econ_obj.value <= 20
+                        ), f"{indicator} growth rate should be reasonable"
+                elif data_type == "index_value":
+                    # Index values should be positive
+                    assert (
+                        econ_obj.value >= 0
+                    ), f"{indicator} index should be non-negative"
+                elif data_type == "percentage_change":
+                    # Percentage changes can be wide-ranging
+                    assert (
+                        -100 <= econ_obj.value <= 100
+                    ), f"{indicator} percentage change should be reasonable"
+
+                # Economic context validation
+                if economic_context == "labor_market" and indicator == "unemployment":
+                    # Unemployment rates should be reasonable
+                    assert (
+                        0 <= econ_obj.value <= 25
+                    ), f"Unemployment rate should be 0-25%"
+                elif economic_context == "price_stability" and indicator == "inflation":
+                    # Inflation rates should be reasonable
+                    assert (
+                        -10 <= econ_obj.value <= 15
+                    ), f"Inflation rate should be reasonable"
+
+    @pytest.mark.parametrize(
+        "country,currency,economic_development,expected_characteristics",
+        [
+            (
+                "US",
+                "USD",
+                "developed",
+                {"risk_premium_range": (2, 10), "stability": "high"},
+            ),
+            (
+                "Germany",
+                "EUR",
+                "developed",
+                {"risk_premium_range": (1, 8), "stability": "high"},
+            ),
+            (
+                "Japan",
+                "JPY",
+                "developed",
+                {"risk_premium_range": (1, 6), "stability": "high"},
+            ),
+            (
+                "UK",
+                "GBP",
+                "developed",
+                {"risk_premium_range": (2, 9), "stability": "high"},
+            ),
+            (
+                "Canada",
+                "CAD",
+                "developed",
+                {"risk_premium_range": (2, 8), "stability": "high"},
+            ),
+            (
+                "Australia",
+                "AUD",
+                "developed",
+                {"risk_premium_range": (3, 10), "stability": "medium"},
+            ),
+            (
+                "China",
+                "CNY",
+                "emerging",
+                {"risk_premium_range": (4, 15), "stability": "medium"},
+            ),
+            (
+                "India",
+                "INR",
+                "emerging",
+                {"risk_premium_range": (5, 20), "stability": "medium"},
+            ),
+            (
+                "Brazil",
+                "BRL",
+                "emerging",
+                {"risk_premium_range": (6, 25), "stability": "low"},
+            ),
+            (
+                "Mexico",
+                "MXN",
+                "emerging",
+                {"risk_premium_range": (4, 18), "stability": "medium"},
+            ),
+        ],
+    )
+    def test_market_risk_premium_global_coverage(
+        self, api_key, country, currency, economic_development, expected_characteristics
+    ):
+        """Test market risk premium across different countries and economic development levels."""
+        start_time = time.time()
+        result = economics.market_risk_premium(apikey=api_key)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert (
+            response_time < RESPONSE_TIME_LIMIT
+        ), f"Response time should be reasonable for market risk premium"
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            # Market risk premium data might not be available
+            pytest.skip(f"Market risk premium data not available")
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list), f"Result should be list for market risk premium"
+
+        if data:
+            # Filter data for the specific country
+            country_data = [
+                item
+                for item in data
+                if (isinstance(item, dict) and item.get("country") == country)
+                or (hasattr(item, "country") and item.country == country)
+            ]
+
+            if not country_data:
+                pytest.skip(
+                    f"Market risk premium data for {country} not found in results"
+                )
+                return
+
+            # Validate market risk premium data for the specific country
+            for risk_data in country_data[:3]:  # Check first 3 data points
+                if isinstance(risk_data, dict):
+                    risk_obj = FMPMarketRiskPremium(**risk_data)
+                else:
+                    risk_obj = risk_data
+
+                # Validate market risk premium data
+                assert (
+                    risk_obj.country == country
+                ), f"Country should match for {country}"
+                assert (
+                    risk_obj.totalEquityRiskPremium is not None
+                ), f"Risk premium should be present for {country}"
+
+                # Risk premium range validation based on economic development
+                risk_range = expected_characteristics["risk_premium_range"]
+                min_risk, max_risk = risk_range
+
+                # Allow some flexibility in risk premium values
+                flexible_min = min_risk * 0.5
+                flexible_max = max_risk * 2.0
+
+                assert (
+                    flexible_min <= risk_obj.totalEquityRiskPremium <= flexible_max
+                ), f"Risk premium for {economic_development} country {country} should be {flexible_min}-{flexible_max}%, got {risk_obj.totalEquityRiskPremium}%"
+
+                # Economic development-specific validation
+                if economic_development == "developed":
+                    # Developed countries should have lower risk premiums
+                    assert (
+                        risk_obj.totalEquityRiskPremium <= 15
+                    ), f"Developed country {country} should have reasonable risk premium"
+                elif economic_development == "emerging":
+                    # Emerging markets can have higher risk premiums
+                    assert (
+                        risk_obj.totalEquityRiskPremium >= 1
+                    ), f"Emerging market {country} should have positive risk premium"

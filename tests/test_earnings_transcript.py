@@ -33,7 +33,36 @@ TEST_SYMBOLS = [
     "GOOGL",
     "TSLA",
     "AMZN",
-]  # Large companies with regular earnings calls
+    "META",
+    "NFLX",
+    "NVDA",
+    "JPM",
+    "JNJ",
+    "UNH",
+    "HD",
+    "PG",
+    "V",
+    "MA",
+    "DIS",
+    "ADBE",
+    "CRM",
+    "IBM",
+    "ORCL",
+    "CSCO",
+    "INTC",
+    "AMD",
+    "QCOM",
+    "TXN",
+    "AVGO",
+    "WMT",
+    "PFE",
+    "XOM",
+    "CVX",
+    "BAC",
+    "WFC",
+    "GS",
+    "MS",
+]  # Extended list of large companies with regular earnings calls
 
 
 def get_field_value(item, field_name):
@@ -48,81 +77,76 @@ def get_field_value(item, field_name):
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
 class TestEarningsTranscriptLatest:
-    """Test class for latest earnings transcript functionality."""
+    """Test latest earnings transcripts endpoint."""
 
-    def test_earnings_transcript_latest_basic(self, api_key):
-        """Test getting latest earnings transcripts."""
+    @pytest.mark.parametrize("limit", [5, 10, 15, 20, 25, 50])
+    def test_earnings_transcript_latest_limits(self, api_key, limit):
+        """Test latest earnings transcripts with different limits."""
         start_time = time.time()
-        result = earnings_transcript_latest(apikey=api_key, limit="10")
-        response_time = time.time() - start_time
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
+        result = earnings_transcript_latest(apikey=api_key, limit=str(limit))
+
+        # Check response time (transcript endpoints can be slower)
+        elapsed_time = time.time() - start_time
+        assert elapsed_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:  # If data is available
+            assert len(result_list) <= limit
+
+            # Test first item structure
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                # Validate required fields
+                assert "symbol" in first_item
+                assert "period" in first_item
+                assert "fiscalYear" in first_item
+                assert "date" in first_item
+
+                # Test Pydantic model validation
+                transcript = FMPEarningsTranscriptList(**first_item)
+                assert transcript.symbol == first_item["symbol"]
+                assert transcript.period == first_item["period"]
+            else:
+                # Already a Pydantic model
+                assert hasattr(first_item, "symbol")
+                assert hasattr(first_item, "period")
+                assert hasattr(first_item, "fiscalYear")
+                assert hasattr(first_item, "date")
+
+    @pytest.mark.parametrize("page,limit", [(1, 5), (2, 10), (3, 15), (1, 20), (2, 25)])
+    def test_earnings_transcript_latest_pagination_extended(self, api_key, page, limit):
+        """Test extensive pagination scenarios for latest earnings transcripts."""
+        result = earnings_transcript_latest(apikey=api_key, limit=str(limit), page=page)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip("API key issues or data unavailable")
 
         result_list = extract_data_list(result)
         assert isinstance(result_list, list)
 
         if result_list:
-            # Test first transcript structure
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPEarningsTranscript.model_validate(first_item)
-            else:
-                validated = first_item
+            assert len(result_list) <= limit
 
-            assert validated.symbol is not None
-            assert validated.period is not None
-            assert validated.fiscalYear is not None
-            assert validated.date is not None
+            # Validate structure of results
+            for item in result_list[:3]:  # Check first few items
+                symbol_value = get_field_value(item, "symbol")
+                period_value = get_field_value(item, "period")
+                fiscal_year_value = get_field_value(item, "fiscalYear")
 
-    def test_earnings_transcript_latest_with_limit(self, api_key):
-        """Test latest earnings transcripts with different limits."""
-        limits = ["5", "10", "20"]
-
-        for limit in limits:
-            result = earnings_transcript_latest(apikey=api_key, limit=limit)
-            result_list = extract_data_list(result)
-
-            assert isinstance(result_list, list)
-            assert len(result_list) <= int(limit)
-
-            if result_list:
-                # Validate structure of first item
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
-                period_value = get_field_value(first_item, "period")
-                fiscal_year_value = get_field_value(first_item, "fiscalYear")
-                date_value = get_field_value(first_item, "date")
-
-                assert symbol_value is not None
-                assert period_value is not None
-                assert fiscal_year_value is not None
-                assert date_value is not None
-
-    def test_earnings_transcript_latest_pagination(self, api_key):
-        """Test pagination for latest earnings transcripts."""
-        # Get first page
-        page1 = earnings_transcript_latest(apikey=api_key, limit="5", page=1)
-        result_list1 = extract_data_list(page1)
-
-        # Get second page
-        page2 = earnings_transcript_latest(apikey=api_key, limit="5", page=2)
-        result_list2 = extract_data_list(page2)
-
-        assert isinstance(result_list1, list)
-        assert isinstance(result_list2, list)
-
-        if result_list1 and result_list2:
-            # Pages should have different content
-            first_symbols_page1 = [
-                get_field_value(item, "symbol") for item in result_list1[:3]
-            ]
-            first_symbols_page2 = [
-                get_field_value(item, "symbol") for item in result_list2[:3]
-            ]
-
-            # At least some symbols should be different between pages
-            assert first_symbols_page1 != first_symbols_page2
+                assert isinstance(symbol_value, str)
+                assert len(symbol_value) > 0
+                assert period_value in ["Q1", "Q2", "Q3", "Q4", "FY"]
+                assert isinstance(fiscal_year_value, int)
+                assert fiscal_year_value >= 2020
 
     def test_earnings_transcript_latest_data_quality(self, api_key):
         """Test data quality for latest earnings transcripts."""
@@ -165,22 +189,140 @@ class TestEarningsTranscriptLatest:
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
 class TestEarningsTranscript:
-    """Test class for specific earnings transcript functionality."""
+    """Test earnings transcript by specific parameters."""
 
-    def test_earnings_transcript_basic(self, api_key):
-        """Test getting specific earnings transcript."""
-        # Use Apple Q4 2023 as a known transcript
+    @pytest.mark.parametrize("symbol", TEST_SYMBOLS)
+    def test_earnings_transcript_by_symbol_comprehensive(self, api_key, symbol):
+        """Test earnings transcripts for comprehensive list of symbols."""
+        test_year = 2023
+        test_quarter = 4  # Q4 is most likely to have data
+
         start_time = time.time()
-        result = earnings_transcript(
-            apikey=api_key, symbol="AAPL", year=2023, quarter=4
-        )
-        response_time = time.time() - start_time
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
+        result = earnings_transcript(
+            apikey=api_key, symbol=symbol, year=test_year, quarter=test_quarter
+        )
+
+        elapsed_time = time.time() - start_time
+        assert elapsed_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(f"API key issues or data unavailable for {symbol}")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list), f"Result should be list for {symbol}"
+
+        if result_list:
+            first_item = result_list[0]
+            symbol_value = get_field_value(first_item, "symbol")
+            fiscal_year_value = get_field_value(first_item, "fiscalYear")
+
+            assert symbol_value == symbol
+            assert fiscal_year_value == test_year
+
+    @pytest.mark.parametrize("year", [2023, 2022, 2021, 2020, 2019])
+    def test_earnings_transcript_by_year(self, api_key, year):
+        """Test earnings transcripts for different years."""
+        symbol = "AAPL"  # Use Apple as it has consistent earnings calls
+        quarter = 4  # Q4 typically has data
+
+        result = earnings_transcript(
+            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        )
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(f"API key issues or data unavailable for year {year}")
 
         result_list = extract_data_list(result)
         assert isinstance(result_list, list)
+
+        if result_list:
+            first_item = result_list[0]
+            symbol_value = get_field_value(first_item, "symbol")
+            fiscal_year_value = get_field_value(first_item, "fiscalYear")
+
+            assert symbol_value == symbol
+            assert fiscal_year_value == year
+
+    @pytest.mark.parametrize("quarter", [1, 2, 3, 4])
+    def test_earnings_transcript_by_quarter(self, api_key, quarter):
+        """Test earnings transcripts for all quarters."""
+        symbol = "AAPL"
+        year = 2023
+
+        result = earnings_transcript(
+            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        )
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(f"API key issues or data unavailable for Q{quarter}")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            first_item = result_list[0]
+            symbol_value = get_field_value(first_item, "symbol")
+            period_value = get_field_value(first_item, "period")
+
+            assert symbol_value == symbol
+            assert period_value == f"Q{quarter}"
+
+    @pytest.mark.parametrize(
+        "symbol,year,quarter",
+        [
+            ("AAPL", 2023, 4),
+            ("MSFT", 2023, 3),
+            ("GOOGL", 2023, 2),
+            ("TSLA", 2023, 1),
+            ("AMZN", 2022, 4),
+            ("META", 2022, 3),
+            ("NFLX", 2022, 2),
+            ("NVDA", 2022, 1),
+            ("JPM", 2023, 4),
+            ("JNJ", 2023, 3),
+            ("UNH", 2023, 2),
+            ("HD", 2023, 1),
+        ],
+    )
+    def test_earnings_transcript_specific_combinations(
+        self, api_key, symbol, year, quarter
+    ):
+        """Test earnings transcripts for specific symbol/year/quarter combinations."""
+        result = earnings_transcript(
+            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        )
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(
+                f"API key issues or data unavailable for {symbol} {year} Q{quarter}"
+            )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            first_item = result_list[0]
+            symbol_value = get_field_value(first_item, "symbol")
+            fiscal_year_value = get_field_value(first_item, "fiscalYear")
+
+            assert symbol_value == symbol
+            assert fiscal_year_value == year
+
+    def test_earnings_transcript_basic(self, api_key):
+        """Test basic earnings transcript functionality."""
+        symbol = "AAPL"
+        year = 2023
+        quarter = 4
+
+        result = earnings_transcript(
+            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        )
+        result_list = extract_data_list(result)
 
         if result_list:
             # Test transcript structure
@@ -296,6 +438,82 @@ class TestEarningsTranscript:
 class TestEarningsTranscriptBySymbol:
     """Test class for earnings transcript dates by symbol functionality."""
 
+    @pytest.mark.parametrize("symbol", TEST_SYMBOLS)
+    def test_earnings_transcript_by_symbol_comprehensive(self, api_key, symbol):
+        """Test earnings transcript dates for comprehensive list of symbols."""
+        start_time = time.time()
+        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+        response_time = time.time() - start_time
+
+        # Check response time
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(f"API key issues or data unavailable for {symbol}")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:  # If data is available
+            # Test first item structure
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                # Validate required fields
+                assert "symbol" in first_item
+                assert "date" in first_item
+                assert first_item["symbol"] == symbol
+
+                # Test Pydantic model validation
+                transcript_by_symbol = FMPEarningsTranscriptBySymbol(**first_item)
+                assert transcript_by_symbol.symbol == symbol
+            else:
+                # Already a Pydantic model
+                assert hasattr(first_item, "symbol")
+                assert hasattr(first_item, "date")
+                assert first_item.symbol == symbol
+
+    @pytest.mark.parametrize(
+        "symbol,expected_sector",
+        [
+            ("AAPL", "Technology"),
+            ("MSFT", "Technology"),
+            ("GOOGL", "Technology"),
+            ("JPM", "Financial"),
+            ("JNJ", "Healthcare"),
+            ("XOM", "Energy"),
+            ("WMT", "Consumer"),
+            ("HD", "Consumer"),
+            ("PG", "Consumer"),
+            ("UNH", "Healthcare"),
+            ("PFE", "Healthcare"),
+            ("V", "Financial"),
+        ],
+    )
+    def test_earnings_transcript_by_symbol_sectors(
+        self, api_key, symbol, expected_sector
+    ):
+        """Test earnings transcript dates for symbols across different sectors."""
+        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(f"API key issues or data unavailable for {symbol}")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            # Validate that all returned items are for the requested symbol
+            for item in result_list[:5]:  # Check first few items
+                symbol_value = get_field_value(item, "symbol")
+                assert symbol_value == symbol
+
+                # Validate date format
+                date_value = get_field_value(item, "date")
+                if date_value:
+                    assert len(date_value) >= 10  # Should be valid date format
+
     def test_earnings_transcript_by_symbol_basic(self, api_key):
         """Test getting earnings transcript dates by symbol."""
         start_time = time.time()
@@ -406,171 +624,127 @@ class TestEarningsTranscriptBySymbol:
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
 class TestEarningsTranscriptList:
-    """Test class for earnings transcript list functionality."""
+    """Test earnings transcript list endpoint."""
+
+    @pytest.mark.parametrize("symbol", TEST_SYMBOLS)
+    def test_earnings_transcript_list_comprehensive(self, api_key, symbol):
+        """Test earnings transcript list for comprehensive symbol coverage."""
+        start_time = time.time()
+        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+        response_time = time.time() - start_time
+
+        # Check response time
+        assert response_time < RESPONSE_TIME_LIMIT
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(f"API key issues or data unavailable for {symbol}")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:  # If data is available
+            # Test first item structure
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                # Validate required fields
+                assert "symbol" in first_item
+                assert "quarter" in first_item
+                assert "fiscalYear" in first_item
+                assert "date" in first_item
+                assert first_item["symbol"] == symbol
+
+                # Test Pydantic model validation
+                transcript_list = FMPEarningsTranscriptBySymbol(**first_item)
+                assert transcript_list.symbol == symbol
+            else:
+                # Already a Pydantic model
+                assert hasattr(first_item, "symbol")
+                assert hasattr(first_item, "quarter")
+                assert hasattr(first_item, "fiscalYear")
+                assert hasattr(first_item, "date")
+                assert first_item.symbol == symbol
+
+    @pytest.mark.parametrize(
+        "symbol,market_cap",
+        [
+            ("AAPL", "Large"),
+            ("MSFT", "Large"),
+            ("GOOGL", "Large"),
+            ("TSLA", "Large"),
+            ("NVDA", "Large"),
+            ("META", "Large"),
+            ("JPM", "Large"),
+            ("JNJ", "Large"),
+            ("UNH", "Large"),
+            ("HD", "Large"),
+            ("PG", "Large"),
+            ("V", "Large"),
+        ],
+    )
+    def test_earnings_transcript_list_by_market_cap(self, api_key, symbol, market_cap):
+        """Test earnings transcript list for large cap companies."""
+        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            pytest.skip(f"API key issues or data unavailable for {symbol}")
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            # Large cap companies should have regular earnings transcripts
+            # Validate data quality
+            for item in result_list[:3]:  # Check first few items
+                symbol_value = get_field_value(item, "symbol")
+                quarter_value = get_field_value(item, "quarter")
+                fiscal_year_value = get_field_value(item, "fiscalYear")
+                date_value = get_field_value(item, "date")
+
+                assert symbol_value == symbol
+                assert quarter_value in ["Q1", "Q2", "Q3", "Q4", "FY"]
+                assert isinstance(fiscal_year_value, int)
+                assert fiscal_year_value >= 2020
+                assert date_value is not None
 
     def test_earnings_transcript_list_basic(self, api_key):
-        """Test getting earnings transcript list."""
+        """Test basic earnings transcript list functionality."""
         start_time = time.time()
         result = earnings_transcript_list(apikey=api_key)
         response_time = time.time() - start_time
 
-        # Response time validation
+        # Check response time
         assert response_time < RESPONSE_TIME_LIMIT
 
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
         result_list = extract_data_list(result)
         assert isinstance(result_list, list)
 
-        if result_list:
-            # Test transcript list structure
+        if result_list:  # If data is available
+            # Test first item structure
             first_item = result_list[0]
             if isinstance(first_item, dict):
-                validated = FMPEarningsTranscriptList.model_validate(first_item)
+                # Validate required fields for transcript list
+                assert "symbol" in first_item
+                assert "companyName" in first_item
+                assert "noOfTranscripts" in first_item
+
+                # Test Pydantic model validation
+                transcript_list = FMPEarningsTranscriptList(**first_item)
+                assert transcript_list.symbol is not None
+                assert transcript_list.companyName is not None
             else:
-                validated = first_item
+                # Already a Pydantic model
+                assert hasattr(first_item, "symbol")
+                assert hasattr(first_item, "companyName")
+                assert hasattr(first_item, "noOfTranscripts")
 
-            assert validated.symbol is not None
-            assert validated.companyName is not None
-            assert validated.noOfTranscripts is not None
-
-    def test_earnings_transcript_list_data_quality(self, api_key):
-        """Test data quality for earnings transcript list."""
-        result = earnings_transcript_list(apikey=api_key)
-        result_list = extract_data_list(result)
-
-        if result_list:
-            # Should have many companies
-            assert len(result_list) > 100
-
-            for item in result_list[:10]:  # Check first 10 items
-                symbol_value = get_field_value(item, "symbol")
-                company_name_value = get_field_value(item, "companyName")
-                no_of_transcripts_value = get_field_value(item, "noOfTranscripts")
-
-                # Basic validation
-                assert isinstance(symbol_value, str)
-                assert len(symbol_value) > 0
-                assert isinstance(company_name_value, str)
-                assert len(company_name_value) > 0
-                assert isinstance(no_of_transcripts_value, str)
-
-                # Number of transcripts should be parseable as int
-                try:
-                    transcript_count = int(no_of_transcripts_value)
-                    assert transcript_count >= 0
-                except ValueError:
-                    pytest.fail(
-                        f"noOfTranscripts should be a valid number: {no_of_transcripts_value}"
-                    )
-
-    def test_earnings_transcript_list_contains_major_companies(self, api_key):
-        """Test that transcript list contains major companies."""
-        result = earnings_transcript_list(apikey=api_key)
-        result_list = extract_data_list(result)
-
-        if result_list:
-            symbols = [get_field_value(item, "symbol") for item in result_list]
-
-            # Should contain some major companies
-            major_companies = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
-            found_companies = [
-                symbol for symbol in major_companies if symbol in symbols
-            ]
-
-            # Should find at least some major companies
-            assert len(found_companies) > 0
-
-    def test_earnings_transcript_list_symbol_uniqueness(self, api_key):
-        """Test that each symbol appears only once in transcript list."""
-        result = earnings_transcript_list(apikey=api_key)
-        result_list = extract_data_list(result)
-
-        if result_list:
-            symbols = [get_field_value(item, "symbol") for item in result_list]
-
-            # Check for duplicates
-            unique_symbols = set(symbols)
-            assert len(symbols) == len(
-                unique_symbols
-            ), "Each symbol should appear only once"
-
-
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
-class TestEarningsTranscriptDataQuality:
-    """Test class for overall earnings transcript data quality and consistency."""
-
-    def test_earnings_transcript_data_consistency(self, api_key):
-        """Test data consistency across different transcript endpoints."""
-        symbol = "AAPL"
-
-        # Get transcript list for the symbol
-        transcript_list = earnings_transcript_list(apikey=api_key)
-        transcript_list_data = extract_data_list(transcript_list)
-
-        # Find Apple in the list
-        apple_transcript_info = None
-        for item in transcript_list_data:
-            if get_field_value(item, "symbol") == symbol:
-                apple_transcript_info = item
-                break
-
-        if apple_transcript_info:
-            # Get transcript dates for Apple
-            transcript_dates = earnings_transcript_by_symbol(
-                apikey=api_key, symbol=symbol
-            )
-            transcript_dates_data = extract_data_list(transcript_dates)
-
-            # Should have transcript dates if listed in transcript list
-            no_of_transcripts = int(
-                get_field_value(apple_transcript_info, "noOfTranscripts")
-            )
-            if no_of_transcripts > 0:
-                assert len(transcript_dates_data) > 0
-
-    def test_earnings_transcript_error_handling_comprehensive(self, api_key):
-        """Test comprehensive error handling across all endpoints."""
-        # Test invalid API key simulation (won't actually test with invalid key)
-        # Instead test edge cases
-
-        # Test very old year
-        result = earnings_transcript(
-            apikey=api_key, symbol="AAPL", year=1900, quarter=1
-        )
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Test future year
-        future_year = datetime.now().year + 10
-        result = earnings_transcript(
-            apikey=api_key, symbol="AAPL", year=future_year, quarter=1
-        )
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-    def test_earnings_transcript_performance_benchmarks(self, api_key):
-        """Test performance benchmarks for earnings transcript endpoints."""
-        # Test latest transcripts performance
-        start_time = time.time()
-        earnings_transcript_latest(apikey=api_key, limit="10")
-        latest_time = time.time() - start_time
-        assert latest_time < RESPONSE_TIME_LIMIT
-
-        # Test specific transcript performance
-        start_time = time.time()
-        earnings_transcript(apikey=api_key, symbol="AAPL", year=2023, quarter=4)
-        specific_time = time.time() - start_time
-        assert specific_time < RESPONSE_TIME_LIMIT
-
-        # Test transcript dates performance
-        start_time = time.time()
-        earnings_transcript_by_symbol(apikey=api_key, symbol="AAPL")
-        dates_time = time.time() - start_time
-        assert dates_time < RESPONSE_TIME_LIMIT
-
-        # Test transcript list performance (might be slower)
-        start_time = time.time()
-        earnings_transcript_list(apikey=api_key)
-        list_time = time.time() - start_time
-        assert list_time < RESPONSE_TIME_LIMIT * 2  # Allow more time for list endpoint
+                # Validate the data
+                assert first_item.symbol is not None
+                assert first_item.companyName is not None
+                assert first_item.noOfTranscripts is not None

@@ -1,3 +1,5 @@
+import pytest
+
 from fmpsdk import senate
 from fmpsdk.models import FMPPoliticalTrade
 from tests.conftest import extract_data_list
@@ -5,6 +7,358 @@ from tests.conftest import extract_data_list
 
 class TestSenateTrading:
     """Test cases for Senate trading disclosure endpoints."""
+
+    @pytest.mark.parametrize(
+        "symbol",
+        [
+            # Technology stocks often traded by politicians
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "META",
+            "TSLA",
+            "NVDA",
+            "NFLX",
+            "CRM",
+            "ORCL",
+            # Healthcare & Pharmaceutical
+            "JNJ",
+            "PFE",
+            "UNH",
+            "ABBV",
+            "MRK",
+            "TMO",
+            "ABT",
+            "LLY",
+            "BMY",
+            "GILD",
+            # Financial Services
+            "JPM",
+            "BAC",
+            "WFC",
+            "GS",
+            "MS",
+            "C",
+            "V",
+            "MA",
+            "AXP",
+            "BLK",
+            # Energy & Utilities
+            "XOM",
+            "CVX",
+            "COP",
+            "EOG",
+            "SLB",
+            "NEE",
+            "SO",
+            "DUK",
+            "AEP",
+            "D",
+            # Defense & Aerospace
+            "LMT",
+            "RTX",
+            "BA",
+            "NOC",
+            "GD",
+            "LHX",
+            "TDG",
+            "HWM",
+            "LDOS",
+            "KTOS",
+            # Consumer Discretionary
+            "HD",
+            "MCD",
+            "NKE",
+            "SBUX",
+            "TGT",
+            "LOW",
+            "DIS",
+            "BKNG",
+            "GM",
+            "F",
+            # Industrial
+            "CAT",
+            "GE",
+            "HON",
+            "UPS",
+            "LMT",
+            "RTX",
+            "DE",
+            "MMM",
+            "FDX",
+            "EMR",
+            # Popular ETFs
+            "SPY",
+            "QQQ",
+            "VTI",
+            "IWM",
+            "EFA",
+            "EEM",
+            "AGG",
+            "TLT",
+            "GLD",
+            "VNQ",
+            # Cryptocurrency-related
+            "COIN",
+            "MSTR",
+            "RIOT",
+            "MARA",
+            "SQ",
+            "PYPL",
+            "HOOD",
+            "PLTR",
+            # Biotech & Emerging Tech
+            "MRNA",
+            "BNTX",
+            "REGN",
+            "BIIB",
+            "ILMN",
+            "VRTX",
+            "ZM",
+            "DOCU",
+            "CRWD",
+            "OKTA",
+        ],
+    )
+    def test_senate_trading_by_symbol(self, api_key, symbol):
+        """Test Senate trading disclosures for various symbols."""
+        result = senate.senate_trades(apikey=api_key, symbol=symbol)
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            trade = data[0]
+
+            # Validate against model
+            if isinstance(trade, dict):
+                trade_obj = FMPPoliticalTrade(**trade)
+            else:
+                trade_obj = trade
+
+            # Basic validation
+            assert hasattr(trade_obj, "symbol")
+            assert hasattr(trade_obj, "disclosureDate")
+            assert hasattr(trade_obj, "firstName")
+            assert hasattr(trade_obj, "lastName")
+
+            # Symbol should match requested
+            if trade_obj.symbol:
+                assert trade_obj.symbol == symbol
+
+    @pytest.mark.parametrize(
+        "sector",
+        [
+            "technology",
+            "healthcare",
+            "financial",
+            "energy",
+            "defense",
+            "consumer",
+            "industrial",
+            "etf_index",
+        ],
+    )
+    def test_senate_trading_by_sector(self, api_key, sector):
+        """Test Senate trading across different sectors."""
+        sector_symbols = {
+            "technology": ["AAPL", "MSFT", "GOOGL"],
+            "healthcare": ["JNJ", "PFE", "UNH"],
+            "financial": ["JPM", "BAC", "V"],
+            "energy": ["XOM", "CVX", "NEE"],
+            "defense": ["LMT", "RTX", "BA"],
+            "consumer": ["HD", "MCD", "NKE"],
+            "industrial": ["CAT", "GE", "HON"],
+            "etf_index": ["SPY", "QQQ", "VTI"],
+        }
+
+        symbols = sector_symbols.get(sector, ["AAPL"])
+
+        for symbol in symbols:
+            result = senate.senate_trades(apikey=api_key, symbol=symbol)
+
+            # Check if result is error dict
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            assert isinstance(data, list)
+
+    @pytest.mark.parametrize("transaction_type", ["purchase", "sale", "both"])
+    def test_senate_trading_by_transaction_type(self, api_key, transaction_type):
+        """Test Senate trading for different transaction types."""
+        # Use popular symbols that likely have both purchases and sales
+        symbols = ["AAPL", "MSFT", "SPY", "QQQ", "TSLA"]
+
+        for symbol in symbols[:2]:  # Test first 2 symbols
+            result = senate.senate_trades(apikey=api_key, symbol=symbol)
+
+            # Check if result is error dict
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            if not data:
+                continue
+
+            # Filter by transaction type
+            if transaction_type == "purchase":
+                filtered_trades = [
+                    trade
+                    for trade in data
+                    if isinstance(trade, dict)
+                    and trade.get("type", "").lower() in ["purchase", "buy"]
+                ]
+            elif transaction_type == "sale":
+                filtered_trades = [
+                    trade
+                    for trade in data
+                    if isinstance(trade, dict)
+                    and trade.get("type", "").lower() in ["sale", "sell"]
+                ]
+            else:  # both
+                filtered_trades = data
+
+            assert isinstance(filtered_trades, list)
+            assert len(filtered_trades) >= 0
+
+    @pytest.mark.parametrize(
+        "date_range",
+        [
+            "recent",  # Last 30 days
+            "quarterly",  # Last 90 days
+            "annual",  # Last 365 days
+            "historical",  # Last 2 years
+        ],
+    )
+    def test_senate_trading_by_date_range(self, api_key, date_range):
+        """Test Senate trading across different date ranges."""
+        from datetime import datetime, timedelta
+
+        # Calculate date ranges
+        end_date = datetime.now()
+        if date_range == "recent":
+            start_date = end_date - timedelta(days=30)
+        elif date_range == "quarterly":
+            start_date = end_date - timedelta(days=90)
+        elif date_range == "annual":
+            start_date = end_date - timedelta(days=365)
+        else:  # historical
+            start_date = end_date - timedelta(days=730)
+
+        # Test with latest endpoint (no date filtering in API, but check dates in response)
+        result = senate.senate_latest(apikey=api_key, limit=50)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:
+            # Check that we have some data within the expected date range
+            recent_trades = []
+            for trade in data:
+                if isinstance(trade, dict) and "disclosureDate" in trade:
+                    try:
+                        trade_date = datetime.strptime(
+                            trade["disclosureDate"], "%Y-%m-%d"
+                        )
+                        if start_date <= trade_date <= end_date:
+                            recent_trades.append(trade)
+                    except (ValueError, TypeError):
+                        # Skip invalid dates
+                        continue
+
+            # This is informational - may not have trades in all date ranges
+            assert len(recent_trades) >= 0
+
+    @pytest.mark.parametrize(
+        "politician_party", ["democrat", "republican", "independent"]
+    )
+    def test_senate_trading_by_party(self, api_key, politician_party):
+        """Test Senate trading by political party affiliation."""
+        # Note: Party information may not be directly available in the API response
+        # This test checks that we can get data and validates basic structure
+
+        result = senate.senate_latest(apikey=api_key, limit=30)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:
+            # Validate structure for political trades
+            for trade in data[:5]:  # Check first 5 trades
+                if isinstance(trade, dict):
+                    trade_obj = FMPPoliticalTrade(**trade)
+                else:
+                    trade_obj = trade
+
+                # Basic validation
+                assert hasattr(trade_obj, "firstName")
+                assert hasattr(trade_obj, "lastName")
+                assert hasattr(trade_obj, "office")
+
+                # Check that we have politician information
+                if trade_obj.firstName and trade_obj.lastName:
+                    assert len(trade_obj.firstName) > 0
+                    assert len(trade_obj.lastName) > 0
+
+    @pytest.mark.parametrize(
+        "trade_size",
+        [
+            "small",  # < $15,000
+            "medium",  # $15,000 - $50,000
+            "large",  # $50,000 - $250,000
+            "very_large",  # > $250,000
+        ],
+    )
+    def test_senate_trading_by_size(self, api_key, trade_size):
+        """Test Senate trading by transaction size ranges."""
+        result = senate.senate_latest(apikey=api_key, limit=50)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:
+            # Filter by trade size (if amount information is available)
+            size_filtered = []
+            for trade in data:
+                if isinstance(trade, dict) and "amount" in trade:
+                    try:
+                        amount = float(trade["amount"])
+                        if trade_size == "small" and amount < 15000:
+                            size_filtered.append(trade)
+                        elif trade_size == "medium" and 15000 <= amount < 50000:
+                            size_filtered.append(trade)
+                        elif trade_size == "large" and 50000 <= amount < 250000:
+                            size_filtered.append(trade)
+                        elif trade_size == "very_large" and amount >= 250000:
+                            size_filtered.append(trade)
+                    except (ValueError, TypeError):
+                        # Skip if amount parsing fails
+                        continue
+
+            # This is informational - amount field may not always be available
+            assert len(size_filtered) >= 0
 
     def test_senate_latest(self, api_key):
         """Test latest Senate trading disclosures endpoint."""

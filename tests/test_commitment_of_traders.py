@@ -14,6 +14,223 @@ from tests.conftest import extract_data_list
 class TestCommitmentOfTradersBasic:
     """Test basic COT functionality."""
 
+    @pytest.mark.parametrize(
+        "commodity_symbol",
+        [
+            # Energy Commodities
+            "CL",  # Crude Oil
+            "NG",  # Natural Gas
+            "HO",  # Heating Oil
+            "RB",  # RBOB Gasoline
+            "BZ",  # Brent Crude
+            # Precious Metals
+            "GC",  # Gold
+            "SI",  # Silver
+            "PL",  # Platinum
+            "PA",  # Palladium
+            # Industrial Metals
+            "HG",  # Copper
+            "AL",  # Aluminum (if available)
+            # Agricultural Commodities
+            "C",  # Corn
+            "W",  # Wheat
+            "S",  # Soybeans
+            "SB",  # Sugar
+            "KC",  # Coffee
+            "CT",  # Cotton
+            "CC",  # Cocoa
+            "OJ",  # Orange Juice
+            # Livestock
+            "LC",  # Live Cattle
+            "FC",  # Feeder Cattle
+            "LH",  # Lean Hogs
+            # Financial Futures
+            "ES",  # E-mini S&P 500
+            "NQ",  # E-mini NASDAQ 100
+            "YM",  # E-mini Dow Jones
+            "TY",  # 10-Year Treasury Note
+            "FV",  # 5-Year Treasury Note
+            "TU",  # 2-Year Treasury Note
+            "US",  # 30-Year Treasury Bond
+            # Currency Futures
+            "EUR",  # Euro
+            "GBP",  # British Pound
+            "JPY",  # Japanese Yen
+            "CAD",  # Canadian Dollar
+            "AUD",  # Australian Dollar
+            "CHF",  # Swiss Franc
+            "NZD",  # New Zealand Dollar
+            "MXN",  # Mexican Peso
+            # Other Commodities
+            "LBS",  # Lumber (if available)
+            "DA",  # Milk (if available)
+        ],
+    )
+    def test_commitment_of_traders_report_by_symbol(self, api_key, commodity_symbol):
+        """Test COT reports for various commodity symbols."""
+        result = commitment_of_traders.commitment_of_traders_report(
+            apikey=api_key, symbol=commodity_symbol
+        )
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
+        if data:  # If we have data
+            report = data[0]
+
+            # Validate against model
+            if isinstance(report, dict):
+                report_obj = FMPCommitmentOfTradersReport(**report)
+            else:
+                report_obj = report
+
+            # Basic validation
+            assert hasattr(report_obj, "symbol")
+            assert hasattr(report_obj, "date")
+
+            # Symbol should match requested
+            if report_obj.symbol:
+                assert (
+                    commodity_symbol in report_obj.symbol
+                    or report_obj.symbol in commodity_symbol
+                )
+
+    @pytest.mark.parametrize(
+        "commodity_category",
+        [
+            "energy",
+            "precious_metals",
+            "industrial_metals",
+            "agricultural",
+            "livestock",
+            "financial",
+            "currency",
+        ],
+    )
+    def test_commitment_of_traders_analysis_by_category(
+        self, api_key, commodity_category
+    ):
+        """Test COT analysis across different commodity categories."""
+        category_symbols = {
+            "energy": ["CL", "NG", "HO"],
+            "precious_metals": ["GC", "SI", "PL"],
+            "industrial_metals": ["HG"],
+            "agricultural": ["C", "W", "S"],
+            "livestock": ["LC", "LH"],
+            "financial": ["ES", "TY", "NQ"],
+            "currency": ["EUR", "GBP", "JPY"],
+        }
+
+        symbols = category_symbols.get(commodity_category, ["CL"])
+
+        for symbol in symbols:
+            result = commitment_of_traders.commitment_of_traders_report_analysis(
+                apikey=api_key, symbol=symbol
+            )
+
+            # Check if result is error dict
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            assert isinstance(data, list)
+
+            if data:  # If we have data
+                analysis = data[0]
+
+                # Validate against model
+                if isinstance(analysis, dict):
+                    analysis_obj = FMPCommitmentOfTradersAnalysis(**analysis)
+                else:
+                    analysis_obj = analysis
+
+                # Basic validation
+                assert hasattr(analysis_obj, "symbol")
+                assert hasattr(analysis_obj, "date")
+
+    @pytest.mark.parametrize(
+        "market_segment",
+        [
+            "commodity_futures",
+            "financial_futures",
+            "currency_futures",
+            "equity_index_futures",
+        ],
+    )
+    def test_commitment_of_traders_by_market_segment(self, api_key, market_segment):
+        """Test COT data across different market segments."""
+        segment_symbols = {
+            "commodity_futures": ["CL", "GC", "C", "LC"],
+            "financial_futures": ["TY", "FV", "US", "TU"],
+            "currency_futures": ["EUR", "GBP", "JPY", "CAD"],
+            "equity_index_futures": ["ES", "NQ", "YM"],
+        }
+
+        symbols = segment_symbols.get(market_segment, ["CL"])
+
+        for symbol in symbols:
+            result = commitment_of_traders.commitment_of_traders_report(
+                apikey=api_key, symbol=symbol
+            )
+
+            # Check if result is error dict
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
+
+            data = extract_data_list(result)
+            assert isinstance(data, list)
+
+    @pytest.mark.parametrize("timeframe", ["recent", "quarterly", "annual"])
+    def test_commitment_of_traders_timeframes(self, api_key, timeframe):
+        """Test COT data for different timeframes."""
+        # Use a reliable symbol like crude oil
+        symbol = "CL"
+
+        if timeframe == "recent":
+            # Test recent data (no date filter)
+            result = commitment_of_traders.commitment_of_traders_report(
+                apikey=api_key, symbol=symbol
+            )
+        elif timeframe == "quarterly":
+            # Test quarterly data from last quarter
+            from datetime import datetime, timedelta
+
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=90)
+
+            result = commitment_of_traders.commitment_of_traders_report(
+                apikey=api_key,
+                symbol=symbol,
+                from_date=start_date.strftime("%Y-%m-%d"),
+                to_date=end_date.strftime("%Y-%m-%d"),
+            )
+        elif timeframe == "annual":
+            # Test annual data from last year
+            from datetime import datetime, timedelta
+
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=365)
+
+            result = commitment_of_traders.commitment_of_traders_report(
+                apikey=api_key,
+                symbol=symbol,
+                from_date=start_date.strftime("%Y-%m-%d"),
+                to_date=end_date.strftime("%Y-%m-%d"),
+            )
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list)
+
     def test_commitment_of_traders_report_list(self, api_key):
         """Test getting list of available COT reports."""
         result = commitment_of_traders.commitment_of_traders_report_list(apikey=api_key)

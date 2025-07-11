@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import pytest
 
 from fmpsdk.chart import (
@@ -554,3 +556,199 @@ class TestChartDataConsistency:
             assert (
                 light_volume == full_volume
             ), "Volume should match between light and full data"
+
+    @pytest.mark.parametrize(
+        "symbol,date_range_days,data_points_expected,asset_class",
+        [
+            ("AAPL", 30, 20, "large_cap_tech"),  # ~20 trading days in a month
+            ("MSFT", 60, 40, "large_cap_tech"),  # ~40 trading days in 2 months
+            ("GOOGL", 90, 60, "large_cap_tech"),  # ~60 trading days in 3 months
+            ("JPM", 30, 20, "financial"),  # Major bank
+            ("JNJ", 60, 40, "healthcare"),  # Healthcare blue chip
+            ("XOM", 90, 60, "energy"),  # Energy sector
+            ("WMT", 30, 20, "consumer_staples"),  # Retail
+            ("TSLA", 60, 40, "electric_vehicle"),  # High volatility stock
+            ("SPY", 30, 20, "etf_broad_market"),  # S&P 500 ETF
+            ("QQQ", 60, 40, "etf_tech"),  # NASDAQ ETF
+            ("IWM", 90, 60, "etf_small_cap"),  # Russell 2000 ETF
+            ("VTI", 30, 20, "etf_total_market"),  # Total stock market ETF
+            ("BTCUSD", 30, 30, "cryptocurrency"),  # Bitcoin (trades 24/7)
+            ("ETHUSD", 60, 60, "cryptocurrency"),  # Ethereum (trades 24/7)
+            ("EURUSD", 30, 30, "forex"),  # Euro/USD (trades 24/5)
+            ("GBPUSD", 60, 60, "forex"),  # GBP/USD (trades 24/5)
+            ("GCUSD", 30, 30, "commodity"),  # Gold (trades 24/5)
+            ("CLUSD", 60, 60, "commodity"),  # Oil (trades 24/5)
+        ],
+    )
+    def test_historical_price_eod_light_comprehensive_assets(
+        self, api_key, symbol, date_range_days, data_points_expected, asset_class
+    ):
+        """Test historical EOD light data across comprehensive asset classes with varying date ranges."""
+        from_date = (datetime.now() - timedelta(days=date_range_days)).strftime(
+            "%Y-%m-%d"
+        )
+        to_date = datetime.now().strftime("%Y-%m-%d")
+
+        result = historical_price_eod_light(
+            apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
+        )
+
+        result_list = extract_data_list(result)
+        assert isinstance(
+            result_list, list
+        ), f"Result should be list for {asset_class} asset {symbol}"
+        assert (
+            len(result_list) > 0
+        ), f"Should have data for {asset_class} asset {symbol}"
+
+        # Flexible data point validation (markets have holidays, weekends, etc.)
+        min_expected = int(data_points_expected * 0.7)  # Allow 30% variance
+        max_expected = int(data_points_expected * 1.3)  # Allow 30% variance
+
+        # For 24/7 markets (crypto), expect more data points
+        if asset_class == "cryptocurrency":
+            min_expected = date_range_days - 5  # Account for potential gaps
+        elif asset_class in ["forex", "commodity"]:
+            min_expected = int(date_range_days * 0.8)  # Account for weekends
+
+        assert (
+            min_expected <= len(result_list) <= max_expected
+        ), f"{symbol} ({asset_class}) should have {min_expected}-{max_expected} data points for {date_range_days} days, got {len(result_list)}"
+
+        first_item = result_list[0]
+        symbol_value = get_field_value(first_item, "symbol")
+        price_value = get_field_value(first_item, "price")
+        date_value = get_field_value(first_item, "date")
+
+        assert symbol_value == symbol, f"Symbol should match for {asset_class} asset"
+        assert (
+            price_value > 0
+        ), f"Price should be positive for {asset_class} asset {symbol}"
+        assert (
+            date_value is not None
+        ), f"Date should be present for {asset_class} asset {symbol}"
+
+        # Validate date range
+        for item in result_list:
+            item_date = get_field_value(item, "date")
+            assert (
+                from_date <= item_date <= to_date
+            ), f"Date should be within range for {symbol}"
+
+        # Asset class specific validations
+        if asset_class == "large_cap_tech":
+            # Tech stocks should have reasonable price ranges
+            assert (
+                10 <= price_value <= 1000
+            ), f"Tech stock {symbol} price should be reasonable"
+        elif asset_class == "cryptocurrency":
+            # Crypto should have higher prices typically
+            assert (
+                price_value > 100
+            ), f"Major crypto {symbol} should have substantial price"
+        elif asset_class.startswith("etf_"):
+            # ETFs should have reasonable price ranges
+            assert 10 <= price_value <= 1000, f"ETF {symbol} price should be reasonable"
+        elif asset_class == "forex":
+            # Forex pairs should be around 0.5-2.0 range typically
+            assert (
+                0.3 <= price_value <= 5.0
+            ), f"Forex pair {symbol} should be in normal range"
+
+    @pytest.mark.parametrize(
+        "time_period,symbol_set,expected_patterns",
+        [
+            ("1_week", ["AAPL", "SPY"], {"trading_days": 5, "pattern": "recent"}),
+            ("1_month", ["MSFT", "QQQ"], {"trading_days": 22, "pattern": "short_term"}),
+            (
+                "1_quarter",
+                ["GOOGL", "IWM"],
+                {"trading_days": 65, "pattern": "medium_term"},
+            ),
+            (
+                "6_months",
+                ["AMZN", "VTI"],
+                {"trading_days": 130, "pattern": "longer_term"},
+            ),
+            ("1_year", ["TSLA", "SPY"], {"trading_days": 250, "pattern": "annual"}),
+            (
+                "2_years",
+                ["NVDA", "QQQ"],
+                {"trading_days": 500, "pattern": "multi_year"},
+            ),
+        ],
+    )
+    def test_historical_price_eod_light_time_periods(
+        self, api_key, time_period, symbol_set, expected_patterns
+    ):
+        """Test historical EOD data across different time periods and patterns."""
+        # Calculate date ranges based on time period
+        period_days = {
+            "1_week": 7,
+            "1_month": 30,
+            "1_quarter": 90,
+            "6_months": 180,
+            "1_year": 365,
+            "2_years": 730,
+        }
+
+        days_back = period_days[time_period]
+        from_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        to_date = datetime.now().strftime("%Y-%m-%d")
+
+        for symbol in symbol_set:
+            result = historical_price_eod_light(
+                apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
+            )
+
+            result_list = extract_data_list(result)
+            assert isinstance(
+                result_list, list
+            ), f"Result should be list for {time_period} period"
+            assert (
+                len(result_list) > 0
+            ), f"Should have data for {symbol} over {time_period}"
+
+            # Validate data point count is reasonable for the time period
+            expected_trading_days = expected_patterns["trading_days"]
+            min_expected = int(
+                expected_trading_days * 0.6
+            )  # Account for holidays/weekends
+            max_expected = int(expected_trading_days * 1.2)  # Account for variations
+
+            assert (
+                min_expected <= len(result_list) <= max_expected
+            ), f"{symbol} over {time_period} should have {min_expected}-{max_expected} data points, got {len(result_list)}"
+
+            # Validate chronological ordering
+            dates = [get_field_value(item, "date") for item in result_list]
+            is_ordered = all(
+                dates[i] >= dates[i + 1] for i in range(len(dates) - 1)
+            ) or all(dates[i] <= dates[i + 1] for i in range(len(dates) - 1))
+            assert (
+                is_ordered
+            ), f"Dates should be chronologically ordered for {symbol} over {time_period}"
+
+            # Validate price consistency (no zero or negative prices)
+            prices = [get_field_value(item, "price") for item in result_list]
+            assert all(
+                price > 0 for price in prices
+            ), f"All prices should be positive for {symbol}"
+
+            # Pattern-specific validations
+            if expected_patterns["pattern"] == "recent":
+                # Recent data should be very current
+                latest_date = max(dates)
+                days_old = (
+                    datetime.now() - datetime.strptime(latest_date, "%Y-%m-%d")
+                ).days
+                assert days_old <= 5, f"Recent data for {symbol} should be very current"
+            elif expected_patterns["pattern"] == "multi_year":
+                # Multi-year data should span significant time
+                date_range = (
+                    datetime.strptime(max(dates), "%Y-%m-%d")
+                    - datetime.strptime(min(dates), "%Y-%m-%d")
+                ).days
+                assert (
+                    date_range >= 600
+                ), f"Multi-year data for {symbol} should span significant time"

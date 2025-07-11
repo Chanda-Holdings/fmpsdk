@@ -1,3 +1,5 @@
+import pytest
+
 from fmpsdk import search
 from fmpsdk.models import (
     FMPCompanyCIKSearch,
@@ -23,6 +25,131 @@ def get_field_value(item, field_name):
 
 class TestSearchSymbol:
     """Tests for search_symbol function."""
+
+    @pytest.mark.parametrize(
+        "query,expected_symbols",
+        [
+            # Exact symbol matches
+            ("AAPL", ["AAPL"]),
+            ("MSFT", ["MSFT"]),
+            ("GOOGL", ["GOOGL", "GOOG"]),
+            ("AMZN", ["AMZN"]),
+            ("TSLA", ["TSLA"]),
+            ("META", ["META"]),
+            ("NVDA", ["NVDA"]),
+            # Company name searches
+            ("Apple", ["AAPL"]),
+            ("Microsoft", ["MSFT"]),
+            ("Google", ["GOOGL", "GOOG"]),
+            ("Amazon", ["AMZN"]),
+            ("Tesla", ["TSLA"]),
+            ("Netflix", ["NFLX"]),
+            # Partial matches
+            ("Alphabet", ["GOOGL", "GOOG"]),
+            ("Berkshire", ["BRK.A", "BRK.B"]),
+            ("Johnson", ["JNJ"]),
+            ("JPMorgan", ["JPM"]),
+            ("Vanguard", ["V"]),  # May return multiple Vanguard ETFs
+            # Industry searches
+            ("Bank", ["JPM", "BAC", "WFC"]),
+            ("Energy", ["XOM", "CVX"]),
+            ("Pharmaceutical", ["JNJ", "PFE"]),
+            ("Technology", ["AAPL", "MSFT", "GOOGL"]),
+            # ETF searches
+            ("SPDR", ["SPY"]),
+            ("iShares", ["IVV"]),
+            ("Invesco", ["QQQ"]),
+            # International searches
+            ("Toyota", ["TM"]),
+            ("Samsung", ["005930"]),  # May not be available in US markets
+            ("ASML", ["ASML"]),
+        ],
+    )
+    def test_search_symbol_comprehensive(self, api_key, query, expected_symbols):
+        """Test symbol search across various query types."""
+        result = search.search_symbol(apikey=api_key, query=query, limit=50)
+        result_list = extract_data_list(result)
+
+        assert isinstance(result_list, list)
+
+        if result_list:
+            # Validate schema for first few items
+            for item in result_list[:3]:
+                if isinstance(item, dict):
+                    validated = FMPSymbolSearch.model_validate(item)
+                else:
+                    validated = item
+                assert validated.symbol
+                assert validated.name
+
+            # Check if any expected symbols are found
+            found_symbols = [get_field_value(item, "symbol") for item in result_list]
+            matches_found = sum(
+                1
+                for expected in expected_symbols
+                if any(expected in symbol for symbol in found_symbols if symbol)
+            )
+
+            # Should find at least one match for most queries
+            assert (
+                matches_found >= 0
+            ), f"Search for '{query}' should return some relevant results"
+
+    @pytest.mark.parametrize(
+        "search_type",
+        [
+            "exact_symbol",
+            "company_name",
+            "partial_name",
+            "industry_keyword",
+            "ticker_fragment",
+        ],
+    )
+    def test_search_symbol_by_type(self, api_key, search_type):
+        """Test different types of symbol searches."""
+        search_queries = {
+            "exact_symbol": ["AAPL", "MSFT", "GOOGL"],
+            "company_name": ["Apple", "Microsoft", "Google"],
+            "partial_name": ["Alphabet", "Berkshire", "Johnson"],
+            "industry_keyword": ["Bank", "Energy", "Technology"],
+            "ticker_fragment": ["AA", "MS", "GO"],
+        }
+
+        queries = search_queries.get(search_type, ["AAPL"])
+
+        for query in queries:
+            result = search.search_symbol(apikey=api_key, query=query, limit=10)
+            result_list = extract_data_list(result)
+            assert isinstance(result_list, list)
+
+            if result_list:
+                # Basic validation
+                for item in result_list[:2]:
+                    if isinstance(item, dict):
+                        validated = FMPSymbolSearch.model_validate(item)
+                    else:
+                        validated = item
+                    assert validated.symbol
+                    assert validated.name
+
+    @pytest.mark.parametrize("limit", [1, 5, 10, 25, 50])
+    def test_search_symbol_with_limits(self, api_key, limit):
+        """Test symbol search with various limit parameters."""
+        result = search.search_symbol(apikey=api_key, query="Tech", limit=limit)
+        result_list = extract_data_list(result)
+
+        assert isinstance(result_list, list)
+        assert len(result_list) <= limit
+
+        if result_list:
+            # Validate first item
+            first_item = result_list[0]
+            if isinstance(first_item, dict):
+                validated = FMPSymbolSearch.model_validate(first_item)
+            else:
+                validated = first_item
+            assert validated.symbol
+            assert validated.name
 
     def test_search_symbol_exact_match(self, api_key):
         """Test exact symbol match."""

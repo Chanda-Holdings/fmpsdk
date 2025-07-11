@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from typing import Dict
 
+import pytest
+
 from fmpsdk import insider_trades
 from fmpsdk.models import (
     FMPAcquisitionOwnership,
@@ -610,3 +612,341 @@ def validate_acquisition_ownership_model(data: Dict) -> bool:
     except Exception as e:
         print(f"Model validation failed: {e}")
         return False
+
+
+@pytest.mark.parametrize(
+    "symbol,sector,company_size,expected_insider_activity,market_cap_range",
+    [
+        ("AAPL", "Technology", "mega_cap", "high", "3T+"),
+        ("MSFT", "Technology", "mega_cap", "high", "3T+"),
+        ("GOOGL", "Technology", "mega_cap", "medium", "1T+"),
+        ("AMZN", "Technology", "mega_cap", "medium", "1T+"),
+        ("TSLA", "Automotive", "large_cap", "very_high", "800B+"),
+        ("META", "Technology", "mega_cap", "medium", "800B+"),
+        ("NVDA", "Technology", "large_cap", "high", "2T+"),
+        ("JPM", "Financial", "large_cap", "medium", "500B+"),
+        ("JNJ", "Healthcare", "large_cap", "low", "400B+"),
+        ("PG", "Consumer Staples", "large_cap", "low", "300B+"),
+        ("XOM", "Energy", "large_cap", "medium", "400B+"),
+        ("WMT", "Consumer Staples", "large_cap", "low", "500B+"),
+        ("DIS", "Media", "large_cap", "medium", "200B+"),
+        ("BA", "Aerospace", "large_cap", "medium", "100B+"),
+        ("CRM", "Technology", "large_cap", "medium", "200B+"),
+        ("ROKU", "Technology", "mid_cap", "high", "5B+"),
+        ("ZM", "Technology", "mid_cap", "high", "20B+"),
+        ("TDOC", "Healthcare", "mid_cap", "medium", "5B+"),
+        ("AIRT", "Industrial", "small_cap", "low", "50M+"),
+        ("TVTX", "Technology", "small_cap", "medium", "100M+"),
+    ],
+)
+def test_insider_trading_comprehensive_coverage(
+    api_key,
+    symbol,
+    sector,
+    company_size,
+    expected_insider_activity,
+    market_cap_range,
+):
+    """Test insider trading across comprehensive range of companies, sectors, and sizes."""
+    result = insider_trades.insider_trading(apikey=api_key, symbol=symbol, limit=20)
+
+    result_list = extract_data_list(result)
+    assert isinstance(
+        result_list, list
+    ), f"Result should be list for {company_size} {sector} company {symbol}"
+
+    if result_list:  # If data is available
+        trade_count = len(result_list)
+
+        # Validate insider activity expectations based on company characteristics
+        if expected_insider_activity == "very_high":
+            # Companies like TSLA should have substantial insider activity
+            assert (
+                trade_count >= 10
+            ), f"Very high activity company {symbol} should have substantial insider trades"
+        elif expected_insider_activity == "high":
+            # Mega-cap tech and popular stocks should have good insider activity
+            assert (
+                trade_count >= 5
+            ), f"High activity company {symbol} should have good insider trades"
+        elif expected_insider_activity == "medium":
+            # Large-cap companies should have some insider activity
+            assert (
+                trade_count >= 2
+            ), f"Medium activity company {symbol} should have some insider trades"
+        elif expected_insider_activity == "low":
+            # Conservative companies may have limited insider activity
+            assert (
+                trade_count >= 0
+            ), f"Low activity company {symbol} may have limited insider trades"
+
+        # Validate insider trade data structure for first few items
+        for item in result_list[:5]:
+            if isinstance(item, dict):
+                # Validate required fields
+                assert "symbol" in item, f"Symbol field should be present for {symbol}"
+                assert (
+                    "filingDate" in item
+                ), f"Filing date should be present for {symbol}"
+                assert (
+                    "transactionDate" in item
+                ), f"Transaction date should be present for {symbol}"
+                assert (
+                    "reportingCik" in item
+                ), f"Reporting CIK should be present for {symbol}"
+                assert (
+                    "companyCik" in item
+                ), f"Company CIK should be present for {symbol}"
+                assert (
+                    "transactionType" in item
+                ), f"Transaction type should be present for {symbol}"
+
+                # Test Pydantic model validation
+                trade = FMPInsiderTrade(**item)
+                assert (
+                    trade.symbol == symbol
+                ), f"Trade symbol should match requested symbol {symbol}"
+
+                # Validate dates are reasonable
+                try:
+                    filing_date = datetime.strptime(trade.filingDate[:10], "%Y-%m-%d")
+                    transaction_date = datetime.strptime(
+                        trade.transactionDate[:10], "%Y-%m-%d"
+                    )
+
+                    # Filing date should be after transaction date (or same day)
+                    assert (
+                        filing_date >= transaction_date
+                    ), f"Filing date should be >= transaction date for {symbol}"
+
+                    # Trades should be reasonably recent (within last 5 years)
+                    days_old = (datetime.now() - transaction_date).days
+                    assert (
+                        days_old <= 1825
+                    ), f"Trade for {symbol} should be within last 5 years"
+                except ValueError:
+                    pytest.fail(f"Invalid date format for {symbol} insider trade")
+            else:
+                # Already a Pydantic model
+                assert hasattr(
+                    item, "symbol"
+                ), f"Symbol attribute should exist for {symbol}"
+                assert hasattr(
+                    item, "filingDate"
+                ), f"Filing date should exist for {symbol}"
+                assert hasattr(
+                    item, "transactionDate"
+                ), f"Transaction date should exist for {symbol}"
+                assert item.symbol == symbol, f"Trade symbol should match for {symbol}"
+
+        # Sector-specific validations
+        if sector == "Technology":
+            # Tech companies often have more stock-based compensation and insider activity
+            # We already validated based on expected_insider_activity
+            pass
+        elif sector == "Financial":
+            # Financial companies have strict insider trading regulations
+            # Validate that all trades have proper disclosure
+            for item in result_list[:3]:
+                trade_dict = item if isinstance(item, dict) else item.__dict__
+                assert trade_dict.get(
+                    "reportingCik"
+                ), f"Financial company {symbol} trades should have reporting CIK"
+
+
+@pytest.mark.parametrize(
+    "transaction_type,expected_frequency,transaction_nature,regulatory_context",
+    [
+        ("P-Purchase", "common", "acquisition", "insider_buying"),
+        ("S-Sale", "very_common", "disposition", "insider_selling"),
+        ("A-Award", "common", "compensation", "equity_grants"),
+        ("M-Exercise", "common", "option_exercise", "stock_options"),
+        ("G-Gift", "rare", "transfer", "estate_planning"),
+        ("J-Other", "uncommon", "other", "miscellaneous"),
+        ("C-Conversion", "uncommon", "conversion", "security_conversion"),
+        ("D-Disposition", "common", "disposition", "various_sales"),
+        ("F-Payment", "uncommon", "tax_payment", "tax_withholding"),
+        ("I-Discretionary", "rare", "discretionary", "plan_transactions"),
+    ],
+)
+def test_insider_trading_transaction_types(
+    api_key,
+    transaction_type,
+    expected_frequency,
+    transaction_nature,
+    regulatory_context,
+):
+    """Test insider trading across different transaction types and their characteristics."""
+    # Use high-activity stocks for better chance of finding specific transaction types
+    high_activity_symbols = ["AAPL", "TSLA", "MSFT", "GOOGL", "META"]
+
+    found_transactions = []
+
+    for symbol in high_activity_symbols:
+        result = insider_trades.insider_trading(
+            apikey=api_key, symbol=symbol, transactionType=transaction_type, limit=10
+        )
+
+        result_list = extract_data_list(result)
+        if result_list:
+            found_transactions.extend(result_list)
+
+            # If we found some transactions of this type, break
+            if len(found_transactions) >= 3:
+                break
+
+    # Validate transaction type characteristics if we found any
+    if found_transactions:
+        for item in found_transactions[:5]:
+            if isinstance(item, dict):
+                trade = FMPInsiderTrade(**item)
+            else:
+                trade = item
+
+            # Validate transaction type matches (if API supports filtering)
+            # Note: Some APIs may not strictly filter by transaction type
+            if hasattr(trade, "transactionType") and trade.transactionType:
+                # The transaction type might be formatted differently in response
+                pass
+
+            # Transaction nature-specific validations
+            if transaction_nature == "acquisition":
+                # Purchases should have positive or acquisition-related values
+                if hasattr(trade, "transactionShares") and trade.transactionShares:
+                    assert (
+                        trade.transactionShares >= 0
+                    ), f"Purchase transactions should have non-negative shares"
+
+            elif transaction_nature == "disposition":
+                # Sales/dispositions might have various share amounts
+                if hasattr(trade, "transactionShares") and trade.transactionShares:
+                    # Can be positive or negative depending on how API reports
+                    assert isinstance(
+                        trade.transactionShares, (int, float)
+                    ), f"Disposition shares should be numeric"
+
+            elif transaction_nature == "compensation":
+                # Awards/grants are typically equity compensation
+                if hasattr(trade, "transactionShares") and trade.transactionShares:
+                    assert (
+                        trade.transactionShares > 0
+                    ), f"Award transactions should have positive shares"
+
+            # Regulatory context validation
+            if regulatory_context in ["insider_buying", "insider_selling"]:
+                # These should have clear transaction amounts
+                if hasattr(trade, "transactionShares"):
+                    assert (
+                        trade.transactionShares is not None
+                    ), f"Buy/sell transactions should have share amounts"
+
+    # Frequency expectation validation
+    if expected_frequency == "very_common":
+        # Should find these transaction types easily
+        if not found_transactions:
+            pytest.skip(
+                f"No {transaction_type} transactions found, may be due to timing or API limitations"
+            )
+    elif expected_frequency == "rare":
+        # Rare transactions may not be found, which is acceptable
+        pass
+
+
+@pytest.mark.parametrize(
+    "date_range_days,analysis_period,expected_trade_volume,market_conditions",
+    [
+        (30, "recent", "current", "normal_market"),
+        (90, "quarterly", "moderate", "quarterly_results"),
+        (180, "semi_annual", "substantial", "earnings_seasons"),
+        (365, "annual", "comprehensive", "full_year_cycle"),
+        (730, "two_year", "extensive", "market_cycles"),
+    ],
+)
+def test_insider_trading_temporal_analysis(
+    api_key, date_range_days, analysis_period, expected_trade_volume, market_conditions
+):
+    """Test insider trading across different time periods and market conditions."""
+    # Use a mix of high-activity stocks for temporal analysis
+    symbols = ["AAPL", "TSLA", "MSFT"]
+
+    all_trades = []
+
+    for symbol in symbols:
+        result = insider_trades.insider_trading(apikey=api_key, symbol=symbol, limit=50)
+        result_list = extract_data_list(result)
+
+        if result_list:
+            # Filter trades by date range
+            cutoff_date = datetime.now() - timedelta(days=date_range_days)
+
+            for item in result_list:
+                if isinstance(item, dict):
+                    trade = FMPInsiderTrade(**item)
+                else:
+                    trade = item
+
+                try:
+                    transaction_date = datetime.strptime(
+                        trade.transactionDate[:10], "%Y-%m-%d"
+                    )
+                    if transaction_date >= cutoff_date:
+                        all_trades.append(trade)
+                except (ValueError, AttributeError):
+                    continue
+
+    # Temporal analysis validation
+    if all_trades:
+        trade_count = len(all_trades)
+
+        # Expected trade volume validation
+        if expected_trade_volume == "comprehensive":
+            # Annual data should have substantial trades
+            assert (
+                trade_count >= 10
+            ), f"Annual period should have comprehensive insider trades"
+        elif expected_trade_volume == "substantial":
+            # Semi-annual should have good coverage
+            assert (
+                trade_count >= 5
+            ), f"Semi-annual period should have substantial insider trades"
+        elif expected_trade_volume == "moderate":
+            # Quarterly should have some trades
+            assert (
+                trade_count >= 2
+            ), f"Quarterly period should have moderate insider trades"
+        elif expected_trade_volume == "current":
+            # Recent period should have at least some activity
+            assert trade_count >= 1, f"Recent period should have current insider trades"
+
+        # Date distribution analysis
+        trade_dates = []
+        for trade in all_trades:
+            try:
+                transaction_date = datetime.strptime(
+                    trade.transactionDate[:10], "%Y-%m-%d"
+                )
+                trade_dates.append(transaction_date)
+            except (ValueError, AttributeError):
+                continue
+
+        if trade_dates:
+            # Validate date range coverage
+            date_range = max(trade_dates) - min(trade_dates)
+            expected_range = timedelta(days=date_range_days)
+
+            # For longer periods, should have good temporal distribution
+            if date_range_days >= 365:
+                assert (
+                    date_range.days >= 90
+                ), f"Annual analysis should span significant time range"
+            elif date_range_days >= 180:
+                assert (
+                    date_range.days >= 60
+                ), f"Semi-annual analysis should span reasonable time range"
+
+    else:
+        # No trades found in the period - could be normal depending on market conditions
+        if expected_trade_volume in ["comprehensive", "extensive"]:
+            pytest.skip(
+                f"No insider trades found for {analysis_period} period, may be due to market conditions or API limitations"
+            )

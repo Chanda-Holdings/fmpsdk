@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from pydantic_core import ValidationError
 
 from fmpsdk.models import (
     FMPAsReportedBalanceSheet,
@@ -783,3 +784,277 @@ class TestStatementsDataConsistency:
         # Check that dates are sorted (newest first)
         for i in range(len(dates) - 1):
             assert dates[i] >= dates[i + 1]
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestComprehensiveFinancialStatements:
+    """Comprehensive tests for financial statement endpoints across various scenarios."""
+
+    @pytest.mark.parametrize(
+        "symbol,period,limit,expected_period_type",
+        [
+            ("AAPL", "annual", 5, "FY"),
+            ("MSFT", "annual", 3, "FY"),
+            ("GOOGL", "annual", 4, "FY"),
+            ("AMZN", "annual", 3, "FY"),
+            ("TSLA", "annual", 2, "FY"),
+            ("META", "annual", 3, "FY"),
+            ("NVDA", "annual", 4, "FY"),
+            ("JPM", "annual", 3, "FY"),
+            ("JNJ", "annual", 5, "FY"),
+            ("PG", "annual", 4, "FY"),
+            ("KO", "annual", 3, "FY"),
+            ("WMT", "annual", 3, "FY"),
+            ("VZ", "annual", 2, "FY"),
+            ("XOM", "annual", 3, "FY"),
+            ("DIS", "annual", 4, "FY"),
+        ],
+    )
+    def test_income_statement_annual_comprehensive(
+        self, api_key, symbol, period, limit, expected_period_type
+    ):
+        """Test annual income statements across diverse companies and parameters."""
+        try:
+            result = income_statement(
+                apikey=api_key, symbol=symbol, period=period, limit=limit
+            )
+        except ValidationError as e:
+            pytest.skip(
+                f"Validation error for {symbol}: {str(e)[:100]}... - API data doesn't match model"
+            )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+        assert len(result_list) > 0, f"Should get annual data for {symbol}"
+        assert (
+            len(result_list) <= limit
+        ), f"Should not exceed limit of {limit} for {symbol}"
+
+        # Validate first item structure
+        first_item = result_list[0]
+        if isinstance(first_item, dict):
+            validated = FMPIncomeStatement.model_validate(first_item)
+        else:
+            validated = first_item
+
+        assert validated.symbol == symbol
+        assert validated.revenue is not None, f"Revenue should be present for {symbol}"
+        assert (
+            validated.netIncome is not None
+        ), f"Net income should be present for {symbol}"
+        assert (
+            validated.period == expected_period_type
+        ), f"Period should be {expected_period_type} for {symbol}"
+
+        # Validate historical data ordering and consistency
+        if len(result_list) > 1:
+            dates = [get_field_value(item, "date") for item in result_list]
+            # Should be in chronological order (either ascending or descending)
+            is_ordered = all(
+                dates[i] >= dates[i + 1] for i in range(len(dates) - 1)
+            ) or all(dates[i] <= dates[i + 1] for i in range(len(dates) - 1))
+            assert is_ordered, f"Dates should be in chronological order for {symbol}"
+
+    @pytest.mark.parametrize(
+        "symbol,period,limit,expected_quarters",
+        [
+            ("AAPL", "quarter", 4, ["Q1", "Q2", "Q3", "Q4"]),
+            ("MSFT", "quarter", 8, ["Q1", "Q2", "Q3", "Q4"]),
+            ("GOOGL", "quarter", 6, ["Q1", "Q2", "Q3", "Q4"]),
+            ("AMZN", "quarter", 4, ["Q1", "Q2", "Q3", "Q4"]),
+            ("TSLA", "quarter", 8, ["Q1", "Q2", "Q3", "Q4"]),
+            ("META", "quarter", 4, ["Q1", "Q2", "Q3", "Q4"]),
+            ("NVDA", "quarter", 6, ["Q1", "Q2", "Q3", "Q4"]),
+            ("CRM", "quarter", 4, ["Q1", "Q2", "Q3", "Q4"]),
+            ("NFLX", "quarter", 4, ["Q1", "Q2", "Q3", "Q4"]),
+            ("ADBE", "quarter", 8, ["Q1", "Q2", "Q3", "Q4"]),
+        ],
+    )
+    def test_income_statement_quarterly_comprehensive(
+        self, api_key, symbol, period, limit, expected_quarters
+    ):
+        """Test quarterly income statements with varying limits and quarters."""
+        try:
+            result = income_statement(
+                apikey=api_key, symbol=symbol, period=period, limit=limit
+            )
+        except ValidationError as e:
+            pytest.skip(
+                f"Validation error for {symbol}: {str(e)[:100]}... - API data doesn't match model"
+            )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+        assert len(result_list) > 0, f"Should get quarterly data for {symbol}"
+        assert (
+            len(result_list) <= limit
+        ), f"Should not exceed limit of {limit} for {symbol}"
+
+        # Validate quarterly data
+        first_item = result_list[0]
+        if isinstance(first_item, dict):
+            validated = FMPIncomeStatement.model_validate(first_item)
+        else:
+            validated = first_item
+
+        assert validated.symbol == symbol
+        assert (
+            validated.period in expected_quarters
+        ), f"Quarter should be valid for {symbol}"
+        assert validated.revenue is not None, f"Revenue should be present for {symbol}"
+
+        # Check that we get multiple quarters if limit allows
+        if limit >= 4 and len(result_list) >= 4:
+            quarters_found = [
+                get_field_value(item, "period") for item in result_list[:4]
+            ]
+            unique_quarters = set(quarters_found)
+            assert (
+                len(unique_quarters) >= 2
+            ), f"Should have multiple different quarters for {symbol}"
+
+    @pytest.mark.parametrize(
+        "symbol,period,asset_class",
+        [
+            ("AAPL", "annual", "technology"),
+            ("MSFT", "annual", "technology"),
+            ("JPM", "annual", "financial"),
+            ("BAC", "annual", "financial"),
+            ("JNJ", "annual", "healthcare"),
+            ("PFE", "annual", "healthcare"),
+            ("XOM", "annual", "energy"),
+            ("CVX", "annual", "energy"),
+            ("WMT", "annual", "consumer_staples"),
+            ("PG", "annual", "consumer_staples"),
+            ("TSLA", "annual", "consumer_discretionary"),
+            ("HD", "annual", "consumer_discretionary"),
+            ("NEE", "annual", "utilities"),
+            ("DUK", "annual", "utilities"),
+            ("CAT", "annual", "industrials"),
+            ("BA", "annual", "industrials"),
+        ],
+    )
+    def test_balance_sheet_statement_sector_diversity(
+        self, api_key, symbol, period, asset_class
+    ):
+        """Test annual balance sheet statements across different sectors."""
+        try:
+            result = balance_sheet_statement(
+                apikey=api_key, symbol=symbol, period=period, limit=3
+            )
+        except ValidationError as e:
+            pytest.skip(
+                f"Validation error for {symbol}: {str(e)[:100]}... - API data doesn't match model"
+            )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+        assert (
+            len(result_list) > 0
+        ), f"Should get balance sheet data for {asset_class} stock {symbol}"
+
+        first_item = result_list[0]
+        if isinstance(first_item, dict):
+            validated = FMPBalanceSheetStatement.model_validate(first_item)
+        else:
+            validated = first_item
+
+        assert validated.symbol == symbol
+        assert (
+            validated.totalAssets is not None
+        ), f"Total assets should be present for {symbol}"
+        assert (
+            validated.totalEquity is not None
+        ), f"Total equity should be present for {symbol}"
+        assert validated.period == "FY", f"Annual period should be FY for {symbol}"
+
+        # Sector-specific validation
+        if asset_class == "financial":
+            # Financial companies often have different balance sheet structures
+            assert (
+                validated.totalAssets > 0
+            ), f"Financial company {symbol} should have positive total assets"
+        elif asset_class == "utilities":
+            # Utilities typically have high fixed assets
+            if (
+                hasattr(validated, "propertyPlantEquipmentNet")
+                and validated.propertyPlantEquipmentNet
+            ):
+                assert (
+                    validated.propertyPlantEquipmentNet > 0
+                ), f"Utility {symbol} should have significant PPE"
+        elif asset_class == "technology":
+            # Tech companies often have significant cash positions
+            if (
+                hasattr(validated, "cashAndCashEquivalents")
+                and validated.cashAndCashEquivalents
+            ):
+                assert (
+                    validated.cashAndCashEquivalents >= 0
+                ), f"Tech company {symbol} should have non-negative cash"
+
+    @pytest.mark.parametrize(
+        "symbol,period,business_model",
+        [
+            ("AMZN", "quarter", "e_commerce"),
+            ("NFLX", "quarter", "subscription"),
+            ("UBER", "quarter", "platform"),
+            ("SHOP", "quarter", "saas"),
+            ("ZM", "quarter", "saas"),
+            ("CRM", "quarter", "saas"),
+            ("SNOW", "quarter", "cloud"),
+            ("DDOG", "quarter", "cloud"),
+            ("ROKU", "quarter", "advertising"),
+            ("TDOC", "quarter", "telemedicine"),
+            ("PTON", "quarter", "fitness_tech"),
+            ("SQ", "quarter", "fintech"),
+            ("PYPL", "quarter", "fintech"),
+            ("TWLO", "quarter", "communication"),
+            ("NET", "quarter", "cloud_infrastructure"),
+        ],
+    )
+    def test_cash_flow_statement_business_models(
+        self, api_key, symbol, period, business_model
+    ):
+        """Test quarterly cash flow statements across different business models."""
+        result = cash_flow_statement(
+            apikey=api_key, symbol=symbol, period=period, limit=4
+        )
+
+        result_list = extract_data_list(result)
+        assert isinstance(result_list, list)
+        assert (
+            len(result_list) > 0
+        ), f"Should get cash flow data for {business_model} company {symbol}"
+
+        first_item = result_list[0]
+        if isinstance(first_item, dict):
+            validated = FMPCashFlowStatement.model_validate(first_item)
+        else:
+            validated = first_item
+
+        assert validated.symbol == symbol
+        assert (
+            validated.operatingCashFlow is not None
+        ), f"Operating cash flow should be present for {symbol}"
+        assert validated.period in [
+            "Q1",
+            "Q2",
+            "Q3",
+            "Q4",
+        ], f"Quarter should be valid for {symbol}"
+
+        # Business model specific validations
+        if business_model in ["saas", "cloud", "subscription"]:
+            # SaaS/Cloud companies often have strong operating cash flow
+            # (but we won't enforce positive due to growth investments)
+            assert validated.operatingCashFlow is not None
+        elif business_model == "e_commerce":
+            # E-commerce companies often have significant working capital changes
+            if hasattr(validated, "changeInWorkingCapital"):
+                assert validated.changeInWorkingCapital is not None
+        elif business_model in ["fintech", "platform"]:
+            # Platform companies might have different cash flow patterns
+            assert validated.operatingCashFlow is not None

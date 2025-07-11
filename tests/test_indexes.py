@@ -11,6 +11,16 @@ from fmpsdk.models import (
 from .conftest import extract_data_list
 
 
+def get_field_value(item, field_name):
+    """Helper to get field value from either dict or model object."""
+    if hasattr(item, field_name):
+        return getattr(item, field_name)
+    elif isinstance(item, dict):
+        return item.get(field_name)
+    else:
+        return None
+
+
 class TestIndexes:
     """Test cases for indexes module functions."""
 
@@ -141,62 +151,91 @@ class TestIndexes:
                 # Should be empty
                 assert len(data) == 0
 
-    @pytest.mark.parametrize("index_name", ["sp500", "nasdaq", "dowjones"])
-    def test_index_constituents_valid_indices(self, api_key, index_name):
-        """Test index_constituents with valid index names."""
+    @pytest.mark.parametrize(
+        "index_name,expected_min_constituents,index_type,market_focus",
+        [
+            ("sp500", 450, "broad_market", "large_cap"),
+            ("nasdaq", 90, "technology_heavy", "growth"),
+            ("dowjones", 25, "blue_chip", "established"),
+        ],
+    )
+    def test_index_constituents_comprehensive_coverage(
+        self, api_key, index_name, expected_min_constituents, index_type, market_focus
+    ):
+        """Test index constituents across comprehensive set of major indices."""
         result = indexes.index_constituents(apikey=api_key, index=index_name)
 
         # Test that we get a result
-        assert result is not None
+        assert (
+            result is not None
+        ), f"Should get result for {index_type} index {index_name}"
 
         # Convert to list if it's a model
         data = extract_data_list(result)
 
         # Test that we get a list
-        assert isinstance(data, list)
+        assert isinstance(data, list), f"Should get list for {index_name}"
 
         if data:  # If data is not empty
+            # Test constituent count expectations
+            assert (
+                len(data) >= expected_min_constituents
+            ), f"{index_name} ({index_type}) should have at least {expected_min_constituents} constituents, got {len(data)}"
+
             # Test first item structure
             first_item = data[0]
             if isinstance(first_item, dict):
                 # Validate dict structure - required fields
                 required_fields = ["symbol", "name", "sector"]
                 for field in required_fields:
-                    assert field in first_item
-                    assert isinstance(first_item[field], str)
-                    assert len(first_item[field]) > 0
-
-                # Optional fields
-                optional_fields = [
-                    "subSector",
-                    "headQuarter",
-                    "dateFirstAdded",
-                    "cik",
-                    "founded",
-                ]
-                for field in optional_fields:
-                    if field in first_item:
-                        assert isinstance(first_item[field], (str, type(None)))
+                    assert (
+                        field in first_item
+                    ), f"{field} should be present in {index_name} constituents"
+                    assert isinstance(
+                        first_item[field], str
+                    ), f"{field} should be string in {index_name}"
+                    assert (
+                        len(first_item[field]) > 0
+                    ), f"{field} should not be empty in {index_name}"
             else:
                 # Test Pydantic model
                 assert isinstance(first_item, FMPIndexConstituent)
-                assert hasattr(first_item, "symbol")
-                assert hasattr(first_item, "name")
-                assert hasattr(first_item, "sector")
-                assert isinstance(first_item.symbol, str)
-                assert isinstance(first_item.name, str)
-                assert isinstance(first_item.sector, str)
-                assert len(first_item.symbol) > 0
-                assert len(first_item.name) > 0
-                assert len(first_item.sector) > 0
+                assert hasattr(first_item, "symbol") and first_item.symbol
+                assert hasattr(first_item, "name") and first_item.name
+                assert hasattr(first_item, "sector") and first_item.sector
 
-            # Test expected number of constituents based on index
+            # Index-specific validations
             if index_name == "sp500":
-                assert len(data) >= 450  # S&P 500 should have around 500 companies
+                # S&P 500 should have diverse sectors
+                sectors = [
+                    get_field_value(item, "sector") for item in data[:50]
+                ]  # Check first 50
+                unique_sectors = set(filter(None, sectors))
+                assert (
+                    len(unique_sectors) >= 8
+                ), f"S&P 500 should have diverse sectors, found {len(unique_sectors)}"
+
+            elif index_name in ["nasdaq", "nasdaq100"]:
+                # NASDAQ indices should have heavy tech representation
+                sectors = [get_field_value(item, "sector") for item in data[:30]]
+                tech_count = sum(
+                    1 for sector in sectors if sector and "Technology" in sector
+                )
+                assert (
+                    tech_count >= 10
+                ), f"NASDAQ should have significant tech representation"
+
             elif index_name == "dowjones":
-                assert len(data) >= 25  # Dow Jones should have around 30 companies
-            elif index_name == "nasdaq":
-                assert len(data) >= 90  # NASDAQ 100 should have around 100 companies
+                # Dow Jones should have exactly around 30 companies
+                assert (
+                    28 <= len(data) <= 32
+                ), f"Dow Jones should have around 30 companies, got {len(data)}"
+
+            elif "small_cap" in market_focus or "russell2000" in index_name:
+                # Small cap indices should have many constituents
+                assert (
+                    len(data) >= 1000
+                ), f"Small cap index {index_name} should have many constituents"
 
             # Test for well-known stocks in each index
             symbols = []

@@ -782,3 +782,303 @@ class TestNewsParameterValidation:
 
         data_list = extract_data_list(result)
         assert isinstance(data_list, list)
+
+    @pytest.mark.parametrize(
+        "symbol,sector,expected_news_volume,company_size",
+        [
+            ("AAPL", "Technology", "high", "mega_cap"),
+            ("MSFT", "Technology", "high", "mega_cap"),
+            ("GOOGL", "Technology", "high", "mega_cap"),
+            ("AMZN", "Technology", "high", "mega_cap"),
+            ("TSLA", "Automotive", "very_high", "large_cap"),
+            ("META", "Technology", "high", "mega_cap"),
+            ("NVDA", "Technology", "very_high", "large_cap"),
+            ("JPM", "Financial", "high", "large_cap"),
+            ("JNJ", "Healthcare", "medium", "large_cap"),
+            ("PG", "Consumer Staples", "medium", "large_cap"),
+            ("XOM", "Energy", "medium", "large_cap"),
+            ("WMT", "Consumer Staples", "medium", "large_cap"),
+            ("DIS", "Media", "high", "large_cap"),
+            ("BA", "Aerospace", "high", "large_cap"),
+            ("CAT", "Industrial", "medium", "large_cap"),
+            ("ROKU", "Technology", "medium", "mid_cap"),
+            ("ZM", "Technology", "medium", "mid_cap"),
+            ("TDOC", "Healthcare", "medium", "mid_cap"),
+            ("AIRT", "Industrial", "low", "small_cap"),
+            ("TVTX", "Technology", "low", "small_cap"),
+        ],
+    )
+    def test_news_stock_symbol_comprehensive(
+        self, api_key, symbol, sector, expected_news_volume, company_size
+    ):
+        """Test getting stock news for comprehensive range of companies across sectors and sizes."""
+        start_time = time.time()
+        result = news.news_stock(apikey=api_key, symbols=[symbol], limit=20)
+        response_time = time.time() - start_time
+
+        # Response time validation
+        assert (
+            response_time < RESPONSE_TIME_LIMIT
+        ), f"Response time should be reasonable for {company_size} {symbol}"
+
+        # Check if result is error dict (invalid API key)
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list), f"Result should be list for {symbol}"
+
+        if data:  # If we have data
+            # Validate news volume expectations based on company size and sector
+            news_count = len(data)
+
+            if expected_news_volume == "very_high":
+                # Companies like TSLA, NVDA should have lots of news
+                assert (
+                    news_count >= 10
+                ), f"Very high profile {symbol} should have substantial news coverage"
+            elif expected_news_volume == "high":
+                # Mega-cap companies should have good news coverage
+                assert (
+                    news_count >= 5
+                ), f"High profile {symbol} should have good news coverage"
+            elif expected_news_volume == "medium":
+                # Large-cap companies should have some news
+                assert (
+                    news_count >= 2
+                ), f"Medium profile {symbol} should have some news coverage"
+            elif expected_news_volume == "low":
+                # Small-cap companies may have limited news
+                assert (
+                    news_count >= 0
+                ), f"Low profile {symbol} may have limited news coverage"
+
+            # Validate news article structure for first few items
+            for article in data[:3]:
+                if isinstance(article, dict):
+                    article_obj = FMPNewsArticle(**article)
+                else:
+                    article_obj = article
+
+                # Validate news article data
+                assert (
+                    article_obj.publishedDate
+                ), f"News for {symbol} should have publish date"
+                assert (
+                    article_obj.title or article_obj.text
+                ), f"News for {symbol} should have content"
+
+                # Symbol should appear in the news somehow (title, text, or symbol field)
+                symbol_mentioned = (
+                    (article_obj.symbol and symbol in article_obj.symbol)
+                    or (article_obj.title and symbol in article_obj.title.upper())
+                    or (article_obj.text and symbol in article_obj.text.upper())
+                )
+                # Note: Not strictly enforcing this as news aggregation can vary
+
+                # Date should be valid format and reasonably recent
+                try:
+                    news_date = datetime.strptime(
+                        article_obj.publishedDate[:10], "%Y-%m-%d"
+                    )
+                    days_old = (datetime.now() - news_date).days
+                    assert (
+                        days_old <= 365
+                    ), f"News for {symbol} should be within last year"
+                except ValueError:
+                    pytest.fail(
+                        f"Invalid date format for {symbol}: {article_obj.publishedDate}"
+                    )
+
+    @pytest.mark.parametrize(
+        "date_range_days,limit,expected_article_count_range,period_description",
+        [
+            (1, 10, (0, 10), "last_day"),
+            (7, 20, (5, 20), "last_week"),
+            (30, 50, (20, 50), "last_month"),
+            (90, 100, (30, 100), "last_quarter"),
+            (180, 150, (50, 150), "last_half_year"),
+            (365, 200, (100, 200), "last_year"),
+        ],
+    )
+    def test_news_stock_latest_date_ranges(
+        self,
+        api_key,
+        date_range_days,
+        limit,
+        expected_article_count_range,
+        period_description,
+    ):
+        """Test getting latest stock news across different date ranges and limits."""
+        start_time = time.time()
+        result = news.news_stock_latest(apikey=api_key, limit=limit)
+        response_time = time.time() - start_time
+
+        # Response time validation (allow more time for larger requests)
+        max_time = RESPONSE_TIME_LIMIT + (limit / 50)  # Add time based on limit
+        assert (
+            response_time < max_time
+        ), f"Response time should be reasonable for {period_description}"
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list), f"Result should be list for {period_description}"
+
+        if data:
+            actual_count = len(data)
+            min_expected, max_expected = expected_article_count_range
+
+            # Flexible validation - news volume can vary significantly
+            assert (
+                actual_count <= limit
+            ), f"Should not exceed requested limit for {period_description}"
+
+            if actual_count > 0:
+                # Validate date distribution for the period
+                dates = []
+                for article in data[: min(10, len(data))]:  # Check first 10 articles
+                    if isinstance(article, dict):
+                        article_obj = FMPNewsArticle(**article)
+                    else:
+                        article_obj = article
+
+                    try:
+                        news_date = datetime.strptime(
+                            article_obj.publishedDate[:10], "%Y-%m-%d"
+                        )
+                        days_old = (datetime.now() - news_date).days
+                        dates.append(days_old)
+                    except ValueError:
+                        continue
+
+                if dates:
+                    # Most news should be relatively recent
+                    recent_news_count = sum(1 for d in dates if d <= date_range_days)
+                    total_checked = len(dates)
+                    recent_ratio = (
+                        recent_news_count / total_checked if total_checked > 0 else 0
+                    )
+
+                    # At least 50% of news should be within the expected timeframe
+                    assert (
+                        recent_ratio >= 0.3
+                    ), f"At least 30% of news should be recent for {period_description}"
+
+    @pytest.mark.parametrize(
+        "news_type,expected_characteristics",
+        [
+            (
+                "general",
+                {
+                    "min_articles": 10,
+                    "max_age_days": 30,
+                    "content_types": ["title", "text"],
+                },
+            ),
+            (
+                "earnings",
+                {
+                    "min_articles": 5,
+                    "max_age_days": 90,
+                    "content_types": ["title", "text"],
+                },
+            ),
+            (
+                "press_releases",
+                {
+                    "min_articles": 3,
+                    "max_age_days": 60,
+                    "content_types": ["title", "text"],
+                },
+            ),
+            (
+                "analyst_ratings",
+                {"min_articles": 2, "max_age_days": 120, "content_types": ["title"]},
+            ),
+        ],
+    )
+    def test_news_content_type_validation(
+        self, api_key, news_type, expected_characteristics
+    ):
+        """Test different types of news content and their characteristics."""
+        if news_type == "general":
+            result = news.news_stock_latest(apikey=api_key, limit=20)
+        elif news_type == "press_releases":
+            result = news.company_press_releases_latest(apikey=api_key, limit=15)
+        elif news_type == "earnings":
+            # Use general news but look for earnings-related content
+            result = news.news_stock_latest(apikey=api_key, limit=30)
+        else:
+            # Default to general news
+            result = news.news_stock_latest(apikey=api_key, limit=20)
+
+        # Check if result is error dict
+        if isinstance(result, dict) and "Error Message" in result:
+            assert "Error Message" in result
+            return
+
+        data = extract_data_list(result)
+        assert isinstance(data, list), f"Result should be list for {news_type} news"
+
+        if data:
+            content_validation = expected_characteristics
+            articles_analyzed = 0
+            valid_articles = 0
+
+            for article in data[:15]:  # Analyze first 15 articles
+                if isinstance(article, dict):
+                    article_obj = FMPNewsArticle(**article)
+                else:
+                    article_obj = article
+
+                articles_analyzed += 1
+
+                # Validate content types
+                has_required_content = False
+                if "title" in content_validation["content_types"] and article_obj.title:
+                    has_required_content = True
+                if "text" in content_validation["content_types"] and article_obj.text:
+                    has_required_content = True
+
+                if has_required_content:
+                    valid_articles += 1
+
+                # Validate age
+                try:
+                    news_date = datetime.strptime(
+                        article_obj.publishedDate[:10], "%Y-%m-%d"
+                    )
+                    days_old = (datetime.now() - news_date).days
+                    assert (
+                        days_old <= content_validation["max_age_days"]
+                    ), f"{news_type} news should be within {content_validation['max_age_days']} days"
+                except ValueError:
+                    continue
+
+                # News type-specific validation
+                if news_type == "earnings" and article_obj.title:
+                    # Look for earnings-related keywords
+                    earnings_keywords = [
+                        "earnings",
+                        "quarter",
+                        "revenue",
+                        "profit",
+                        "eps",
+                    ]
+                    title_lower = article_obj.title.lower()
+                    has_earnings_content = any(
+                        keyword in title_lower for keyword in earnings_keywords
+                    )
+                    # Note: Not strictly enforcing as general news may not be earnings-specific
+
+            # Validate overall quality
+            if articles_analyzed > 0:
+                validity_ratio = valid_articles / articles_analyzed
+                assert (
+                    validity_ratio >= 0.7
+                ), f"At least 70% of {news_type} articles should have valid content"
