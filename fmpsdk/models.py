@@ -201,6 +201,24 @@ class FMPRatingSnapshot(BaseModel):
     priceToEarningsScore: int
     priceToBookScore: int
 
+class FMPRatingSnapshotV3(BaseModel):
+        symbol: str
+        date: str
+        rating: str
+        ratingScore: int
+        ratingRecommendation: str
+        ratingDetailsDCFScore: int
+        ratingDetailsDCFRecommendation: str
+        ratingDetailsROEScore: int
+        ratingDetailsROERecommendation: str
+        ratingDetailsROAScore: int
+        ratingDetailsROARecommendation: str
+        ratingDetailsDEScore: int
+        ratingDetailsDERecommendation: str
+        ratingDetailsPEScore: int
+        ratingDetailsPERecommendation: str
+        ratingDetailsPBScore: int
+        ratingDetailsPBRecommendation: str
 
 class FMPHistoricalRating(BaseModel):
     symbol: str

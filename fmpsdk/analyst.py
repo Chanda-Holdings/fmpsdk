@@ -8,6 +8,7 @@ from .models import (
     FMPPriceTargetConsensus,
     FMPPriceTargetSummary,
     FMPRatingSnapshot,
+    FMPRatingSnapshotV3,
     FMPStockGrade,
     FMPStockGradeSummary,
 )
@@ -83,6 +84,27 @@ def ratings_historical(
     if to_date:
         query_vars["to"] = to_date
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
+
+
+@parse_response
+def ratings_historical_v3(
+    apikey: str, symbol: str, limit: int = None
+) -> RootModel[typing.List[FMPRatingSnapshotV3]]:
+    """
+    Get historical ratings using the /v3/historical-rating endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        symbol (str): The symbol to get historical ratings for.
+        limit (int, optional): Limit the number of results.
+    Returns:
+        List of dictionaries with historical ratings.
+    """
+    path = f"historical-rating/{symbol}"
+    query_vars = {"apikey": apikey}
+    if limit:
+        query_vars["limit"] = str(limit)
+    return __return_json(path=path, query_vars=query_vars, version="v3")  # type: ignore[no-any-return]
 
 
 @parse_response
