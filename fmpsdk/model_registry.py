@@ -86,6 +86,7 @@ from .models import (
     FMPHistoricalIndexConstituent,
     FMPHistoricalIndustryPE,
     FMPHistoricalIndustryPerformance,
+    FMPHistoricalRating,
     FMPHistoricalSectorPE,
     FMPHistoricalSectorPerformance,
     FMPHistoricalSentiment,
@@ -172,7 +173,7 @@ ENDPOINT_MODEL_MAP = {
     # Analyst
     "analyst_estimates": RootModel[List[FMPAnalystEstimates]],
     "ratings_snapshot": RootModel[List[FMPRatingSnapshot]],
-    "ratings_historical": RootModel[List[FMPRatingSnapshot]],
+    "ratings_historical": RootModel[List[FMPHistoricalRating]],
     "price_target_summary": RootModel[List[FMPPriceTargetSummary]],
     "price_target_consensus": RootModel[List[FMPPriceTargetConsensus]],
     "price_target_news": RootModel[List[FMPPriceTargetNews]],

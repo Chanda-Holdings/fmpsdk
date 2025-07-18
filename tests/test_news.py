@@ -6,8 +6,19 @@ from typing import List
 import pytest
 
 from fmpsdk import news
-from fmpsdk.models import FMPNewsArticle, FMPPriceTargetNews, FMPStockGradeNews
-from tests.conftest import extract_data_list
+from fmpsdk.exceptions import InvalidAPIKeyException
+from fmpsdk.models import (
+    FMPNewsArticle,
+    FMPPriceTargetNews, 
+    FMPStockGradeNews,
+    FMPTrendingSentiment,
+    FMPHistoricalSentiment,
+)
+from tests.conftest import (
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
+)
 
 # Test configuration
 RESPONSE_TIME_LIMIT = 15.0  # seconds (news endpoints might be slower)
@@ -16,10 +27,7 @@ RESPONSE_TIME_LIMIT = 15.0  # seconds (news endpoints might be slower)
 @pytest.fixture
 def api_key():
     """API key fixture for testing."""
-    key = os.getenv("FMP_API_KEY")
-    if not key:
-        pytest.skip("FMP_API_KEY environment variable not set")
-    return key
+    return os.getenv("FMP_API_KEY")
 
 
 @pytest.fixture
@@ -46,30 +54,31 @@ class TestNewsBasic:
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for article in data[:3]:  # Check first few items
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
-                # Validate news article data
-                assert article_obj.publishedDate
-                assert article_obj.title or article_obj.text  # Should have some content
+        if models:  # If we have data
+            for article in models[:3]:  # Check first few items
+                # Enhanced business logic validation
+                assert article.publishedDate, "Published date should not be empty"
+                assert article.title or article.text, "Should have either title or text content"
 
                 # Date should be valid format
                 try:
-                    datetime.strptime(article_obj.publishedDate[:10], "%Y-%m-%d")
+                    datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
                 except ValueError:
-                    pytest.fail(f"Invalid date format: {article_obj.publishedDate}")
+                    pytest.fail(f"Invalid date format: {article.publishedDate}")
+
+                # Content validation
+                if article.title:
+                    assert len(article.title) <= 1000, "Title should be reasonable length"
+                    assert len(article.title) >= 5, "Title should have meaningful content"
+                if article.text:
+                    assert len(article.text) >= 10, "Text should have meaningful content"
+                if article.url:
+                    assert article.url.startswith(('http://', 'https://')), "URL should be valid"
+                if article.site:
+                    assert len(article.site) <= 100, "Site name should be reasonable length"
 
     def test_company_press_releases_latest(self, api_key):
         """Test getting latest company press releases."""
@@ -80,28 +89,25 @@ class TestNewsBasic:
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for release in data[:3]:  # Check first few items
-                if isinstance(release, dict):
-                    release_obj = FMPNewsArticle(**release)
-                else:
-                    release_obj = release
-
-                # Validate press release data
-                assert release_obj.publishedDate
-                assert release_obj.title or release_obj.text
+        if models:  # If we have data
+            for release in models[:3]:  # Check first few items
+                # Enhanced business logic validation
+                assert release.publishedDate, "Published date should not be empty"
+                assert release.title or release.text, "Should have either title or text content"
 
                 # Press releases should typically have a symbol
-                if release_obj.symbol:
-                    assert len(release_obj.symbol) <= 10  # Reasonable symbol length
+                if release.symbol:
+                    assert len(release.symbol) <= 10, "Symbol should have reasonable length"
+                    assert release.symbol.isupper(), "Symbol should be uppercase"
+
+                # Content quality validation
+                if release.title:
+                    assert len(release.title) >= 10, "Press release title should be substantial"
+                if release.text:
+                    assert len(release.text) >= 20, "Press release text should be substantial"
 
     def test_news_general_latest(self, api_key):
         """Test getting latest general market news."""
@@ -112,24 +118,22 @@ class TestNewsBasic:
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        if models:  # If we have data
+            for article in models[:3]:  # Check first few items
+                # Enhanced business logic validation
+                assert article.publishedDate, "Published date should not be empty"
+                assert article.title or article.text, "Should have either title or text content"
 
-        if data:  # If we have data
-            for article in data[:3]:  # Check first few items
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
-                # Validate general news data
-                assert article_obj.publishedDate
-                assert article_obj.title or article_obj.text
+                # News freshness validation
+                try:
+                    news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                    days_old = (datetime.now() - news_date).days
+                    assert days_old <= 365, f"News should not be too old (found {days_old} days old)"
+                except ValueError:
+                    pytest.fail(f"Invalid date format: {article.publishedDate}")
 
     def test_news_crypto_latest(self, api_key):
         """Test getting latest cryptocurrency news."""
@@ -140,24 +144,24 @@ class TestNewsBasic:
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        if models:  # If we have data
+            for article in models[:3]:  # Check first few items
+                # Enhanced business logic validation
+                assert article.publishedDate, "Published date should not be empty"
+                assert article.title or article.text, "Should have either title or text content"
 
-        if data:  # If we have data
-            for article in data[:3]:  # Check first few items
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
-                # Validate crypto news data
-                assert article_obj.publishedDate
-                assert article_obj.title or article_obj.text
+                # Crypto-specific validation
+                if article.symbol:
+                    # Crypto symbols often end with USD
+                    assert len(article.symbol) <= 15, "Crypto symbol should be reasonable length"
+                if article.title:
+                    # Crypto news might contain relevant keywords
+                    crypto_keywords = ['bitcoin', 'ethereum', 'crypto', 'blockchain', 'btc', 'eth']
+                    title_lower = article.title.lower()
+                    # Not enforcing keywords as general news might not always contain them
 
 
 class TestNewsWithParameters:
@@ -166,85 +170,73 @@ class TestNewsWithParameters:
     def test_news_stock_latest_with_date_range(self, api_key, recent_date, older_date):
         """Test stock news with date range parameters."""
         result = news.news_stock_latest(
-            apikey=api_key, from_date=older_date, to_date=recent_date, limit=15
+            apikey=api_key, 
+            from_date=older_date, 
+            to_date=recent_date, 
+            limit=15
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
-            # Validate date range filtering (if API supports it)
-            for article in data[:5]:
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
+        if models:
+            # Validate date range filtering with enhanced business logic
+            for article in models[:5]:
                 # Check if date is within range (API might not strictly enforce)
-                article_date = datetime.strptime(
-                    article_obj.publishedDate[:10], "%Y-%m-%d"
-                )
+                article_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
                 from_date_obj = datetime.strptime(older_date, "%Y-%m-%d")
                 to_date_obj = datetime.strptime(recent_date, "%Y-%m-%d")
 
                 # Some tolerance for API behavior
-                assert article_date >= from_date_obj - timedelta(days=7)
-                assert article_date <= to_date_obj + timedelta(days=7)
+                assert article_date >= from_date_obj - timedelta(days=7), f"Article date {article_date} too early"
+                assert article_date <= to_date_obj + timedelta(days=7), f"Article date {article_date} too late"
+
+                # Enhanced validation
+                if article.symbol:
+                    assert len(article.symbol) <= 10, "Stock symbol should be reasonable length"
+                if article.title:
+                    assert len(article.title) >= 5, "Article title should have substance"
 
     def test_news_with_pagination(self, api_key):
         """Test news endpoints with pagination parameters."""
         result = news.news_general_latest(apikey=api_key, page=0, limit=5)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
         # Should respect limit (with some tolerance)
-        if data:
-            assert len(data) <= 10  # Allow some flexibility
+        if models:
+            assert len(models) <= 10, "Should respect pagination limit with some tolerance"
+
+            # Validate pagination results
+            for article in models[:3]:
+                assert article.publishedDate, "Published date should be present"
+                assert article.title or article.text, "Content should be present"
 
     def test_crypto_news_with_date_filter(self, api_key, recent_date):
         """Test crypto news with date filtering."""
-        result = news.news_crypto_latest(
-            apikey=api_key, from_date=recent_date, limit=10
-        )
+        result = news.news_crypto_latest(apikey=api_key, from_date=recent_date, limit=10)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        if models:
+            for article in models[:3]:
+                # Enhanced crypto news validation
+                assert article.publishedDate, "Published date should be present"
+                
+                # Date should be after the filter date
+                article_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                filter_date = datetime.strptime(recent_date, "%Y-%m-%d")
+                assert article_date >= filter_date - timedelta(days=1), "Article should be after filter date"
 
-        if data:
-            for article in data[:3]:
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
-                # Validate crypto news content
-                assert article_obj.publishedDate
-                # Crypto news might contain relevant keywords
-                if article_obj.title:
-                    title_lower = article_obj.title.lower()
-                    crypto_keywords = [
-                        "bitcoin",
-                        "btc",
-                        "ethereum",
-                        "eth",
-                        "crypto",
-                        "blockchain",
-                        "defi",
-                    ]
-                    # Note: Not all crypto news will contain these keywords
+                # Crypto news quality validation
+                if article.symbol:
+                    assert len(article.symbol) <= 15, "Crypto symbol should be reasonable length"
+                if article.title:
+                    assert len(article.title) >= 5, "Title should have substance"
+                if article.site:
+                    assert len(article.site) <= 100, "Site name should be reasonable"
 
 
 class TestNewsDataQuality:
@@ -254,40 +246,29 @@ class TestNewsDataQuality:
         """Test news article content quality."""
         result = news.news_stock_latest(apikey=api_key, limit=20)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
+        models = get_response_models(result, FMPNewsArticle)
+        if models:
             valid_articles = 0
-            for article in data:
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
+            for article in models:
                 # Content quality checks
-                if article_obj.title and len(article_obj.title.strip()) > 10:
+                if article.title and len(article.title.strip()) > 10:
                     valid_articles += 1
 
                     # Title should not be excessively long
-                    assert len(article_obj.title) <= 500
+                    assert len(article.title) <= 500
 
                     # Published date should be recent (within last year)
-                    pub_date = datetime.strptime(
-                        article_obj.publishedDate[:10], "%Y-%m-%d"
-                    )
-                    one_year_ago = datetime.now() - timedelta(days=365)
-                    assert pub_date >= one_year_ago
+                    if article.publishedDate:
+                        pub_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                        assert pub_date >= datetime.now() - timedelta(days=365)
 
-                    # URL should be valid format if present
-                    if article_obj.url:
-                        assert article_obj.url.startswith(("http://", "https://"))
+                    # URL validation if present
+                    if article.url:
+                        assert article.url.startswith(("http://", "https://"))
 
-                    # Publisher should be reasonable if present
-                    if article_obj.publisher:
-                        assert len(article_obj.publisher) <= 100
+                    # Publisher validation if present
+                    if article.publisher:
+                        assert len(article.publisher) <= 100
 
             # Should have at least some valid articles
             assert valid_articles > 0
@@ -296,48 +277,29 @@ class TestNewsDataQuality:
         """Test press release symbol consistency."""
         result = news.company_press_releases_latest(apikey=api_key, limit=15)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            for release in data[:10]:
-                if isinstance(release, dict):
-                    release_obj = FMPNewsArticle(**release)
-                else:
-                    release_obj = release
-
+        models = get_response_models(result, FMPNewsArticle)
+        if models:
+            for release in models[:10]:
                 # Symbol format validation
-                if release_obj.symbol:
+                if release.symbol:
                     # Symbol should be uppercase and reasonable length
-                    assert release_obj.symbol.isupper() or release_obj.symbol.isdigit()
-                    assert 1 <= len(release_obj.symbol) <= 10
+                    assert release.symbol.isupper() or release.symbol.isdigit()
+                    assert 1 <= len(release.symbol) <= 10
 
                     # Symbol should not contain spaces or special chars (with some exceptions)
-                    assert not any(
-                        char in release_obj.symbol for char in [" ", "\t", "\n"]
-                    )
+                    assert not any(char in release.symbol for char in [" ", "\t", "\n"])
 
     def test_news_freshness(self, api_key):
         """Test that news data is reasonably fresh."""
         result = news.news_general_latest(apikey=api_key, limit=10)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
+        models = get_response_models(result, FMPNewsArticle)
+        if models:
             # Check the most recent article
-            latest_article = data[0]
-            if isinstance(latest_article, dict):
-                article_obj = FMPNewsArticle(**latest_article)
-            else:
-                article_obj = latest_article
+            latest_article = models[0]
 
             # Most recent news should be within last 7 days (with tolerance for weekends)
-            latest_date = datetime.strptime(article_obj.publishedDate[:10], "%Y-%m-%d")
+            latest_date = datetime.strptime(latest_article.publishedDate[:10], "%Y-%m-%d")
             days_old = (datetime.now() - latest_date).days
 
             # Allow up to 10 days for news data freshness
@@ -349,19 +311,13 @@ class TestNewsErrorHandling:
 
     def test_news_invalid_api_key(self):
         """Test news endpoints with invalid API key."""
-        result = news.news_stock_latest(apikey="invalid_key", limit=5)
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            news.news_stock_latest(apikey="invalid_key", limit=5)
 
     def test_press_releases_invalid_api_key(self):
         """Test press releases with invalid API key."""
-        result = news.company_press_releases_latest(apikey="invalid_key", limit=5)
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            news.company_press_releases_latest(apikey="invalid_key", limit=5)
 
     def test_news_invalid_date_format(self, api_key):
         """Test news with invalid date format."""
@@ -373,8 +329,8 @@ class TestNewsErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+            models = get_response_models(result, FMPNewsArticle)
+            validate_model_list(models, FMPNewsArticle)
 
     def test_news_invalid_pagination(self, api_key):
         """Test news with invalid pagination parameters."""
@@ -384,24 +340,18 @@ class TestNewsErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+            models = get_response_models(result, FMPNewsArticle)
+            validate_model_list(models, FMPNewsArticle)
 
     def test_general_news_invalid_api_key(self):
         """Test general news with invalid API key."""
-        result = news.news_general_latest(apikey="invalid_key")
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            news.news_general_latest(apikey="invalid_key")
 
     def test_crypto_news_invalid_api_key(self):
         """Test crypto news with invalid API key."""
-        result = news.news_crypto_latest(apikey="invalid_key")
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            news.news_crypto_latest(apikey="invalid_key")
 
 
 class TestNewsPerformance:
@@ -411,10 +361,7 @@ class TestNewsPerformance:
         """Test that all news endpoints respond within acceptable time."""
         endpoints = [
             ("stock_news", lambda: news.news_stock_latest(api_key, limit=10)),
-            (
-                "press_releases",
-                lambda: news.company_press_releases_latest(api_key, limit=10),
-            ),
+            ("press_releases", lambda: news.company_press_releases_latest(api_key, limit=10)),
             ("general_news", lambda: news.news_general_latest(api_key, limit=10)),
             ("crypto_news", lambda: news.news_crypto_latest(api_key, limit=10)),
         ]
@@ -424,37 +371,30 @@ class TestNewsPerformance:
             result = endpoint_func()
             response_time = time.time() - start_time
 
-            # Skip premium endpoints
+            # Response time validation
+            assert response_time < RESPONSE_TIME_LIMIT, f"{endpoint_name} took too long: {response_time}s"
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
+            # Check if result is error dict (invalid API key)
+            if isinstance(result, dict) and "Error Message" in result:
+                continue
 
-        data = extract_data_list(result)
-        if data and len(data) >= 5:
-            publishers = set()
-            sites = set()
-            symbols = set()
+            models = get_response_models(result, FMPNewsArticle)
+            if models and len(models) >= 5:
+                publishers = set()
+                sites = set()
+                symbols = set()
 
-            for article in data[:20]:
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
+                for article in models[:20]:
+                    if article.publisher:
+                        publishers.add(article.publisher)
+                    if article.site:
+                        sites.add(article.site)
+                    if article.symbol:
+                        symbols.add(article.symbol)
 
-                if article_obj.publisher:
-                    publishers.add(article_obj.publisher)
-                if article_obj.site:
-                    sites.add(article_obj.site)
-                if article_obj.symbol:
-                    symbols.add(article_obj.symbol)
-
-            # Should have some variety in news sources
-            # Note: This is a soft check as demo data might be limited
-            if len(data) >= 10:
-                assert (
-                    len(publishers) >= 1 or len(sites) >= 1
-                )  # At least some source diversity
+                # Should have some variety in news sources
+                if len(models) >= 10:
+                    assert len(publishers) >= 1 or len(sites) >= 1  # At least some source diversity
 
     def test_press_release_vs_news_distinction(self, api_key):
         """Test distinction between press releases and general news."""
@@ -462,30 +402,20 @@ class TestNewsPerformance:
         press_releases = news.company_press_releases_latest(apikey=api_key, limit=10)
         general_news = news.news_general_latest(apikey=api_key, limit=10)
 
-        # Check if result is error dict (invalid API key)
-        if (isinstance(press_releases, dict) and "Error Message" in press_releases) or (
-            isinstance(general_news, dict) and "Error Message" in general_news
-        ):
-            return
+        pr_models = get_response_models(press_releases, FMPNewsArticle)
+        news_models = get_response_models(general_news, FMPNewsArticle)
 
-        pr_data = extract_data_list(press_releases)
-        news_data = extract_data_list(general_news)
-
-        # Both should return data structures of the same type
-        assert isinstance(pr_data, list)
-        assert isinstance(news_data, list)
+        # Both should return valid model lists
+        validate_model_list(pr_models, FMPNewsArticle)
+        validate_model_list(news_models, FMPNewsArticle)
 
         # Content validation (basic structure should be similar)
-        if pr_data and news_data:
-            for article in pr_data[:3]:
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                    assert article_obj.publishedDate
+        if pr_models and news_models:
+            for article in pr_models[:3]:
+                assert article.publishedDate
 
-            for article in news_data[:3]:
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                    assert article_obj.publishedDate
+            for article in news_models[:3]:
+                assert article.publishedDate
 
 
 class TestNewsAdditionalEndpoints:
@@ -500,78 +430,54 @@ class TestNewsAdditionalEndpoints:
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
+        # Extract models and validate structure
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        # Extract data and validate structure
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPNewsArticle)
-                assert hasattr(item, "title")
-                assert hasattr(item, "text")
+        if models:  # If data is returned
+            for article in models[:3]:  # Test first few items
+                assert article.title
+                assert article.text
 
     def test_news_forex_with_date_range(self, api_key, recent_date, older_date):
         """Test forex news with date range."""
         result = news.news_forex(
             apikey=api_key, from_date=older_date, to_date=recent_date, limit=5
         )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
     def test_price_target_news(self, api_key):
         """Test getting price target news for a specific symbol."""
         result = news.price_target_news(apikey=api_key, symbol="AAPL", limit=10)
+        models = get_response_models(result, FMPPriceTargetNews)
+        validate_model_list(models, FMPPriceTargetNews)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPPriceTargetNews)
-                assert hasattr(item, "symbol")
+        if models:  # If data is returned
+            for item in models[:3]:  # Test first few items
+                validate_required_fields(item, ["symbol"])
 
     def test_price_target_latest_news(self, api_key):
-        """Test getting latest price target news for a specific symbol."""
-        result = news.price_target_latest_news(apikey=api_key, symbol="MSFT", limit=5)
+        """Test latest price target news."""
+        result = news.price_target_latest_news(apikey=api_key, symbol="AAPL", limit=10)
+        models = get_response_models(result, FMPPriceTargetNews)
+        validate_model_list(models, FMPPriceTargetNews)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPPriceTargetNews)
-                assert hasattr(item, "symbol")
+        if models:  # If data is returned
+            for item in models[:3]:  # Test first few items
+                validate_required_fields(item, ["symbol"])
 
     def test_news_stock_with_symbols(self, api_key):
         """Test getting news for specific stock symbols."""
         symbols = ["AAPL", "MSFT", "GOOGL"]
         result = news.news_stock(apikey=api_key, symbols=symbols, limit=10)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPNewsArticle)
-                assert hasattr(item, "title")
-                assert hasattr(item, "symbol")
+        if models:  # If data is returned
+            for article in models[:3]:  # Test first few items
+                assert article.title
+                assert article.symbol
 
     def test_news_stock_with_date_range(self, api_key, recent_date, older_date):
         """Test stock news with date range and multiple symbols."""
@@ -583,108 +489,73 @@ class TestNewsAdditionalEndpoints:
             to_date=recent_date,
             limit=5,
         )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
     def test_company_press_releases_with_symbols(self, api_key):
         """Test getting press releases for specific symbols."""
         symbols = ["AAPL", "MSFT"]
         result = news.company_press_releases(apikey=api_key, symbols=symbols, limit=10)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPNewsArticle)
-                assert hasattr(item, "title")
-                assert hasattr(item, "symbol")
+        if models:  # If data is returned
+            for article in models[:3]:  # Test first few items
+                assert article.title
+                assert article.symbol
 
     def test_news_crypto_with_symbols(self, api_key):
         """Test getting crypto news for specific symbols."""
         symbols = ["BTCUSD", "ETHUSD"]
         result = news.news_crypto(apikey=api_key, symbols=symbols, limit=10)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPNewsArticle)
-                assert hasattr(item, "title")
+        if models:  # If data is returned
+            for article in models[:3]:  # Test first few items
+                assert article.title
 
     def test_stock_grade_news(self, api_key):
         """Test getting stock grade news for a specific symbol."""
         result = news.stock_grade_news(apikey=api_key, symbol="AAPL", limit=10)
+        models = get_response_models(result, FMPStockGradeNews)
+        validate_model_list(models, FMPStockGradeNews)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPStockGradeNews)
-                assert hasattr(item, "symbol")
+        if models:  # If data is returned
+            for item in models[:3]:  # Test first few items
+                validate_required_fields(item, ["symbol"])
 
     def test_stock_grade_latest_news(self, api_key):
         """Test getting latest stock grade news."""
         result = news.stock_grade_latest_news(apikey=api_key, limit=10)
+        models = get_response_models(result, FMPStockGradeNews)
+        validate_model_list(models, FMPStockGradeNews)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
-
-        if data_list:  # If data is returned
-            for item in data_list[:3]:  # Test first few items
-                assert isinstance(item, FMPStockGradeNews)
+        if models:  # If data is returned
+            for item in models[:3]:  # Test first few items
+                validate_required_fields(item, ["symbol"])
 
     def test_social_sentiment(self, api_key):
         """Test getting social sentiment for a symbol."""
         result = news.social_sentiment(apikey=api_key, symbol="AAPL", page=0)
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPHistoricalSentiment)
+        validate_model_list(models, FMPHistoricalSentiment)
 
     def test_trending_sentiment_bullish(self, api_key):
         """Test getting trending bullish sentiment."""
         result = news.trending_sentiment(
             apikey=api_key, type="bullish", source="stocktwits"
         )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPTrendingSentiment)
+        validate_model_list(models, FMPTrendingSentiment)
 
     def test_trending_sentiment_bearish(self, api_key):
         """Test getting trending bearish sentiment."""
         result = news.trending_sentiment(
             apikey=api_key, type="bearish", source="stocktwits"
         )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPTrendingSentiment)
+        validate_model_list(models, FMPTrendingSentiment)
 
 
 class TestNewsParameterValidation:
@@ -695,42 +566,26 @@ class TestNewsParameterValidation:
         result = news.news_forex(
             apikey=api_key, from_date=older_date, to_date=recent_date, page=0, limit=5
         )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
     def test_price_target_news_with_pagination(self, api_key):
         """Test price target news with pagination."""
         result = news.price_target_news(apikey=api_key, symbol="AAPL", page=0, limit=5)
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPPriceTargetNews)
+        validate_model_list(models, FMPPriceTargetNews)
 
     def test_stock_grade_news_with_pagination(self, api_key):
         """Test stock grade news with pagination parameters."""
         result = news.stock_grade_news(apikey=api_key, symbol="MSFT", page=0, limit=5)
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPStockGradeNews)
+        validate_model_list(models, FMPStockGradeNews)
 
     def test_stock_grade_latest_news_with_pagination(self, api_key):
         """Test latest stock grade news with pagination."""
         result = news.stock_grade_latest_news(apikey=api_key, page=0, limit=5)
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPStockGradeNews)
+        validate_model_list(models, FMPStockGradeNews)
 
     def test_news_functions_with_empty_symbol_lists(self, api_key):
         """Test news functions with empty symbol lists."""
@@ -743,6 +598,9 @@ class TestNewsParameterValidation:
             if isinstance(result, dict) and "Error Message" in result:
                 # This is expected behavior for empty symbols
                 pass
+            else:
+                models = get_response_models(result, FMPNewsArticle)
+                validate_model_list(models, FMPNewsArticle)
         except Exception:
             # Exception is also acceptable for empty symbols
             pass
@@ -758,12 +616,8 @@ class TestNewsParameterValidation:
             page=0,
             limit=5,
         )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
     def test_news_crypto_all_params(self, api_key, recent_date, older_date):
         """Test crypto news with all parameters."""
@@ -776,12 +630,8 @@ class TestNewsParameterValidation:
             page=0,
             limit=5,
         )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key might be invalid or endpoint requires premium access")
-
-        data_list = extract_data_list(result)
-        assert isinstance(data_list, list)
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle)
 
     @pytest.mark.parametrize(
         "symbol,sector,expected_news_volume,company_size",
@@ -821,17 +671,12 @@ class TestNewsParameterValidation:
             response_time < RESPONSE_TIME_LIMIT
         ), f"Response time should be reasonable for {company_size} {symbol}"
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle, f"Result should be valid for {symbol}")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list), f"Result should be list for {symbol}"
-
-        if data:  # If we have data
+        if models:  # If we have data
             # Validate news volume expectations based on company size and sector
-            news_count = len(data)
+            news_count = len(models)
 
             if expected_news_volume == "very_high":
                 # Companies like TSLA, NVDA should have lots of news
@@ -855,41 +700,20 @@ class TestNewsParameterValidation:
                 ), f"Low profile {symbol} may have limited news coverage"
 
             # Validate news article structure for first few items
-            for article in data[:3]:
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
+            for article in models[:3]:
                 # Validate news article data
-                assert (
-                    article_obj.publishedDate
-                ), f"News for {symbol} should have publish date"
-                assert (
-                    article_obj.title or article_obj.text
-                ), f"News for {symbol} should have content"
-
-                # Symbol should appear in the news somehow (title, text, or symbol field)
-                symbol_mentioned = (
-                    (article_obj.symbol and symbol in article_obj.symbol)
-                    or (article_obj.title and symbol in article_obj.title.upper())
-                    or (article_obj.text and symbol in article_obj.text.upper())
-                )
-                # Note: Not strictly enforcing this as news aggregation can vary
+                assert article.publishedDate, f"News for {symbol} should have publish date"
+                assert article.title or article.text, f"News for {symbol} should have content"
 
                 # Date should be valid format and reasonably recent
                 try:
-                    news_date = datetime.strptime(
-                        article_obj.publishedDate[:10], "%Y-%m-%d"
-                    )
+                    news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
                     days_old = (datetime.now() - news_date).days
                     assert (
                         days_old <= 365
                     ), f"News for {symbol} should be within last year"
                 except ValueError:
-                    pytest.fail(
-                        f"Invalid date format for {symbol}: {article_obj.publishedDate}"
-                    )
+                    pytest.fail(f"Invalid date format for {symbol}: {article.publishedDate}")
 
     @pytest.mark.parametrize(
         "date_range_days,limit,expected_article_count_range,period_description",
@@ -921,16 +745,11 @@ class TestNewsParameterValidation:
             response_time < max_time
         ), f"Response time should be reasonable for {period_description}"
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle, f"Result should be valid for {period_description}")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list), f"Result should be list for {period_description}"
-
-        if data:
-            actual_count = len(data)
+        if models:
+            actual_count = len(models)
             min_expected, max_expected = expected_article_count_range
 
             # Flexible validation - news volume can vary significantly
@@ -941,16 +760,9 @@ class TestNewsParameterValidation:
             if actual_count > 0:
                 # Validate date distribution for the period
                 dates = []
-                for article in data[: min(10, len(data))]:  # Check first 10 articles
-                    if isinstance(article, dict):
-                        article_obj = FMPNewsArticle(**article)
-                    else:
-                        article_obj = article
-
+                for article in models[: min(10, len(models))]:  # Check first 10 articles
                     try:
-                        news_date = datetime.strptime(
-                            article_obj.publishedDate[:10], "%Y-%m-%d"
-                        )
+                        news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
                         days_old = (datetime.now() - news_date).days
                         dates.append(days_old)
                     except ValueError:
@@ -964,7 +776,7 @@ class TestNewsParameterValidation:
                         recent_news_count / total_checked if total_checked > 0 else 0
                     )
 
-                    # At least 50% of news should be within the expected timeframe
+                    # At least 30% of news should be within the expected timeframe
                     assert (
                         recent_ratio >= 0.3
                     ), f"At least 30% of news should be recent for {period_description}"
@@ -1017,32 +829,22 @@ class TestNewsParameterValidation:
             # Default to general news
             result = news.news_stock_latest(apikey=api_key, limit=20)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        models = get_response_models(result, FMPNewsArticle)
+        validate_model_list(models, FMPNewsArticle, f"Result should be valid for {news_type} news")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list), f"Result should be list for {news_type} news"
-
-        if data:
+        if models:
             content_validation = expected_characteristics
             articles_analyzed = 0
             valid_articles = 0
 
-            for article in data[:15]:  # Analyze first 15 articles
-                if isinstance(article, dict):
-                    article_obj = FMPNewsArticle(**article)
-                else:
-                    article_obj = article
-
+            for article in models[:15]:  # Analyze first 15 articles
                 articles_analyzed += 1
 
                 # Validate content types
                 has_required_content = False
-                if "title" in content_validation["content_types"] and article_obj.title:
+                if "title" in content_validation["content_types"] and article.title:
                     has_required_content = True
-                if "text" in content_validation["content_types"] and article_obj.text:
+                if "text" in content_validation["content_types"] and article.text:
                     has_required_content = True
 
                 if has_required_content:
@@ -1050,31 +852,13 @@ class TestNewsParameterValidation:
 
                 # Validate age
                 try:
-                    news_date = datetime.strptime(
-                        article_obj.publishedDate[:10], "%Y-%m-%d"
-                    )
+                    news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
                     days_old = (datetime.now() - news_date).days
                     assert (
                         days_old <= content_validation["max_age_days"]
                     ), f"{news_type} news should be within {content_validation['max_age_days']} days"
                 except ValueError:
                     continue
-
-                # News type-specific validation
-                if news_type == "earnings" and article_obj.title:
-                    # Look for earnings-related keywords
-                    earnings_keywords = [
-                        "earnings",
-                        "quarter",
-                        "revenue",
-                        "profit",
-                        "eps",
-                    ]
-                    title_lower = article_obj.title.lower()
-                    has_earnings_content = any(
-                        keyword in title_lower for keyword in earnings_keywords
-                    )
-                    # Note: Not strictly enforcing as general news may not be earnings-specific
 
             # Validate overall quality
             if articles_analyzed > 0:

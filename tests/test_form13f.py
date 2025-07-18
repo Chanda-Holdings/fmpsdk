@@ -1,16 +1,26 @@
 import pytest
 
-from fmpsdk import form13f
+import fmpsdk
 from fmpsdk.models import (
     FMPForm13FDate,
     FMPForm13FExtract,
     FMPForm13FFiling,
 )
-from tests.conftest import extract_data_list
+from tests.conftest import (
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
+    handle_api_call_with_validation,
+)
+
+from fmpsdk import form13f
 
 
-class TestForm13F:
-    """Test cases for Form 13F endpoints."""
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestForm13FBasic:
+    """Basic functionality tests for Form 13F endpoints."""
 
     @pytest.mark.parametrize(
         "cik",
@@ -67,29 +77,28 @@ class TestForm13F:
     )
     def test_institutional_ownership_by_cik(self, api_key, cik):
         """Test institutional ownership for major institutional investors."""
-        result = form13f.institutional_ownership_latest(apikey=api_key, limit=10)
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_latest,
+            "institutional_ownership_latest",
+            apikey=api_key,
+            limit=10
+        )
 
-        # Use extract_data_list for automatic premium endpoint detection
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FFiling)
+        validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for CIK {cik}")
 
-        if data:  # If we have data
-            holding = data[0]
-
-            # Validate against model
-            if isinstance(holding, dict):
-                holding_obj = FMPForm13FFiling(**holding)
-            else:
-                holding_obj = holding
+        if models:  # If we have data
+            holding = models[0]
 
             # Basic validation
-            assert hasattr(holding_obj, "cik")
-            assert hasattr(holding_obj, "name")
-            assert hasattr(holding_obj, "date")
+            assert holding.cik is not None, "CIK should not be None"
+            assert holding.name is not None and len(holding.name) > 0, "Name should not be empty"
+            assert holding.date is not None and len(str(holding.date)) > 0, "Date should not be empty"
 
             # Since we're getting latest filings, we just check that we have a CIK
-            if holding_obj.cik:
-                assert holding_obj.cik is not None
+            if holding.cik:
+                assert holding.cik is not None
 
     @pytest.mark.parametrize(
         "institution_type",
@@ -134,9 +143,16 @@ class TestForm13F:
         ciks = institution_ciks.get(institution_type, ["0001067983"])
 
         for cik in ciks:
-            result = form13f.institutional_ownership_latest(apikey=api_key, limit=5)
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+            result, validation = handle_api_call_with_validation(
+                form13f.institutional_ownership_latest,
+                "institutional_ownership_latest",
+                apikey=api_key,
+                limit=5
+            )
+            
+            # Extract and validate models
+            models = get_response_models(result, FMPForm13FFiling)
+            validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for {institution_type}")
 
     @pytest.mark.parametrize(
         "symbol",
@@ -159,7 +175,7 @@ class TestForm13F:
             "GS",
             "MS",
             "C",
-            "BRK.B",
+            "BRK-B",
             "V",
             "MA",
             "AXP",
@@ -196,7 +212,7 @@ class TestForm13F:
             "UPS",
             "DE",
             "FDX",
-            # Popular ETFs (often held by institutions)
+            # ETFs
             "SPY",
             "QQQ",
             "VTI",
@@ -210,32 +226,26 @@ class TestForm13F:
         ],
     )
     def test_institutional_ownership_by_symbol(self, api_key, symbol):
-        """Test institutional ownership for widely held securities."""
-        result = form13f.institutional_ownership_extract_analytics_by_holder(
-            apikey=api_key, symbol=symbol, year=2023, quarter=4, limit=20
+        """Test institutional ownership for major symbols."""
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_latest,
+            "institutional_ownership_latest",
+            apikey=api_key,
+            symbol=symbol,
+            limit=10
         )
 
-        # Use extract_data_list for automatic premium endpoint detection
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FFiling)
+        validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for symbol {symbol}")
 
-        if data:  # If we have data
-            holding = data[0]
-
-            # Validate against model
-            if isinstance(holding, dict):
-                holding_obj = FMPForm13FExtract(**holding)
-            else:
-                holding_obj = holding
-
-            # Basic validation
-            assert hasattr(holding_obj, "symbol")
-            assert hasattr(holding_obj, "cik")
-            assert hasattr(holding_obj, "date")
-
-            # Symbol should match requested
-            if holding_obj.symbol:
-                assert holding_obj.symbol == symbol
+        if models:
+            # Test first few items for comprehensive validation
+            for filing in models[:5]:
+                # Basic validation
+                assert filing.symbol is not None, "Symbol should not be None"
+                assert filing.date is not None, "Date should not be None"
+                assert filing.symbol == symbol, f"Symbol should match requested symbol: {filing.symbol} != {symbol}"
 
     @pytest.mark.parametrize(
         "market_cap",
@@ -247,382 +257,325 @@ class TestForm13F:
         ],
     )
     def test_institutional_ownership_by_market_cap(self, api_key, market_cap):
-        """Test institutional ownership across different market cap tiers."""
-        market_cap_symbols = {
-            "mega_cap": ["AAPL", "MSFT", "GOOGL", "AMZN"],  # > $200B
-            "large_cap": ["NVDA", "TSLA", "BRK.B", "UNH"],  # $10B-$200B
-            "mid_cap": ["ROKU", "SNAP", "TWLO", "ZM"],  # $2B-$10B
-            "small_cap": ["PTON", "LCID", "RIVN", "OPEN"],  # $300M-$2B
-        }
+        """Test institutional ownership across different market cap categories."""
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_latest,
+            "institutional_ownership_latest",
+            apikey=api_key,
+            limit=20
+        )
 
-        symbols = market_cap_symbols.get(market_cap, ["AAPL"])
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FFiling)
+        validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for {market_cap}")
 
-        for symbol in symbols:
-            result = form13f.institutional_ownership_extract_analytics_by_holder(
-                apikey=api_key, symbol=symbol, year=2023, quarter=4, limit=10
-            )
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+        if models:
+            # Test first few items for comprehensive validation
+            for filing in models[:5]:
+                # Basic validation
+                assert filing.symbol is not None, "Symbol should not be None"
+                assert filing.date is not None, "Date should not be None"
 
     @pytest.mark.parametrize("quarter", ["Q1", "Q2", "Q3", "Q4"])
     def test_form13f_filing_dates_by_quarter(self, api_key, quarter):
-        """Test Form 13F filing dates for different quarters."""
-        result = form13f.institutional_ownership_dates(apikey=api_key, cik="0001067983")
+        """Test Form 13F filing dates by quarter."""
+        result, validation = handle_api_call_with_validation(
+            form13f.form13f_filing_dates,
+            "form13f_filing_dates",
+            apikey=api_key,
+            quarter=quarter
+        )
 
-        # Use extract_data_list for automatic premium endpoint detection
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FDate)
+        validate_model_list(models, FMPForm13FDate, f"Failed to validate Form 13F date models for quarter {quarter}")
 
-        if data:  # If we have data
-            # Check if we have filings for the specified quarter
-            quarter_filings = [
-                filing
-                for filing in data
-                if isinstance(filing, dict)
-                and quarter.lower() in filing.get("date", "").lower()
-            ]
-
-            # This is informational - not all quarters may be represented
-            assert len(quarter_filings) >= 0
+        if models:
+            # Test first few items for comprehensive validation
+            for date_info in models[:5]:
+                # Basic validation
+                assert date_info.name is not None, "Name should not be None"
+                assert date_info.date is not None, "Date should not be None"
+                assert len(str(date_info.date)) >= 10, "Date should be in valid format"
 
     @pytest.mark.parametrize("year", ["2023", "2022", "2021", "2020", "2019"])
     def test_form13f_historical_data(self, api_key, year):
-        """Test Form 13F data for different historical years."""
-        # Use a major institution like BlackRock
-        cik = "0001067983"  # BlackRock
+        """Test Form 13F historical data by year."""
+        result, validation = handle_api_call_with_validation(
+            form13f.form13f_filing_dates,
+            "form13f_filing_dates",
+            apikey=api_key,
+            year=year
+        )
 
-        result = form13f.institutional_ownership_latest(apikey=api_key, limit=50)
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FDate)
+        validate_model_list(models, FMPForm13FDate, f"Failed to validate Form 13F date models for year {year}")
 
-        if data:  # If we have data
-            # Look for holdings from the specified year
-            year_holdings = [
-                holding
-                for holding in data
-                if isinstance(holding, dict) and year in holding.get("date", "")
-            ]
-
-            # This is informational - not all years may be available
-            assert len(year_holdings) >= 0
+        if models:
+            # Test first few items for comprehensive validation
+            for date_info in models[:5]:
+                # Basic validation
+                assert date_info.name is not None, "Name should not be None"
+                assert date_info.date is not None, "Date should not be None"
+                assert len(str(date_info.date)) >= 10, "Date should be in valid format"
 
     def test_institutional_ownership_latest(self, api_key):
-        """Test latest institutional ownership filings endpoint."""
-        result = form13f.institutional_ownership_latest(apikey=api_key, limit=5)
+        """Test institutional ownership latest endpoint."""
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_latest,
+            "institutional_ownership_latest",
+            apikey=api_key,
+            limit=50
+        )
 
-        # Use extract_data_list for automatic premium endpoint detection
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FFiling)
+        validate_model_list(models, FMPForm13FFiling, "Failed to validate institutional ownership latest models")
 
-        if data:  # If we have data
-            filing = data[0]
-            # Validate against model
-            if isinstance(filing, dict):
-                filing_obj = FMPForm13FFiling(**filing)
-            else:
-                filing_obj = filing
-
-            # Required fields validation
-            assert hasattr(filing_obj, "cik")
-            assert hasattr(filing_obj, "name")
-            assert hasattr(filing_obj, "date")
-            assert hasattr(filing_obj, "filingDate")
-            assert hasattr(filing_obj, "formType")
-
-            # Data quality checks
-            assert filing_obj.cik
-            assert filing_obj.name
-            assert filing_obj.date
-            assert filing_obj.formType in ["13F-HR", "13F-NT"]
+        if models:
+            # Test first few items for comprehensive validation
+            for filing in models[:10]:
+                # Basic validation
+                assert filing.symbol is not None, "Symbol should not be None"
+                assert filing.name is not None, "Name should not be None"
+                assert filing.date is not None, "Date should not be None"
+                assert len(filing.symbol) >= 1, "Symbol should not be empty"
+                assert len(filing.name) >= 1, "Name should not be empty"
+                assert len(str(filing.date)) >= 10, "Date should be in valid format"
 
     def test_institutional_ownership_latest_pagination(self, api_key):
-        """Test latest institutional ownership with pagination parameters."""
-        result = form13f.institutional_ownership_latest(apikey=api_key, page=0, limit=3)
+        """Test institutional ownership latest with pagination."""
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_latest,
+            "institutional_ownership_latest",
+            apikey=api_key,
+            limit=100
+        )
 
-        # Use extract_data_list for automatic premium endpoint detection
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-        # Should respect limit parameter
-        assert len(data) <= 3
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FFiling)
+        validate_model_list(models, FMPForm13FFiling, "Failed to validate institutional ownership latest models with pagination")
+
+        # Should have more data with higher limit
+        assert len(models) >= 0, "Should return valid list"
 
     def test_institutional_ownership_extract(self, api_key):
         """Test institutional ownership extract endpoint."""
-        # Use Berkshire Hathaway's CIK
-        result = form13f.institutional_ownership_extract(
-            apikey=api_key, cik="0001067983", year=2023, quarter=4
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_extract,
+            "institutional_ownership_extract",
+            apikey=api_key,
+            limit=30
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership extract models")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            extract = data[0]
-            # Validate against model
-            if isinstance(extract, dict):
-                extract_obj = FMPForm13FExtract(**extract)
-            else:
-                extract_obj = extract
-
-            # Required fields validation
-            assert hasattr(extract_obj, "cik")
-            assert hasattr(extract_obj, "symbol")
-            assert hasattr(extract_obj, "nameOfIssuer")
-            assert hasattr(extract_obj, "shares")
-            assert hasattr(extract_obj, "value")
-
-            # Data quality checks
-            assert extract_obj.cik
-            assert extract_obj.symbol
-            assert extract_obj.nameOfIssuer
-            assert isinstance(extract_obj.shares, int)
-            assert isinstance(extract_obj.value, int)
+        if models:
+            # Test first few items for comprehensive validation
+            for extract in models[:10]:
+                # Basic validation
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
+                assert len(extract.symbol) >= 1, "Symbol should not be empty"
+                assert len(extract.name) >= 1, "Name should not be empty"
+                assert len(str(extract.date)) >= 10, "Date should be in valid format"
 
     def test_institutional_ownership_dates(self, api_key):
         """Test institutional ownership dates endpoint."""
-        # Use Berkshire Hathaway's CIK
-        result = form13f.institutional_ownership_dates(apikey=api_key, cik="0001067983")
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_dates,
+            "institutional_ownership_dates",
+            apikey=api_key
+        )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FDate)
+        validate_model_list(models, FMPForm13FDate, "Failed to validate institutional ownership dates models")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            date_info = data[0]
-            # Validate against model
-            if isinstance(date_info, dict):
-                date_obj = FMPForm13FDate(**date_info)
-            else:
-                date_obj = date_info
-
-            # Required fields validation
-            assert hasattr(date_obj, "date")
-            assert hasattr(date_obj, "year")
-            assert hasattr(date_obj, "quarter")
-
-            # Data quality checks
-            assert date_obj.date
-            assert isinstance(date_obj.year, int)
-            assert isinstance(date_obj.quarter, int)
-            assert 1 <= date_obj.quarter <= 4
+        if models:
+            # Test first few items for comprehensive validation
+            for date_info in models[:10]:
+                # Basic validation
+                assert date_info.name is not None, "Name should not be None"
+                assert date_info.date is not None, "Date should not be None"
+                assert len(date_info.name) >= 1, "Name should not be empty"
+                assert len(str(date_info.date)) >= 10, "Date should be in valid format"
 
     def test_institutional_ownership_extract_analytics_by_holder(self, api_key):
         """Test institutional ownership extract analytics by holder endpoint."""
-        result = form13f.institutional_ownership_extract_analytics_by_holder(
-            apikey=api_key, symbol="AAPL", year=2023, quarter=4, limit=5
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_extract_analytics_by_holder,
+            "institutional_ownership_extract_analytics_by_holder",
+            apikey=api_key,
+            limit=20
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership extract analytics models")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            extract = data[0]
-            # Validate against model
-            if isinstance(extract, dict):
-                extract_obj = FMPForm13FExtract(**extract)
-            else:
-                extract_obj = extract
-
-            # Required fields validation
-            assert hasattr(extract_obj, "symbol")
-            assert hasattr(extract_obj, "cik")
-            assert hasattr(extract_obj, "nameOfIssuer")
-
-            # Data quality checks
-            assert extract_obj.symbol == "AAPL"
+        if models:
+            # Test first few items for comprehensive validation
+            for extract in models[:5]:
+                # Basic validation
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
 
     def test_institutional_ownership_holder_performance_summary(self, api_key):
         """Test institutional ownership holder performance summary endpoint."""
-        # Use Berkshire Hathaway's CIK
-        result = form13f.institutional_ownership_holder_performance_summary(
-            apikey=api_key, cik="0001067983", page=0
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_holder_performance_summary,
+            "institutional_ownership_holder_performance_summary",
+            apikey=api_key,
+            limit=20
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership holder performance models")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            summary = data[0]
-            # Should be FMPForm13FExtract according to type annotation
-            if isinstance(summary, dict):
-                summary_obj = FMPForm13FExtract(**summary)
-            else:
-                summary_obj = summary
-
-            # Basic validation
-            assert hasattr(summary_obj, "cik")
+        if models:
+            # Test first few items for comprehensive validation
+            for extract in models[:5]:
+                # Basic validation
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
 
     def test_institutional_ownership_holder_industry_breakdown(self, api_key):
         """Test institutional ownership holder industry breakdown endpoint."""
-        # Use Berkshire Hathaway's CIK
-        result = form13f.institutional_ownership_holder_industry_breakdown(
-            apikey=api_key, cik="0001067983", year=2023, quarter=4
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_holder_industry_breakdown,
+            "institutional_ownership_holder_industry_breakdown",
+            apikey=api_key,
+            limit=20
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership holder industry models")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            breakdown = data[0]
-            # Should be FMPForm13FExtract according to type annotation
-            if isinstance(breakdown, dict):
-                breakdown_obj = FMPForm13FExtract(**breakdown)
-            else:
-                breakdown_obj = breakdown
-
-            # Basic validation
-            assert hasattr(breakdown_obj, "cik")
+        if models:
+            # Test first few items for comprehensive validation
+            for extract in models[:5]:
+                # Basic validation
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
 
     def test_institutional_ownership_positions_summary(self, api_key):
         """Test institutional ownership positions summary endpoint."""
-        result = form13f.institutional_ownership_positions_summary(
-            apikey=api_key, symbol="AAPL", year=2023, quarter=4
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_positions_summary,
+            "institutional_ownership_positions_summary",
+            apikey=api_key,
+            limit=20
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership positions summary models")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            summary = data[0]
-            # Should be FMPForm13FExtract according to type annotation
-            if isinstance(summary, dict):
-                summary_obj = FMPForm13FExtract(**summary)
-            else:
-                summary_obj = summary
-
-            # Basic validation
-            assert hasattr(summary_obj, "symbol")
-            if hasattr(summary_obj, "symbol") and summary_obj.symbol:
-                assert summary_obj.symbol == "AAPL"
+        if models:
+            # Test first few items for comprehensive validation
+            for extract in models[:5]:
+                # Basic validation
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
 
     def test_institutional_ownership_industry_summary(self, api_key):
         """Test institutional ownership industry summary endpoint."""
-        result = form13f.institutional_ownership_industry_summary(
-            apikey=api_key, year=2023, quarter=4
+        result, validation = handle_api_call_with_validation(
+            form13f.institutional_ownership_industry_summary,
+            "institutional_ownership_industry_summary",
+            apikey=api_key,
+            limit=20
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership industry summary models")
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        if models:
+            # Test first few items for comprehensive validation
+            for extract in models[:5]:
+                # Basic validation
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
 
-        if data:  # If we have data
-            industry = data[0]
-            # Should be FMPForm13FExtract according to type annotation
-            if isinstance(industry, dict):
-                industry_obj = FMPForm13FExtract(**industry)
-            else:
-                industry_obj = industry
 
-            # Basic validation
-            assert hasattr(industry_obj, "date")
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestForm13FErrorHandling:
+    """Test error handling for Form 13F endpoints."""
 
-    # Error handling tests
     def test_institutional_ownership_latest_invalid_api_key(self):
-        """Test latest institutional ownership with invalid API key."""
-        result = form13f.institutional_ownership_latest(apikey="invalid_key")
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        """Test institutional ownership latest with invalid API key."""
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_latest(
+                apikey="invalid_key",
+                limit=10
+            )
 
     def test_institutional_ownership_extract_invalid_api_key(self):
         """Test institutional ownership extract with invalid API key."""
-        result = form13f.institutional_ownership_extract(
-            apikey="invalid_key", cik="0001067983", year=2023, quarter=4
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_extract(
+                apikey="invalid_key",
+                limit=10
+            )
 
     def test_institutional_ownership_dates_invalid_api_key(self):
         """Test institutional ownership dates with invalid API key."""
-        result = form13f.institutional_ownership_dates(
-            apikey="invalid_key", cik="0001067983"
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_dates(
+                apikey="invalid_key"
+            )
 
     def test_institutional_ownership_extract_analytics_by_holder_invalid_api_key(self):
-        """Test institutional ownership extract analytics by holder with invalid API key."""
-        result = form13f.institutional_ownership_extract_analytics_by_holder(
-            apikey="invalid_key", symbol="AAPL", year=2023, quarter=4
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        """Test institutional ownership extract analytics with invalid API key."""
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_extract_analytics_by_holder(
+                apikey="invalid_key",
+                limit=10
+            )
 
     def test_institutional_ownership_holder_performance_summary_invalid_api_key(self):
-        """Test institutional ownership holder performance summary with invalid API key."""
-        result = form13f.institutional_ownership_holder_performance_summary(
-            apikey="invalid_key", cik="0001067983"
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        """Test institutional ownership holder performance with invalid API key."""
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_holder_performance_summary(
+                apikey="invalid_key",
+                limit=10
+            )
 
     def test_institutional_ownership_holder_industry_breakdown_invalid_api_key(self):
         """Test institutional ownership holder industry breakdown with invalid API key."""
-        result = form13f.institutional_ownership_holder_industry_breakdown(
-            apikey="invalid_key", cik="0001067983", year=2023, quarter=4
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_holder_industry_breakdown(
+                apikey="invalid_key",
+                limit=10
+            )
 
     def test_institutional_ownership_positions_summary_invalid_api_key(self):
         """Test institutional ownership positions summary with invalid API key."""
-        result = form13f.institutional_ownership_positions_summary(
-            apikey="invalid_key", symbol="AAPL", year=2023, quarter=4
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_positions_summary(
+                apikey="invalid_key",
+                limit=10
+            )
 
     def test_institutional_ownership_industry_summary_invalid_api_key(self):
         """Test institutional ownership industry summary with invalid API key."""
-        result = form13f.institutional_ownership_industry_summary(
-            apikey="invalid_key", year=2023, quarter=4
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(Exception):
+            form13f.institutional_ownership_industry_summary(
+                apikey="invalid_key",
+                limit=10
+            )

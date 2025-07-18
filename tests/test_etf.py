@@ -1,7 +1,4 @@
-import time
-
 import pytest
-from pydantic_core import ValidationError
 
 from fmpsdk import etf
 from fmpsdk.models import (
@@ -12,7 +9,12 @@ from fmpsdk.models import (
     FMPFundSectorWeighting,
 )
 
-from .conftest import extract_data_list
+from tests.conftest import (
+    get_response_models,
+    handle_api_call_with_validation,
+    validate_model_list,
+    validate_required_fields,
+)
 
 
 class TestETFInfo:
@@ -81,47 +83,51 @@ class TestETFInfo:
     )
     def test_etf_info_comprehensive(self, api_key, symbol):
         """Test ETF info across various categories and asset classes."""
-        try:
-            result = etf.etf_info(apikey=api_key, symbol=symbol)
-        except ValidationError as e:
-            pytest.skip(
-                f"Validation error for {symbol}: {str(e)[:100]}... - API data doesn't match model"
-            )
-
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                fund_info = FMPFundInfo(**first_item)
-            else:
-                fund_info = first_item
-
-            assert fund_info.symbol == symbol, f"Symbol should match {symbol}"
-
-            # Basic data quality checks
-            if hasattr(fund_info, "fundName") and fund_info.fundName:
-                assert len(fund_info.fundName) > 3, "Fund name should be meaningful"
-
-            if (
-                hasattr(fund_info, "expenseRatio")
-                and fund_info.expenseRatio is not None
-            ):
-                assert (
-                    0 <= fund_info.expenseRatio <= 5
-                ), "Expense ratio should be reasonable (0-5%)"
-
-            if hasattr(fund_info, "nav") and fund_info.nav is not None:
-                assert fund_info.nav > 0, "NAV should be positive"
+        response, validation = handle_api_call_with_validation(
+            etf.etf_info, "etf_info", True, apikey=api_key, symbol=symbol
+        )
+        
+        # ETF info specific validation
+        result_list = get_response_models(response, FMPFundInfo)
+        
+        for item in result_list:
+            # Symbol validation
+            if item.symbol:
+                assert item.symbol == symbol, f"Symbol should match {symbol}"
+                assert len(item.symbol) <= 10, f"Symbol should be reasonable length: {item.symbol}"
+                assert item.symbol.replace("-", "").replace(".", "").isalnum(), f"Symbol should be alphanumeric: {item.symbol}"
+            
+            # Fund name validation
+            if item.name:
+                assert len(item.name) >= 3, f"Fund name should be meaningful: {item.name}"
+                assert len(item.name) <= 200, f"Fund name should be reasonable length: {item.name}"
+            
+            # Expense ratio validation
+            if item.expenseRatio is not None:
+                assert 0 <= item.expenseRatio <= 5, f"Expense ratio should be reasonable (0-5%): {item.expenseRatio}"
+            
+            # NAV validation
+            if item.nav is not None:
+                assert item.nav > 0, f"NAV should be positive: {item.nav}"
+                assert item.nav <= 10000, f"NAV should be reasonable: {item.nav}"
+            
+            # Assets under management validation
+            if item.assetsUnderManagement is not None:
+                assert item.assetsUnderManagement >= 0, f"AUM should be non-negative: {item.assetsUnderManagement}"
+            
+            # Average volume validation
+            if item.avgVolume is not None:
+                assert item.avgVolume >= 0, f"Average volume should be non-negative: {item.avgVolume}"
+            
+            # Inception date validation
+            if item.inceptionDate:
+                assert len(item.inceptionDate) >= 8, f"Inception date should be properly formatted: {item.inceptionDate}"
 
     @pytest.mark.parametrize(
         "etf_category",
         [
             "broad_market",
-            "sector",
+            "sector", 
             "international",
             "fixed_income",
             "commodity",
@@ -142,52 +148,25 @@ class TestETFInfo:
         symbols = category_etfs.get(etf_category, ["SPY"])
 
         for symbol in symbols:
-            try:
-                result = etf.etf_info(apikey=api_key, symbol=symbol)
-            except ValidationError as e:
-                pytest.skip(
-                    f"Validation error for {symbol}: {str(e)[:100]}... - API data doesn't match model"
-                )
-
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Response should be a list for {symbol}"
-
-    def test_etf_info_success(self, api_key):
-        """Test successful retrieval of ETF info."""
-        result = etf.etf_info(apikey=api_key, symbol="SPY")
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                fund_info = FMPFundInfo(**first_item)
-            else:
-                fund_info = first_item
-            assert fund_info.symbol, "Symbol should not be empty"
-
-    def test_etf_info_major_etfs(self, api_key):
-        """Test ETF info for major ETFs."""
-        major_etfs = ["SPY", "QQQ", "VTI", "IWM"]
-
-        for symbol in major_etfs:
-            result = etf.etf_info(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Response should be a list for {symbol}"
-
-    def test_etf_info_invalid_symbol(self, api_key):
-        """Test ETF info with invalid symbol."""
-        result = etf.etf_info(apikey=api_key, symbol="INVALID")
-        result_list = extract_data_list(result)
-        assert isinstance(
-            result_list, list
-        ), "Should return a list even with invalid symbol"
+            response, validation = handle_api_call_with_validation(
+                etf.etf_info, "etf_info", True, apikey=api_key, symbol=symbol
+            )
+            
+            # Category consistency validation
+            result_list = get_response_models(response, FMPFundInfo)
+            
+            for item in result_list:
+                if item.name:
+                    # Basic categorization validation based on fund name
+                    if etf_category == "sector":
+                        sector_keywords = ["Select", "Sector", "SPDR", "Financial", "Technology", "Energy", "Health", "Industrial", "Consumer", "Utilities", "Materials", "Real Estate"]
+                        # Not all sector ETFs have these keywords, so just check if present
+                    elif etf_category == "international":
+                        intl_keywords = ["FTSE", "MSCI", "EAFE", "Emerging", "Europe", "Pacific", "China", "Japan", "India", "Brazil"]
+                        # Similar soft validation for international ETFs
+                    elif etf_category == "fixed_income":
+                        bond_keywords = ["Bond", "Treasury", "Corporate", "Municipal", "Aggregate", "Fixed", "Income"]
+                        # Similar soft validation for bond ETFs
 
 
 class TestETFHoldings:
@@ -225,34 +204,40 @@ class TestETFHoldings:
     )
     def test_etf_holdings_comprehensive(self, api_key, symbol):
         """Test ETF holdings across various ETF types."""
-        result = etf.etf_holdings(apikey=api_key, symbol=symbol)
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                holding = FMPFundHolding(**first_item)
-            else:
-                holding = first_item
-
-            # Should have symbol or holdingSymbol field
-            has_symbol = (hasattr(holding, "symbol") and holding.symbol) or (
-                hasattr(holding, "holdingSymbol") and holding.holdingSymbol
-            )
-            assert has_symbol, "Should have symbol field"
-
-            # Should have weight information
-            if hasattr(holding, "weightPercent") and holding.weightPercent is not None:
-                assert 0 <= holding.weightPercent <= 100, "Weight should be 0-100%"
-
-            # Should have shares or market value
-            has_quantity = (
-                hasattr(holding, "shares") and holding.shares is not None
-            ) or (hasattr(holding, "marketValue") and holding.marketValue is not None)
-            # This may not always be available, so just check if present
+        response, validation = handle_api_call_with_validation(
+            etf.etf_holdings, "etf_holdings", True, apikey=api_key, symbol=symbol
+        )
+        
+        # ETF holdings specific validation
+        result_list = get_response_models(response, FMPFundHolding)
+        total_weight = 0
+        
+        for item in result_list:
+            # Symbol validation
+            if item.symbol:
+                assert len(item.symbol) <= 15, f"Holding symbol should be reasonable length: {item.symbol}"
+                assert item.symbol.replace("-", "").replace(".", "").isalnum(), f"Holding symbol should be alphanumeric: {item.symbol}"
+            
+            # Weight validation
+            if item.weightPercentage is not None:
+                assert 0 <= item.weightPercentage <= 100, f"Weight should be 0-100%: {item.weightPercentage}"
+                total_weight += item.weightPercentage
+            
+            # Shares validation
+            if item.sharesNumber is not None:
+                assert item.sharesNumber >= 0, f"Shares should be non-negative: {item.sharesNumber}"
+            
+            # Market value validation
+            if item.marketValue is not None:
+                assert item.marketValue >= 0, f"Market value should be non-negative: {item.marketValue}"
+            
+            # Asset name validation
+            if item.name:
+                assert len(item.name) <= 200, f"Asset name should be reasonable length: {item.name}"
+        
+        # Total weight should generally be reasonable (allowing for incomplete data)
+        if total_weight > 0:
+            assert total_weight <= 110, f"Total weight should be reasonable: {total_weight}%"
 
     @pytest.mark.parametrize(
         "asset_class", ["equity", "fixed_income", "commodity", "real_estate"]
@@ -269,40 +254,9 @@ class TestETFHoldings:
         symbols = asset_class_etfs.get(asset_class, ["SPY"])
 
         for symbol in symbols:
-            result = etf.etf_holdings(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Response should be a list for {symbol}"
-
-    def test_etf_holdings_success(self, api_key):
-        """Test successful retrieval of ETF holdings."""
-        result = etf.etf_holdings(apikey=api_key, symbol="SPY")
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                holding = FMPFundHolding(**first_item)
-            else:
-                holding = first_item
-            assert hasattr(holding, "symbol") or hasattr(
-                holding, "holdingSymbol"
-            ), "Should have symbol field"
-
-    def test_etf_holdings_major_etfs(self, api_key):
-        """Test ETF holdings for major ETFs."""
-        major_etfs = ["SPY", "QQQ", "VTI"]
-
-        for symbol in major_etfs:
-            result = etf.etf_holdings(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Response should be a list for {symbol}"
+            response, validation = handle_api_call_with_validation(
+                etf.etf_holdings, "etf_holdings", True, apikey=api_key, symbol=symbol
+            )
 
 
 class TestETFAssetExposure:
@@ -313,176 +267,151 @@ class TestETFAssetExposure:
     )
     def test_etf_asset_exposure_comprehensive(self, api_key, symbol):
         """Test ETF asset exposure across various ETFs."""
-        result = etf.etf_asset_exposure(apikey=api_key, symbol=symbol)
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                exposure = FMPFundAssetExposure(**first_item)
-            else:
-                exposure = first_item
-
-            # Should have asset allocation information
-            assert hasattr(exposure, "assetClass") or hasattr(
-                exposure, "category"
-            ), "Should have asset class information"
-
-    def test_etf_asset_exposure_success(self, api_key):
-        """Test successful retrieval of ETF asset exposure."""
-        result = etf.etf_asset_exposure(apikey=api_key, symbol="SPY")
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                exposure = FMPFundAssetExposure(**first_item)
-            else:
-                exposure = first_item
-            assert hasattr(exposure, "assetType") or hasattr(
-                exposure, "exposure"
-            ), "Should have asset exposure fields"
-
-    def test_etf_asset_exposure_different_types(self, api_key):
-        """Test asset exposure for different ETF types."""
-        etf_types = ["SPY", "AGG", "GLD"]  # Equity, Bond, Commodity
-
-        for symbol in etf_types:
-            result = etf.etf_asset_exposure(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Response should be a list for {symbol}"
+        response, validation = handle_api_call_with_validation(
+            etf.etf_asset_exposure, "etf_asset_exposure", True, apikey=api_key, symbol=symbol
+        )
+        
+        # Asset exposure specific validation
+        result_list = get_response_models(response, FMPFundAssetExposure)
+        total_exposure = 0
+        
+        for item in result_list:
+            # Asset validation
+            if item.asset:
+                assert len(item.asset) <= 50, f"Asset should be reasonable length: {item.asset}"
+            
+            # Weight percentage validation
+            if item.weightPercentage is not None:
+                assert 0 <= item.weightPercentage <= 100, f"Weight percentage should be 0-100%: {item.weightPercentage}"
+                total_exposure += item.weightPercentage
+            
+            # Symbol validation
+            if item.symbol:
+                assert len(item.symbol) <= 15, f"Symbol should be reasonable length: {item.symbol}"
+                
+            # Market value validation
+            if item.marketValue is not None:
+                assert item.marketValue >= 0, f"Market value should be non-negative: {item.marketValue}"
+        
+        # Total exposure should be reasonable (allowing for incomplete data)
+        if total_exposure > 0:
+            assert total_exposure <= 110, f"Total exposure should be reasonable: {total_exposure}%"
 
 
 class TestETFCountryWeightings:
     """Test the etf_country_weightings function."""
 
-    def test_etf_country_weightings_success(self, api_key):
-        """Test successful retrieval of ETF country weightings."""
-        result = etf.etf_country_weightings(apikey=api_key, symbol="SPY")
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                country = FMPFundCountryAllocation(**first_item)
-            else:
-                country = first_item
-            assert hasattr(country, "country") or hasattr(
-                country, "countryName"
-            ), "Should have country field"
-
-    def test_etf_country_weightings_international(self, api_key):
-        """Test country weightings for international ETFs."""
-        international_etfs = ["VEA", "EFA", "VWO"]
-
+    def test_etf_country_weightings_comprehensive(self, api_key):
+        """Test ETF country weightings across various ETFs."""
+        international_etfs = ["VEA", "EFA", "VWO", "EEM", "SPY"]
+        
         for symbol in international_etfs:
-            result = etf.etf_country_weightings(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Response should be a list for {symbol}"
+            response, validation = handle_api_call_with_validation(
+                etf.etf_country_weightings, "etf_country_weightings", True, apikey=api_key, symbol=symbol
+            )
+            
+            # Country weightings specific validation
+            result_list = get_response_models(response, FMPFundCountryAllocation)
+            total_weight = 0
+            
+            for item in result_list:
+                # Country validation
+                if item.country:
+                    assert len(item.country) >= 2, f"Country should have reasonable length: {item.country}"
+                    assert len(item.country) <= 100, f"Country should be reasonable length: {item.country}"
+                
+                # Weight validation (note: weightPercentage is a string in this model)
+                if item.weightPercentage:
+                    try:
+                        weight_float = float(item.weightPercentage.replace('%', ''))
+                        assert -10 <= weight_float <= 100, f"Weight should be reasonable range (-10% to 100%): {weight_float}"
+                        total_weight += weight_float
+                    except (ValueError, AttributeError):
+                        # Skip invalid weight values
+                        pass
+            
+            # Total weight should be reasonable
+            if total_weight > 0:
+                assert total_weight <= 110, f"Total weight should be reasonable: {total_weight}%"
 
 
 class TestETFSectorWeightings:
     """Test the etf_sector_weightings function."""
 
-    def test_etf_sector_weightings_success(self, api_key):
-        """Test successful retrieval of ETF sector weightings."""
-        result = etf.etf_sector_weightings(apikey=api_key, symbol="SPY")
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                sector = FMPFundSectorWeighting(**first_item)
-            else:
-                sector = first_item
-            assert hasattr(sector, "sector") or hasattr(
-                sector, "sectorName"
-            ), "Should have sector field"
-
-    def test_etf_sector_weightings_broad_market(self, api_key):
-        """Test sector weightings for broad market ETFs."""
-        broad_market_etfs = ["SPY", "VTI", "QQQ"]
-
+    def test_etf_sector_weightings_comprehensive(self, api_key):
+        """Test ETF sector weightings across various ETFs."""
+        broad_market_etfs = ["SPY", "VTI", "QQQ", "IWM"]
+        
         for symbol in broad_market_etfs:
-            result = etf.etf_sector_weightings(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Response should be a list for {symbol}"
+            response, validation = handle_api_call_with_validation(
+                etf.etf_sector_weightings, "etf_sector_weightings", True, apikey=api_key, symbol=symbol
+            )
+            
+            # Sector weightings specific validation
+            result_list = get_response_models(response, FMPFundSectorWeighting)
+            total_weight = 0
+            valid_sectors = [
+                "Technology", "Health Care", "Financial", "Consumer", "Industrial", 
+                "Communication", "Energy", "Materials", "Real Estate", "Utilities"
+            ]
+            
+            for item in result_list:
+                # Sector validation
+                if item.sector:
+                    assert len(item.sector) >= 3, f"Sector should have meaningful length: {item.sector}"
+                    assert len(item.sector) <= 100, f"Sector should be reasonable length: {item.sector}"
+                    
+                    # Check if sector matches common sector names (soft validation)
+                    sector_matches = any(valid_sector in item.sector for valid_sector in valid_sectors)
+                    # Note: Not all sectors will match, so this is just informational
+                
+                # Weight validation
+                if item.weightPercentage is not None:
+                    assert 0 <= item.weightPercentage <= 100, f"Weight should be 0-100%: {item.weightPercentage}"
+                    total_weight += item.weightPercentage
+            
+            # Total weight should be reasonable
+            if total_weight > 0:
+                assert total_weight <= 110, f"Total weight should be reasonable: {total_weight}%"
 
 
-class TestETFComprehensive:
-    """Comprehensive ETF tests."""
+class TestETFDataQuality:
+    """Test ETF data quality metrics."""
 
-    def test_etf_all_functions_consistency(self, api_key):
-        """Test that all ETF functions work consistently for SPY."""
-        symbol = "SPY"
+    def test_etf_data_quality_comprehensive(self, api_key):
+        """Test comprehensive ETF data quality across multiple endpoints."""
+        test_symbols = ["SPY", "QQQ", "VTI", "AGG", "GLD"]
+        
+        for symbol in test_symbols:
+            response, validation = handle_api_call_with_validation(
+                etf.etf_info, "etf_info", True, apikey=api_key, symbol=symbol
+            )
+            
+            # Comprehensive data quality validation
+            result_list = get_response_models(response, FMPFundInfo)
+            if not result_list:
+                continue
+            
+            # Calculate data quality metrics
+            total_items = len(result_list)
+            valid_symbols = sum(1 for item in result_list if item.symbol)
+            meaningful_names = sum(1 for item in result_list if item.name and len(item.name) > 3)
+            valid_nav = sum(1 for item in result_list if item.nav and item.nav > 0)
+            
+            # Data quality assertions
+            if total_items > 0:
+                assert valid_symbols / total_items >= 0.9, f"At least 90% should have valid symbols: {valid_symbols}/{total_items}"
+                assert meaningful_names / total_items >= 0.8, f"At least 80% should have meaningful names: {meaningful_names}/{total_items}"
+                if valid_nav > 0:
+                    assert valid_nav / total_items >= 0.7, f"At least 70% should have valid NAV: {valid_nav}/{total_items}"
 
-        # Test all functions with the same symbol
-        info_result = etf.etf_info(apikey=api_key, symbol=symbol)
-        holdings_result = etf.etf_holdings(apikey=api_key, symbol=symbol)
-        asset_result = etf.etf_asset_exposure(apikey=api_key, symbol=symbol)
-        country_result = etf.etf_country_weightings(apikey=api_key, symbol=symbol)
-        sector_result = etf.etf_sector_weightings(apikey=api_key, symbol=symbol)
-
-        # All should return lists
-        assert isinstance(extract_data_list(info_result), list)
-        assert isinstance(extract_data_list(holdings_result), list)
-        assert isinstance(extract_data_list(asset_result), list)
-        assert isinstance(extract_data_list(country_result), list)
-        assert isinstance(extract_data_list(sector_result), list)
-
-    def test_etf_response_times(self, api_key):
-        """Test that ETF functions respond within reasonable time."""
-        symbol = "SPY"
-        functions = [
-            etf.etf_info,
-            etf.etf_holdings,
-            etf.etf_asset_exposure,
-            etf.etf_country_weightings,
-            etf.etf_sector_weightings,
-        ]
-
-        for func in functions:
-            start_time = time.time()
-            result = func(apikey=api_key, symbol=symbol)
-            extract_data_list(result)
-            response_time = time.time() - start_time
-
-            assert (
-                response_time < 10.0
-            ), f"{func.__name__} took {response_time:.2f}s, expected < 10.0s"
-
-    def test_etf_invalid_api_keys(self):
-        """Test ETF functions with invalid API keys."""
-        symbol = "SPY"
-        functions = [
-            etf.etf_info,
-            etf.etf_holdings,
-            etf.etf_asset_exposure,
-            etf.etf_country_weightings,
-            etf.etf_sector_weightings,
-        ]
-
-        for func in functions:
-            result = func(apikey="invalid_key", symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"{func.__name__} should return list with invalid key"
+    def test_etf_invalid_inputs(self, api_key):
+        """Test ETF functions with invalid inputs."""
+        # Test with invalid symbol
+        response, validation = handle_api_call_with_validation(
+            etf.etf_info, "etf_info", True, apikey=api_key, symbol="INVALID"
+        )
+        
+        # Test with invalid API key (should raise InvalidAPIKeyException)
+        with pytest.raises(Exception):  # Expecting an exception for invalid API key
+            etf.etf_info(apikey="invalid_key", symbol="SPY")

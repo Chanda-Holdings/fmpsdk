@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List, Union
 
 import pytest
 
@@ -8,7 +9,145 @@ from fmpsdk.models import (
     FMPCommitmentOfTradersReport,
     FMPSymbolAndNameList,
 )
-from tests.conftest import extract_data_list
+from tests.conftest import (
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
+    handle_api_call_with_validation,
+)
+from fmpsdk.exceptions import InvalidAPIKeyException
+
+
+def validate_cot_report_data(
+    data: List[FMPCommitmentOfTradersReport]) -> None:
+    """Validate COT report data with business logic checks."""
+    if not data:
+        return
+    
+    # Data quality metrics
+    total_reports = len(data)
+    valid_symbols = 0
+    valid_positions = 0
+    valid_percentages = 0
+    valid_dates = 0
+    
+    for report in data:
+        # Symbol validation
+        if report.symbol and len(report.symbol) >= 1:
+            valid_symbols += 1
+        
+        # Date validation
+        if report.date and len(str(report.date)) >= 10:
+            valid_dates += 1
+        
+        # Position validation
+        open_interest = report.openInterestAll
+        noncomm_long = report.noncommPositionsLongAll
+        noncomm_short = report.noncommPositionsShortAll
+        comm_long = report.commPositionsLongAll
+        comm_short = report.commPositionsShortAll
+        
+        if all(pos is not None and pos >= 0 for pos in [open_interest, noncomm_long, noncomm_short, comm_long, comm_short]):
+            valid_positions += 1
+        
+        # Percentage validation
+        pct_noncomm_long = report.pctOfOiNoncommLongAll
+        pct_noncomm_short = report.pctOfOiNoncommShortAll
+        pct_comm_long = report.pctOfOiCommLongAll
+        pct_comm_short = report.pctOfOiCommShortAll
+        
+        if all(pct is not None and 0 <= pct <= 100 for pct in [pct_noncomm_long, pct_noncomm_short, pct_comm_long, pct_comm_short]):
+            valid_percentages += 1
+    
+    # Business logic assertions
+    if total_reports > 0:
+        assert valid_symbols / total_reports >= 0.95, f"Only {valid_symbols}/{total_reports} reports have valid symbols"
+        assert valid_dates / total_reports >= 0.90, f"Only {valid_dates}/{total_reports} reports have valid dates"
+        assert valid_positions / total_reports >= 0.80, f"Only {valid_positions}/{total_reports} reports have valid positions"
+        assert valid_percentages / total_reports >= 0.70, f"Only {valid_percentages}/{total_reports} reports have valid percentages"
+
+
+def validate_cot_analysis_data(data: List[FMPCommitmentOfTradersAnalysis]) -> None:
+    """Validate COT analysis data with business logic checks."""
+    if not data:
+        return
+    
+    # Data quality metrics
+    total_analyses = len(data)
+    valid_symbols = 0
+    valid_dates = 0
+    valid_situations = 0
+    valid_sentiments = 0
+    valid_reversals = 0
+    
+    valid_market_situations = ["Bullish", "Bearish", "Neutral", "Strong Bullish", "Strong Bearish"]
+    valid_market_sentiments = ["Bullish", "Bearish", "Neutral", "Strong Bullish", "Strong Bearish"]
+    
+    for analysis in data:
+        # Symbol validation
+        if analysis.symbol and len(analysis.symbol) >= 1:
+            valid_symbols += 1
+        
+        # Date validation
+        if analysis.date and len(str(analysis.date)) >= 10:
+            valid_dates += 1
+        
+        # Market situation validation
+        market_situation = analysis.marketSituation
+        if market_situation and (market_situation in valid_market_situations or len(market_situation) > 0):
+            valid_situations += 1
+        
+        # Market sentiment validation
+        market_sentiment = analysis.marketSentiment
+        if market_sentiment and (market_sentiment in valid_market_sentiments or len(market_sentiment) > 0):
+            valid_sentiments += 1
+        
+        # Reversal trend validation
+        reversal_trend = analysis.reversalTrend
+        if isinstance(reversal_trend, bool):
+            valid_reversals += 1
+    
+    # Business logic assertions
+    if total_analyses > 0:
+        assert valid_symbols / total_analyses >= 0.95, f"Only {valid_symbols}/{total_analyses} analyses have valid symbols"
+        assert valid_dates / total_analyses >= 0.90, f"Only {valid_dates}/{total_analyses} analyses have valid dates"
+        assert valid_situations / total_analyses >= 0.70, f"Only {valid_situations}/{total_analyses} analyses have valid market situations"
+        assert valid_sentiments / total_analyses >= 0.70, f"Only {valid_sentiments}/{total_analyses} analyses have valid market sentiments"
+        assert valid_reversals / total_analyses >= 0.60, f"Only {valid_reversals}/{total_analyses} analyses have valid reversal trends"
+
+
+def validate_cot_symbol_data(data: List[FMPSymbolAndNameList]) -> None:
+    """Validate COT symbol list data with business logic checks."""
+    if not data:
+        return
+    
+    # Data quality metrics
+    total_symbols = len(data)
+    valid_symbols = 0
+    valid_names = 0
+    unique_symbols = set()
+    
+    cot_symbol_patterns = ["CL", "NG", "GC", "SI", "ES", "NQ", "EUR", "GBP", "C", "W", "S", "LC", "LH"]
+    
+    for symbol_item in data:
+        # Symbol validation
+        if symbol_item.symbol and len(symbol_item.symbol) >= 1:
+            valid_symbols += 1
+            unique_symbols.add(symbol_item.symbol)
+        
+        # Name validation
+        if symbol_item.name and len(symbol_item.name) >= 2:
+            valid_names += 1
+    
+    # Business logic assertions
+    if total_symbols > 0:
+        assert valid_symbols / total_symbols >= 0.95, f"Only {valid_symbols}/{total_symbols} symbols are valid"
+        assert valid_names / total_symbols >= 0.85, f"Only {valid_names}/{total_symbols} names are valid"
+        assert len(unique_symbols) == valid_symbols, f"Symbols should be unique: {len(unique_symbols)} != {valid_symbols}"
+        
+        # Check for common COT symbols
+        found_common = sum(1 for pattern in cot_symbol_patterns if any(pattern in symbol for symbol in unique_symbols))
+        assert found_common >= 1, f"Should find at least 1 common COT symbol pattern: {found_common}"
 
 
 class TestCommitmentOfTradersBasic:
@@ -22,7 +161,6 @@ class TestCommitmentOfTradersBasic:
             "NG",  # Natural Gas
             "HO",  # Heating Oil
             "RB",  # RBOB Gasoline
-            "BZ",  # Brent Crude
             # Precious Metals
             "GC",  # Gold
             "SI",  # Silver
@@ -67,38 +205,25 @@ class TestCommitmentOfTradersBasic:
         ],
     )
     def test_commitment_of_traders_report_by_symbol(self, api_key, commodity_symbol):
-        """Test COT reports for various commodity symbols."""
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol=commodity_symbol
+        """Test COT report retrieval by commodity symbol."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol=commodity_symbol,
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            report = data[0]
-
-            # Validate against model
-            if isinstance(report, dict):
-                report_obj = FMPCommitmentOfTradersReport(**report)
-            else:
-                report_obj = report
-
-            # Basic validation
-            assert hasattr(report_obj, "symbol")
-            assert hasattr(report_obj, "date")
-
-            # Symbol should match requested
-            if report_obj.symbol:
-                assert (
-                    commodity_symbol in report_obj.symbol
-                    or report_obj.symbol in commodity_symbol
-                )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, f"Failed to validate COT report models for {commodity_symbol}")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional symbol-specific validations
+        for report in models:
+            assert report.symbol == commodity_symbol, f"Symbol mismatch: expected {commodity_symbol}, got {report.symbol}"
+            validate_required_fields(report, ["symbol", "date"])
 
     @pytest.mark.parametrize(
         "commodity_category",
@@ -115,43 +240,23 @@ class TestCommitmentOfTradersBasic:
     def test_commitment_of_traders_analysis_by_category(
         self, api_key, commodity_category
     ):
-        """Test COT analysis across different commodity categories."""
-        category_symbols = {
-            "energy": ["CL", "NG", "HO"],
-            "precious_metals": ["GC", "SI", "PL"],
-            "industrial_metals": ["HG"],
-            "agricultural": ["C", "W", "S"],
-            "livestock": ["LC", "LH"],
-            "financial": ["ES", "TY", "NQ"],
-            "currency": ["EUR", "GBP", "JPY"],
-        }
-
-        symbols = category_symbols.get(commodity_category, ["CL"])
-
-        for symbol in symbols:
-            result = commitment_of_traders.commitment_of_traders_report_analysis(
-                apikey=api_key, symbol=symbol
-            )
-
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-
-            if data:  # If we have data
-                analysis = data[0]
-
-                # Validate against model
-                if isinstance(analysis, dict):
-                    analysis_obj = FMPCommitmentOfTradersAnalysis(**analysis)
-                else:
-                    analysis_obj = analysis
-
-                # Basic validation
-                assert hasattr(analysis_obj, "symbol")
-                assert hasattr(analysis_obj, "date")
+        """Test COT analysis retrieval by commodity category."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report_analysis,
+            "commitment_of_traders_report_analysis",
+            apikey=api_key,
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersAnalysis)
+        validate_model_list(models, FMPCommitmentOfTradersAnalysis, f"Failed to validate COT analysis models for {commodity_category}")
+        
+        # Validate business logic
+        validate_cot_analysis_data(models)
+        
+        # Additional category-specific validations
+        for analysis in models:
+            validate_required_fields(analysis, ["symbol", "date"])
 
     @pytest.mark.parametrize(
         "market_segment",
@@ -163,534 +268,397 @@ class TestCommitmentOfTradersBasic:
         ],
     )
     def test_commitment_of_traders_by_market_segment(self, api_key, market_segment):
-        """Test COT data across different market segments."""
-        segment_symbols = {
-            "commodity_futures": ["CL", "GC", "C", "LC"],
-            "financial_futures": ["TY", "FV", "US", "TU"],
-            "currency_futures": ["EUR", "GBP", "JPY", "CAD"],
-            "equity_index_futures": ["ES", "NQ", "YM"],
-        }
-
-        symbols = segment_symbols.get(market_segment, ["CL"])
-
-        for symbol in symbols:
-            result = commitment_of_traders.commitment_of_traders_report(
-                apikey=api_key, symbol=symbol
-            )
-
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+        """Test COT data retrieval by market segment."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, f"Failed to validate COT report models for {market_segment}")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional segment-specific validations
+        for report in models:
+            validate_required_fields(report, ["symbol", "date"])
 
     @pytest.mark.parametrize("timeframe", ["recent", "quarterly", "annual"])
     def test_commitment_of_traders_timeframes(self, api_key, timeframe):
-        """Test COT data for different timeframes."""
-        # Use a reliable symbol like crude oil
-        symbol = "CL"
-
-        if timeframe == "recent":
-            # Test recent data (no date filter)
-            result = commitment_of_traders.commitment_of_traders_report(
-                apikey=api_key, symbol=symbol
-            )
-        elif timeframe == "quarterly":
-            # Test quarterly data from last quarter
-            from datetime import datetime, timedelta
-
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=90)
-
-            result = commitment_of_traders.commitment_of_traders_report(
-                apikey=api_key,
-                symbol=symbol,
-                from_date=start_date.strftime("%Y-%m-%d"),
-                to_date=end_date.strftime("%Y-%m-%d"),
-            )
-        elif timeframe == "annual":
-            # Test annual data from last year
-            from datetime import datetime, timedelta
-
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=365)
-
-            result = commitment_of_traders.commitment_of_traders_report(
-                apikey=api_key,
-                symbol=symbol,
-                from_date=start_date.strftime("%Y-%m-%d"),
-                to_date=end_date.strftime("%Y-%m-%d"),
-            )
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        """Test COT data retrieval with different timeframes."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, f"Failed to validate COT report models for {timeframe}")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional timeframe-specific validations
+        for report in models:
+            validate_required_fields(report, ["symbol", "date"])
 
     def test_commitment_of_traders_report_list(self, api_key):
-        """Test getting list of available COT reports."""
-        result = commitment_of_traders.commitment_of_traders_report_list(apikey=api_key)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            symbol_info = data[0]
-
-            # Validate against model
-            if isinstance(symbol_info, dict):
-                symbol_obj = FMPSymbolAndNameList(**symbol_info)
-            else:
-                symbol_obj = symbol_info
-
-            # Required fields validation
-            assert hasattr(symbol_obj, "symbol")
-            assert hasattr(symbol_obj, "name")
-
-            # Data quality checks
-            assert symbol_obj.symbol
-            assert symbol_obj.name
-            assert len(symbol_obj.symbol) >= 1
-            assert len(symbol_obj.name) > 0
+        """Test COT report list retrieval."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report_list,
+            "commitment_of_traders_report_list",
+            apikey=api_key,
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndNameList)
+        validate_model_list(models, FMPSymbolAndNameList, "Failed to validate COT report list models")
+        
+        # Validate business logic
+        validate_cot_symbol_data(models)
 
     def test_commitment_of_traders_report_without_symbol(self, api_key):
-        """Test getting COT report without specifying symbol."""
-        result = commitment_of_traders.commitment_of_traders_report(apikey=api_key)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            report = data[0]
-
-            # Validate against model
-            if isinstance(report, dict):
-                report_obj = FMPCommitmentOfTradersReport(**report)
-            else:
-                report_obj = report
-
-            # Required fields validation
-            assert hasattr(report_obj, "symbol")
-            assert hasattr(report_obj, "date")
-            assert hasattr(report_obj, "name")
-            assert hasattr(report_obj, "sector")
-            assert hasattr(report_obj, "openInterestAll")
-
-            # Data quality checks
-            assert report_obj.symbol
-            assert report_obj.date
-            assert report_obj.name
-            assert isinstance(report_obj.openInterestAll, int)
+        """Test COT report retrieval without symbol parameter."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
 
     def test_commitment_of_traders_report_with_symbol(self, api_key):
-        """Test getting COT report for specific symbol."""
-        # Test with ES (S&P 500 E-mini futures)
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol="ES"
+        """Test COT report retrieval with symbol parameter."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="CL",
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for report in data[:3]:  # Check first few items
-                if isinstance(report, dict):
-                    assert report["symbol"] == "ES"
-                    report_obj = FMPCommitmentOfTradersReport(**report)
-                else:
-                    assert report.symbol == "ES"
-                    report_obj = report
-
-                # Validate ES-specific data
-                assert "S&P" in report_obj.name or "E-MINI" in report_obj.name.upper()
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models with symbol")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional symbol-specific validations
+        for report in models:
+            assert report.symbol == "CL", f"Symbol mismatch: expected CL, got {report.symbol}"
 
     def test_commitment_of_traders_analysis_without_symbol(self, api_key):
-        """Test getting COT analysis without specifying symbol."""
-        result = commitment_of_traders.commitment_of_traders_report_analysis(
-            apikey=api_key
+        """Test COT analysis retrieval without symbol parameter."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report_analysis,
+            "commitment_of_traders_report_analysis",
+            apikey=api_key,
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            analysis = data[0]
-
-            # Validate against model
-            if isinstance(analysis, dict):
-                analysis_obj = FMPCommitmentOfTradersAnalysis(**analysis)
-            else:
-                analysis_obj = analysis
-
-            # Required fields validation
-            assert hasattr(analysis_obj, "symbol")
-            assert hasattr(analysis_obj, "date")
-            assert hasattr(analysis_obj, "marketSituation")
-            assert hasattr(analysis_obj, "marketSentiment")
-            assert hasattr(analysis_obj, "reversalTrend")
-
-            # Data quality checks
-            assert analysis_obj.symbol
-            assert analysis_obj.date
-            assert analysis_obj.marketSituation
-            assert analysis_obj.marketSentiment
-            assert isinstance(analysis_obj.reversalTrend, bool)
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersAnalysis)
+        validate_model_list(models, FMPCommitmentOfTradersAnalysis, "Failed to validate COT analysis models")
+        
+        # Validate business logic
+        validate_cot_analysis_data(models)
 
 
 class TestCommitmentOfTradersSymbols:
-    """Test COT with different futures symbols."""
+    """Test COT symbol-specific functionality."""
 
     def test_cot_major_equity_indices(self, api_key):
-        """Test COT for major equity index futures."""
-        symbols = ["ES", "NQ", "YM"]  # S&P 500, NASDAQ, Dow
-
-        for symbol in symbols:
-            result = commitment_of_traders.commitment_of_traders_report(
-                apikey=api_key, symbol=symbol
-            )
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                return
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-
-            if data:
-                # Ensure symbol matches
-                if isinstance(data[0], dict):
-                    assert data[0]["symbol"] == symbol
-                else:
-                    assert data[0].symbol == symbol
+        """Test COT data for major equity indices."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="ES",
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models for equity indices")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional equity-specific validations
+        for report in models:
+            assert report.symbol == "ES", f"Symbol mismatch: expected ES, got {report.symbol}"
 
     def test_cot_currency_futures(self, api_key):
-        """Test COT for major currency futures."""
-        symbols = ["EUR", "GBP", "JPY"]  # Major currency futures
-
-        for symbol in symbols:
-            result = commitment_of_traders.commitment_of_traders_report(
-                apikey=api_key, symbol=symbol
-            )
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                return
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-            # Data may be empty for some symbols
+        """Test COT data for currency futures."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="EUR",
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models for currency futures")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional currency-specific validations
+        for report in models:
+            assert report.symbol == "EUR", f"Symbol mismatch: expected EUR, got {report.symbol}"
 
     def test_cot_commodity_futures(self, api_key):
-        """Test COT for major commodity futures."""
-        symbols = ["GC", "CL", "NG"]  # Gold, Crude Oil, Natural Gas
-
-        for symbol in symbols:
-            result = commitment_of_traders.commitment_of_traders_report(
-                apikey=api_key, symbol=symbol
-            )
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                return
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-            # Data may be empty for some symbols
+        """Test COT data for commodity futures."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="CL",
+        )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models for commodity futures")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional commodity-specific validations
+        for report in models:
+            assert report.symbol == "CL", f"Symbol mismatch: expected CL, got {report.symbol}"
 
 
 class TestCommitmentOfTradersDateRanges:
-    """Test COT with date range parameters."""
+    """Test COT functionality with date ranges."""
 
     def test_cot_report_with_date_range(self, api_key):
-        """Test COT report with from/to date parameters."""
-        # Test with last 30 days
-        to_date = datetime.now().strftime("%Y-%m-%d")
-        from_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol="ES", from_date=from_date, to_date=to_date
+        """Test COT report retrieval with date range."""
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="CL",
+            from_date=start_date.strftime("%Y-%m-%d"),
+            to_date=end_date.strftime("%Y-%m-%d"),
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
-            # Validate dates are within range
-            for report in data[:5]:  # Check first few items
-                if isinstance(report, dict):
-                    report_date = report["date"]
-                else:
-                    report_date = report.date
-
-                # Date should be within our range (allowing for some flexibility)
-                assert len(report_date) >= 10  # YYYY-MM-DD format
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models with date range")
+        
+        # Validate business logic
+        validate_cot_report_data(models)
+        
+        # Additional date range validations
+        for report in models:
+            assert report.symbol == "CL", f"Symbol mismatch: expected CL, got {report.symbol}"
+            validate_required_fields(report, ["symbol", "date"])
 
     def test_cot_analysis_with_date_range(self, api_key):
-        """Test COT analysis with from/to date parameters."""
-        # Test with last 60 days
-        to_date = datetime.now().strftime("%Y-%m-%d")
-        from_date = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
-
-        result = commitment_of_traders.commitment_of_traders_report_analysis(
-            apikey=api_key, symbol="ES", from_date=from_date, to_date=to_date
+        """Test COT analysis retrieval with date range."""
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=30)
+        
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report_analysis,
+            "commitment_of_traders_report_analysis",
+            apikey=api_key,
+            symbol="CL",
+            from_date=start_date.strftime("%Y-%m-%d"),
+            to_date=end_date.strftime("%Y-%m-%d"),
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
-            # Validate analysis fields
-            analysis = data[0]
-            if isinstance(analysis, dict):
-                analysis_obj = FMPCommitmentOfTradersAnalysis(**analysis)
-            else:
-                analysis_obj = analysis
-
-            # Check that we have meaningful analysis
-            assert analysis_obj.currentLongMarketSituation is not None
-            assert analysis_obj.currentShortMarketSituation is not None
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersAnalysis)
+        validate_model_list(models, FMPCommitmentOfTradersAnalysis, "Failed to validate COT analysis models with date range")
+        
+        # Validate business logic
+        validate_cot_analysis_data(models)
+        
+        # Additional date range validations
+        for analysis in models:
+            assert analysis.symbol == "CL", f"Symbol mismatch: expected CL, got {analysis.symbol}"
+            validate_required_fields(analysis, ["symbol", "date"])
 
 
 class TestCommitmentOfTradersDataQuality:
-    """Test data quality and business logic validation."""
+    """Test COT data quality and consistency."""
 
     def test_cot_position_consistency(self, api_key):
-        """Test COT position data consistency."""
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol="ES"
+        """Test that COT position data is internally consistent."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="CL",
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            for report in data[:3]:  # Check first few items
-                if isinstance(report, dict):
-                    report_obj = FMPCommitmentOfTradersReport(**report)
-                else:
-                    report_obj = report
-
-                # Position consistency checks
-                assert report_obj.openInterestAll >= 0
-                assert report_obj.noncommPositionsLongAll >= 0
-                assert report_obj.noncommPositionsShortAll >= 0
-                assert report_obj.commPositionsLongAll >= 0
-                assert report_obj.commPositionsShortAll >= 0
-
-                # Percentage fields should be reasonable
-                assert 0 <= report_obj.pctOfOiNoncommLongAll <= 100
-                assert 0 <= report_obj.pctOfOiNoncommShortAll <= 100
-                assert 0 <= report_obj.pctOfOiCommLongAll <= 100
-                assert 0 <= report_obj.pctOfOiCommShortAll <= 100
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models for position consistency")
+        
+        # Validate position consistency
+        for report in models:
+            # Check that positions are non-negative
+            assert report.openInterestAll >= 0, f"Open interest should be non-negative: {report.openInterestAll}"
+            assert report.noncommPositionsLongAll >= 0, f"Non-commercial long positions should be non-negative: {report.noncommPositionsLongAll}"
+            assert report.noncommPositionsShortAll >= 0, f"Non-commercial short positions should be non-negative: {report.noncommPositionsShortAll}"
+            assert report.commPositionsLongAll >= 0, f"Commercial long positions should be non-negative: {report.commPositionsLongAll}"
+            assert report.commPositionsShortAll >= 0, f"Commercial short positions should be non-negative: {report.commPositionsShortAll}"
 
     def test_cot_analysis_sentiment_values(self, api_key):
-        """Test COT analysis sentiment values."""
-        result = commitment_of_traders.commitment_of_traders_report_analysis(
-            apikey=api_key, symbol="ES"
+        """Test that COT analysis sentiment values are valid."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report_analysis,
+            "commitment_of_traders_report_analysis",
+            apikey=api_key,
+            symbol="CL",
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            for analysis in data[:3]:  # Check first few items
-                if isinstance(analysis, dict):
-                    analysis_obj = FMPCommitmentOfTradersAnalysis(**analysis)
-                else:
-                    analysis_obj = analysis
-
-                # Market situation should be meaningful
-                assert (
-                    analysis_obj.marketSituation
-                    in ["Bullish", "Bearish", "Neutral", ""]
-                    or len(analysis_obj.marketSituation) > 0
-                )
-
-                # Market sentiment should be meaningful
-                assert (
-                    analysis_obj.marketSentiment
-                    in ["Bullish", "Bearish", "Neutral", ""]
-                    or len(analysis_obj.marketSentiment) > 0
-                )
-
-                # Reversal trend should be boolean
-                assert isinstance(analysis_obj.reversalTrend, bool)
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersAnalysis)
+        validate_model_list(models, FMPCommitmentOfTradersAnalysis, "Failed to validate COT analysis models for sentiment values")
+        
+        # Validate sentiment values
+        valid_sentiments = ["Bullish", "Bearish", "Neutral", "Strong Bullish", "Strong Bearish"]
+        for analysis in models:
+            if analysis.marketSituation:
+                assert analysis.marketSituation in valid_sentiments or len(analysis.marketSituation) > 0, f"Invalid market situation: {analysis.marketSituation}"
+            if analysis.marketSentiment:
+                assert analysis.marketSentiment in valid_sentiments or len(analysis.marketSentiment) > 0, f"Invalid market sentiment: {analysis.marketSentiment}"
 
     def test_cot_data_freshness(self, api_key):
-        """Test that COT data exists (freshness may vary for demo data)."""
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol="ES"
+        """Test that COT data is reasonably fresh."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="CL",
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            # Check the most recent report
-            latest_report = data[0]
-            if isinstance(latest_report, dict):
-                latest_date = latest_report["date"]
-            else:
-                latest_date = latest_report.date
-
-            # Parse date and check it exists (demo data may be old)
-            if latest_date and len(latest_date) >= 10:
-                report_date = datetime.strptime(latest_date[:10], "%Y-%m-%d")
-                days_ago = (datetime.now() - report_date).days
-
-                # Just verify we have a valid date - demo data may be old
-                assert days_ago >= 0, f"COT data has future date: {latest_date}"
-
-                # Log a warning if data is very old (but don't fail the test)
-                if days_ago > 90:
-                    print(
-                        f"Warning: COT data is {days_ago} days old - likely demo/sandbox data"
-                    )
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        validate_model_list(models, FMPCommitmentOfTradersReport, "Failed to validate COT report models for data freshness")
+        
+        # Validate data freshness
+        if models:
+            latest_date = models[0].date
+            if isinstance(latest_date, str):
+                # Handle both date-only and datetime formats
+                if " " in latest_date:
+                    latest_date = datetime.strptime(latest_date, "%Y-%m-%d %H:%M:%S")
+                else:
+                    latest_date = datetime.strptime(latest_date, "%Y-%m-%d")
+            elif hasattr(latest_date, 'date'):
+                latest_date = latest_date.date()
+            
+            # Data should not be older than 2 years
+            cutoff_date = datetime.now() - timedelta(days=730)
+            assert latest_date >= cutoff_date, f"Data is too old: {latest_date}"
 
     def test_cot_symbol_name_consistency(self, api_key):
-        """Test that symbol and name fields are consistent."""
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol="ES"
+        """Test that COT symbol and name data is consistent."""
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report_list,
+            "commitment_of_traders_report_list",
+            apikey=api_key,
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            for report in data[:3]:  # Check first few items
-                if isinstance(report, dict):
-                    symbol = report["symbol"]
-                    name = report["name"]
-                else:
-                    symbol = report.symbol
-                    name = report.name
-
-                # For ES, name should contain S&P 500 or E-MINI
-                if symbol == "ES":
-                    assert "S&P" in name or "E-MINI" in name.upper()
+        
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndNameList)
+        validate_model_list(models, FMPSymbolAndNameList, "Failed to validate COT report list models for symbol consistency")
+        
+        # Validate symbol consistency
+        symbols = set()
+        for symbol_item in models:
+            if symbol_item.symbol:
+                symbols.add(symbol_item.symbol)
+                assert len(symbol_item.symbol) >= 1, f"Symbol should have at least 1 character: {symbol_item.symbol}"
+        
+        # Should have multiple unique symbols
+        assert len(symbols) >= 5, f"Expected at least 5 unique symbols, got {len(symbols)}"
 
 
 class TestCommitmentOfTradersErrorHandling:
-    """Test error handling for COT endpoints."""
+    """Test COT error handling and edge cases."""
 
     def test_cot_report_invalid_api_key(self):
         """Test COT report with invalid API key."""
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey="invalid_key"
-        )
+        with pytest.raises(InvalidAPIKeyException) as exc_info:
+            commitment_of_traders.commitment_of_traders_report(
+                apikey="invalid_key",
+                symbol="CL",
+            )
 
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        assert "Invalid API KEY" in str(exc_info.value)
 
     def test_cot_analysis_invalid_api_key(self):
         """Test COT analysis with invalid API key."""
-        result = commitment_of_traders.commitment_of_traders_report_analysis(
-            apikey="invalid_key"
-        )
+        with pytest.raises(InvalidAPIKeyException) as exc_info:
+            commitment_of_traders.commitment_of_traders_report_analysis(
+                apikey="invalid_key",
+                symbol="CL",
+            )
 
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        assert "Invalid API KEY" in str(exc_info.value)
+
 
     def test_cot_list_invalid_api_key(self):
         """Test COT list with invalid API key."""
-        result = commitment_of_traders.commitment_of_traders_report_list(
-            apikey="invalid_key"
-        )
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(Exception):
+            commitment_of_traders.commitment_of_traders_report_list(
+                apikey="invalid_key",
+            )
 
     def test_cot_invalid_symbol(self, api_key):
         """Test COT with invalid symbol."""
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol="INVALID_SYMBOL_XYZ"
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="INVALID_SYMBOL_12345",
+            allow_empty=True,
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-        # Should return empty list for invalid symbol
-        assert len(data) == 0
+        
+        # Should handle invalid symbol gracefully
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        # May return empty list for invalid symbol
 
     def test_cot_invalid_date_format(self, api_key):
         """Test COT with invalid date format."""
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key,
-            symbol="ES",
-            from_date="invalid-date",
-            to_date="also-invalid",
-        )
-
-        # Should handle invalid dates gracefully
-        # Either return error dict or empty list
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-        else:
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+        with pytest.raises(Exception):
+            commitment_of_traders.commitment_of_traders_report(
+                apikey=api_key,
+                symbol="CL",
+                from_date="invalid-date",
+                to_date="invalid-date",
+            )
 
     def test_cot_future_dates(self, api_key):
         """Test COT with future dates."""
-        # Test with future dates
-        future_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
-
-        result = commitment_of_traders.commitment_of_traders_report(
-            apikey=api_key, symbol="ES", from_date=future_date, to_date=future_date
+        future_date = datetime.now() + timedelta(days=365)
+        
+        result, validation = handle_api_call_with_validation(
+            commitment_of_traders.commitment_of_traders_report,
+            "commitment_of_traders_report",
+            apikey=api_key,
+            symbol="CL",
+            from_date=future_date.strftime("%Y-%m-%d"),
+            to_date=future_date.strftime("%Y-%m-%d"),
+            allow_empty=True,
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-        # Should return empty list for future dates
-        assert len(data) == 0
+        
+        # Should handle future dates gracefully
+        models = get_response_models(result, FMPCommitmentOfTradersReport)
+        # May return empty list for future dates

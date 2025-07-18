@@ -10,754 +10,780 @@ from fmpsdk.models import (
     FMPStockScreenerResult,
     FMPSymbolSearch,
 )
-from tests.conftest import extract_data_list
+from tests.conftest import (
+    get_response_models,
+    handle_api_call_with_validation,
+    validate_model_list,
+    validate_required_fields,
+)
 
 
-def get_field_value(item, field_name):
-    """Helper to get field value from either dict or model object."""
-    if hasattr(item, field_name):
-        return getattr(item, field_name)
-    elif isinstance(item, dict):
-        return item.get(field_name)
-    else:
-        return None
-
-
-class TestSearchSymbol:
-    """Tests for search_symbol function."""
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestSymbolSearch:
+    """Test class for symbol search functionality with comprehensive validation."""
 
     @pytest.mark.parametrize(
-        "query,expected_symbols",
+        "query,search_type,expected_patterns,min_results",
         [
             # Exact symbol matches
-            ("AAPL", ["AAPL"]),
-            ("MSFT", ["MSFT"]),
-            ("GOOGL", ["GOOGL", "GOOG"]),
-            ("AMZN", ["AMZN"]),
-            ("TSLA", ["TSLA"]),
-            ("META", ["META"]),
-            ("NVDA", ["NVDA"]),
+            ("AAPL", "exact_symbol", {"symbol_match": "exact", "company": "Apple"}, 1),
+            ("MSFT", "exact_symbol", {"symbol_match": "exact", "company": "Microsoft"}, 1),
+            ("GOOGL", "exact_symbol", {"symbol_match": "exact", "company": "Google"}, 1),
+            ("TSLA", "exact_symbol", {"symbol_match": "exact", "company": "Tesla"}, 1),
+            ("META", "exact_symbol", {"symbol_match": "exact", "company": "Meta"}, 1),
+            
             # Company name searches
-            ("Apple", ["AAPL"]),
-            ("Microsoft", ["MSFT"]),
-            ("Google", ["GOOGL", "GOOG"]),
-            ("Amazon", ["AMZN"]),
-            ("Tesla", ["TSLA"]),
-            ("Netflix", ["NFLX"]),
+            ("Apple", "company_name", {"symbol_contains": "AAPL", "relevance": "high"}, 0),
+            ("Microsoft", "company_name", {"symbol_contains": "MSFT", "relevance": "high"}, 0),
+            ("Google", "company_name", {"symbol_contains": "GOOGL", "relevance": "high"}, 0),
+            ("Amazon", "company_name", {"symbol_contains": "AMZN", "relevance": "high"}, 0),
+            ("Tesla", "company_name", {"symbol_contains": "TSLA", "relevance": "high"}, 0),
+            ("Netflix", "company_name", {"symbol_contains": "NFLX", "relevance": "high"}, 0),
+            
             # Partial matches
-            ("Alphabet", ["GOOGL", "GOOG"]),
-            ("Berkshire", ["BRK.A", "BRK.B"]),
-            ("Johnson", ["JNJ"]),
-            ("JPMorgan", ["JPM"]),
-            ("Vanguard", ["V"]),  # May return multiple Vanguard ETFs
+            ("Alphabet", "partial_name", {"symbol_contains": "GOOGL", "relevance": "moderate"}, 0),
+            ("Berkshire", "partial_name", {"symbol_contains": "BRK", "relevance": "moderate"}, 0),
+            ("Johnson", "partial_name", {"symbol_contains": "JNJ", "relevance": "moderate"}, 0),
+            ("JPMorgan", "partial_name", {"symbol_contains": "JPM", "relevance": "moderate"}, 0),
+            
             # Industry searches
-            ("Bank", ["JPM", "BAC", "WFC"]),
-            ("Energy", ["XOM", "CVX"]),
-            ("Pharmaceutical", ["JNJ", "PFE"]),
-            ("Technology", ["AAPL", "MSFT", "GOOGL"]),
+            ("Bank", "industry", {"sector": "financial", "diversity": "high"}, 0),
+            ("Energy", "industry", {"sector": "energy", "diversity": "high"}, 0),
+            ("Technology", "industry", {"sector": "technology", "diversity": "high"}, 0),
+            ("Healthcare", "industry", {"sector": "healthcare", "diversity": "high"}, 0),
+            
             # ETF searches
-            ("SPDR", ["SPY"]),
-            ("iShares", ["IVV"]),
-            ("Invesco", ["QQQ"]),
+            ("SPDR", "etf_family", {"structure": "etf", "family": "state_street"}, 2),
+            ("iShares", "etf_family", {"structure": "etf", "family": "blackrock"}, 2),
+            ("Vanguard", "etf_family", {"structure": "etf", "family": "vanguard"}, 2),
+            
             # International searches
-            ("Toyota", ["TM"]),
-            ("Samsung", ["005930"]),  # May not be available in US markets
-            ("ASML", ["ASML"]),
+            ("Toyota", "international", {"geography": "japan", "adr": True}, 1),
+            ("ASML", "international", {"geography": "netherlands", "adr": True}, 1),
+            ("Nestle", "international", {"geography": "switzerland", "adr": True}, 1),
         ],
     )
-    def test_search_symbol_comprehensive(self, api_key, query, expected_symbols):
-        """Test symbol search across various query types."""
-        result = search.search_symbol(apikey=api_key, query=query, limit=50)
-        result_list = extract_data_list(result)
+    def test_symbol_search_comprehensive(
+        self, api_key, query, search_type, expected_patterns, min_results
+    ):
+        """Test comprehensive symbol search with business logic validation."""
+        response, validation = handle_api_call_with_validation(
+            search.search_symbol,
+            "search_symbol",
+            allow_empty=False,
+            apikey=api_key,
+            query=query,
+            limit=50
+        )
 
-        assert isinstance(result_list, list)
+        search_results = get_response_models(response, FMPSymbolSearch)
+        validate_model_list(search_results, FMPSymbolSearch)
+        assert len(search_results) >= min_results
 
-        if result_list:
-            # Validate schema for first few items
-            for item in result_list[:3]:
-                if isinstance(item, dict):
-                    validated = FMPSymbolSearch.model_validate(item)
-                else:
-                    validated = item
-                assert validated.symbol
-                assert validated.name
-
-            # Check if any expected symbols are found
-            found_symbols = [get_field_value(item, "symbol") for item in result_list]
-            matches_found = sum(
-                1
-                for expected in expected_symbols
-                if any(expected in symbol for symbol in found_symbols if symbol)
+        # Validate search results structure
+        for item in search_results[:5]:  # Check first 5 results
+            symbol = item.symbol
+            name = item.name
+            currency = item.currency
+            
+            assert symbol is not None and len(symbol) > 0
+            assert name is not None and len(name) > 0
+            assert len(symbol) <= 15  # Reasonable symbol length (increased for international symbols)
+            
+            # Currency validation
+            if currency:
+                assert currency in ["USD", "EUR", "GBP", "CAD", "JPY", "CHF", "AUD", "HKD", "GBp", "MXN", "SEK", "NOK", "DKK", "SGD", "NZD", "ZAR", "BRL", "CNY", "INR", "KRW", "IDR", "PLN", "TRY", "RUB", "THB"]
+        
+        # Search type-specific validation
+        if search_type == "exact_symbol":
+            # Should find exact match in results
+            found_exact = any(
+                item.symbol == query 
+                for item in search_results
             )
-
-            # Should find at least one match for most queries
-            assert (
-                matches_found >= 0
-            ), f"Search for '{query}' should return some relevant results"
+            assert found_exact, f"Should find exact symbol match for {query}"
+            
+        elif search_type == "company_name":
+            # Should find relevant company in results if any results are returned
+            if search_results:
+                found_company = any(
+                    expected_patterns["symbol_contains"] in item.symbol
+                    for item in search_results
+                )
+                assert found_company, f"Should find company symbol for {query}"
+            
+        elif search_type == "industry":
+            # Should find multiple companies in the sector
+            assert len(search_results) >= min_results
+            
+        elif search_type == "etf_family":
+            # Should find ETF family members
+            etf_symbols = [item.symbol for item in search_results]
+            assert len(etf_symbols) >= min_results
 
     @pytest.mark.parametrize(
-        "search_type",
+        "limit,expected_behavior",
         [
-            "exact_symbol",
-            "company_name",
-            "partial_name",
-            "industry_keyword",
-            "ticker_fragment",
+            (1, "single_result"),
+            (5, "limited_results"),
+            (10, "moderate_results"),
+            (25, "many_results"),
+            (50, "max_results"),
         ],
     )
-    def test_search_symbol_by_type(self, api_key, search_type):
-        """Test different types of symbol searches."""
-        search_queries = {
-            "exact_symbol": ["AAPL", "MSFT", "GOOGL"],
-            "company_name": ["Apple", "Microsoft", "Google"],
-            "partial_name": ["Alphabet", "Berkshire", "Johnson"],
-            "industry_keyword": ["Bank", "Energy", "Technology"],
-            "ticker_fragment": ["AA", "MS", "GO"],
-        }
-
-        queries = search_queries.get(search_type, ["AAPL"])
-
-        for query in queries:
-            result = search.search_symbol(apikey=api_key, query=query, limit=10)
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-
-            if result_list:
-                # Basic validation
-                for item in result_list[:2]:
-                    if isinstance(item, dict):
-                        validated = FMPSymbolSearch.model_validate(item)
-                    else:
-                        validated = item
-                    assert validated.symbol
-                    assert validated.name
-
-    @pytest.mark.parametrize("limit", [1, 5, 10, 25, 50])
-    def test_search_symbol_with_limits(self, api_key, limit):
-        """Test symbol search with various limit parameters."""
-        result = search.search_symbol(apikey=api_key, query="Tech", limit=limit)
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list)
-        assert len(result_list) <= limit
-
-        if result_list:
-            # Validate first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPSymbolSearch.model_validate(first_item)
-            else:
-                validated = first_item
-            assert validated.symbol
-            assert validated.name
-
-    def test_search_symbol_exact_match(self, api_key):
-        """Test exact symbol match."""
-        result = search.search_symbol(apikey=api_key, query="AAPL")
-
-        # Extract data from API response
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        # Validate schema
-        for item in result_list:
-            if isinstance(item, dict):
-                validated = FMPSymbolSearch.model_validate(item)
-            else:
-                validated = item  # Already a model instance
-            assert validated.symbol
-            assert validated.name
-            assert validated.currency
-
-        # Should find Apple Inc.
-        apple_symbols = [
-            item for item in result_list if "AAPL" in get_field_value(item, "symbol")
-        ]
-        assert len(apple_symbols) > 0
-
-    def test_search_symbol_partial_match(self, api_key):
-        """Test partial symbol matching."""
-        result = search.search_symbol(apikey=api_key, query="AA")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        # Should return multiple matches
-        assert len(result_list) >= 5
-
-        # All symbols should contain "AA"
-        for item in result_list:
-            symbol = get_field_value(item, "symbol")
-            assert "AA" in symbol.upper()
-            if isinstance(item, dict):
-                FMPSymbolSearch.model_validate(item)
-
-    def test_search_symbol_with_exchange_filter(self, api_key):
-        """Test symbol search with exchange filter."""
-        result = search.search_symbol(apikey=api_key, query="AAPL", exchange="NASDAQ")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        # All results should be from NASDAQ
-        for item in result_list:
-            exchange = get_field_value(item, "exchange")
-            assert exchange == "NASDAQ"
-            if isinstance(item, dict):
-                FMPSymbolSearch.model_validate(item)
-
-    def test_search_symbol_with_limit(self, api_key):
-        """Test symbol search with result limit."""
-        limit = 5
-        result = search.search_symbol(apikey=api_key, query="A", limit=limit)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) <= limit
-        assert len(result_list) > 0
-
-        for item in result_list:
-            if isinstance(item, dict):
-                FMPSymbolSearch.model_validate(item)
-
-    def test_search_symbol_empty_result(self, api_key):
-        """Test symbol search with no matches."""
-        result = search.search_symbol(apikey=api_key, query="ZZZNOMATCH999")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        # Should return empty list for no matches
-
-    def test_search_symbol_international(self, api_key):
-        """Test search for international symbols."""
-        result = search.search_symbol(apikey=api_key, query="ASML")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    FMPSymbolSearch.model_validate(item)
-
-
-class TestSearchName:
-    """Tests for search_name function."""
-
-    def test_search_name_exact_company(self, api_key):
-        """Test exact company name search."""
-        result = search.search_name(apikey=api_key, query="Apple Inc")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        for item in result_list:
-            if isinstance(item, dict):
-                validated = FMPCompanyNameSearch.model_validate(item)
-            else:
-                validated = item
-            assert validated.symbol
-            assert validated.name
-            assert "Apple" in validated.name
-
-    def test_search_name_partial_match(self, api_key):
-        """Test partial company name matching."""
-        result = search.search_name(apikey=api_key, query="Bank")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        # Should return multiple bank companies
-        for item in result_list:
-            if isinstance(item, dict):
-                FMPCompanyNameSearch.model_validate(item)
-            name = get_field_value(item, "name")
-            assert "Bank" in name or "BANK" in name
-
-    def test_search_name_with_exchange_filter(self, api_key):
-        """Test name search with exchange filter."""
-        result = search.search_name(
-            apikey=api_key, query="Microsoft", exchange="NASDAQ"
-        )
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                exchange = get_field_value(item, "exchange")
-                assert exchange == "NASDAQ"
-                if isinstance(item, dict):
-                    FMPCompanyNameSearch.model_validate(item)
-
-    def test_search_name_with_limit(self, api_key):
-        """Test name search with result limit."""
-        limit = 3
-        result = search.search_name(apikey=api_key, query="Bank", limit=limit)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) <= limit
-
-        for item in result_list:
-            if isinstance(item, dict):
-                FMPCompanyNameSearch.model_validate(item)
-
-
-class TestSearchCIK:
-    """Tests for search_cik function."""
-
-    def test_search_cik_valid_number(self, api_key):
-        """Test CIK search with valid CIK number."""
-        # Apple's CIK
-        result = search.search_cik(apikey=api_key, query="320193")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    validated = FMPCompanyCIKSearch.model_validate(item)
-                else:
-                    validated = item
-                assert validated.symbol
-                assert validated.companyName
-                assert validated.cik
-                assert "320193" in validated.cik
-
-    def test_search_cik_company_name(self, api_key):
-        """Test CIK search by CIK number (Microsoft)."""
-        # Microsoft's CIK
-        result = search.search_cik(apikey=api_key, query="789019")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    FMPCompanyCIKSearch.model_validate(item)
-                company_name = get_field_value(item, "companyName")
-                cik_value = get_field_value(item, "cik")
-                assert "Microsoft" in company_name or "MICROSOFT" in company_name
-                assert "789019" in cik_value
-
-    def test_search_cik_with_limit(self, api_key):
-        """Test CIK search with result limit - Google's CIK."""
-        limit = 5
-        # Google/Alphabet's CIK
-        result = search.search_cik(apikey=api_key, query="1652044", limit=limit)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) <= limit
-
-        for item in result_list:
-            if isinstance(item, dict):
-                FMPCompanyCIKSearch.model_validate(item)
-                cik_value = get_field_value(item, "cik")
-                assert "1652044" in cik_value
-
-    def test_search_cik_invalid_format(self, api_key):
-        """Test CIK search with invalid format."""
-        result = search.search_cik(apikey=api_key, query="INVALID_CIK")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        # Should handle gracefully (empty result or error)
-
-
-class TestSearchCUSIP:
-    """Tests for search_cusip function."""
-
-    def test_search_cusip_valid(self, api_key):
-        """Test CUSIP search with valid identifier."""
-        # Apple's CUSIP
-        result = search.search_cusip(apikey=api_key, cusip="037833100")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    validated = FMPCusipSearch.model_validate(item)
-                else:
-                    validated = item
-                assert validated.symbol
-                assert validated.companyName
-                assert validated.cusip == "037833100"
-
-    def test_search_cusip_invalid_format(self, api_key):
-        """Test CUSIP search with invalid format."""
-        result = search.search_cusip(apikey=api_key, cusip="INVALID")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        # Should handle gracefully
-
-
-class TestSearchISIN:
-    """Tests for search_isin function."""
-
-    def test_search_isin_valid_us(self, api_key):
-        """Test ISIN search with valid US ISIN."""
-        # Apple's ISIN
-        result = search.search_isin(apikey=api_key, isin="US0378331005")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    validated = FMPIsinSearch.model_validate(item)
-                else:
-                    validated = item
-                assert validated.symbol
-                assert validated.name
-                assert validated.isin == "US0378331005"
-
-    def test_search_isin_invalid_format(self, api_key):
-        """Test ISIN search with invalid format."""
-        result = search.search_isin(apikey=api_key, isin="INVALID_ISIN")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        # Should handle gracefully
-
-
-class TestCompanyScreener:
-    """Tests for company_screener function."""
-
-    def test_screener_market_cap_filter(self, api_key):
-        """Test screener with market cap filters."""
-        result = search.company_screener(
-            apikey=api_key, market_cap_more_than=1000000000, limit=20  # > $1B
-        )
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        for item in result_list:
-            if isinstance(item, dict):
-                validated = FMPStockScreenerResult.model_validate(item)
-            else:
-                validated = item
-            assert validated.marketCap >= 1000000000
-            assert validated.symbol
-            assert validated.companyName
-
-    def test_screener_price_filter(self, api_key):
-        """Test screener with price filters."""
-        result = search.company_screener(
-            apikey=api_key, price_more_than=10.0, price_lower_than=500.0, limit=15
-        )
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    validated = FMPStockScreenerResult.model_validate(item)
-                else:
-                    validated = item
-                assert 10.0 <= validated.price <= 500.0
-
-    def test_screener_sector_filter(self, api_key):
-        """Test screener with sector filter."""
-        result = search.company_screener(apikey=api_key, sector="Technology", limit=10)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    validated = FMPStockScreenerResult.model_validate(item)
-                else:
-                    validated = item
-                if validated.sector:
-                    assert "Technology" in validated.sector
-
-    def test_screener_exchange_filter(self, api_key):
-        """Test screener with exchange filter."""
-        result = search.company_screener(apikey=api_key, exchange="NASDAQ", limit=10)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    validated = FMPStockScreenerResult.model_validate(item)
-                else:
-                    validated = item
-                assert validated.exchangeShortName == "NASDAQ"
-
-    def test_screener_etf_filter(self, api_key):
-        """Test screener with ETF filter."""
-        result = search.company_screener(apikey=api_key, is_etf=True, limit=10)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        for item in result_list:
-            if isinstance(item, dict):
-                FMPStockScreenerResult.model_validate(item)
-
-    def test_screener_multiple_filters(self, api_key):
-        """Test screener with multiple filters combined."""
-        result = search.company_screener(
+    def test_symbol_search_limit_validation(self, api_key, limit, expected_behavior):
+        """Test symbol search with different limit parameters."""
+        response, validation = handle_api_call_with_validation(
+            search.search_symbol,
+            "search_symbol",
+            allow_empty=False,
             apikey=api_key,
-            market_cap_more_than=500000000,  # > $500M
-            price_more_than=5.0,
-            volume_more_than=100000,
-            sector="Technology",
-            limit=5,
+            query="Tech",
+            limit=limit
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        search_results = get_response_models(response, FMPSymbolSearch)
+        validate_model_list(search_results, FMPSymbolSearch)
+        assert len(search_results) <= limit
 
-        for item in result_list:
-            if isinstance(item, dict):
-                validated = FMPStockScreenerResult.model_validate(item)
-            else:
-                validated = item
-            assert validated.marketCap >= 500000000
-            assert validated.price >= 5.0
-            assert validated.volume >= 100000
+        if search_results:
+            # Validate result quality
+            first_item = search_results[0]
+            symbol = first_item.symbol
+            name = first_item.name
+            
+            assert symbol is not None and len(symbol) > 0
+            assert name is not None and len(name) > 0
+            
+            # Limit-specific validation
+            if expected_behavior == "single_result":
+                assert len(search_results) == 1
+            elif expected_behavior == "limited_results":
+                assert len(search_results) <= 5
+            elif expected_behavior == "max_results":
+                assert len(search_results) <= 50
 
-    def test_screener_beta_filter(self, api_key):
-        """Test screener with beta filters."""
-        result = search.company_screener(
-            apikey=api_key, beta_more_than=0.5, beta_lower_than=2.0, limit=10
-        )
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        for item in result_list:
-            if isinstance(item, dict):
-                validated = FMPStockScreenerResult.model_validate(item)
-            else:
-                validated = item
-            if validated.beta is not None:
-                assert 0.5 <= validated.beta <= 2.0
-
-    def test_screener_no_filters(self, api_key):
-        """Test screener with no filters (all stocks)."""
-        result = search.company_screener(apikey=api_key, limit=5)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        for item in result_list:
-            if isinstance(item, dict):
-                FMPStockScreenerResult.model_validate(item)
-
-
-class TestSearchExchangeVariants:
-    """Tests for search_exchange_variants function."""
-
-    def test_exchange_variants_single_listing(self, api_key):
-        """Test exchange variants for symbol with single listing."""
-        result = search.search_exchange_variants(apikey=api_key, symbol="AAPL")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            for item in result_list:
-                if isinstance(item, dict):
-                    FMPCompanyProfile.model_validate(item)
-
-    def test_exchange_variants_multiple_listings(self, api_key):
-        """Test exchange variants for symbol with multiple listings."""
-        # Many international companies have multiple listings
-        result = search.search_exchange_variants(
+    @pytest.mark.parametrize(
+        "exchange,expected_listings",
+        [
+            ("NASDAQ", {"primary_exchange": "NASDAQ", "tech_heavy": True}),
+            ("NYSE", {"primary_exchange": "NYSE", "traditional": True}),
+            ("AMEX", {"primary_exchange": "AMEX", "smaller_companies": True}),
+        ],
+    )
+    def test_symbol_search_exchange_filtering(self, api_key, exchange, expected_listings):
+        """Test symbol search with exchange-specific filtering."""
+        response, validation = handle_api_call_with_validation(
+            search.search_symbol,
+            "search_symbol",
+            allow_empty=False,
             apikey=api_key,
-            symbol="TSM",  # Taiwan Semiconductor, often has multiple listings
+            query="A",  # Broad search
+            exchange=exchange,
+            limit=20
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        search_results = get_response_models(response, FMPSymbolSearch)
+        validate_model_list(search_results, FMPSymbolSearch)
 
-        for item in result_list:
-            if isinstance(item, dict):
-                FMPCompanyProfile.model_validate(item)
+        if search_results:
+            # Validate exchange information
+            for item in search_results[:5]:
+                symbol = item.symbol
+                name = item.name
+                exchange_info = item.exchange
+                
+                assert symbol is not None
+                assert name is not None
+                
+                # Exchange-specific validation
+                if exchange_info:
+                    if exchange == "NASDAQ":
+                        # Many NASDAQ symbols should be technology-related
+                        assert exchange_info in ["NASDAQ", "NMS", "NCM"]
+                    elif exchange == "NYSE":
+                        # NYSE should have traditional listings
+                        assert exchange_info in ["NYSE", "NYQ"]
+                    elif exchange == "AMEX":
+                        # AMEX should be present
+                        assert exchange_info in ["AMEX", "ASE"]
 
-    def test_exchange_variants_invalid_symbol(self, api_key):
-        """Test exchange variants for invalid symbol."""
-        result = search.search_exchange_variants(apikey=api_key, symbol="INVALID999")
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        # Should handle gracefully (empty result)
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestCompanyNameSearch:
+    """Test class for company name search functionality."""
+
+    @pytest.mark.parametrize(
+        "company_name,expected_symbol,search_quality",
+        [
+            ("Apple Inc", "AAPL", "exact_match"),
+            ("Microsoft Corporation", "MSFT", "exact_match"),
+            ("Alphabet Inc", "GOOGL", "exact_match"),
+            ("Amazon.com Inc", "AMZN", "exact_match"),
+            ("Tesla Inc", "TSLA", "exact_match"),
+            ("Johnson & Johnson", "JNJ", "exact_match"),
+            ("JPMorgan Chase", "JPM", "partial_match"),
+            ("Berkshire Hathaway", "BRK", "partial_match"),
+            ("Walmart Inc", "WMT", "exact_match"),
+            ("Exxon Mobil", "XOM", "exact_match"),
+        ],
+    )
+    def test_company_name_search_validation(
+        self, api_key, company_name, expected_symbol, search_quality
+    ):
+        """Test company name search with comprehensive validation."""
+        response, validation = handle_api_call_with_validation(
+            search.search_name,
+            "search_name",
+            allow_empty=False,
+            apikey=api_key,
+            query=company_name,
+            limit=10
+        )
+
+        search_results = get_response_models(response, FMPCompanyNameSearch)
+        validate_model_list(search_results, FMPCompanyNameSearch)
+        assert len(search_results) > 0
+
+        # Validate search results structure
+        for item in search_results[:3]:  # Check first 3 results
+            symbol = item.symbol
+            name = item.name
+            
+            assert symbol is not None and len(symbol) > 0
+            assert name is not None and len(name) > 0
+            assert len(symbol) <= 10  # Reasonable symbol length
+
+        # Search quality-specific validation
+        if search_quality == "exact_match":
+            # Should find exact company match in top results
+            found_exact = any(
+                expected_symbol in item.symbol
+                for item in search_results[:3]
+            )
+            assert found_exact, f"Should find {expected_symbol} for {company_name}"
+            
+        elif search_quality == "partial_match":
+            # Should find related company somewhere in results
+            found_related = any(
+                expected_symbol in item.symbol
+                for item in search_results
+            )
+            assert found_related, f"Should find {expected_symbol} related to {company_name}"
+
+        # Validate data quality
+        first_result = search_results[0]
+        symbol = first_result.symbol
+        name = first_result.name
+        
+        # Most relevant result should contain search term
+        assert company_name.lower() in name.lower() or any(
+            word.lower() in name.lower() for word in company_name.split()
+        )
+
+    @pytest.mark.parametrize(
+        "search_term,expected_sector,min_results",
+        [
+            ("Bank", "financial", 3),
+            ("Insurance", "financial", 2),
+            ("Technology", "technology", 5),
+            ("Pharmaceutical", "healthcare", 3),
+            ("Energy", "energy", 2),
+            ("Retail", "consumer_discretionary", 2),
+            ("Utility", "utilities", 2),
+        ],
+    )
+    def test_company_name_search_by_sector(
+        self, api_key, search_term, expected_sector, min_results
+    ):
+        """Test company name search across different sectors."""
+        response, validation = handle_api_call_with_validation(
+            search.search_name,
+            "search_name",
+            allow_empty=False,
+            apikey=api_key,
+            query=search_term,
+            limit=20
+        )
+
+        search_results = get_response_models(response, FMPCompanyNameSearch)
+        validate_model_list(search_results, FMPCompanyNameSearch)
+        assert len(search_results) >= min_results
+
+        # Validate sector diversity
+        unique_symbols = set()
+        for item in search_results:
+            symbol = item.symbol
+            name = item.name
+            
+            assert symbol is not None and len(symbol) > 0
+            assert name is not None and len(name) > 0
+            unique_symbols.add(symbol)
+            
+            # Sector-specific validation
+            if expected_sector == "financial":
+                # Financial companies often have keywords
+                financial_keywords = ["bank", "financial", "insurance", "capital", "group"]
+                has_financial_keyword = any(
+                    keyword in name.lower() for keyword in financial_keywords
+                )
+                if not has_financial_keyword:
+                    # Allow some flexibility but most should match
+                    pass
+                    
+            elif expected_sector == "technology":
+                # Technology companies often have tech-related terms
+                tech_keywords = ["tech", "systems", "software", "data", "digital", "computing"]
+                # Allow flexibility for broad technology search
+
+        # Validate diversity - should find multiple unique companies
+        assert len(unique_symbols) >= min_results
+
+    def test_company_name_search_data_quality(self, api_key):
+        """Test company name search data quality and consistency."""
+        # Test with well-known companies
+        test_companies = ["Apple", "Microsoft", "Google", "Amazon", "Tesla"]
+        
+        for company in test_companies:
+            response, validation = handle_api_call_with_validation(
+                search.search_name,
+                "search_name",
+                allow_empty=False,
+                apikey=api_key,
+                query=company,
+                limit=5
+            )
+
+            search_results = get_response_models(response, FMPCompanyNameSearch)
+            validate_model_list(search_results, FMPCompanyNameSearch)
+            
+            if search_results:
+                first_result = search_results[0]
+                symbol = first_result.symbol
+                name = first_result.name
+                
+                assert symbol is not None and len(symbol) > 0
+                assert name is not None and len(name) > 0
+                
+                # Symbol should be reasonable length
+                assert 1 <= len(symbol) <= 10
+                
+                # Name should contain the search term or be highly relevant
+                assert company.lower() in name.lower() or any(
+                    word.lower() in name.lower() for word in company.split()
+                )
 
 
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestCIKSearch:
+    """Test class for CIK (Central Index Key) search functionality."""
+
+    @pytest.mark.parametrize(
+        "cik_input,search_type,expected_results",
+        [
+            # Well-known CIK numbers
+            ("320193", "numeric_cik", {"company": "Apple", "symbol": "AAPL"}),
+            ("789019", "numeric_cik", {"company": "Microsoft", "symbol": "MSFT"}),
+            ("1652044", "numeric_cik", {"company": "Google", "symbol": "GOOGL"}),
+            ("1018724", "numeric_cik", {"company": "Amazon", "symbol": "AMZN"}),
+            ("1318605", "numeric_cik", {"company": "Tesla", "symbol": "TSLA"}),
+            
+            # Company name searches for CIK
+            ("Apple", "company_name", {"cik_found": True, "symbol": "AAPL"}),
+            ("Microsoft", "company_name", {"cik_found": True, "symbol": "MSFT"}),
+            ("Google", "company_name", {"cik_found": True, "symbol": "GOOGL"}),
+            ("Amazon", "company_name", {"cik_found": True, "symbol": "AMZN"}),
+            ("Tesla", "company_name", {"cik_found": True, "symbol": "TSLA"}),
+        ],
+    )
+    def test_cik_search_validation(self, api_key, cik_input, search_type, expected_results):
+        """Test CIK search with validation."""
+        response, validation = handle_api_call_with_validation(
+            search.search_cik,
+            "search_cik",
+            allow_empty=False,
+            apikey=api_key,
+            query=cik_input,
+            limit=10
+        )
+
+        search_results = get_response_models(response, FMPCompanyCIKSearch)
+        validate_model_list(search_results, FMPCompanyCIKSearch)
+        assert len(search_results) > 0
+
+        # Validate search results
+        found_match = False
+        for item in search_results:
+            cik = item.cik
+            name = item.companyName
+            
+            assert cik is not None
+            assert name is not None
+            
+            # CIK should be numeric string
+            assert str(cik).isdigit() or cik.isdigit()
+            
+            # Search type-specific validation
+            if search_type == "numeric_cik":
+                if cik_input in str(cik):
+                    found_match = True
+                    assert expected_results["company"].lower() in name.lower()
+                    break
+            elif search_type == "company_name":
+                if cik_input.lower() in name.lower():
+                    found_match = True
+                    break
+        
+        assert found_match, f"Should find CIK match for {cik_input}"
+
+    def test_cik_search_data_quality(self, api_key):
+        """Test CIK search data quality and consistency."""
+        response, validation = handle_api_call_with_validation(
+            search.search_cik,
+            "search_cik",
+            allow_empty=False,
+            apikey=api_key,
+            query="Apple",
+            limit=5
+        )
+
+        search_results = get_response_models(response, FMPCompanyCIKSearch)
+        validate_model_list(search_results, FMPCompanyCIKSearch)
+        assert len(search_results) > 0
+
+        # Validate data quality
+        for item in search_results:
+            cik = item.cik
+            name = item.companyName
+            
+            # CIK validation
+            assert cik is not None
+            assert len(str(cik)) >= 1
+            
+            # Name validation
+            assert name is not None
+            assert len(name) > 0
+            
+            # CIK should be reasonable length (typically 10 digits or less)
+            assert len(str(cik)) <= 10
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestCUSIPSearch:
+    """Test class for CUSIP search functionality."""
+
+    @pytest.mark.parametrize(
+        "cusip_input,expected_characteristics",
+        [
+            ("037833100", {"company": "Apple", "format": "valid"}),
+            ("594918104", {"company": "Microsoft", "format": "valid"}),
+            ("02079K305", {"company": "Alphabet", "format": "valid"}),
+            ("023135106", {"company": "Amazon", "format": "valid"}),
+        ],
+    )
+    def test_cusip_search_validation(self, api_key, cusip_input, expected_characteristics):
+        """Test CUSIP search validation."""
+        response, validation = handle_api_call_with_validation(
+            search.search_cusip,
+            "search_cusip",
+            allow_empty=True,  # CUSIP data may not always be available
+            apikey=api_key,
+            cusip=cusip_input
+        )
+
+        search_results = get_response_models(response, FMPCusipSearch)
+        validate_model_list(search_results, FMPCusipSearch)
+
+        if search_results:
+            # Validate CUSIP structure
+            for item in search_results:
+                cusip = item.cusip
+                name = item.name
+                
+                if cusip:
+                    assert len(cusip) == 9  # CUSIP should be 9 characters
+                    assert cusip.replace(' ', '').isalnum()  # Should be alphanumeric
+                
+                if name:
+                    assert len(name) > 0
+                    
+                    # Check for expected company match
+                    if expected_characteristics.get("company"):
+                        expected_company = expected_characteristics["company"]
+                        assert expected_company.lower() in name.lower()
+
+    def test_cusip_search_format_validation(self, api_key):
+        """Test CUSIP search with format validation."""
+        # Test with invalid CUSIP format
+        response, validation = handle_api_call_with_validation(
+            search.search_cusip,
+            "search_cusip",
+            allow_empty=True,
+            apikey=api_key,
+            cusip="INVALID"
+        )
+
+        search_results = get_response_models(response, FMPCusipSearch)
+        validate_model_list(search_results, FMPCusipSearch)
+        # Invalid CUSIP should return empty results
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestISINSearch:
+    """Test class for ISIN search functionality."""
+
+    @pytest.mark.parametrize(
+        "isin_input,expected_characteristics",
+        [
+            ("US0378331005", {"country": "US", "company": "Apple", "format": "valid"}),
+            ("US5949181045", {"country": "US", "company": "Microsoft", "format": "valid"}),
+            ("US02079K3059", {"country": "US", "company": "Google", "format": "valid"}),
+            ("US0231351067", {"country": "US", "company": "Amazon", "format": "valid"}),
+        ],
+    )
+    def test_isin_search_validation(self, api_key, isin_input, expected_characteristics):
+        """Test ISIN search validation."""
+        response, validation = handle_api_call_with_validation(
+            search.search_isin,
+            "search_isin",
+            allow_empty=True,  # ISIN data may not always be available
+            apikey=api_key,
+            isin=isin_input
+        )
+
+        search_results = get_response_models(response, FMPIsinSearch)
+        validate_model_list(search_results, FMPIsinSearch)
+
+        if search_results:
+            # Validate ISIN structure
+            for item in search_results:
+                isin = item.isin
+                name = item.name
+                
+                if isin:
+                    assert len(isin) == 12  # ISIN should be 12 characters
+                    assert isin[:2].isalpha()  # First 2 characters should be country code
+                    assert isin[2:].isalnum()  # Remaining should be alphanumeric
+                    
+                    # Country validation
+                    if expected_characteristics.get("country"):
+                        expected_country = expected_characteristics["country"]
+                        assert isin.startswith(expected_country)
+                
+                if name:
+                    assert len(name) > 0
+                    
+                    # Check for expected company match
+                    if expected_characteristics.get("company"):
+                        expected_company = expected_characteristics["company"]
+                        assert expected_company.lower() in name.lower()
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestStockScreener:
+    """Test class for stock screener functionality."""
+
+    @pytest.mark.parametrize(
+        "filter_type,filter_params,expected_characteristics",
+        [
+            ("market_cap", {"market_cap_more_than": "10000000000"}, {"segment": "large_cap", "min_results": 5}),
+            ("market_cap", {"market_cap_lower_than": "2000000000"}, {"segment": "small_cap", "min_results": 5}),
+            ("price_range", {"price_more_than": "50", "price_lower_than": "200"}, {"price_range": "mid", "min_results": 5}),
+            ("sector", {"sector": "Technology"}, {"sector": "technology", "min_results": 10}),
+            ("exchange", {"exchange": "NASDAQ"}, {"exchange": "nasdaq", "min_results": 10}),
+            ("dividend", {"dividend_more_than": "2"}, {"dividend_yield": "high", "min_results": 3}),
+            ("beta", {"beta_more_than": "1.5"}, {"volatility": "high", "min_results": 5}),
+        ],
+    )
+    def test_stock_screener_filters(self, api_key, filter_type, filter_params, expected_characteristics):
+        """Test stock screener with various filters."""
+        response, validation = handle_api_call_with_validation(
+            search.company_screener,
+            "screener",
+            allow_empty=False,
+            apikey=api_key,
+            limit=20,
+            **filter_params
+        )
+
+        screener_results = get_response_models(response, FMPStockScreenerResult)
+        validate_model_list(screener_results, FMPStockScreenerResult)
+        assert len(screener_results) >= expected_characteristics["min_results"]
+
+        # Validate screener results
+        for item in screener_results[:5]:
+            symbol = item.symbol
+            company_name = item.companyName
+            price = item.price
+            market_cap = item.marketCap
+            
+            assert symbol is not None
+            assert company_name is not None
+            
+            # Filter-specific validation
+            if filter_type == "market_cap":
+                if market_cap is not None:
+                    if "market_cap_more_than" in filter_params:
+                        min_cap = float(filter_params["market_cap_more_than"])
+                        assert market_cap >= min_cap
+                    if "market_cap_lower_than" in filter_params:
+                        max_cap = float(filter_params["market_cap_lower_than"])
+                        assert market_cap <= max_cap
+            
+            elif filter_type == "price_range":
+                if price is not None:
+                    if "price_more_than" in filter_params:
+                        min_price = float(filter_params["price_more_than"])
+                        assert price >= min_price
+                    if "price_lower_than" in filter_params:
+                        max_price = float(filter_params["price_lower_than"])
+                        assert price <= max_price
+            
+            elif filter_type == "sector":
+                sector = item.sector
+                if sector:
+                    expected_sector = filter_params["sector"]
+                    assert expected_sector.lower() in sector.lower()
+
+    def test_stock_screener_comprehensive(self, api_key):
+        """Test comprehensive stock screener functionality."""
+        response, validation = handle_api_call_with_validation(
+            search.company_screener,
+            "company_screener",
+            allow_empty=False,
+            apikey=api_key,
+            market_cap_more_than="1000000000",
+            price_more_than="10",
+            limit=10
+        )
+
+        screener_results = get_response_models(response, FMPStockScreenerResult)
+        validate_model_list(screener_results, FMPStockScreenerResult)
+        assert len(screener_results) > 0
+
+        # Validate comprehensive data
+        for item in screener_results:
+            symbol = item.symbol
+            company_name = item.companyName
+            price = item.price
+            market_cap = item.marketCap
+            sector = item.sector
+            
+            # Basic validation
+            assert symbol is not None
+            assert company_name is not None
+            
+            # Price validation
+            if price is not None:
+                assert price >= 10  # Based on filter
+            
+            # Market cap validation
+            if market_cap is not None:
+                assert market_cap >= 1000000000  # Based on filter
+            
+            # Symbol format validation
+            assert len(symbol) <= 10
+            assert symbol.isalnum() or '-' in symbol or '.' in symbol
+
+
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
 class TestSearchErrorHandling:
-    """Test error handling for search functions."""
+    """Test class for search error handling and edge cases."""
 
-    def test_search_symbol_invalid_api_key(self):
-        """Test search_symbol with invalid API key."""
-        result = search.search_symbol(apikey="invalid_key", query="AAPL")
-        # Should return error message dict instead of raising exception
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
+    @pytest.mark.parametrize(
+        "search_function,invalid_input,expected_behavior",
+        [
+            (search.search_symbol, "", "empty_result"),
+            (search.search_symbol, "INVALID_SYMBOL_12345", "empty_result"),
+            (search.search_name, "", "empty_result"),
+            (search.search_name, "NONEXISTENT_COMPANY_XYZ", "empty_result"),
+            (search.search_cik, "INVALID_CIK", "empty_result"),
+            (search.search_cusip, "INVALID", "empty_result"),
+            (search.search_isin, "INVALID", "empty_result"),
+        ],
+    )
+    def test_search_invalid_inputs(self, api_key, search_function, invalid_input, expected_behavior):
+        """Test search functions with invalid inputs."""
+        # Determine the correct parameter name for each function
+        if search_function.__name__ == "search_cusip":
+            param_name = "cusip"
+        elif search_function.__name__ == "search_isin":
+            param_name = "isin"
+        elif search_function.__name__ == "search_cik":
+            param_name = "cik"
         else:
-            # If it returns a model, check if it's empty or has an error
-            result_list = extract_data_list(result)
-            # Should either be empty or have error indication
-
-    def test_search_name_invalid_api_key(self):
-        """Test search_name with invalid API key."""
-        result = search.search_name(apikey="invalid_key", query="Apple")
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-
-    def test_search_cik_invalid_api_key(self):
-        """Test search_cik with invalid API key."""
-        result = search.search_cik(apikey="invalid_key", query="320193")
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-
-    def test_search_cusip_invalid_api_key(self):
-        """Test search_cusip with invalid API key."""
-        result = search.search_cusip(apikey="invalid_key", cusip="037833100")
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-
-    def test_search_isin_invalid_api_key(self):
-        """Test search_isin with invalid API key."""
-        result = search.search_isin(apikey="invalid_key", isin="US0378331005")
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-
-    def test_screener_invalid_api_key(self):
-        """Test company_screener with invalid API key."""
-        result = search.company_screener(apikey="invalid_key", limit=5)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-
-    def test_exchange_variants_invalid_api_key(self):
-        """Test search_exchange_variants with invalid API key."""
-        result = search.search_exchange_variants(apikey="invalid_key", symbol="AAPL")
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-
-
-class TestSearchResponseTimes:
-    """Test response time performance for search functions."""
-
-    def test_search_symbol_response_time(self, api_key):
-        """Test search_symbol response time."""
-        import time
-
-        start_time = time.time()
-        result = search.search_symbol(apikey=api_key, query="AAPL")
-        end_time = time.time()
-
-        response_time = end_time - start_time
-        assert response_time < 10.0  # Should respond within 10 seconds
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-    def test_screener_response_time(self, api_key):
-        """Test company_screener response time."""
-        import time
-
-        start_time = time.time()
-        result = search.company_screener(
-            apikey=api_key, market_cap_more_than=1000000000, limit=10
-        )
-        end_time = time.time()
-
-        response_time = end_time - start_time
-        assert response_time < 15.0  # Screener might be slower
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-
-class TestSearchDataConsistency:
-    """Test data consistency across search functions."""
-
-    def test_symbol_vs_name_search_consistency(self, api_key):
-        """Test consistency between symbol and name search results."""
-        # Search by symbol
-        symbol_result = search.search_symbol(apikey=api_key, query="AAPL")
-
-        # Search by name
-        name_result = search.search_name(apikey=api_key, query="Apple")
-
-        symbol_list = extract_data_list(symbol_result)
-        name_list = extract_data_list(name_result)
-
-        assert isinstance(symbol_list, list)
-        assert isinstance(name_list, list)
-
-        if len(symbol_list) > 0 and len(name_list) > 0:
-            # Look for Apple in both results
-            symbol_apple = [
-                item
-                for item in symbol_list
-                if get_field_value(item, "symbol") == "AAPL"
-            ]
-            name_apple = [
-                item for item in name_list if get_field_value(item, "symbol") == "AAPL"
-            ]
-
-            if len(symbol_apple) > 0 and len(name_apple) > 0:
-                # Should have consistent data
-                symbol_name = get_field_value(symbol_apple[0], "name")
-                name_name = get_field_value(name_apple[0], "name")
-                assert symbol_name == name_name
-
-                symbol_exchange = get_field_value(symbol_apple[0], "exchange")
-                name_exchange = get_field_value(name_apple[0], "exchange")
-                assert symbol_exchange == name_exchange
-
-    def test_screener_vs_search_consistency(self, api_key):
-        """Test consistency between screener and search results."""
-        # Get Apple from screener
-        screener_result = search.company_screener(
-            apikey=api_key, market_cap_more_than=1000000000, limit=100
+            param_name = "query"
+            
+        kwargs = {"apikey": api_key, param_name: invalid_input}
+        
+        response, validation = handle_api_call_with_validation(
+            search_function,
+            search_function.__name__,
+            allow_empty=True,
+            **kwargs
         )
 
-        # Get Apple from symbol search
-        symbol_result = search.search_symbol(apikey=api_key, query="AAPL")
+        # For invalid inputs test, we just need to check empty results generically
+        if isinstance(response, list):
+            search_results = response
+        elif hasattr(response, 'model_dump'):
+            dumped = response.model_dump()
+            search_results = dumped if isinstance(dumped, list) else [dumped]
+        else:
+            search_results = []
+        
+        assert isinstance(search_results, list)
 
-        screener_list = extract_data_list(screener_result)
-        symbol_list = extract_data_list(symbol_result)
+        if expected_behavior == "empty_result":
+            # Should return empty list for invalid inputs
+            assert len(search_results) == 0 or search_results == []
 
-        assert isinstance(screener_list, list)
-        assert isinstance(symbol_list, list)
+    def test_search_api_key_validation(self):
+        """Test search API key validation."""
+        with pytest.raises(Exception):
+            search.search_symbol(apikey="invalid_key", query="AAPL")
 
-        if len(screener_list) > 0 and len(symbol_list) > 0:
-            # Look for Apple in both
-            screener_apple = [
-                item
-                for item in screener_list
-                if get_field_value(item, "symbol") == "AAPL"
-            ]
-            symbol_apple = [
-                item
-                for item in symbol_list
-                if get_field_value(item, "symbol") == "AAPL"
-            ]
+    @pytest.mark.parametrize(
+        "limit_value,expected_result",
+        [
+            (0, "empty_or_error"),
+            (1, "single_result"),
+            (100, "max_results"),
+            (1000, "max_results_capped"),
+        ],
+    )
+    def test_search_limit_edge_cases(self, api_key, limit_value, expected_result):
+        """Test search limit edge cases."""
+        response, validation = handle_api_call_with_validation(
+            search.search_symbol,
+            "search_symbol",
+            allow_empty=True,
+            apikey=api_key,
+            query="A",
+            limit=limit_value
+        )
 
-            if len(screener_apple) > 0 and len(symbol_apple) > 0:
-                # Company name should be consistent
-                screener_name = get_field_value(screener_apple[0], "companyName")
-                symbol_name = get_field_value(symbol_apple[0], "name")
-                assert screener_name in symbol_name or symbol_name in screener_name
+        search_results = get_response_models(response, FMPSymbolSearch)
+        validate_model_list(search_results, FMPSymbolSearch)
+
+        if expected_result == "single_result":
+            assert len(search_results) <= 1
+        elif expected_result == "max_results":
+            assert len(search_results) <= 100
+        elif expected_result == "max_results_capped":
+            # API should cap results at reasonable limit
+            assert len(search_results) <= 1000

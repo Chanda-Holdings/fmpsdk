@@ -1,9 +1,73 @@
+from typing import List
+
 import pytest
 
 from fmpsdk import commodity
-from fmpsdk.models import FMPCommodity
+from fmpsdk.models import FMPCommodityListItem  # Corrected - this is what the API actually returns
+from tests.conftest import (
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
+    handle_api_call_with_validation,
+)
 
-from .conftest import extract_data_list
+
+def validate_commodity_data(commodities: List[FMPCommodityListItem]) -> None:
+    """Validate commodity data with business logic checks using Pydantic models."""
+    if not commodities:
+        return
+    
+    # Validate all items are FMPCommodityListItem models (the actual API return type)
+    validate_model_list(commodities, FMPCommodityListItem, min_count=1)
+    
+    # Data quality metrics
+    total_commodities = len(commodities)
+    valid_symbols = 0
+    valid_names = 0
+    unique_symbols = set()
+    category_coverage = set()
+    
+    # Commodity categories and their keywords
+    category_keywords = {
+        "energy": ["oil", "gas", "crude", "brent", "wti", "heating", "gasoline"],
+        "precious_metals": ["gold", "silver", "platinum", "palladium"],
+        "industrial_metals": ["copper", "aluminum", "zinc", "nickel", "lead", "tin"],
+        "agricultural": ["corn", "wheat", "soybean", "rice", "oats", "barley"],
+        "soft_commodities": ["coffee", "sugar", "cotton", "cocoa", "orange", "lumber"],
+        "livestock": ["cattle", "hog", "lean", "feeder", "pork"],
+    }
+    
+    for commodity in commodities:
+        # Symbol validation - direct Pydantic model access
+        symbol = commodity.symbol
+        if symbol and len(symbol) >= 2:
+            valid_symbols += 1
+            unique_symbols.add(symbol)
+        
+        # Name validation - direct Pydantic model access
+        name = commodity.name
+        if name and len(name) > 2:
+            valid_names += 1
+        
+        # Category detection
+        name_lower = name.lower() if name else ""
+        symbol_lower = symbol.lower() if symbol else ""
+        
+        for category, keywords in category_keywords.items():
+            if any(keyword in name_lower or keyword in symbol_lower for keyword in keywords):
+                category_coverage.add(category)
+                break
+    
+    # Business logic assertions
+    if total_commodities > 0:
+        assert valid_symbols / total_commodities >= 0.85, f"Only {valid_symbols}/{total_commodities} commodities have valid symbols"
+        assert valid_names / total_commodities >= 0.90, f"Only {valid_names}/{total_commodities} commodities have valid names"
+        assert len(unique_symbols) == valid_symbols, f"Commodity symbols should be unique: {len(unique_symbols)} != {valid_symbols}"
+        assert len(category_coverage) >= 1, f"Should cover at least 1 major commodity category, found: {category_coverage}"
+        
+        # Reasonable commodity count
+        assert total_commodities >= 10, f"Should have at least 10 commodities, got {total_commodities}"
+        assert total_commodities <= 1000, f"Should have reasonable number of commodities (< 1000), got {total_commodities}"
 
 
 class TestCommodityList:
@@ -11,43 +75,31 @@ class TestCommodityList:
 
     def test_commodity_list_success(self, api_key):
         """Test successful retrieval of commodity list."""
-        result = commodity.commodity_list(apikey=api_key)
-        result_list = extract_data_list(result)
-
-        assert isinstance(result_list, list), "Response should be a list"
-
-        if result_list:
-            # Test first item - commodity returns dict, so create model from it
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                commodity_data = FMPCommodity(**first_item)
-            else:
-                commodity_data = first_item
-            assert commodity_data.symbol, "Symbol should not be empty"
-            assert commodity_data.name, "Name should not be empty"
+        response, validation = handle_api_call_with_validation(
+            commodity.commodity_list, "commodity_list", True, apikey=api_key
+        )
+        
+        # NEW: Use direct Pydantic model access
+        commodities = get_response_models(response, FMPCommodityListItem)
+        if commodities:
+            validate_commodity_data(commodities)
 
     def test_commodity_list_model_validation(self, api_key):
         """Test that returned data validates against the Pydantic model."""
-        result = commodity.commodity_list(apikey=api_key)
-        result_list = extract_data_list(result)
-
-        if result_list:
-            # Test model validation on first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated_item = FMPCommodity(**first_item)
-            else:
-                validated_item = first_item
-            assert hasattr(validated_item, "symbol")
-            assert hasattr(validated_item, "name")
+        response, validation = handle_api_call_with_validation(
+            commodity.commodity_list, "commodity_list", True, apikey=api_key
+        )
+        
+        # NEW: Direct model validation - no conversion needed!
+        commodities = get_response_models(response, FMPCommodityListItem)
+        validate_model_list(commodities, FMPCommodityListItem, min_count=1)
+        if commodities:
+            validate_commodity_data(commodities)
 
     def test_commodity_list_invalid_api_key(self):
         """Test handling of invalid API key."""
-        result = commodity.commodity_list(apikey="invalid_api_key")
-        result_list = extract_data_list(result)
-        assert isinstance(
-            result_list, list
-        ), "Should return a list even with invalid key"
+        with pytest.raises(Exception):
+            commodity.commodity_list(apikey="invalid_api_key")
 
     @pytest.mark.parametrize(
         "commodity_type",
@@ -63,44 +115,44 @@ class TestCommodityList:
     )
     def test_commodity_list_by_category(self, api_key, commodity_type):
         """Test commodity list contains expected categories of commodities."""
-        result = commodity.commodity_list(apikey=api_key)
-        result_list = extract_data_list(result)
+        response, validation = handle_api_call_with_validation(
+            commodity.commodity_list, "commodity_list", True, apikey=api_key
+        )
+        
+        # NEW: Use direct Pydantic model access
+        commodities = get_response_models(response, FMPCommodityListItem)
+        if commodities:
+            validate_commodity_data(commodities)
+            
+            # Category-specific validation
+            expected_patterns = {
+                "energy": ["crude", "oil", "gas", "brent", "wti"],
+                "metals": ["gold", "silver", "copper", "aluminum", "zinc"],
+                "agricultural": ["corn", "wheat", "soybean", "rice", "oats"],
+                "livestock": ["cattle", "hog", "lean", "feeder"],
+                "precious_metals": ["gold", "silver", "platinum", "palladium"],
+                "industrial_metals": ["copper", "aluminum", "zinc", "nickel", "lead"],
+                "soft_commodities": ["coffee", "sugar", "cotton", "cocoa", "orange"],
+            }
 
-        if not result_list:
-            pytest.skip("No commodity data available")
+            patterns = expected_patterns.get(commodity_type, [])
+            found_commodities = []
 
-        # Map commodity types to expected symbols/names
-        expected_patterns = {
-            "energy": ["crude", "oil", "gas", "brent", "wti"],
-            "metals": ["gold", "silver", "copper", "aluminum", "zinc"],
-            "agricultural": ["corn", "wheat", "soybean", "rice", "oats"],
-            "livestock": ["cattle", "hog", "lean", "feeder"],
-            "precious_metals": ["gold", "silver", "platinum", "palladium"],
-            "industrial_metals": ["copper", "aluminum", "zinc", "nickel", "lead"],
-            "soft_commodities": ["coffee", "sugar", "cotton", "cocoa", "orange"],
-        }
+            for commodity_model in commodities:
+                # Direct Pydantic model field access - type safe!
+                name = commodity_model.name
+                symbol = commodity_model.symbol
+                
+                name_lower = name.lower() if name else ""
+                symbol_lower = symbol.lower() if symbol else ""
 
-        patterns = expected_patterns.get(commodity_type, [])
-        found_commodities = []
+                for pattern in patterns:
+                    if pattern in name_lower or pattern in symbol_lower:
+                        found_commodities.append(symbol)
+                        break
 
-        for item in result_list:
-            if isinstance(item, dict):
-                commodity_data = FMPCommodity(**item)
-            else:
-                commodity_data = item
-
-            name_lower = commodity_data.name.lower() if commodity_data.name else ""
-            symbol_lower = (
-                commodity_data.symbol.lower() if commodity_data.symbol else ""
-            )
-
-            for pattern in patterns:
-                if pattern in name_lower or pattern in symbol_lower:
-                    found_commodities.append(commodity_data.symbol)
-                    break
-
-        # At least some commodities should match the category
-        assert len(found_commodities) >= 0, f"No {commodity_type} commodities found"
+            # At least some commodities should match the category
+            assert len(found_commodities) >= 0, f"No {commodity_type} commodities found"
 
     @pytest.mark.parametrize(
         "expected_commodity",
@@ -109,39 +161,46 @@ class TestCommodityList:
             "SIUSD",  # Silver futures
             "CLUSD",  # Crude oil futures
             "NGUSD",  # Natural gas futures
-            "CCUSD",  # Copper futures
-            "CTUSD",  # Cotton futures
-            "KCCUSD",  # Coffee futures
-            "SBUSD",  # Sugar futures
-            "WUSD",  # Wheat futures
-            "CUSD",  # Corn futures
+            "HGUSD",  # Copper futures (API returns HGUSD, not CCUSD)
+            "KEUSX",  # Wheat futures (API returns KEUSX, not WUSD)
+            "ZCUSX",  # Corn futures (API returns ZCUSX, not CUSD)
+            "PLUSD",  # Platinum
+            "PAUSD",  # Palladium
         ],
     )
     def test_commodity_list_contains_major_commodities(
         self, api_key, expected_commodity
     ):
         """Test that commodity list contains major traded commodities."""
-        result = commodity.commodity_list(apikey=api_key)
-        result_list = extract_data_list(result)
-
-        if not result_list:
-            pytest.skip("No commodity data available")
-
-        symbols = []
-        for item in result_list:
-            if isinstance(item, dict):
-                commodity_data = FMPCommodity(**item)
-            else:
-                commodity_data = item
-            symbols.append(commodity_data.symbol)
-
-        # Note: Exact symbol format may vary, so we'll check for partial matches
-        symbol_found = any(expected_commodity in symbol for symbol in symbols)
-        partial_match = any(expected_commodity[:2] in symbol for symbol in symbols)
-
-        # Some commodities may not be available, so we'll make this more flexible
-        if not (symbol_found or partial_match):
-            pytest.skip(f"{expected_commodity} not found in current commodity list")
+        response, validation = handle_api_call_with_validation(
+            commodity.commodity_list, "commodity_list", True, apikey=api_key
+        )
+        
+        # NEW: Use direct Pydantic model access
+        commodities = get_response_models(response, FMPCommodityListItem)
+        if commodities:
+            validate_commodity_data(commodities)
+            
+            # Check for major commodities - direct model field access
+            symbols = [commodity_model.symbol for commodity_model in commodities if commodity_model.symbol]
+            
+            # Create a more flexible matching approach
+            symbol_found = any(expected_commodity == symbol for symbol in symbols)
+            
+            # If exact match fails, try case-insensitive matching
+            if not symbol_found:
+                symbol_found = any(
+                    expected_commodity.lower() == symbol.lower() 
+                    for symbol in symbols
+                )
+            
+            # For debugging: if symbol not found, show what symbols are available
+            if not symbol_found:
+                available_symbols = symbols[:10]  # Show first 10
+                pytest.fail(
+                    f"Expected commodity '{expected_commodity}' not found in list. "
+                    f"Available symbols (first 10): {available_symbols}"
+                )
 
     @pytest.mark.parametrize(
         "data_quality_check",
@@ -155,130 +214,80 @@ class TestCommodityList:
     )
     def test_commodity_list_data_quality(self, api_key, data_quality_check):
         """Test various data quality aspects of commodity list."""
-        result = commodity.commodity_list(apikey=api_key)
-        result_list = extract_data_list(result)
+        response, validation = handle_api_call_with_validation(
+            commodity.commodity_list, "commodity_list", True, apikey=api_key
+        )
+        
+        # NEW: Use direct Pydantic model access
+        commodities = get_response_models(response, FMPCommodityListItem)
+        if commodities:
+            validate_commodity_data(commodities)
+            
+            # Additional specific checks using direct model field access
+            if data_quality_check == "symbol_format":
+                # Check that symbols follow expected patterns - type-safe access
+                valid_symbols = sum(1 for item in commodities 
+                                  if item.symbol and len(item.symbol) >= 2)
+                assert valid_symbols >= len(commodities) * 0.8, "At least 80% of symbols should be valid"
 
-        if not result_list:
-            pytest.skip("No commodity data available")
+            elif data_quality_check == "name_completeness":
+                # Check that most commodities have meaningful names - type-safe access
+                named_commodities = sum(1 for item in commodities 
+                                      if item.name and len(item.name) > 2)
+                assert named_commodities >= len(commodities) * 0.9, "At least 90% should have meaningful names"
 
-        if data_quality_check == "symbol_format":
-            # Check that symbols follow expected patterns
-            valid_symbols = 0
-            for item in result_list:
-                if isinstance(item, dict):
-                    commodity_data = FMPCommodity(**item)
-                else:
-                    commodity_data = item
+            elif data_quality_check == "unique_symbols":
+                # Check for duplicate symbols - direct field access
+                symbols = [item.symbol for item in commodities if item.symbol]
+                unique_symbols = set(symbols)
+                assert len(unique_symbols) == len(symbols), "All commodity symbols should be unique"
 
-                if commodity_data.symbol and len(commodity_data.symbol) >= 2:
-                    valid_symbols += 1
+            elif data_quality_check == "price_availability":
+                # Check if price field exists in the Pydantic model
+                commodities_with_price = sum(1 for item in commodities 
+                                           if hasattr(item, "price"))
+                # This is informational - price availability may vary
+                assert commodities_with_price >= 0, "Price availability check"
 
-            assert (
-                valid_symbols >= len(result_list) * 0.8
-            ), "At least 80% of symbols should be valid"
+            elif data_quality_check == "category_coverage":
+                # Check that we have good coverage across commodity categories
+                categories_found = set()
+                energy_keywords = ["oil", "gas", "crude", "brent", "wti"]
+                metal_keywords = ["gold", "silver", "copper", "aluminum", "zinc"]
+                agri_keywords = ["corn", "wheat", "soybean", "rice", "cotton"]
 
-        elif data_quality_check == "name_completeness":
-            # Check that most commodities have meaningful names
-            named_commodities = 0
-            for item in result_list:
-                if isinstance(item, dict):
-                    commodity_data = FMPCommodity(**item)
-                else:
-                    commodity_data = item
+                for item in commodities:
+                    # Direct Pydantic model field access - type safe!
+                    name = item.name
+                    symbol = item.symbol
+                    
+                    name_lower = name.lower() if name else ""
+                    symbol_lower = symbol.lower() if symbol else ""
 
-                if commodity_data.name and len(commodity_data.name) > 2:
-                    named_commodities += 1
+                    if any(keyword in name_lower or keyword in symbol_lower for keyword in energy_keywords):
+                        categories_found.add("energy")
+                    if any(keyword in name_lower or keyword in symbol_lower for keyword in metal_keywords):
+                        categories_found.add("metals")
+                    if any(keyword in name_lower or keyword in symbol_lower for keyword in agri_keywords):
+                        categories_found.add("agricultural")
 
-            assert (
-                named_commodities >= len(result_list) * 0.9
-            ), "At least 90% should have meaningful names"
-
-        elif data_quality_check == "unique_symbols":
-            # Check for duplicate symbols
-            symbols = []
-            for item in result_list:
-                if isinstance(item, dict):
-                    commodity_data = FMPCommodity(**item)
-                else:
-                    commodity_data = item
-                symbols.append(commodity_data.symbol)
-
-            unique_symbols = set(symbols)
-            assert len(unique_symbols) == len(
-                symbols
-            ), "All commodity symbols should be unique"
-
-        elif data_quality_check == "price_availability":
-            # Check if price field exists (if available in model)
-            commodities_with_price = 0
-            for item in result_list:
-                if isinstance(item, dict):
-                    commodity_data = FMPCommodity(**item)
-                    if "price" in item or hasattr(commodity_data, "price"):
-                        commodities_with_price += 1
-                else:
-                    commodity_data = item
-                    if hasattr(commodity_data, "price"):
-                        commodities_with_price += 1
-
-            # This is informational - price availability may vary
-            assert commodities_with_price >= 0, "Price availability check"
-
-        elif data_quality_check == "category_coverage":
-            # Check that we have good coverage across commodity categories
-            categories_found = set()
-            energy_keywords = ["oil", "gas", "crude", "brent", "wti"]
-            metal_keywords = ["gold", "silver", "copper", "aluminum", "zinc"]
-            agri_keywords = ["corn", "wheat", "soybean", "rice", "cotton"]
-
-            for item in result_list:
-                if isinstance(item, dict):
-                    commodity_data = FMPCommodity(**item)
-                else:
-                    commodity_data = item
-
-                name_lower = commodity_data.name.lower() if commodity_data.name else ""
-                symbol_lower = (
-                    commodity_data.symbol.lower() if commodity_data.symbol else ""
-                )
-
-                if any(
-                    keyword in name_lower or keyword in symbol_lower
-                    for keyword in energy_keywords
-                ):
-                    categories_found.add("energy")
-                if any(
-                    keyword in name_lower or keyword in symbol_lower
-                    for keyword in metal_keywords
-                ):
-                    categories_found.add("metals")
-                if any(
-                    keyword in name_lower or keyword in symbol_lower
-                    for keyword in agri_keywords
-                ):
-                    categories_found.add("agricultural")
-
-            assert (
-                len(categories_found) >= 1
-            ), "Should cover at least one major commodity category"
+                assert len(categories_found) >= 1, "Should cover at least one major commodity category"
 
     def test_commodity_list_stress_test(self, api_key):
         """Stress test for commodity list endpoint."""
-        # Test multiple rapid calls
+        # Test multiple rapid calls - NEW: using direct model access
         results = []
         for i in range(3):
-            result = commodity.commodity_list(apikey=api_key)
-            result_list = extract_data_list(result)
-            results.append(len(result_list))
+            response, validation = handle_api_call_with_validation(
+                commodity.commodity_list, "commodity_list", True, apikey=api_key
+            )
+            commodities = get_response_models(response, FMPCommodityListItem)
+            results.append(len(commodities))
 
         # All calls should return consistent results
-        assert all(
-            count == results[0] for count in results
-        ), "Commodity list should be consistent across calls"
+        assert all(count == results[0] for count in results), "Commodity list should be consistent across calls"
 
         # Should have reasonable number of commodities
         if results[0] > 0:
             assert results[0] >= 10, "Should have at least 10 commodities listed"
-            assert (
-                results[0] <= 1000
-            ), "Should have reasonable number of commodities (< 1000)"
+            assert results[0] <= 1000, "Should have reasonable number of commodities (< 1000)"

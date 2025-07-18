@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional, Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -168,21 +168,21 @@ class FMPCountry(BaseModel):
 class FMPAnalystEstimates(BaseModel):
     symbol: str
     date: str
-    revenueLow: float
-    revenueHigh: float
-    revenueAvg: float
-    ebitdaLow: float
-    ebitdaHigh: float
-    ebitdaAvg: float
-    ebitLow: float
-    ebitHigh: float
-    ebitAvg: float
-    netIncomeLow: float
-    netIncomeHigh: float
+    revenueLow: int
+    revenueHigh: int
+    revenueAvg: int
+    ebitdaLow: int
+    ebitdaHigh: int
+    ebitdaAvg: int
+    ebitLow: int
+    ebitHigh: int
+    ebitAvg: int
+    netIncomeLow: int
+    netIncomeHigh: int
     netIncomeAvg: float
-    sgaExpenseLow: float
-    sgaExpenseHigh: float
-    sgaExpenseAvg: float
+    sgaExpenseLow: int
+    sgaExpenseHigh: int
+    sgaExpenseAvg: int
     epsAvg: float
     epsHigh: float
     epsLow: float
@@ -192,6 +192,19 @@ class FMPAnalystEstimates(BaseModel):
 
 class FMPRatingSnapshot(BaseModel):
     symbol: str
+    rating: str
+    overallScore: int
+    discountedCashFlowScore: int
+    returnOnEquityScore: int
+    returnOnAssetsScore: int
+    debtToEquityScore: int
+    priceToEarningsScore: int
+    priceToBookScore: int
+
+
+class FMPHistoricalRating(BaseModel):
+    symbol: str
+    date: str
     rating: str
     overallScore: int
     discountedCashFlowScore: int
@@ -986,7 +999,7 @@ class FMPCrowdfundingSearch(BaseModel):
 class FMPEquityOffering(BaseModel):
     cik: str
     companyName: str
-    date: Optional[str] = None
+    date: str
     filingDate: str
     acceptedDate: str
     formType: str
@@ -1013,16 +1026,16 @@ class FMPEquityOffering(BaseModel):
     industryGroupType: str
     revenueRange: Optional[str] = None
     federalExemptionsExclusions: str
-    isAmendment: Optional[bool] = None
+    isAmendment: bool
     dateOfFirstSale: str
-    durationOfOfferingIsMoreThanYear: Optional[bool] = None
+    durationOfOfferingIsMoreThanYear: bool
     securitiesOfferedAreOfEquityType: Optional[bool] = None
-    isBusinessCombinationTransaction: Optional[bool] = None
+    isBusinessCombinationTransaction: bool
     minimumInvestmentAccepted: int
     totalOfferingAmount: int
     totalAmountSold: int
     totalAmountRemaining: int
-    hasNonAccreditedInvestors: Optional[bool] = None
+    hasNonAccreditedInvestors: bool
     totalNumberAlreadyInvested: int
     salesCommissions: int
     findersFees: int
@@ -1713,7 +1726,7 @@ class FMPBalanceSheetStatement(BaseModel):
     otherPayables: float
     accruedExpenses: float
     shortTermDebt: float
-    capitalLeaseObligationsCurrent: float
+    capitalLeaseObligationsCurrent: Optional[float] = None
     taxPayables: float
     deferredRevenue: float
     otherCurrentLiabilities: float
@@ -1726,7 +1739,7 @@ class FMPBalanceSheetStatement(BaseModel):
     otherLiabilities: float
     capitalLeaseObligations: float
     totalLiabilities: float
-    treasuryStock: float
+    treasuryStock: Optional[float] = None
     preferredStock: float
     commonStock: float
     retainedEarnings: float
@@ -1828,14 +1841,14 @@ class FMPCashFlowStatement(BaseModel):
     netDebtIssuance: int
     longTermNetDebtIssuance: int
     shortTermNetDebtIssuance: int
-    netStockIssuance: int
+    netStockIssuance: Optional[int] = None
     netCommonStockIssuance: int
     commonStockIssuance: int
     commonStockRepurchased: int
     netPreferredStockIssuance: int
     netDividendsPaid: int
     commonDividendsPaid: int
-    preferredDividendsPaid: int
+    preferredDividendsPaid: Optional[int] = None
     otherFinancingActivities: int
     netCashProvidedByFinancingActivities: int
     effectOfForexChangesOnCash: int
@@ -1925,7 +1938,7 @@ class FMPIncomeStatement(BaseModel):
     incomeTaxExpense: int
     netIncomeFromContinuingOperations: int
     netIncomeFromDiscontinuedOperations: int
-    otherAdjustmentsToNetIncome: int
+    otherAdjustmentsToNetIncome: Optional[int] = None
     netIncome: int
     netIncomeDeductions: int
     bottomLineNetIncome: int
@@ -1958,7 +1971,7 @@ class FMPKeyMetrics(BaseModel):
     netDebtToEBITDA: float
     currentRatio: float
     incomeQuality: float
-    grahamNumber: float
+    grahamNumber: Optional[float] = None
     grahamNetNet: float
     taxBurden: float
     interestBurden: float

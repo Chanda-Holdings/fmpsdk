@@ -162,3 +162,51 @@ def house_trades_by_name(
     path = "house-trades-by-name"
     query_vars = {"apikey": apikey, "name": name}
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
+
+
+# Create class-like wrappers for backwards compatibility with tests
+class SenateFunctions:
+    """Wrapper class to provide dot notation access to senate functions."""
+    @staticmethod
+    def senate_latest(*args, **kwargs):
+        return senate_latest(*args, **kwargs)
+    
+    @staticmethod 
+    def senate_trades(*args, **kwargs):
+        return senate_trades(*args, **kwargs)
+    
+    @staticmethod
+    def senate_trades_by_name(*args, **kwargs):
+        return senate_trades_by_name(*args, **kwargs)
+    
+    @staticmethod
+    def house_latest(*args, **kwargs):
+        return house_latest(*args, **kwargs)
+    
+    @staticmethod
+    def house_trades(*args, **kwargs):
+        return house_trades(*args, **kwargs)
+    
+    @staticmethod
+    def house_trades_by_name(*args, **kwargs):
+        return house_trades_by_name(*args, **kwargs)
+
+
+class HouseFunctions:
+    """Wrapper class to provide dot notation access to house functions."""
+    @staticmethod
+    def house_latest(*args, **kwargs):
+        return house_latest(*args, **kwargs)
+    
+    @staticmethod
+    def house_trades(*args, **kwargs):
+        return house_trades(*args, **kwargs)
+    
+    @staticmethod
+    def house_trades_by_name(*args, **kwargs):
+        return house_trades_by_name(*args, **kwargs)
+
+
+# Create instances for backwards compatibility
+senate = SenateFunctions()
+house = HouseFunctions()

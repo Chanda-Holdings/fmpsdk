@@ -14,15 +14,12 @@ from fmpsdk.models import (
     FMPHistoricalDataPointLight,
     FMPIntradayDataPoint,
 )
-from tests.conftest import extract_data_list
-
-
-def get_field_value(item, field_name):
-    """Helper function to safely get field value from dict or model."""
-    if isinstance(item, dict):
-        return item.get(field_name)
-    else:
-        return getattr(item, field_name, None)
+from tests.conftest import (
+    get_response_models,
+    handle_api_call_with_validation,
+    validate_model_list,
+    validate_required_fields,
+)
 
 
 @pytest.mark.integration
@@ -33,41 +30,45 @@ class TestHistoricalPriceEODLight:
 
     def test_historical_price_eod_light_basic(self, api_key):
         """Test basic historical EOD light data retrieval."""
-        result = historical_price_eod_light(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            historical_price_eod_light,
+            'historical_price_eod_light',
+            apikey=api_key, 
+            symbol="AAPL"
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        data_points = get_response_models(result, FMPHistoricalDataPointLight)
+        validate_model_list(data_points, FMPHistoricalDataPointLight)
+        assert len(data_points) > 0
 
-        # Validate first item
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPHistoricalDataPointLight.model_validate(first_item)
-        else:
-            validated = first_item
-
-        assert validated.symbol == "AAPL"
-        assert validated.date is not None
-        assert validated.price > 0
-        assert validated.volume >= 0
+        # Validate first item with business logic
+        first_point = data_points[0]
+        assert first_point.symbol == "AAPL"
+        assert first_point.date is not None, "Date should not be None"
+        assert first_point.price > 0, "Price should be positive"
+        assert first_point.volume >= 0, "Volume should be non-negative"
 
     def test_historical_price_eod_light_with_date_range(self, api_key):
         """Test historical EOD light data with specific date range."""
         from_date = "2024-01-01"
         to_date = "2024-01-31"
 
-        result = historical_price_eod_light(
-            apikey=api_key, symbol="AAPL", from_date=from_date, to_date=to_date
+        result, validation = handle_api_call_with_validation(
+            historical_price_eod_light,
+            'historical_price_eod_light',
+            apikey=api_key, 
+            symbol="AAPL", 
+            from_date=from_date, 
+            to_date=to_date
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        data_points = get_response_models(result, FMPHistoricalDataPointLight)
+        validate_model_list(data_points, FMPHistoricalDataPointLight)
+        assert len(data_points) > 0
 
         # Validate date range
-        for item in result_list:
-            date_value = get_field_value(item, "date")
-            assert from_date <= date_value <= to_date
+        for point in data_points:
+            assert from_date <= point.date <= to_date, f"Date {point.date} should be within range {from_date} to {to_date}"
 
     def test_historical_price_eod_light_multiple_asset_types(
         self, api_key, test_symbols
@@ -83,33 +84,37 @@ class TestHistoricalPriceEODLight:
 
         for asset_category, symbol, asset_name in test_cases:
             if symbol in test_symbols[asset_category]:
-                result = historical_price_eod_light(apikey=api_key, symbol=symbol)
-                result_list = extract_data_list(result)
+                result, validation = handle_api_call_with_validation(
+                    historical_price_eod_light,
+                    'historical_price_eod_light',
+                    apikey=api_key, 
+                    symbol=symbol
+                )
+                data_points = get_response_models(result, FMPHistoricalDataPointLight)
+                validate_model_list(data_points, FMPHistoricalDataPointLight)
 
-                assert isinstance(
-                    result_list, list
-                ), f"Result should be list for {asset_name}"
-                assert (
-                    len(result_list) > 0
-                ), f"Should have data for {asset_name} {symbol}"
+                assert len(data_points) > 0, f"Should have data for {asset_name} {symbol}"
 
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
-                price_value = get_field_value(first_item, "price")
-
-                assert symbol_value == symbol, f"Symbol should match for {asset_name}"
-                assert price_value > 0, f"Price should be positive for {asset_name}"
+                first_point = data_points[0]
+                assert first_point.symbol == symbol, f"Symbol should match for {asset_name}"
+                assert first_point.price > 0, f"Price should be positive for {asset_name}"
 
     def test_historical_price_eod_light_chronological_order(self, api_key):
         """Test that historical data is returned in chronological order."""
-        result = historical_price_eod_light(
-            apikey=api_key, symbol="AAPL", from_date="2024-01-01", to_date="2024-01-10"
+        result, validation = handle_api_call_with_validation(
+            historical_price_eod_light,
+            'historical_price_eod_light',
+            apikey=api_key, 
+            symbol="AAPL", 
+            from_date="2024-01-01", 
+            to_date="2024-01-10"
         )
 
-        result_list = extract_data_list(result)
-        assert len(result_list) > 1
+        data_points = get_response_models(result, FMPHistoricalDataPointLight)
+        validate_model_list(data_points, FMPHistoricalDataPointLight)
+        assert len(data_points) > 1
 
-        dates = [get_field_value(item, "date") for item in result_list]
+        dates = [point.date for point in data_points]
 
         # Check if dates are in order (either ascending or descending)
         is_ascending = all(dates[i] <= dates[i + 1] for i in range(len(dates) - 1))
@@ -126,32 +131,32 @@ class TestHistoricalPriceEODFull:
 
     def test_historical_price_eod_full_basic(self, api_key):
         """Test basic historical EOD full data retrieval."""
-        result = historical_price_eod(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            historical_price_eod,
+            'historical_price_eod',
+            apikey=api_key, 
+            symbol="AAPL"
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        data_points = get_response_models(result, FMPHistoricalDataPointFull)
+        validate_model_list(data_points, FMPHistoricalDataPointFull)
+        assert len(data_points) > 0
 
-        # Validate first item has OHLCV data
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPHistoricalDataPointFull.model_validate(first_item)
-        else:
-            validated = first_item
-
-        assert validated.symbol == "AAPL"
-        assert validated.date is not None
-        assert validated.open is not None and validated.open > 0
-        assert validated.high is not None and validated.high > 0
-        assert validated.low is not None and validated.low > 0
-        assert validated.close is not None and validated.close > 0
-        assert validated.volume is not None and validated.volume >= 0
+        # Validate first item has OHLCV data with business logic
+        first_point = data_points[0]
+        assert first_point.symbol == "AAPL"
+        assert first_point.date is not None, "Date should not be None"
+        assert first_point.open is not None and first_point.open > 0, "Open price should be positive"
+        assert first_point.high is not None and first_point.high > 0, "High price should be positive"
+        assert first_point.low is not None and first_point.low > 0, "Low price should be positive"
+        assert first_point.close is not None and first_point.close > 0, "Close price should be positive"
+        assert first_point.volume is not None and first_point.volume >= 0, "Volume should be non-negative"
 
         # OHLC relationships should be valid
-        assert validated.high >= validated.open
-        assert validated.high >= validated.close
-        assert validated.low <= validated.open
-        assert validated.low <= validated.close
+        assert first_point.high >= first_point.open, "High should be >= open"
+        assert first_point.high >= first_point.close, "High should be >= close"
+        assert first_point.low <= first_point.open, "Low should be <= open"
+        assert first_point.low <= first_point.close, "Low should be <= close"
 
     def test_historical_price_eod_full_vs_light_consistency(self, api_key):
         """Test consistency between full and light historical data."""
@@ -160,33 +165,40 @@ class TestHistoricalPriceEODFull:
         to_date = "2024-01-05"
 
         # Get both full and light data
-        full_result = historical_price_eod(
-            apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
+        full_result, validation = handle_api_call_with_validation(
+            historical_price_eod,
+            'historical_price_eod',
+            apikey=api_key, 
+            symbol=symbol, 
+            from_date=from_date, 
+            to_date=to_date
         )
-        light_result = historical_price_eod_light(
-            apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
+        light_result, validation = handle_api_call_with_validation(
+            historical_price_eod_light,
+            'historical_price_eod_light',
+            apikey=api_key, 
+            symbol=symbol, 
+            from_date=from_date, 
+            to_date=to_date
         )
 
-        full_list = extract_data_list(full_result)
-        light_list = extract_data_list(light_result)
+        full_data = get_response_models(full_result, FMPHistoricalDataPointFull)
+        light_data = get_response_models(light_result, FMPHistoricalDataPointLight)
+        validate_model_list(full_data, FMPHistoricalDataPointFull)
+        validate_model_list(light_data, FMPHistoricalDataPointLight)
 
-        assert len(full_list) == len(
-            light_list
+        assert len(full_data) == len(
+            light_data
         ), "Full and light data should have same number of records"
 
         # Compare first few records
-        for i in range(min(3, len(full_list))):
-            full_item = full_list[i]
-            light_item = light_list[i]
+        for i in range(min(3, len(full_data))):
+            full_point = full_data[i]
+            light_point = light_data[i]
 
-            full_date = get_field_value(full_item, "date")
-            light_date = get_field_value(light_item, "date")
-            full_close = get_field_value(full_item, "close")
-            light_price = get_field_value(light_item, "price")
-
-            assert full_date == light_date, f"Dates should match for record {i}"
+            assert full_point.date == light_point.date, f"Dates should match for record {i}"
             assert (
-                abs(full_close - light_price) < 0.01
+                abs(full_point.close - light_point.price) < 0.01
             ), f"Close price should match light price for record {i}"
 
     def test_historical_price_eod_full_high_volume_stocks(self, api_key):
@@ -194,22 +206,22 @@ class TestHistoricalPriceEODFull:
         high_volume_symbols = ["AAPL", "MSFT", "SPY", "QQQ"]
 
         for symbol in high_volume_symbols:
-            result = historical_price_eod(
+            result, validation = handle_api_call_with_validation(
+                historical_price_eod,
+                'historical_price_eod',
                 apikey=api_key,
                 symbol=symbol,
                 from_date="2024-01-01",
-                to_date="2024-01-03",
+                to_date="2024-01-03"
             )
 
-            result_list = extract_data_list(result)
-            assert len(result_list) > 0, f"Should have data for {symbol}"
+            data_points = get_response_models(result, FMPHistoricalDataPointFull)
+            validate_model_list(data_points, FMPHistoricalDataPointFull)
+            assert len(data_points) > 0, f"Should have data for {symbol}"
 
-            for item in result_list:
-                volume_value = get_field_value(item, "volume")
-                close_value = get_field_value(item, "close")
-
-                assert volume_value > 0, f"Volume should be positive for {symbol}"
-                assert close_value > 0, f"Close price should be positive for {symbol}"
+            for point in data_points:
+                assert point.volume > 0, f"Volume should be positive for {symbol}"
+                assert point.close > 0, f"Close price should be positive for {symbol}"
 
 
 @pytest.mark.integration
@@ -227,22 +239,17 @@ class TestHistoricalPriceAdjustments:
             apikey=api_key, symbol=symbol, from_date="2020-01-01", to_date="2020-12-31"
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        data_points = get_response_models(result, FMPHistoricalDataPointFull)
+        validate_model_list(data_points, FMPHistoricalDataPointFull)
+        assert len(data_points) > 0
 
         # Validate structure
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPHistoricalDataPointFull.model_validate(first_item)
-        else:
-            validated = first_item
-
-        assert validated.symbol == symbol
-        assert validated.date is not None
+        first_point = data_points[0]
+        assert first_point.symbol == symbol
+        assert first_point.date is not None
         # Note: Some adjusted endpoints may return None for OHLC fields
         # Just ensure we have symbol, date, and volume data
-        assert validated.volume is not None and validated.volume >= 0
+        assert first_point.volume is not None and first_point.volume >= 0
 
     def test_historical_price_dividend_adjusted(self, api_key):
         """Test dividend adjusted historical data."""
@@ -253,22 +260,17 @@ class TestHistoricalPriceAdjustments:
             apikey=api_key, symbol=symbol, from_date="2024-01-01", to_date="2024-03-31"
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        data_points = get_response_models(result, FMPHistoricalDataPointFull)
+        validate_model_list(data_points, FMPHistoricalDataPointFull)
+        assert len(data_points) > 0
 
         # Validate structure
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPHistoricalDataPointFull.model_validate(first_item)
-        else:
-            validated = first_item
-
-        assert validated.symbol == symbol
-        assert validated.date is not None
+        first_point = data_points[0]
+        assert first_point.symbol == symbol
+        assert first_point.date is not None
         # Note: Some adjusted endpoints may return None for OHLC fields
         # Just ensure we have symbol, date, and volume data
-        assert validated.volume is not None and validated.volume >= 0
+        assert first_point.volume is not None and first_point.volume >= 0
 
     def test_adjustment_comparison(self, api_key):
         """Compare regular vs adjusted prices."""
@@ -284,14 +286,16 @@ class TestHistoricalPriceAdjustments:
             apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
         )
 
-        regular_list = extract_data_list(regular_result)
-        non_split_list = extract_data_list(non_split_result)
+        regular_data = get_response_models(regular_result, FMPHistoricalDataPointFull)
+        non_split_data = get_response_models(non_split_result, FMPHistoricalDataPointFull)
+        validate_model_list(regular_data, FMPHistoricalDataPointFull)
+        validate_model_list(non_split_data, FMPHistoricalDataPointFull)
 
-        assert len(regular_list) > 0
-        assert len(non_split_list) > 0
+        assert len(regular_data) > 0
+        assert len(non_split_data) > 0
 
         # Both should have data for the same dates
-        assert len(regular_list) == len(non_split_list)
+        assert len(regular_data) == len(non_split_data)
 
 
 @pytest.mark.integration
@@ -308,31 +312,24 @@ class TestHistoricalChart:
         for interval in valid_intervals:
             result = historical_chart(symbol=symbol, interval=interval, apikey=api_key)
 
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Result should be list for {interval}"
+            data_points = get_response_models(result, FMPIntradayDataPoint)
+            validate_model_list(data_points, FMPIntradayDataPoint)
 
             # Intraday data might be limited, but structure should be valid
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                if isinstance(first_item, dict):
-                    validated = FMPIntradayDataPoint.model_validate(first_item)
-                else:
-                    validated = first_item
-
-                assert validated.date is not None
-                assert validated.open > 0
-                assert validated.high > 0
-                assert validated.low > 0
-                assert validated.close > 0
-                assert validated.volume >= 0
+            if len(data_points) > 0:
+                first_point = data_points[0]
+                assert first_point.date is not None
+                assert first_point.open > 0
+                assert first_point.high > 0
+                assert first_point.low > 0
+                assert first_point.close > 0
+                assert first_point.volume >= 0
 
                 # OHLC relationships should be valid
-                assert validated.high >= validated.open
-                assert validated.high >= validated.close
-                assert validated.low <= validated.open
-                assert validated.low <= validated.close
+                assert first_point.high >= first_point.open
+                assert first_point.high >= first_point.close
+                assert first_point.low <= first_point.open
+                assert first_point.low <= first_point.close
 
     def test_historical_chart_invalid_interval(self, api_key):
         """Test historical chart with invalid interval."""
@@ -346,26 +343,23 @@ class TestHistoricalChart:
 
         for symbol in test_symbols:
             result = historical_chart(symbol=symbol, interval=interval, apikey=api_key)
-            result_list = extract_data_list(result)
-
-            assert isinstance(result_list, list), f"Result should be list for {symbol}"
+            data_points = get_response_models(result, FMPIntradayDataPoint)
+            validate_model_list(data_points, FMPIntradayDataPoint)
 
             # Validate structure if data is available
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                open_value = get_field_value(first_item, "open")
-                close_value = get_field_value(first_item, "close")
-
-                assert open_value > 0, f"Open price should be positive for {symbol}"
-                assert close_value > 0, f"Close price should be positive for {symbol}"
+            if len(data_points) > 0:
+                first_point = data_points[0]
+                assert first_point.open > 0, f"Open price should be positive for {symbol}"
+                assert first_point.close > 0, f"Close price should be positive for {symbol}"
 
     def test_historical_chart_data_chronology(self, api_key):
         """Test that intraday data is in chronological order."""
         result = historical_chart(symbol="AAPL", interval="1hour", apikey=api_key)
-        result_list = extract_data_list(result)
+        data_points = get_response_models(result, FMPIntradayDataPoint)
+        validate_model_list(data_points, FMPIntradayDataPoint)
 
-        if len(result_list) > 1:
-            dates = [get_field_value(item, "date") for item in result_list]
+        if len(data_points) > 1:
+            dates = [point.date for point in data_points]
 
             # Check if dates are in order (either ascending or descending)
             is_ascending = all(dates[i] <= dates[i + 1] for i in range(len(dates) - 1))
@@ -390,17 +384,16 @@ class TestChartErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+            data_points = get_response_models(result, FMPHistoricalDataPointLight)
+            validate_model_list(data_points, FMPHistoricalDataPointLight)
             # Empty list is acceptable for invalid symbols
 
     def test_historical_price_invalid_api_key(self):
         """Test historical price with invalid API key."""
-        result = historical_price_eod_light(apikey="invalid_key", symbol="AAPL")
-
-        # Should return error response
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        from fmpsdk.exceptions import InvalidAPIKeyException
+        
+        with pytest.raises(InvalidAPIKeyException):
+            historical_price_eod_light(apikey="invalid_key", symbol="AAPL")
 
     def test_historical_price_invalid_date_format(self, api_key):
         """Test historical price with invalid date format."""
@@ -413,8 +406,8 @@ class TestChartErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+            data_points = get_response_models(result, FMPHistoricalDataPointLight)
+            validate_model_list(data_points, FMPHistoricalDataPointLight)
 
     def test_historical_chart_invalid_symbol(self, api_key):
         """Test historical chart with invalid symbol."""
@@ -426,8 +419,8 @@ class TestChartErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+            data_points = get_response_models(result, FMPIntradayDataPoint)
+            validate_model_list(data_points, FMPIntradayDataPoint)
 
 
 @pytest.mark.integration
@@ -483,16 +476,18 @@ class TestChartDataConsistency:
             apikey=api_key, symbol=symbol, from_date="2024-01-15", to_date="2024-01-19"
         )
 
-        month_list = extract_data_list(one_month_result)
-        week_list = extract_data_list(one_week_result)
+        month_data = get_response_models(one_month_result, FMPHistoricalDataPointLight)
+        week_data = get_response_models(one_week_result, FMPHistoricalDataPointLight)
+        validate_model_list(month_data, FMPHistoricalDataPointLight)
+        validate_model_list(week_data, FMPHistoricalDataPointLight)
 
-        assert len(month_list) > len(
-            week_list
+        assert len(month_data) > len(
+            week_data
         ), "Month data should have more records than week data"
 
         # Week data should be subset of month data
-        month_dates = {get_field_value(item, "date") for item in month_list}
-        week_dates = {get_field_value(item, "date") for item in week_list}
+        month_dates = {point.date for point in month_data}
+        week_dates = {point.date for point in week_data}
 
         assert week_dates.issubset(
             month_dates
@@ -504,30 +499,25 @@ class TestChartDataConsistency:
             apikey=api_key, symbol="AAPL", from_date="2024-01-01", to_date="2024-01-05"
         )
 
-        result_list = extract_data_list(result)
-        assert len(result_list) > 0
+        data_points = get_response_models(result, FMPHistoricalDataPointFull)
+        validate_model_list(data_points, FMPHistoricalDataPointFull)
+        assert len(data_points) > 0
 
-        for item in result_list:
-            open_val = get_field_value(item, "open")
-            high_val = get_field_value(item, "high")
-            low_val = get_field_value(item, "low")
-            close_val = get_field_value(item, "close")
-            volume_val = get_field_value(item, "volume")
-
+        for point in data_points:
             # Price reasonableness checks
             assert (
-                0 < low_val <= high_val
-            ), f"Low {low_val} should be positive and <= high {high_val}"
+                0 < point.low <= point.high
+            ), f"Low {point.low} should be positive and <= high {point.high}"
             assert (
-                low_val <= open_val <= high_val
-            ), f"Open {open_val} should be between low {low_val} and high {high_val}"
+                point.low <= point.open <= point.high
+            ), f"Open {point.open} should be between low {point.low} and high {point.high}"
             assert (
-                low_val <= close_val <= high_val
-            ), f"Close {close_val} should be between low {low_val} and high {high_val}"
-            assert volume_val >= 0, f"Volume {volume_val} should be non-negative"
+                point.low <= point.close <= point.high
+            ), f"Close {point.close} should be between low {point.low} and high {point.high}"
+            assert point.volume >= 0, f"Volume {point.volume} should be non-negative"
 
             # Daily price movement should be reasonable (less than 50% typically)
-            daily_range = (high_val - low_val) / low_val
+            daily_range = (point.high - point.low) / point.low
             assert (
                 daily_range < 0.5
             ), f"Daily price range {daily_range:.2%} seems unreasonably large"
@@ -546,15 +536,14 @@ class TestChartDataConsistency:
             apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
         )
 
-        light_list = extract_data_list(light_result)
-        full_list = extract_data_list(full_result)
+        light_data = get_response_models(light_result, FMPHistoricalDataPointLight)
+        full_data = get_response_models(full_result, FMPHistoricalDataPointFull)
+        validate_model_list(light_data, FMPHistoricalDataPointLight)
+        validate_model_list(full_data, FMPHistoricalDataPointFull)
 
-        if len(light_list) > 0 and len(full_list) > 0:
-            light_volume = get_field_value(light_list[0], "volume")
-            full_volume = get_field_value(full_list[0], "volume")
-
+        if len(light_data) > 0 and len(full_data) > 0:
             assert (
-                light_volume == full_volume
+                light_data[0].volume == full_data[0].volume
             ), "Volume should match between light and full data"
 
     @pytest.mark.parametrize(
@@ -577,7 +566,7 @@ class TestChartDataConsistency:
             ("EURUSD", 30, 30, "forex"),  # Euro/USD (trades 24/5)
             ("GBPUSD", 60, 60, "forex"),  # GBP/USD (trades 24/5)
             ("GCUSD", 30, 30, "commodity"),  # Gold (trades 24/5)
-            ("CLUSD", 60, 60, "commodity"),  # Oil (trades 24/5)
+            ("BZUSD", 60, 60, "commodity"),  # Brent Oil (trades 24/5)
         ],
     )
     def test_historical_price_eod_light_comprehensive_assets(
@@ -593,12 +582,10 @@ class TestChartDataConsistency:
             apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(
-            result_list, list
-        ), f"Result should be list for {asset_class} asset {symbol}"
+        data_points = get_response_models(result, FMPHistoricalDataPointLight)
+        validate_model_list(data_points, FMPHistoricalDataPointLight)
         assert (
-            len(result_list) > 0
+            len(data_points) > 0
         ), f"Should have data for {asset_class} asset {symbol}"
 
         # Flexible data point validation (markets have holidays, weekends, etc.)
@@ -612,47 +599,42 @@ class TestChartDataConsistency:
             min_expected = int(date_range_days * 0.8)  # Account for weekends
 
         assert (
-            min_expected <= len(result_list) <= max_expected
-        ), f"{symbol} ({asset_class}) should have {min_expected}-{max_expected} data points for {date_range_days} days, got {len(result_list)}"
+            min_expected <= len(data_points) <= max_expected
+        ), f"{symbol} ({asset_class}) should have {min_expected}-{max_expected} data points for {date_range_days} days, got {len(data_points)}"
 
-        first_item = result_list[0]
-        symbol_value = get_field_value(first_item, "symbol")
-        price_value = get_field_value(first_item, "price")
-        date_value = get_field_value(first_item, "date")
-
-        assert symbol_value == symbol, f"Symbol should match for {asset_class} asset"
+        first_point = data_points[0]
+        assert first_point.symbol == symbol, f"Symbol should match for {asset_class} asset"
         assert (
-            price_value > 0
+            first_point.price > 0
         ), f"Price should be positive for {asset_class} asset {symbol}"
         assert (
-            date_value is not None
+            first_point.date is not None
         ), f"Date should be present for {asset_class} asset {symbol}"
 
         # Validate date range
-        for item in result_list:
-            item_date = get_field_value(item, "date")
+        for point in data_points:
             assert (
-                from_date <= item_date <= to_date
+                from_date <= point.date <= to_date
             ), f"Date should be within range for {symbol}"
 
         # Asset class specific validations
         if asset_class == "large_cap_tech":
             # Tech stocks should have reasonable price ranges
             assert (
-                10 <= price_value <= 1000
+                10 <= first_point.price <= 1000
             ), f"Tech stock {symbol} price should be reasonable"
         elif asset_class == "cryptocurrency":
             # Crypto should have higher prices typically
             assert (
-                price_value > 100
+                first_point.price > 100
             ), f"Major crypto {symbol} should have substantial price"
         elif asset_class.startswith("etf_"):
             # ETFs should have reasonable price ranges
-            assert 10 <= price_value <= 1000, f"ETF {symbol} price should be reasonable"
+            assert 10 <= first_point.price <= 1000, f"ETF {symbol} price should be reasonable"
         elif asset_class == "forex":
             # Forex pairs should be around 0.5-2.0 range typically
             assert (
-                0.3 <= price_value <= 5.0
+                0.3 <= first_point.price <= 5.0
             ), f"Forex pair {symbol} should be in normal range"
 
     @pytest.mark.parametrize(
@@ -701,12 +683,10 @@ class TestChartDataConsistency:
                 apikey=api_key, symbol=symbol, from_date=from_date, to_date=to_date
             )
 
-            result_list = extract_data_list(result)
-            assert isinstance(
-                result_list, list
-            ), f"Result should be list for {time_period} period"
+            data_points = get_response_models(result, FMPHistoricalDataPointLight)
+            validate_model_list(data_points, FMPHistoricalDataPointLight)
             assert (
-                len(result_list) > 0
+                len(data_points) > 0
             ), f"Should have data for {symbol} over {time_period}"
 
             # Validate data point count is reasonable for the time period
@@ -717,11 +697,11 @@ class TestChartDataConsistency:
             max_expected = int(expected_trading_days * 1.2)  # Account for variations
 
             assert (
-                min_expected <= len(result_list) <= max_expected
-            ), f"{symbol} over {time_period} should have {min_expected}-{max_expected} data points, got {len(result_list)}"
+                min_expected <= len(data_points) <= max_expected
+            ), f"{symbol} over {time_period} should have {min_expected}-{max_expected} data points, got {len(data_points)}"
 
             # Validate chronological ordering
-            dates = [get_field_value(item, "date") for item in result_list]
+            dates = [point.date for point in data_points]
             is_ordered = all(
                 dates[i] >= dates[i + 1] for i in range(len(dates) - 1)
             ) or all(dates[i] <= dates[i + 1] for i in range(len(dates) - 1))
@@ -730,7 +710,7 @@ class TestChartDataConsistency:
             ), f"Dates should be chronologically ordered for {symbol} over {time_period}"
 
             # Validate price consistency (no zero or negative prices)
-            prices = [get_field_value(item, "price") for item in result_list]
+            prices = [point.price for point in data_points]
             assert all(
                 price > 0 for price in prices
             ), f"All prices should be positive for {symbol}"

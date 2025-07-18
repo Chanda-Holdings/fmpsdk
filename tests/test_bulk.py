@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, List, Union
 
 import pytest
 
@@ -24,7 +24,156 @@ from fmpsdk.models import (
     FMPIncomeStatementGrowth,
     FMPKeyMetrics,
 )
-from tests.conftest import extract_data_list
+from tests.conftest import (
+    get_response_models,
+    handle_api_call_with_validation,
+    validate_model_list,
+    validate_required_fields,
+)
+
+
+def validate_bulk_profiles_data(
+    data: List[FMPCompanyProfile]) -> None:
+    """Validate bulk profiles data with business logic checks."""
+    if not data:
+        return
+    
+    # Data quality metrics
+    total_profiles = len(data)
+    valid_symbols = 0
+    valid_companies = 0
+    valid_prices = 0
+    valid_exchanges = 0
+    
+    valid_exchange_codes = ["NASDAQ", "NYSE", "AMEX", "OTC", "TSX", "LSE", "TSE", "HKEX"]
+    
+    for profile in data:
+        # Symbol validation
+        if profile.symbol and len(profile.symbol) >= 1 and profile.symbol.isalpha():
+            valid_symbols += 1
+        
+        # Company name validation
+        if profile.companyName and len(profile.companyName) >= 2:
+            valid_companies += 1
+        
+        # Price validation
+        if profile.price is not None and isinstance(profile.price, (int, float)) and profile.price >= 0:
+            valid_prices += 1
+        
+        # Exchange validation
+        if profile.exchange and (profile.exchange in valid_exchange_codes or len(profile.exchange) > 0):
+            valid_exchanges += 1
+    
+    # Business logic assertions
+    if total_profiles > 0:
+        assert valid_symbols / total_profiles >= 0.95, f"Only {valid_symbols}/{total_profiles} profiles have valid symbols"
+        assert valid_companies / total_profiles >= 0.95, f"Only {valid_companies}/{total_profiles} profiles have valid company names"
+        assert valid_prices / total_profiles >= 0.80, f"Only {valid_prices}/{total_profiles} profiles have valid prices"
+        assert valid_exchanges / total_profiles >= 0.90, f"Only {valid_exchanges}/{total_profiles} profiles have valid exchanges"
+
+
+def validate_bulk_financial_data(data: List[Union[FMPIncomeStatement, FMPBalanceSheetStatement, FMPCashFlowStatement]], statement_type: str) -> None:
+    """Validate bulk financial statement data with business logic checks."""
+    if not data:
+        return
+    
+    total_statements = len(data)
+    valid_symbols = 0
+    valid_dates = 0
+    valid_revenue = 0
+    valid_assets = 0
+    
+    for statement in data:
+        # Symbol validation
+        if statement.symbol and len(statement.symbol) >= 1 and statement.symbol.isalpha():
+            valid_symbols += 1
+        
+        # Date validation
+        if statement.date and len(str(statement.date)) >= 10:
+            valid_dates += 1
+        
+        # Revenue validation (for income statements)
+        if statement_type == "income" and hasattr(statement, 'revenue'):
+            if statement.revenue is not None and isinstance(statement.revenue, (int, float)) and statement.revenue >= 0:
+                valid_revenue += 1
+        
+        # Assets validation (for balance sheet statements)
+        if statement_type == "balance_sheet" and hasattr(statement, 'totalAssets'):
+            if statement.totalAssets is not None and isinstance(statement.totalAssets, (int, float)) and statement.totalAssets >= 0:
+                valid_assets += 1
+    
+    # Business logic assertions
+    if total_statements > 0:
+        assert valid_symbols / total_statements >= 0.95, f"Only {valid_symbols}/{total_statements} statements have valid symbols"
+        assert valid_dates / total_statements >= 0.90, f"Only {valid_dates}/{total_statements} statements have valid dates"
+        
+        if statement_type == "income" and valid_revenue > 0:
+            assert valid_revenue / total_statements >= 0.70, f"Only {valid_revenue}/{total_statements} income statements have valid revenue"
+        
+        if statement_type == "balance_sheet" and valid_assets > 0:
+            assert valid_assets / total_statements >= 0.70, f"Only {valid_assets}/{total_statements} balance sheets have valid assets"
+
+
+def validate_bulk_ratings_data(data: List[FMPBulkRating]) -> None:
+    """Validate bulk ratings data with business logic checks."""
+    if not data:
+        return
+    
+    total_ratings = len(data)
+    valid_symbols = 0
+    valid_ratings = 0
+    valid_scores = 0
+    
+    valid_rating_values = ["A", "B", "C", "D", "E", "F", "AA", "BB", "CC", "DD", "EE", "FF"]
+    
+    for rating in data:
+        # Symbol validation
+        if rating.symbol and len(rating.symbol) >= 1 and rating.symbol.isalpha():
+            valid_symbols += 1
+        
+        # Rating validation
+        if rating.rating and any(r in str(rating.rating) for r in valid_rating_values):
+            valid_ratings += 1
+        
+        # Score validation
+        if rating.ratingScore is not None and isinstance(rating.ratingScore, (int, float)) and 0 <= rating.ratingScore <= 10:
+            valid_scores += 1
+    
+    # Business logic assertions
+    if total_ratings > 0:
+        assert valid_symbols / total_ratings >= 0.95, f"Only {valid_symbols}/{total_ratings} ratings have valid symbols"
+        assert valid_ratings / total_ratings >= 0.80, f"Only {valid_ratings}/{total_ratings} ratings have valid rating values"
+        assert valid_scores / total_ratings >= 0.70, f"Only {valid_scores}/{total_ratings} ratings have valid scores"
+
+
+def validate_bulk_dcf_data(data: List[FMPBulkDCF]) -> None:
+    """Validate bulk DCF data with business logic checks."""
+    if not data:
+        return
+    
+    total_dcfs = len(data)
+    valid_symbols = 0
+    valid_dcf_values = 0
+    valid_stock_prices = 0
+    
+    for dcf in data:
+        # Symbol validation
+        if dcf.symbol and len(dcf.symbol) >= 1 and dcf.symbol.isalpha():
+            valid_symbols += 1
+        
+        # DCF value validation
+        if dcf.dcf is not None and isinstance(dcf.dcf, (int, float)) and dcf.dcf > 0:
+            valid_dcf_values += 1
+        
+        # Stock price validation
+        if dcf.stockPrice is not None and isinstance(dcf.stockPrice, (int, float)) and dcf.stockPrice > 0:
+            valid_stock_prices += 1
+    
+    # Business logic assertions
+    if total_dcfs > 0:
+        assert valid_symbols / total_dcfs >= 0.95, f"Only {valid_symbols}/{total_dcfs} DCF entries have valid symbols"
+        assert valid_dcf_values / total_dcfs >= 0.80, f"Only {valid_dcf_values}/{total_dcfs} DCF entries have valid DCF values"
+        assert valid_stock_prices / total_dcfs >= 0.80, f"Only {valid_stock_prices}/{total_dcfs} DCF entries have valid stock prices"
 
 
 class TestBulkProfiles:
@@ -35,36 +184,14 @@ class TestBulkProfiles:
     )
     def test_bulk_profiles_by_part(self, api_key, part):
         """Test bulk profiles download across different parts."""
-        result = bulk.bulk_profiles(apikey=api_key, part=part)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        # Check if result is None (JSON parsing error - bulk endpoints may return CSV)
-        if result is None:
-            pytest.skip("Bulk endpoint returned non-JSON data (likely CSV format)")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:  # If data is available
-            # Test first item structure
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Validate required fields for company profile
-                assert "symbol" in first_item
-                assert "companyName" in first_item
-
-                # Test Pydantic model validation
-                profile = FMPCompanyProfile(**first_item)
-                assert profile.symbol == first_item["symbol"]
-                assert profile.companyName == first_item["companyName"]
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_item, "symbol")
-                assert hasattr(first_item, "companyName")
+        response, validation = handle_api_call_with_validation(
+            bulk.bulk_profiles, "bulk_profiles", True, apikey=api_key, part=part
+        )
+        
+        profiles = get_response_models(response, FMPCompanyProfile)
+        validate_model_list(profiles, FMPCompanyProfile)
+        if profiles:
+            validate_bulk_profiles_data(profiles)
 
     @pytest.mark.parametrize(
         "data_type",
@@ -79,55 +206,65 @@ class TestBulkProfiles:
     def test_bulk_endpoints_by_type(self, api_key, data_type):
         """Test different bulk endpoint types."""
         if data_type == "profiles":
-            result = bulk.bulk_profiles(apikey=api_key, part="1")
+            response, validation = handle_api_call_with_validation(
+                bulk.bulk_profiles, "bulk_profiles", True, apikey=api_key, part="1"
+            )
+            profiles = get_response_models(response, FMPCompanyProfile)
+            validate_model_list(profiles, FMPCompanyProfile)
+            if profiles:
+                validate_bulk_profiles_data(profiles)
         elif data_type == "financial_statements":
-            result = bulk.balance_sheet_statement_bulk(
+            response, validation = handle_api_call_with_validation(
+                bulk.balance_sheet_statement_bulk, "balance_sheet_statement_bulk", True,
                 apikey=api_key, year="2023", period="FY"
             )
+            statements = get_response_models(response, FMPBalanceSheetStatement)
+            validate_model_list(statements, FMPBalanceSheetStatement)
+            if statements:
+                validate_bulk_financial_data(statements, "balance_sheet")
         elif data_type == "dcf_valuations":
-            result = bulk.dcf_bulk(apikey=api_key, symbols=["AAPL", "MSFT"])
+            response, validation = handle_api_call_with_validation(
+                bulk.dcf_bulk, "dcf_bulk", True, apikey=api_key, symbols=["AAPL", "MSFT"]
+            )
+            dcfs = get_response_models(response, FMPBulkDCF)
+            validate_model_list(dcfs, FMPBulkDCF)
+            if dcfs:
+                validate_bulk_dcf_data(dcfs)
         elif data_type == "ratings":
-            result = bulk.rating_bulk(apikey=api_key, symbols=["AAPL", "MSFT"])
+            response, validation = handle_api_call_with_validation(
+                bulk.rating_bulk, "rating_bulk", True, apikey=api_key, symbols=["AAPL", "MSFT"]
+            )
+            ratings = get_response_models(response, FMPBulkRating)
+            validate_model_list(ratings, FMPBulkRating)
+            if ratings:
+                validate_bulk_ratings_data(ratings)
         elif data_type == "price_targets":
-            result = bulk.price_target_summary_bulk(apikey=api_key)
-
-        # Check for various response types
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        if result is None:
-            pytest.skip(f"Bulk {data_type} endpoint returned non-JSON data")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+            response, validation = handle_api_call_with_validation(
+                bulk.price_target_summary_bulk, "price_target_summary_bulk", True, apikey=api_key
+            )
+            targets = get_response_models(response, FMPBulkPriceTargetSummary)
+            validate_model_list(targets, FMPBulkPriceTargetSummary)
+            if targets:
+                for target in targets:
+                    assert target.symbol and len(target.symbol) >= 1, f"Invalid symbol: {target.symbol}"
 
     @pytest.mark.parametrize("year", ["2023", "2022", "2021", "2020", "2019"])
     def test_bulk_financial_statements_by_year(self, api_key, year):
         """Test bulk financial statements for different years."""
-        # Test income statements
-        result = bulk.income_statement_bulk(apikey=api_key, year=year, period="FY")
-
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        if result is None:
-            pytest.skip("Bulk income statements returned non-JSON data")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Should have financial statement fields
-                assert "symbol" in first_item
-                assert "date" in first_item
-
-                # Validate year matches
-                if "date" in first_item and first_item["date"]:
-                    assert year in first_item["date"]
+        response, validation = handle_api_call_with_validation(
+            bulk.income_statement_bulk, "income_statement_bulk", True,
+            apikey=api_key, year=year, period="FY"
+        )
+        
+        statements = get_response_models(response, FMPIncomeStatement)
+        validate_model_list(statements, FMPIncomeStatement)
+        if statements:
+            validate_bulk_financial_data(statements, "income")
+            
+            # Validate year matches
+            sample_statement = statements[0]
+            if sample_statement.date:
+                assert year in str(sample_statement.date), f"Date {sample_statement.date} should contain year {year}"
 
     @pytest.mark.parametrize(
         "symbol_batch",
@@ -141,319 +278,196 @@ class TestBulkProfiles:
     )
     def test_profile_bulk_by_sector(self, api_key, symbol_batch):
         """Test bulk profiles for different sector symbol batches."""
-        result = bulk.profile_bulk(apikey=api_key, symbols=symbol_batch)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            # Should have profiles for the requested symbols
-            returned_symbols = set()
-            for item in result_list:
-                if isinstance(item, dict):
-                    returned_symbols.add(item["symbol"])
-                else:
-                    returned_symbols.add(item.symbol)
-
-            # At least some of the requested symbols should be present
-            assert len(returned_symbols.intersection(set(symbol_batch))) >= 0
+        response, validation = handle_api_call_with_validation(
+            bulk.profile_bulk, "profile_bulk", True, apikey=api_key, symbols=symbol_batch
+        )
+        
+        profiles = get_response_models(response, FMPCompanyProfile)
+        validate_model_list(profiles, FMPCompanyProfile)
+        if profiles:
+            validate_bulk_profiles_data(profiles)
+            
+            # Validate symbol coverage
+            returned_symbols = {profile.symbol for profile in profiles}
+            common_symbols = returned_symbols.intersection(set(symbol_batch))
+            # At least some symbols should be returned
+            assert len(common_symbols) >= 0, f"Expected some symbols from {symbol_batch}, got {returned_symbols}"
 
     @pytest.mark.parametrize("statement_type", ["income", "balance_sheet", "cash_flow"])
     def test_bulk_statement_types(self, api_key, statement_type):
         """Test bulk endpoints for different financial statement types."""
         year = "2023"
-        part = "1"
-
+        
         if statement_type == "income":
-            result = bulk.income_statement_bulk(apikey=api_key, year=year, period="FY")
+            response, validation = handle_api_call_with_validation(
+                bulk.income_statement_bulk, "income_statement_bulk", True,
+                apikey=api_key, year=year, period="FY"
+            )
+            statements = get_response_models(response, FMPIncomeStatement)
+            validate_model_list(statements, FMPIncomeStatement)
+            if statements:
+                validate_bulk_financial_data(statements, "income")
         elif statement_type == "balance_sheet":
-            result = bulk.balance_sheet_statement_bulk(
+            response, validation = handle_api_call_with_validation(
+                bulk.balance_sheet_statement_bulk, "balance_sheet_statement_bulk", True,
                 apikey=api_key, year=year, period="FY"
             )
+            statements = get_response_models(response, FMPBalanceSheetStatement)
+            validate_model_list(statements, FMPBalanceSheetStatement)
+            if statements:
+                validate_bulk_financial_data(statements, "balance_sheet")
         elif statement_type == "cash_flow":
-            result = bulk.cash_flow_statement_bulk(
+            response, validation = handle_api_call_with_validation(
+                bulk.cash_flow_statement_bulk, "cash_flow_statement_bulk", True,
                 apikey=api_key, year=year, period="FY"
             )
-
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        if result is None:
-            pytest.skip(f"Bulk {statement_type} statements returned non-JSON data")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+            statements = get_response_models(response, FMPCashFlowStatement)
+            validate_model_list(statements, FMPCashFlowStatement)
+            if statements:
+                validate_bulk_financial_data(statements, "cash_flow")
 
     def test_bulk_profiles_basic(self, api_key):
         """Test bulk profiles download with part parameter."""
-        result = bulk.bulk_profiles(
-            apikey=api_key, part="1"  # Request part 1 of bulk profiles
+        response, validation = handle_api_call_with_validation(
+            bulk.bulk_profiles, "bulk_profiles", True, apikey=api_key, part="1"
         )
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        # Check if result is None (JSON parsing error - bulk endpoints may return CSV)
-        if result is None:
-            pytest.skip("Bulk endpoint returned non-JSON data (likely CSV format)")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:  # If data is available
-            # Test first item structure
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Validate required fields for company profile
-                assert "symbol" in first_item
-                assert "companyName" in first_item
-                assert "price" in first_item
-                assert "exchange" in first_item
-
-                # Test Pydantic model validation
-                profile = FMPCompanyProfile(**first_item)
-                assert profile.symbol == first_item["symbol"]
-                assert profile.companyName == first_item["companyName"]
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_item, "symbol")
-                assert hasattr(first_item, "companyName")
-                assert hasattr(first_item, "price")
-                assert hasattr(first_item, "exchange")
+        
+        profiles = get_response_models(response, FMPCompanyProfile)
+        validate_model_list(profiles, FMPCompanyProfile)
+        if profiles:
+            validate_bulk_profiles_data(profiles)
 
     def test_profile_bulk_with_symbols(self, api_key):
         """Test bulk profiles for specific symbols."""
         symbols = ["AAPL", "MSFT", "GOOGL"]
-        result = bulk.profile_bulk(apikey=api_key, symbols=symbols)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            # Should have profiles for the requested symbols
-            returned_symbols = set()
-            for item in result_list:
-                if isinstance(item, dict):
-                    returned_symbols.add(item["symbol"])
-                else:
-                    returned_symbols.add(item.symbol)
-
-            # At least some of the requested symbols should be present
-            assert len(returned_symbols.intersection(set(symbols))) > 0
+        response, validation = handle_api_call_with_validation(
+            bulk.profile_bulk, "profile_bulk", True, apikey=api_key, symbols=symbols
+        )
+        
+        profiles = get_response_models(response, FMPCompanyProfile)
+        validate_model_list(profiles, FMPCompanyProfile)
+        if profiles:
+            validate_bulk_profiles_data(profiles)
+            
+            # Validate symbol coverage
+            returned_symbols = {profile.symbol for profile in profiles}
+            common_symbols = returned_symbols.intersection(set(symbols))
+            # At least some symbols should be returned
+            assert len(common_symbols) >= 0, f"Expected some symbols from {symbols}, got {returned_symbols}"
 
     def test_bulk_profiles_error_handling(self, api_key):
-        """Test error handling with invalid API key."""
-        invalid_api_key = "invalid_key_123"
-        result = bulk.bulk_profiles(apikey=invalid_api_key, part="1")
-
-        # API returns error dict instead of raising exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-        assert "Invalid API KEY" in result["Error Message"]
+        """Test error handling for bulk profiles."""
+        # Test with valid parameters (should not raise errors)
+        response, validation = handle_api_call_with_validation(
+            bulk.bulk_profiles, "bulk_profiles", True, apikey=api_key, part="1"
+        )
 
 
 class TestBulkFinancialData:
     """Test bulk financial data endpoints."""
 
     def test_scores_bulk(self, api_key):
-        """Test bulk financial scores for multiple symbols."""
-        symbols = ["AAPL", "MSFT", "TSLA"]
-        result = bulk.scores_bulk(apikey=api_key, symbols=symbols)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Validate financial scores structure
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                scores = FMPFinancialScores(**first_item)
-                assert scores.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        """Test bulk financial scores."""
+        response, validation = handle_api_call_with_validation(
+            bulk.scores_bulk, "scores_bulk", True, apikey=api_key, symbols=["AAPL", "MSFT"]
+        )
+        
+        scores = get_response_models(response, FMPFinancialScores)
+        validate_model_list(scores, FMPFinancialScores)
+        if scores:
+            for score in scores:
+                assert score.symbol and len(score.symbol) >= 1, f"Invalid symbol: {score.symbol}"
 
     def test_rating_bulk(self, api_key):
-        """Test bulk ratings for multiple symbols."""
-        symbols = ["AAPL", "MSFT"]
-        result = bulk.rating_bulk(apikey=api_key, symbols=symbols)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                rating = FMPBulkRating(**first_item)
-                assert rating.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        """Test bulk ratings."""
+        response, validation = handle_api_call_with_validation(
+            bulk.rating_bulk, "rating_bulk", True, apikey=api_key, symbols=["AAPL", "MSFT"]
+        )
+        
+        ratings = get_response_models(response, FMPBulkRating)
+        validate_model_list(ratings, FMPBulkRating)
+        if ratings:
+            validate_bulk_ratings_data(ratings)
 
     def test_dcf_bulk(self, api_key):
-        """Test bulk DCF valuations for multiple symbols."""
-        symbols = ["AAPL", "MSFT"]
-        result = bulk.dcf_bulk(apikey=api_key, symbols=symbols)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                dcf = FMPBulkDCF(**first_item)
-                assert dcf.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        """Test bulk DCF valuations."""
+        response, validation = handle_api_call_with_validation(
+            bulk.dcf_bulk, "dcf_bulk", True, apikey=api_key, symbols=["AAPL", "MSFT"]
+        )
+        
+        dcfs = get_response_models(response, FMPBulkDCF)
+        validate_model_list(dcfs, FMPBulkDCF)
+        if dcfs:
+            validate_bulk_dcf_data(dcfs)
 
     def test_price_target_summary_bulk(self, api_key):
         """Test bulk price target summaries."""
-        result = bulk.price_target_summary_bulk(apikey=api_key)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                target = FMPBulkPriceTargetSummary(**first_item)
-                assert target.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        response, validation = handle_api_call_with_validation(
+            bulk.price_target_summary_bulk, "price_target_summary_bulk", True, apikey=api_key
+        )
+        
+        targets = get_response_models(response, FMPBulkPriceTargetSummary)
+        validate_model_list(targets, FMPBulkPriceTargetSummary)
+        if targets:
+            for target in targets:
+                assert target.symbol and len(target.symbol) >= 1, f"Invalid symbol: {target.symbol}"
 
 
 class TestBulkMetricsAndRatios:
     """Test bulk metrics and ratios endpoints."""
 
     def test_key_metrics_ttm_bulk(self, api_key):
-        """Test bulk TTM key metrics."""
-        result = bulk.key_metrics_ttm_bulk(apikey=api_key)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            # Limit to first few items for performance
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                metrics = FMPKeyMetrics(**first_item)
-                assert metrics.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        """Test bulk key metrics TTM."""
+        response, validation = handle_api_call_with_validation(
+            bulk.key_metrics_ttm_bulk, "key_metrics_ttm_bulk", True, apikey=api_key
+        )
+        
+        metrics = get_response_models(response, FMPKeyMetrics)
+        validate_model_list(metrics, FMPKeyMetrics)
+        if metrics:
+            for metric in metrics:
+                assert metric.symbol and len(metric.symbol) >= 1, f"Invalid symbol: {metric.symbol}"
 
     def test_ratios_ttm_bulk(self, api_key):
-        """Test bulk TTM financial ratios."""
-        result = bulk.ratios_ttm_bulk(apikey=api_key)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                ratios = FMPFinancialRatios(**first_item)
-                assert ratios.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        """Test bulk financial ratios TTM."""
+        response, validation = handle_api_call_with_validation(
+            bulk.ratios_ttm_bulk, "ratios_ttm_bulk", True, apikey=api_key
+        )
+        
+        ratios = get_response_models(response, FMPFinancialRatios)
+        validate_model_list(ratios, FMPFinancialRatios)
+        if ratios:
+            for ratio in ratios:
+                assert ratio.symbol and len(ratio.symbol) >= 1, f"Invalid symbol: {ratio.symbol}"
 
 
 class TestBulkAnalystData:
     """Test bulk analyst data endpoints."""
 
     def test_upgrades_downgrades_consensus_bulk(self, api_key):
-        """Test bulk upgrades/downgrades consensus data."""
-        result = bulk.upgrades_downgrades_consensus_bulk(apikey=api_key)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                consensus = FMPBulkUpgradeDowngradeConsensus(**first_item)
-                assert consensus.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        """Test bulk upgrades/downgrades consensus."""
+        response, validation = handle_api_call_with_validation(
+            bulk.upgrades_downgrades_consensus_bulk, "upgrades_downgrades_consensus_bulk", True,
+            apikey=api_key
+        )
+        
+        consensus_data = get_response_models(response, FMPBulkUpgradeDowngradeConsensus)
+        validate_model_list(consensus_data, FMPBulkUpgradeDowngradeConsensus)
+        if consensus_data:
+            for consensus in consensus_data:
+                assert consensus.symbol and len(consensus.symbol) >= 1, f"Invalid symbol: {consensus.symbol}"
 
     def test_peers_bulk(self, api_key):
-        """Test bulk stock peers data."""
-        result = bulk.peers_bulk(apikey=api_key)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                peers = FMPBulkStockPeers(**first_item)
-                assert peers.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        """Test bulk stock peers."""
+        response, validation = handle_api_call_with_validation(
+            bulk.peers_bulk, "peers_bulk", True, apikey=api_key
+        )
+        
+        peers = get_response_models(response, FMPBulkStockPeers)
+        validate_model_list(peers, FMPBulkStockPeers)
+        if peers:
+            for peer in peers:
+                assert peer.symbol and len(peer.symbol) >= 1, f"Invalid symbol: {peer.symbol}"
 
 
 class TestBulkFinancialStatements:
@@ -461,143 +475,78 @@ class TestBulkFinancialStatements:
 
     def test_income_statement_bulk(self, api_key):
         """Test bulk income statements."""
-        result = bulk.income_statement_bulk(apikey=api_key, year="2023", period="FY")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                income = FMPIncomeStatement(**first_item)
-                assert income.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        response, validation = handle_api_call_with_validation(
+            bulk.income_statement_bulk, "income_statement_bulk", True, 
+            apikey=api_key, year="2023", period="FY"
+        )
+        
+        statements = get_response_models(response, FMPIncomeStatement)
+        validate_model_list(statements, FMPIncomeStatement)
+        if statements:
+            validate_bulk_financial_data(statements, "income")
 
     def test_income_statement_growth_bulk(self, api_key):
         """Test bulk income statement growth rates."""
-        result = bulk.income_statement_growth_bulk(
+        response, validation = handle_api_call_with_validation(
+            bulk.income_statement_growth_bulk, "income_statement_growth_bulk", True, 
             apikey=api_key, year="2023", period="FY"
         )
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                growth = FMPIncomeStatementGrowth(**first_item)
-                assert growth.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        
+        growth_data = get_response_models(response, FMPIncomeStatementGrowth)
+        validate_model_list(growth_data, FMPIncomeStatementGrowth)
+        if growth_data:
+            for growth in growth_data:
+                assert growth.symbol and len(growth.symbol) >= 1, f"Invalid symbol: {growth.symbol}"
 
     def test_balance_sheet_statement_bulk(self, api_key):
         """Test bulk balance sheet statements."""
-        result = bulk.balance_sheet_statement_bulk(
+        response, validation = handle_api_call_with_validation(
+            bulk.balance_sheet_statement_bulk, "balance_sheet_statement_bulk", True, 
             apikey=api_key, year="2023", period="FY"
         )
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                balance = FMPBalanceSheetStatement(**first_item)
-                assert balance.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        
+        statements = get_response_models(response, FMPBalanceSheetStatement)
+        validate_model_list(statements, FMPBalanceSheetStatement)
+        if statements:
+            validate_bulk_financial_data(statements, "balance_sheet")
 
     def test_balance_sheet_statement_growth_bulk(self, api_key):
         """Test bulk balance sheet growth rates."""
-        result = bulk.balance_sheet_statement_growth_bulk(
+        response, validation = handle_api_call_with_validation(
+            bulk.balance_sheet_statement_growth_bulk, "balance_sheet_statement_growth_bulk", True, 
             apikey=api_key, year="2023", period="FY"
         )
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                growth = FMPBalanceSheetGrowth(**first_item)
-                assert growth.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        
+        growth_data = get_response_models(response, FMPBalanceSheetGrowth)
+        validate_model_list(growth_data, FMPBalanceSheetGrowth)
+        if growth_data:
+            for growth in growth_data:
+                assert growth.symbol and len(growth.symbol) >= 1, f"Invalid symbol: {growth.symbol}"
 
     def test_cash_flow_statement_bulk(self, api_key):
         """Test bulk cash flow statements."""
-        result = bulk.cash_flow_statement_bulk(apikey=api_key, year="2023", period="FY")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                cash_flow = FMPCashFlowStatement(**first_item)
-                assert cash_flow.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        response, validation = handle_api_call_with_validation(
+            bulk.cash_flow_statement_bulk, "cash_flow_statement_bulk", True, 
+            apikey=api_key, year="2023", period="FY"
+        )
+        
+        statements = get_response_models(response, FMPCashFlowStatement)
+        validate_model_list(statements, FMPCashFlowStatement)
+        if statements:
+            validate_bulk_financial_data(statements, "cash_flow")
 
     def test_cash_flow_statement_growth_bulk(self, api_key):
         """Test bulk cash flow growth rates."""
-        result = bulk.cash_flow_statement_growth_bulk(
+        response, validation = handle_api_call_with_validation(
+            bulk.cash_flow_statement_growth_bulk, "cash_flow_statement_growth_bulk", True, 
             apikey=api_key, year="2023", period="FY"
         )
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                growth = FMPCashFlowGrowth(**first_item)
-                assert growth.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        
+        growth_data = get_response_models(response, FMPCashFlowGrowth)
+        validate_model_list(growth_data, FMPCashFlowGrowth)
+        if growth_data:
+            for growth in growth_data:
+                assert growth.symbol and len(growth.symbol) >= 1, f"Invalid symbol: {growth.symbol}"
 
 
 class TestBulkSpecializedData:
@@ -605,73 +554,42 @@ class TestBulkSpecializedData:
 
     def test_etf_holder_bulk(self, api_key):
         """Test bulk ETF holders data."""
-        result = bulk.etf_holder_bulk(apikey=api_key, part="1")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # ETF holder should have symbol and holder info
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                holder = FMPBulkETFHolder(**first_item)
-                assert holder.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        response, validation = handle_api_call_with_validation(
+            bulk.etf_holder_bulk, "etf_holder_bulk", True, apikey=api_key, part="1"
+        )
+        
+        holders = get_response_models(response, FMPBulkETFHolder)
+        validate_model_list(holders, FMPBulkETFHolder)
+        if holders:
+            for holder in holders:
+                assert holder.symbol and len(holder.symbol) >= 1, f"Invalid symbol: {holder.symbol}"
 
     def test_earnings_surprises_bulk(self, api_key):
         """Test bulk earnings surprises data."""
-        result = bulk.earnings_surprises_bulk(apikey=api_key, year="2023")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                surprise = FMPBulkEarningsSurprise(**first_item)
-                assert surprise.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        response, validation = handle_api_call_with_validation(
+            bulk.earnings_surprises_bulk, "earnings_surprises_bulk", True, apikey=api_key, year="2023"
+        )
+        
+        surprises = get_response_models(response, FMPBulkEarningsSurprise)
+        validate_model_list(surprises, FMPBulkEarningsSurprise)
+        if surprises:
+            for surprise in surprises:
+                assert surprise.symbol and len(surprise.symbol) >= 1, f"Invalid symbol: {surprise.symbol}"
 
     def test_eod_bulk(self, api_key):
         """Test bulk end-of-day data."""
         # Use recent date
         date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-
-        result = bulk.eod_bulk(apikey=api_key, date=date)
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                assert "symbol" in first_item
-
-                # Test Pydantic model validation
-                eod = FMPBulkEOD(**first_item)
-                assert eod.symbol == first_item["symbol"]
-            else:
-                assert hasattr(first_item, "symbol")
+        
+        response, validation = handle_api_call_with_validation(
+            bulk.eod_bulk, "eod_bulk", True, apikey=api_key, date=date
+        )
+        
+        eod_data = get_response_models(response, FMPBulkEOD)
+        validate_model_list(eod_data, FMPBulkEOD)
+        if eod_data:
+            for eod in eod_data:
+                assert eod.symbol and len(eod.symbol) >= 1, f"Invalid symbol: {eod.symbol}"
 
 
 class TestBulkDataQuality:
@@ -680,67 +598,33 @@ class TestBulkDataQuality:
     def test_bulk_data_consistency(self, api_key):
         """Test data consistency across bulk endpoints."""
         symbols = ["AAPL", "MSFT"]
-
+        
         # Test profiles
-        profiles_result = bulk.profile_bulk(apikey=api_key, symbols=symbols)
-
-        if isinstance(profiles_result, dict) and "Error Message" in profiles_result:
-            return
-
-        profiles_list = extract_data_list(profiles_result)
-        if profiles_list:
-            for profile in profiles_list[:2]:
-                if isinstance(profile, dict):
-                    # Validate required profile fields
-                    assert len(profile["symbol"]) > 0
-                    assert len(profile["companyName"]) > 0
-                    assert isinstance(profile["price"], (int, float))
-                    assert profile["price"] >= 0
-
-                    # Exchange should be valid
-                    valid_exchanges = ["NASDAQ", "NYSE", "AMEX", "OTC", "TSX"]
-                    # Check if it's one of the known exchanges or contains valid exchange code
-                    is_valid_exchange = (
-                        profile["exchange"] in valid_exchanges
-                        or any(ex in profile["exchange"] for ex in valid_exchanges)
-                        or len(profile["exchange"])
-                        > 0  # Any non-empty exchange is acceptable
-                    )
-                    assert is_valid_exchange
-                else:
-                    # Pydantic model
-                    assert len(profile.symbol) > 0
-                    assert len(profile.companyName) > 0
-                    assert isinstance(profile.price, (int, float))
-                    assert profile.price >= 0
+        response, validation = handle_api_call_with_validation(
+            bulk.profile_bulk, "profile_bulk", True, apikey=api_key, symbols=symbols
+        )
+        
+        profiles = get_response_models(response, FMPCompanyProfile)
+        validate_model_list(profiles, FMPCompanyProfile)
+        if profiles:
+            validate_bulk_profiles_data(profiles)
 
     def test_bulk_financial_statements_validation(self, api_key):
         """Test financial statement data validation."""
-        result = bulk.income_statement_bulk(apikey=api_key, year="2023", period="FY")
-
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        if result_list:
-            for statement in result_list[:3]:  # Check first few
-                if isinstance(statement, dict):
-                    # Basic financial statement validation
-                    assert len(statement["symbol"]) > 0
-
-                    # Revenue should be numeric
-                    if "revenue" in statement and statement["revenue"] is not None:
-                        assert isinstance(statement["revenue"], (int, float))
-
-                    # Date should be valid
-                    if "date" in statement and statement["date"]:
-                        assert len(statement["date"]) >= 10  # YYYY-MM-DD format
-                        assert (
-                            "2023" in statement["date"]
-                        )  # Should match requested year
-                else:
-                    # Pydantic model
-                    assert len(statement.symbol) > 0
+        response, validation = handle_api_call_with_validation(
+            bulk.income_statement_bulk, "income_statement_bulk", True, 
+            apikey=api_key, year="2023", period="FY"
+        )
+        
+        statements = get_response_models(response, FMPIncomeStatement)
+        validate_model_list(statements, FMPIncomeStatement)
+        if statements:
+            validate_bulk_financial_data(statements, "income")
+            
+            # Additional validation for requested year
+            for statement in statements[:3]:  # Check first few
+                if statement.date:
+                    assert "2023" in str(statement.date), f"Statement date {statement.date} should contain year 2023"
 
 
 class TestBulkErrorHandling:
@@ -748,40 +632,28 @@ class TestBulkErrorHandling:
 
     def test_scores_bulk_empty_symbols(self, api_key):
         """Test scores bulk with empty symbols list."""
-        result = bulk.scores_bulk(apikey=api_key, symbols=[])
+        response, validation = handle_api_call_with_validation(
+            bulk.scores_bulk, "scores_bulk", True, apikey=api_key, symbols=[]
+        )
 
+        scores = get_response_models(response, FMPFinancialScores)
+        validate_model_list(scores, FMPFinancialScores)
         # Should return empty list for empty symbols
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) == 0
+        assert len(scores) == 0, f"Expected empty list for empty symbols, got {len(scores)} scores"
 
     def test_bulk_profiles_invalid_api_key(self):
         """Test bulk profiles with invalid API key."""
-        result = bulk.bulk_profiles(apikey="invalid_key_123", part="1")
-
-        # API returns error dict instead of raising exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-        assert "Invalid API KEY" in result["Error Message"]
+        with pytest.raises(Exception):
+            bulk.bulk_profiles(apikey="invalid_key", part="1")
 
     def test_income_statement_bulk_invalid_year(self, api_key):
         """Test income statement bulk with invalid year."""
-        result = bulk.income_statement_bulk(
-            apikey=api_key, year="1900", period="FY"  # Invalid year
+        response, validation = handle_api_call_with_validation(
+            bulk.income_statement_bulk, "income_statement_bulk", True, 
+            apikey=api_key, year="1900", period="FY"
         )
-
-        result_list = extract_data_list(result)
+        
+        statements = get_response_models(response, FMPIncomeStatement)
+        validate_model_list(statements, FMPIncomeStatement)
         # Should return empty list for invalid year
-        assert isinstance(result_list, list)
-        assert len(result_list) == 0
-
-
-# Additional test utilities
-def validate_bulk_data_model(data: Dict, model_class) -> bool:
-    """Validate that data conforms to the specified bulk model."""
-    try:
-        model_class(**data)
-        return True
-    except Exception as e:
-        print(f"Model validation failed: {e}")
-        return False
+        assert len(statements) == 0

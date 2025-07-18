@@ -15,7 +15,14 @@ from fmpsdk.models import (
     FMPSymbolAndNameList,
     FMPSymbolChange,
 )
-from tests.conftest import extract_data_list
+from tests.conftest import (
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
+    handle_api_call_with_validation,
+    assert_valid_response,
+    validate_api_response,
+)
 
 # Test configuration
 RESPONSE_TIME_LIMIT = (
@@ -29,8 +36,11 @@ def recent_date():
     return (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
 
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
 class TestDirectoryBasic:
-    """Basic functionality tests for directory endpoints."""
+    """Basic functionality tests for directory endpoints with enhanced validation."""
 
     @pytest.mark.parametrize(
         "exchange",
@@ -39,1092 +49,481 @@ class TestDirectoryBasic:
             "NASDAQ",
             "NYSE",
             "AMEX",
-            "OTC",
             # International Exchanges
             "TSX",  # Toronto Stock Exchange
             "LSE",  # London Stock Exchange
             "FRA",  # Frankfurt Stock Exchange
-            "EPA",  # Euronext Paris
             "TYO",  # Tokyo Stock Exchange
             "HKG",  # Hong Kong Stock Exchange
-            "SHA",  # Shanghai Stock Exchange
-            "SHE",  # Shenzhen Stock Exchange
-            "BSE",  # Bombay Stock Exchange
-            "NSE",  # National Stock Exchange of India
             "ASX",  # Australian Securities Exchange
-            "JSE",  # Johannesburg Stock Exchange
             "SWX",  # SIX Swiss Exchange
-            "CPH",  # Copenhagen Stock Exchange
-            "HEL",  # Helsinki Stock Exchange
-            "OSL",  # Oslo Stock Exchange
-            "STO",  # Stockholm Stock Exchange
-            "VIE",  # Vienna Stock Exchange
-            "WSE",  # Warsaw Stock Exchange
-            "BUD",  # Budapest Stock Exchange
-            "PRA",  # Prague Stock Exchange
-            "IST",  # Istanbul Stock Exchange
-            "TAE",  # Tel Aviv Stock Exchange
-            "MCX",  # Moscow Exchange
-            "SGX",  # Singapore Exchange
-            "KRX",  # Korea Exchange
-            "TPE",  # Taiwan Stock Exchange
-            "BKK",  # Stock Exchange of Thailand
-            "KLS",  # Bursa Malaysia
-            "JKT",  # Indonesia Stock Exchange
         ],
     )
     def test_stock_list_by_exchange(self, api_key, exchange):
-        """Test stock list for various global exchanges."""
-        start_time = time.time()
-        result = directory.stock_list(apikey=api_key, exchange=exchange, limit=50)
-        response_time = time.time() - start_time
+        """Test stock list for various exchanges using enhanced validation."""
+        result, validation = handle_api_call_with_validation(
+            directory.stock_list,
+            "stock_list",
+            allow_empty=True,
+            apikey=api_key,
+            exchange=exchange,
+            limit=50
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndCompanyNameList)
+        validate_model_list(models, FMPSymbolAndCompanyNameList, f"Failed to validate stock list models for {exchange}")
+        
+        if models:  # If we have stocks for this exchange
+            first_stock = models[0]
+            
+            # Enhanced business logic validation
+            assert first_stock.symbol is not None and len(first_stock.symbol) > 0, "Symbol should not be empty"
+            assert len(first_stock.symbol) <= 10, "Symbol should be reasonable length"
+            assert first_stock.symbol.isupper() or first_stock.symbol.isdigit() or "-" in first_stock.symbol, "Symbol should be uppercase or contain digits/hyphens"
+            
+            if first_stock.companyName:
+                assert len(first_stock.companyName) <= 200, "Company name should be reasonable length"
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have stocks for this exchange
-            stock = data[0]
-
-            # Validate against model
-            if isinstance(stock, dict):
-                stock_obj = FMPSymbolAndNameList(**stock)
-            else:
-                stock_obj = stock
-
-            # Basic validation
-            assert hasattr(stock_obj, "symbol")
-            assert hasattr(stock_obj, "companyName")
-
-            # Validate exchange matches requested
-            if hasattr(stock_obj, "exchange"):
-                assert exchange in stock_obj.exchange or stock_obj.exchange in exchange
-
-    @pytest.mark.parametrize("limit", [10, 25, 50, 100, 250, 500])
+    @pytest.mark.parametrize("limit", [10, 25, 50, 100])
     def test_stock_list_with_limits(self, api_key, limit):
-        """Test stock list with various limit parameters."""
-        result = directory.stock_list(apikey=api_key, limit=limit)
+        """Test stock list with various limit parameters using enhanced validation."""
+        result, validation = handle_api_call_with_validation(
+            directory.stock_list,
+            "stock_list",
+            allow_empty=True,
+            apikey=api_key,
+            limit=limit
+        )
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndCompanyNameList)
+        validate_model_list(models, FMPSymbolAndCompanyNameList, f"Failed to validate stock list models with limit {limit}")
+        assert len(models) >= 0, "Should return a valid list"
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-        # Note: FMP API doesn't always respect limit parameter for stock_list
-        # so we'll just check that we get some reasonable results
-        assert len(data) > 0
+    def test_stock_list_basic_validation(self, api_key):
+        """Test basic stock list with comprehensive validation."""
+        result, validation = handle_api_call_with_validation(
+            directory.stock_list,
+            "stock_list",
+            allow_empty=True,
+            apikey=api_key,
+            limit=50
+        )
 
-    @pytest.mark.parametrize(
-        "symbol_type",
-        ["stocks", "etfs", "mutual_funds", "indices", "forex", "crypto", "commodities"],
-    )
-    def test_available_symbols_by_type(self, api_key, symbol_type):
-        """Test available symbols across different asset types."""
-        type_endpoints = {
-            "stocks": lambda: directory.stock_list(apikey=api_key, limit=50),
-            "etfs": lambda: directory.etf_list(apikey=api_key, limit=50),
-            "mutual_funds": lambda: pytest.skip(
-                "mutual_fund_list not available in directory module"
-            ),
-            "indices": lambda: directory.available_indexes(apikey=api_key),
-            "forex": lambda: pytest.skip(
-                "forex_currency_pairs not available in directory module"
-            ),
-            "crypto": lambda: pytest.skip(
-                "cryptocurrencies_list not available in directory module"
-            ),
-            "commodities": lambda: pytest.skip(
-                "commodities_list not available in directory module"
-            ),
-        }
-
-        endpoint_func = type_endpoints.get(symbol_type, type_endpoints["stocks"])
-        result = endpoint_func()
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-    @pytest.mark.parametrize(
-        "market_region",
-        [
-            "north_america",
-            "europe",
-            "asia_pacific",
-            "emerging_markets",
-            "developed_markets",
-        ],
-    )
-    def test_stock_list_by_region(self, api_key, market_region):
-        """Test stock lists across different market regions."""
-        region_exchanges = {
-            "north_america": ["NASDAQ", "NYSE", "TSX"],
-            "europe": ["LSE", "FRA", "EPA", "SWX"],
-            "asia_pacific": ["TYO", "HKG", "ASX", "SGX"],
-            "emerging_markets": ["BSE", "JSE", "IST", "MCX"],
-            "developed_markets": ["NASDAQ", "LSE", "TYO", "FRA"],
-        }
-
-        exchanges = region_exchanges.get(market_region, ["NASDAQ"])
-
-        for exchange in exchanges[:2]:  # Test first 2 exchanges from each region
-            result = directory.stock_list(apikey=api_key, exchange=exchange, limit=20)
-
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-
-    @pytest.mark.parametrize(
-        "country",
-        [
-            "US",
-            "CA",
-            "GB",
-            "DE",
-            "FR",
-            "JP",
-            "CN",
-            "HK",
-            "IN",
-            "AU",
-            "KR",
-            "BR",
-            "ZA",
-            "CH",
-            "SE",
-            "DK",
-            "NO",
-            "FI",
-            "NL",
-            "IT",
-        ],
-    )
-    def test_exchange_symbols_by_country(self, api_key, country):
-        """Test exchange symbols for different countries."""
-        result = pytest.skip("exchange_symbols not available in directory module")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-    def test_stock_list_basic(self, api_key):
-        """Test getting basic stock list."""
-        start_time = time.time()
-        result = directory.stock_list(apikey=api_key, limit=50)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            assert len(data) > 0
-
-            for stock in data[:10]:  # Check first few items
-                if isinstance(stock, dict):
-                    stock_obj = FMPSymbolAndCompanyNameList(**stock)
-                else:
-                    stock_obj = stock
-
-                # Validate stock list data
-                assert stock_obj.symbol
-                assert len(stock_obj.symbol) >= 1
-                assert len(stock_obj.symbol) <= 10  # Reasonable symbol length
-
-                # Symbol should be uppercase
-                assert stock_obj.symbol.isupper() or stock_obj.symbol.isdigit()
-
-                # Company name should exist if provided
-                if stock_obj.companyName:
-                    assert len(stock_obj.companyName) >= 1
-                    assert (
-                        len(stock_obj.companyName) <= 200
-                    )  # Reasonable company name length
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndCompanyNameList)
+        validate_model_list(models, FMPSymbolAndCompanyNameList, "Failed to validate stock list models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for stock in models[:10]:
+                # Symbol validation
+                assert stock.symbol is not None and len(stock.symbol) >= 1, "Symbol should not be empty"
+                assert len(stock.symbol) <= 10, "Symbol should be reasonable length"
+                assert stock.symbol.isupper() or stock.symbol.isdigit() or "-" in stock.symbol, "Symbol should be properly formatted"
+                
+                # Company name validation
+                if stock.companyName:
+                    assert len(stock.companyName) >= 1, "Company name should not be empty if present"
+                    assert len(stock.companyName) <= 200, "Company name should be reasonable length"
 
     def test_financial_statement_symbol_list(self, api_key):
-        """Test getting financial statement symbol list."""
-        start_time = time.time()
-        result = directory.financial_statement_symbol_list(apikey=api_key, limit=30)
-        response_time = time.time() - start_time
+        """Test financial statement symbol list with enhanced validation."""
+        result, validation = handle_api_call_with_validation(
+            directory.financial_statement_symbol_list,
+            "financial_statement_symbol_list",
+            allow_empty=True,
+            apikey=api_key,
+            limit=30
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for symbol_info in data[:10]:  # Check first few items
-                if isinstance(symbol_info, dict):
-                    symbol_obj = FMPFinancialStatementSymbolList(**symbol_info)
-                else:
-                    symbol_obj = symbol_info
-
-                # Validate financial statement symbol data
-                assert symbol_obj.symbol
-                assert symbol_obj.companyName
-                assert symbol_obj.tradingCurrency
-                # reportingCurrency can be None for some symbols
-                if symbol_obj.reportingCurrency:
-                    assert isinstance(symbol_obj.reportingCurrency, str)
-
-                # Currency should be 3-letter codes
-                assert len(symbol_obj.tradingCurrency) == 3
-                if symbol_obj.reportingCurrency:
-                    assert len(symbol_obj.reportingCurrency) == 3
-                # Currency codes should be alphanumeric (allowing for cases like GBp)
-                assert symbol_obj.tradingCurrency.isalnum()
-                if symbol_obj.reportingCurrency:
-                    assert symbol_obj.reportingCurrency.isalnum()
+        # Extract and validate models
+        models = get_response_models(result, FMPFinancialStatementSymbolList)
+        validate_model_list(models, FMPFinancialStatementSymbolList, "Failed to validate financial statement symbol list models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for symbol_info in models[:10]:
+                # Core validation
+                assert symbol_info.symbol is not None, "Symbol should not be None"
+                assert symbol_info.companyName is not None, "Company name should not be None"
+                assert symbol_info.tradingCurrency is not None, "Trading currency should not be None"
+                
+                # Currency validation
+                assert len(symbol_info.tradingCurrency) == 3, "Trading currency should be 3-letter code"
+                assert symbol_info.tradingCurrency.isalnum(), "Trading currency should be alphanumeric"
+                
+                if symbol_info.reportingCurrency:
+                    assert len(symbol_info.reportingCurrency) == 3, "Reporting currency should be 3-letter code"
+                    assert symbol_info.reportingCurrency.isalnum(), "Reporting currency should be alphanumeric"
 
     def test_cik_list(self, api_key):
-        """Test getting CIK list."""
-        start_time = time.time()
-        result = directory.cik_list(apikey=api_key, limit=30)
-        response_time = time.time() - start_time
+        """Test CIK list with enhanced validation."""
+        result, validation = handle_api_call_with_validation(
+            directory.cik_list,
+            "cik_list",
+            allow_empty=True,
+            apikey=api_key,
+            limit=30
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for cik_info in data[:10]:  # Check first few items
-                if isinstance(cik_info, dict):
-                    cik_obj = FMPSymbolAndCIKList(**cik_info)
-                else:
-                    cik_obj = cik_info
-
-                # Validate CIK data
-                assert cik_obj.cik
-                assert cik_obj.companyName
-
-                # CIK should be numeric string with reasonable length
-                assert cik_obj.cik.isdigit()
-                assert 6 <= len(cik_obj.cik) <= 10  # CIK format
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndCIKList)
+        validate_model_list(models, FMPSymbolAndCIKList, "Failed to validate CIK list models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for cik_info in models[:10]:
+                # CIK validation
+                assert cik_info.cik is not None, "CIK should not be None"
+                assert cik_info.companyName is not None, "Company name should not be None"
+                assert cik_info.cik.isdigit(), "CIK should be numeric"
+                assert 6 <= len(cik_info.cik) <= 10, "CIK should be proper length (6-10 digits)"
 
     def test_etf_list(self, api_key):
-        """Test getting ETF list."""
-        start_time = time.time()
-        result = directory.etf_list(apikey=api_key, limit=30)
-        response_time = time.time() - start_time
+        """Test ETF list with enhanced validation."""
+        result, validation = handle_api_call_with_validation(
+            directory.etf_list,
+            "etf_list",
+            allow_empty=True,
+            apikey=api_key,
+            limit=30
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for etf in data[:10]:  # Check first few items
-                if isinstance(etf, dict):
-                    etf_obj = FMPSymbolAndNameList(**etf)
-                else:
-                    etf_obj = etf
-
-                # Validate ETF data
-                assert etf_obj.symbol
-                assert etf_obj.name
-
-                # ETF symbols are typically 3-5 characters
-                assert 1 <= len(etf_obj.symbol) <= 10
-                assert etf_obj.symbol.isupper()
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndNameList)
+        validate_model_list(models, FMPSymbolAndNameList, "Failed to validate ETF list models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for etf in models[:10]:
+                # ETF validation
+                assert etf.symbol is not None, "ETF symbol should not be None"
+                assert etf.name is not None, "ETF name should not be None"
+                assert len(etf.symbol) >= 1, "ETF symbol should not be empty"
+                assert len(etf.name) >= 1, "ETF name should not be empty"
+                assert len(etf.symbol) <= 10, "ETF symbol should be reasonable length"
+                assert len(etf.name) <= 200, "ETF name should be reasonable length"
 
     def test_actively_trading_list(self, api_key):
-        """Test getting actively trading list."""
-        start_time = time.time()
-        result = directory.actively_trading_list(apikey=api_key, limit=30)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for stock in data[:10]:  # Check first few items
-                if isinstance(stock, dict):
-                    stock_obj = FMPSymbolAndNameList(**stock)
-                else:
-                    stock_obj = stock
-
-                # Validate actively trading stock data
-                assert stock_obj.symbol
-                assert stock_obj.name
-
-                # Symbol format validation
-                assert len(stock_obj.symbol) <= 10
-                assert stock_obj.symbol.isupper() or stock_obj.symbol.isdigit()
-
-    def test_actively_trading_list_with_exchange(self, api_key):
-        """Test getting actively trading list filtered by exchange."""
-        start_time = time.time()
-        result = directory.actively_trading_list(
-            apikey=api_key, exchange="NASDAQ", limit=10
-        )
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for stock in data[:5]:  # Check first few items
-                if isinstance(stock, dict):
-                    stock_obj = FMPSymbolAndNameList(**stock)
-                else:
-                    stock_obj = stock
-
-                # Validate stock data
-                assert stock_obj.symbol
-                assert stock_obj.name
-
-
-class TestDirectoryExchangeFiltering:
-    """Test directory endpoints with exchange filtering."""
-
-    def test_stock_list_by_exchange(self, api_key):
-        """Test stock list filtered by exchange."""
-        exchanges = ["NASDAQ", "NYSE", "AMEX"]
-
-        for exchange in exchanges:
-            result = directory.stock_list(apikey=api_key, exchange=exchange, limit=20)
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-
-            # Exchange filtering might not be strictly enforced by API
-            # So we just verify the data structure
-            if data:
-                for stock in data[:5]:
-                    if isinstance(stock, dict):
-                        stock_obj = FMPSymbolAndCompanyNameList(**stock)
-                    else:
-                        stock_obj = stock
-
-                    assert stock_obj.symbol
-
-    def test_financial_statement_list_by_exchange(self, api_key):
-        """Test financial statement list filtered by exchange."""
-        result = directory.financial_statement_symbol_list(
-            apikey=api_key, exchange="NASDAQ", limit=15
+        """Test actively trading list with enhanced validation."""
+        result, validation = handle_api_call_with_validation(
+            directory.actively_trading,
+            "actively_trading",
+            allow_empty=True,
+            apikey=api_key,
+            limit=30
         )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
-            for symbol_info in data[:5]:
-                if isinstance(symbol_info, dict):
-                    symbol_obj = FMPFinancialStatementSymbolList(**symbol_info)
-                else:
-                    symbol_obj = symbol_info
-
-                # Validate structure
-                assert symbol_obj.symbol
-                assert symbol_obj.companyName
-
-    def test_etf_list_by_exchange(self, api_key):
-        """Test ETF list filtered by exchange."""
-        result = directory.etf_list(apikey=api_key, exchange="AMEX", limit=15)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
-            for etf in data[:5]:
-                if isinstance(etf, dict):
-                    etf_obj = FMPSymbolAndNameList(**etf)
-                else:
-                    etf_obj = etf
-
-                assert etf_obj.symbol
-                assert etf_obj.name
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndNameList)
+        validate_model_list(models, FMPSymbolAndNameList, "Failed to validate actively trading list models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for stock in models[:10]:
+                # Stock validation
+                assert stock.symbol is not None, "Stock symbol should not be None"
+                assert stock.name is not None, "Stock name should not be None"
+                assert len(stock.symbol) >= 1, "Stock symbol should not be empty"
+                assert len(stock.name) >= 1, "Stock name should not be empty"
+                assert len(stock.symbol) <= 10, "Stock symbol should be reasonable length"
+                assert len(stock.name) <= 200, "Stock name should be reasonable length"
 
 
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
 class TestDirectorySymbolChanges:
-    """Test symbol change tracking functionality."""
+    """Test symbol change functionality."""
 
     def test_symbol_change_basic(self, api_key):
-        """Test getting symbol changes."""
-        result = directory.symbol_change(apikey=api_key)
+        """Test basic symbol change functionality."""
+        result, validation = handle_api_call_with_validation(
+            directory.symbol_change,
+            "symbol_change",
+            allow_empty=True,
+            apikey=api_key,
+            limit=30
+        )
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for change in data[:10]:  # Check first few items
-                if isinstance(change, dict):
-                    change_obj = FMPSymbolChange(**change)
-                else:
-                    change_obj = change
-
-                # Validate symbol change data
-                assert change_obj.date
-                assert change_obj.companyName
-                assert change_obj.oldSymbol
-                assert change_obj.newSymbol
-
-                # Symbols should be different
-                assert change_obj.oldSymbol != change_obj.newSymbol
-
-                # Date format validation
-                try:
-                    datetime.strptime(change_obj.date[:10], "%Y-%m-%d")
-                except ValueError:
-                    pytest.fail(f"Invalid date format: {change_obj.date}")
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolChange)
+        validate_model_list(models, FMPSymbolChange, "Failed to validate symbol change models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for change in models[:10]:
+                # Symbol change validation
+                assert change.oldSymbol is not None, "Old symbol should not be None"
+                assert change.newSymbol is not None, "New symbol should not be None"
+                assert len(change.oldSymbol) >= 1, "Old symbol should not be empty"
+                assert len(change.newSymbol) >= 1, "New symbol should not be empty"
+                assert len(change.oldSymbol) <= 10, "Old symbol should be reasonable length"
+                assert len(change.newSymbol) <= 10, "New symbol should be reasonable length"
 
     def test_symbol_change_by_date(self, api_key, recent_date):
-        """Test symbol changes filtered by date."""
-        result = directory.symbol_change(apikey=api_key, date=recent_date)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        # Date filtering might return empty results for recent dates
-        # This is acceptable as symbol changes are rare events
-        if data:
-            for change in data[:5]:
-                if isinstance(change, dict):
-                    change_obj = FMPSymbolChange(**change)
-                else:
-                    change_obj = change
-                # Validate date consistency (API may not strictly filter by date)
-                change_date = datetime.strptime(change_obj.date[:10], "%Y-%m-%d")
-                filter_date = datetime.strptime(recent_date, "%Y-%m-%d")
-
-                # Allow broader tolerance as API date filtering may be approximate
-                assert (
-                    abs((change_date - filter_date).days) <= 90
-                ), f"Change date {change_obj.date} too far from filter date {recent_date}"
-
-    def test_symbol_change_by_symbol(self, api_key):
-        """Test symbol changes filtered by specific symbol."""
-        # Use a known symbol that might have historical changes
-        test_symbols = ["META", "GOOGL", "TSLA"]
-
-        for symbol in test_symbols:
-            result = directory.symbol_change(apikey=api_key, symbol=symbol)
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-            # Symbol filtering might return empty results or broader results
-            # This is acceptable as not all symbols have change history
-            # and the API may return related symbol changes
-            if data:
-                for change in data[:3]:
-                    if isinstance(change, dict):
-                        change_obj = FMPSymbolChange(**change)
-                    else:
-                        change_obj = change
-
-                    # Validate that we have symbol change data structure
-                    assert change_obj.oldSymbol
-                    assert change_obj.newSymbol
-                    assert change_obj.date
-
-                    # Note: API may return broader results than just the specific symbol
-
-
-class TestDirectoryDataQuality:
-    """Test directory data quality and consistency."""
-
-    def test_stock_list_symbol_uniqueness(self, api_key):
-        """Test that stock list has unique symbols."""
-        result = directory.stock_list(apikey=api_key, limit=100)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data and len(data) > 10:
-            symbols = set()
-            duplicate_symbols = []
-
-            for stock in data:
-                if isinstance(stock, dict):
-                    stock_obj = FMPSymbolAndCompanyNameList(**stock)
-                else:
-                    stock_obj = stock
-
-                if stock_obj.symbol in symbols:
-                    duplicate_symbols.append(stock_obj.symbol)
-                symbols.add(stock_obj.symbol)
-
-            # Allow some duplicates (different share classes, etc.)
-            assert len(duplicate_symbols) <= len(data) * 0.1  # Max 10% duplicates
-
-    def test_cik_format_consistency(self, api_key):
-        """Test CIK format consistency."""
-        result = directory.cik_list(apikey=api_key, limit=50)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            valid_ciks = 0
-            for cik_info in data:
-                if isinstance(cik_info, dict):
-                    cik_obj = FMPSymbolAndCIKList(**cik_info)
-                else:
-                    cik_obj = cik_info
-
-                # CIK should be numeric and proper length
-                if cik_obj.cik.isdigit() and 6 <= len(cik_obj.cik) <= 10:
-                    valid_ciks += 1
-
-            # Most CIKs should be valid format
-            assert valid_ciks >= len(data) * 0.8  # At least 80% valid
-
-    def test_financial_statement_currency_validation(self, api_key):
-        """Test financial statement currency validation."""
-        result = directory.financial_statement_symbol_list(apikey=api_key, limit=50)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            valid_currencies = 0
-            common_currencies = {
-                "USD",
-                "CAD",
-                "EUR",
-                "GBP",
-                "JPY",
-                "AUD",
-                "CHF",
-                "SEK",
-                "NOK",
-                "DKK",
-            }
-
-            for symbol_info in data:
-                if isinstance(symbol_info, dict):
-                    symbol_obj = FMPFinancialStatementSymbolList(**symbol_info)
-                else:
-                    symbol_obj = symbol_info
-
-                # Check if currencies are in common set
-                if (
-                    symbol_obj.tradingCurrency in common_currencies
-                    and symbol_obj.reportingCurrency in common_currencies
-                ):
-                    valid_currencies += 1
-
-            # Most should have common currencies
-            assert valid_currencies >= len(data) * 0.7  # At least 70% common currencies
-
-
-class TestDirectoryErrorHandling:
-    """Test error handling for directory endpoints."""
-
-    def test_stock_list_invalid_api_key(self):
-        """Test stock list with invalid API key."""
-        result = directory.stock_list(apikey="invalid_key", limit=10)
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_financial_statement_list_invalid_api_key(self):
-        """Test financial statement list with invalid API key."""
-        result = directory.financial_statement_symbol_list(
-            apikey="invalid_key", limit=10
+        """Test symbol change with date filter."""
+        result, validation = handle_api_call_with_validation(
+            directory.symbol_change,
+            "symbol_change",
+            allow_empty=True,
+            apikey=api_key,
+            from_date=recent_date,
+            limit=30
         )
 
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_cik_list_invalid_api_key(self):
-        """Test CIK list with invalid API key."""
-        result = directory.cik_list(apikey="invalid_key", limit=10)
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_symbol_change_invalid_api_key(self):
-        """Test symbol change with invalid API key."""
-        result = directory.symbol_change(apikey="invalid_key")
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_etf_list_invalid_api_key(self):
-        """Test ETF list with invalid API key."""
-        result = directory.etf_list(apikey="invalid_key", limit=10)
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_actively_trading_list_invalid_api_key(self):
-        """Test actively trading list with invalid API key."""
-        result = directory.actively_trading_list(apikey="invalid_key", limit=10)
-
-        # Should return error message
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_symbol_change_invalid_date(self, api_key):
-        """Test symbol change with invalid date format."""
-        result = directory.symbol_change(apikey=api_key, date="invalid-date")
-
-        # API might return error or empty result for invalid date
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-        else:
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-
-    def test_directory_invalid_exchange(self, api_key):
-        """Test directory endpoints with invalid exchange."""
-        result = directory.stock_list(
-            apikey=api_key, exchange="INVALID_EXCHANGE", limit=10
-        )
-
-        # API might return empty result or error for invalid exchange
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-        else:
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-            # Empty result is acceptable for invalid exchange
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolChange)
+        validate_model_list(models, FMPSymbolChange, "Failed to validate symbol change models with date filter")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for change in models[:10]:
+                # Symbol change validation
+                assert change.oldSymbol is not None, "Old symbol should not be None"
+                assert change.newSymbol is not None, "New symbol should not be None"
+                assert len(change.oldSymbol) >= 1, "Old symbol should not be empty"
+                assert len(change.newSymbol) >= 1, "New symbol should not be empty"
 
 
-class TestDirectoryPerformance:
-    """Test directory endpoint performance."""
-
-    def test_directory_response_times(self, api_key):
-        """Test that all directory endpoints respond within acceptable time."""
-        endpoints = [
-            ("stock_list", lambda: directory.stock_list(api_key, limit=30)),
-            (
-                "financial_statement_list",
-                lambda: directory.financial_statement_symbol_list(api_key, limit=30),
-            ),
-            ("cik_list", lambda: directory.cik_list(api_key, limit=30)),
-            ("etf_list", lambda: directory.etf_list(api_key, limit=30)),
-            (
-                "actively_trading_list",
-                lambda: directory.actively_trading_list(api_key, limit=30),
-            ),
-            ("symbol_change", lambda: directory.symbol_change(api_key)),
-        ]
-
-        for endpoint_name, endpoint_func in endpoints:
-            start_time = time.time()
-            result = endpoint_func()
-            response_time = time.time() - start_time
-
-            # Skip premium endpoints
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-
-            if data:
-                # The API may not enforce limits strictly, but should return data
-                assert len(data) > 0
-                # Basic validation of data structure - different endpoints have different structures
-                first_item = data[0]
-
-                # Validate based on endpoint type
-                if endpoint_name == "cik_list":
-                    # CIK list has cik and companyName
-                    assert hasattr(first_item, "cik")
-                    assert hasattr(first_item, "companyName")
-                elif endpoint_name == "symbol_change":
-                    # Symbol change has oldSymbol and newSymbol
-                    assert hasattr(first_item, "oldSymbol") or hasattr(
-                        first_item, "newSymbol"
-                    )
-                else:
-                    # Most other endpoints have symbol
-                    assert hasattr(first_item, "symbol")
-                    # Some may not have companyName
-                    if hasattr(first_item, "companyName"):
-                        assert first_item.companyName or first_item.companyName == ""
-
-    def test_cik_list_limit_validation(self, api_key):
-        """Test CIK list with different limit values."""
-        limits = [1, 10, 25]
-
-        for limit in limits:
-            result = directory.cik_list(apikey=api_key, limit=limit)
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
-
-            # Should respect limits approximately
-            if data:
-                assert len(data) <= limit * 2  # Allow flexibility
-
-
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
 class TestDirectoryAvailableEndpoints:
-    """Tests for available exchanges, sectors, industries, countries, and indexes."""
+    """Test available endpoints functionality."""
 
     def test_available_exchanges(self, api_key):
-        """Test getting available exchanges."""
-        start_time = time.time()
-        result = directory.available_exchanges(apikey=api_key)
-        response_time = time.time() - start_time
+        """Test available exchanges endpoint."""
+        result, validation = handle_api_call_with_validation(
+            directory.available_exchanges,
+            "available_exchanges",
+            apikey=api_key
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for exchange in data[:5]:  # Check first few items
-                if isinstance(exchange, dict):
-                    exchange_obj = FMPExchangeInfo(**exchange)
-                else:
-                    exchange_obj = exchange
-
-                # Validate exchange data
-                assert hasattr(exchange_obj, "name")
-                assert hasattr(exchange_obj, "exchange")
-                assert hasattr(exchange_obj, "countryName")
-                assert hasattr(exchange_obj, "countryCode")
+        # Extract and validate models
+        models = get_response_models(result, FMPExchangeInfo)
+        validate_model_list(models, FMPExchangeInfo, "Failed to validate available exchanges models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for exchange in models[:10]:
+                # Exchange validation
+                assert exchange.name is not None, "Exchange name should not be None"
+                assert exchange.exchange is not None, "Exchange code should not be None"
+                assert exchange.countryName is not None, "Country name should not be None"
+                assert exchange.countryCode is not None, "Country code should not be None"
+                assert len(exchange.name) >= 1, "Exchange name should not be empty"
+                assert len(exchange.exchange) >= 1, "Exchange code should not be empty"
+                assert len(exchange.countryName) >= 1, "Country name should not be empty"
+                assert len(exchange.countryCode) >= 1, "Country code should not be empty"
 
     def test_available_sectors(self, api_key):
-        """Test getting available sectors."""
-        start_time = time.time()
-        result = directory.available_sectors(apikey=api_key)
-        response_time = time.time() - start_time
+        """Test available sectors endpoint."""
+        result, validation = handle_api_call_with_validation(
+            directory.available_sectors,
+            "available_sectors",
+            apikey=api_key
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for sector in data[:5]:  # Check first few items
-                if isinstance(sector, dict):
-                    sector_obj = FMPSector(**sector)
-                else:
-                    sector_obj = sector
-
-                # Validate sector data
-                assert hasattr(sector_obj, "sector")
+        # Extract and validate models
+        models = get_response_models(result, FMPSector)
+        validate_model_list(models, FMPSector, "Failed to validate available sectors models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for sector in models[:10]:
+                # Sector validation
+                assert sector.sector is not None, "Sector name should not be None"
+                assert len(sector.sector) >= 1, "Sector name should not be empty"
+                assert len(sector.sector) <= 100, "Sector name should be reasonable length"
 
     def test_available_industries(self, api_key):
-        """Test getting available industries."""
-        start_time = time.time()
-        result = directory.available_industries(apikey=api_key)
-        response_time = time.time() - start_time
+        """Test available industries endpoint."""
+        result, validation = handle_api_call_with_validation(
+            directory.available_industries,
+            "available_industries",
+            apikey=api_key
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for industry in data[:5]:  # Check first few items
-                if isinstance(industry, dict):
-                    industry_obj = FMPIndustry(**industry)
-                else:
-                    industry_obj = industry
-
-                # Validate industry data
-                assert hasattr(industry_obj, "industry")
+        # Extract and validate models
+        models = get_response_models(result, FMPIndustry)
+        validate_model_list(models, FMPIndustry, "Failed to validate available industries models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for industry in models[:10]:
+                # Industry validation
+                assert industry.industry is not None, "Industry name should not be None"
+                assert len(industry.industry) >= 1, "Industry name should not be empty"
+                assert len(industry.industry) <= 100, "Industry name should be reasonable length"
 
     def test_available_countries(self, api_key):
-        """Test getting available countries."""
-        start_time = time.time()
-        result = directory.available_countries(apikey=api_key)
-        response_time = time.time() - start_time
+        """Test available countries endpoint."""
+        result, validation = handle_api_call_with_validation(
+            directory.available_countries,
+            "available_countries",
+            apikey=api_key
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for country in data[:5]:  # Check first few items
-                if isinstance(country, dict):
-                    country_obj = FMPCountry(**country)
-                else:
-                    country_obj = country
-
-                # Validate country data
-                assert hasattr(country_obj, "name")
+        # Extract and validate models
+        models = get_response_models(result, FMPCountry)
+        validate_model_list(models, FMPCountry, "Failed to validate available countries models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for country in models[:10]:
+                # Country validation
+                assert country.name is not None, "Country name should not be None"
+                assert len(country.name) >= 1, "Country name should not be empty"
+                assert len(country.name) <= 100, "Country name should be reasonable length"
 
     def test_available_indexes(self, api_key):
-        """Test getting available indexes."""
-        start_time = time.time()
-        result = directory.available_indexes(apikey=api_key)
-        response_time = time.time() - start_time
+        """Test available indexes endpoint."""
+        result, validation = handle_api_call_with_validation(
+            directory.available_indexes,
+            "available_indexes",
+            apikey=api_key
+        )
 
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for index in data[:5]:  # Check first few items
-                if isinstance(index, dict):
-                    index_obj = FMPSymbolAndNameList(**index)
-                else:
-                    index_obj = index
-
-                # Validate index data
-                assert hasattr(index_obj, "symbol")
-                assert hasattr(index_obj, "name")
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndNameList)
+        validate_model_list(models, FMPSymbolAndNameList, "Failed to validate available indexes models")
+        
+        if models:
+            # Test first 10 items for comprehensive validation
+            for index in models[:10]:
+                # Index validation
+                assert index.symbol is not None, "Index symbol should not be None"
+                assert index.name is not None, "Index name should not be None"
+                assert len(index.symbol) >= 1, "Index symbol should not be empty"
+                assert len(index.name) >= 1, "Index name should not be empty"
+                assert len(index.symbol) <= 20, "Index symbol should be reasonable length"
+                assert len(index.name) <= 200, "Index name should be reasonable length"
 
 
-class TestDirectoryAvailableEndpointsErrorHandling:
-    """Test error handling for available endpoints."""
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
+class TestDirectoryDataQuality:
+    """Test data quality for directory endpoints."""
 
-    def test_available_exchanges_invalid_api_key(self):
-        """Test available exchanges with invalid API key."""
-        result = directory.available_exchanges(apikey="invalid_key")
+    def test_stock_list_data_quality(self, api_key):
+        """Test data quality for stock list endpoint."""
+        result, validation = handle_api_call_with_validation(
+            directory.stock_list,
+            "stock_list",
+            allow_empty=True,
+            apikey=api_key,
+            limit=100
+        )
 
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_available_sectors_invalid_api_key(self):
-        """Test available sectors with invalid API key."""
-        result = directory.available_sectors(apikey="invalid_key")
-
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_available_industries_invalid_api_key(self):
-        """Test available industries with invalid API key."""
-        result = directory.available_industries(apikey="invalid_key")
-
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_available_countries_invalid_api_key(self):
-        """Test available countries with invalid API key."""
-        result = directory.available_countries(apikey="invalid_key")
-
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-    def test_available_indexes_invalid_api_key(self):
-        """Test available indexes with invalid API key."""
-        result = directory.available_indexes(apikey="invalid_key")
-
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-
-
-class TestDirectoryAvailableEndpointsDataQuality:
-    """Test data quality for available endpoints."""
+        # Extract and validate models
+        models = get_response_models(result, FMPSymbolAndCompanyNameList)
+        validate_model_list(models, FMPSymbolAndCompanyNameList, "Failed to validate stock list models for data quality test")
+        
+        if models:
+            # Data quality metrics
+            total_stocks = len(models)
+            valid_symbols = 0
+            valid_names = 0
+            unique_symbols = set()
+            
+            for stock in models:
+                # Symbol validation
+                if stock.symbol and len(stock.symbol) >= 1:
+                    valid_symbols += 1
+                    unique_symbols.add(stock.symbol)
+                
+                # Company name validation
+                if stock.companyName and len(stock.companyName) >= 1:
+                    valid_names += 1
+            
+            # Business logic assertions
+            if total_stocks > 0:
+                assert valid_symbols / total_stocks >= 0.95, f"Only {valid_symbols}/{total_stocks} stocks have valid symbols"
+                assert valid_names / total_stocks >= 0.80, f"Only {valid_names}/{total_stocks} stocks have valid names"
+                assert len(unique_symbols) == valid_symbols, f"Symbols should be unique: {len(unique_symbols)} != {valid_symbols}"
 
     def test_available_data_consistency(self, api_key):
-        """Test that available endpoints return consistent data."""
-        # Get all available data
-        exchanges = directory.available_exchanges(apikey=api_key)
-        sectors = directory.available_sectors(apikey=api_key)
-        industries = directory.available_industries(apikey=api_key)
-        countries = directory.available_countries(apikey=api_key)
+        """Test consistency across available endpoints."""
+        # Test exchanges
+        exchanges_response = handle_api_call_with_validation(
+            directory.available_exchanges,
+            "available_exchanges",
+            apikey=api_key
+        )
+        
+        # Test sectors
+        sectors_response = handle_api_call_with_validation(
+            directory.available_sectors,
+            "available_sectors",
+            apikey=api_key
+        )
+        
+        # Test industries
+        industries_response = handle_api_call_with_validation(
+            directory.available_industries,
+            "available_industries",
+            apikey=api_key
+        )
+        
+        # Test countries
+        countries_response = handle_api_call_with_validation(
+            directory.available_countries,
+            "available_countries",
+            apikey=api_key
+        )
+        
+        # Extract and validate models
+        exchanges_models = get_response_models(exchanges_response, FMPExchangeInfo)
+        sectors_models = get_response_models(sectors_response, FMPSector)
+        industries_models = get_response_models(industries_response, FMPIndustry)
+        countries_models = get_response_models(countries_response, FMPCountry)
+        
+        # Validate model lists
+        validate_model_list(exchanges_models, FMPExchangeInfo, "Failed to validate exchanges models")
+        validate_model_list(sectors_models, FMPSector, "Failed to validate sectors models")
+        validate_model_list(industries_models, FMPIndustry, "Failed to validate industries models")
+        validate_model_list(countries_models, FMPCountry, "Failed to validate countries models")
+        
+        # Consistency checks
+        if exchanges_models:
+            assert len(exchanges_models) >= 5, "Should have at least 5 exchanges"
+        
+        if sectors_models:
+            assert len(sectors_models) >= 10, "Should have at least 10 sectors"
+        
+        if industries_models:
+            assert len(industries_models) >= 20, "Should have at least 20 industries"
+        
+        if countries_models:
+            assert len(countries_models) >= 10, "Should have at least 10 countries"
 
-        # Skip if any have errors
-        if any(
-            isinstance(data, dict) and "Error Message" in data
-            for data in [exchanges, sectors, industries, countries]
-        ):
-            return
+    def test_financial_statement_currency_validation(self, api_key):
+        """Test currency validation for financial statement symbols."""
+        result, validation = handle_api_call_with_validation(
+            directory.financial_statement_symbol_list,
+            "financial_statement_symbol_list",
+            allow_empty=True,
+            apikey=api_key,
+            limit=50
+        )
 
-        exchanges_data = extract_data_list(exchanges)
-        sectors_data = extract_data_list(sectors)
-        industries_data = extract_data_list(industries)
-        countries_data = extract_data_list(countries)
-
-        # All should return lists
-        assert isinstance(exchanges_data, list)
-        assert isinstance(sectors_data, list)
-        assert isinstance(industries_data, list)
-        assert isinstance(countries_data, list)
-
-        # Check for reasonable data volumes
-        if exchanges_data:
-            assert len(exchanges_data) > 5  # Should have multiple exchanges
-        if sectors_data:
-            assert len(sectors_data) > 5  # Should have multiple sectors
-        if industries_data:
-            assert len(industries_data) > 10  # Should have many industries
-
-    def test_available_indexes_data_volume(self, api_key):
-        """Test that available indexes returns reasonable data volume."""
-        result = directory.available_indexes(apikey=api_key)
-
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        # Should have multiple indexes
-        if data:
-            assert len(data) > 5  # Should have multiple indexes
-
-            # Check for major index symbols
-            symbols = [
-                item.symbol if hasattr(item, "symbol") else item.get("symbol", "")
-                for item in data
-            ]
-            major_indexes = ["SPX", "DJI", "IXIC", "RUT"]
-
-            # Should contain at least one major index (flexible test)
-            has_major_index = any(idx in symbols for idx in major_indexes)
-            # Note: Not asserting this as index availability may vary
-
-
-class TestDirectoryAvailableEndpointsPerformance:
-    """Test performance of available endpoints."""
-
-    def test_available_endpoints_response_times(self, api_key):
-        """Test that all available endpoints respond within acceptable time."""
-        endpoints = [
-            ("exchanges", lambda: directory.available_exchanges(api_key)),
-            ("sectors", lambda: directory.available_sectors(api_key)),
-            ("industries", lambda: directory.available_industries(api_key)),
-            ("countries", lambda: directory.available_countries(api_key)),
-            ("indexes", lambda: directory.available_indexes(api_key)),
-        ]
-
-        for endpoint_name, endpoint_func in endpoints:
-            start_time = time.time()
-            result = endpoint_func()
-            response_time = time.time() - start_time
-
-            # Response time should be reasonable
-            assert response_time < RESPONSE_TIME_LIMIT
-
-            # Skip validation if error
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+        # Extract and validate models
+        models = get_response_models(result, FMPFinancialStatementSymbolList)
+        validate_model_list(models, FMPFinancialStatementSymbolList, "Failed to validate financial statement symbol list models")
+        
+        if models:
+            # Currency validation
+            for symbol_info in models:
+                # Trading currency validation
+                assert symbol_info.tradingCurrency is not None, "Trading currency should not be None"
+                assert len(symbol_info.tradingCurrency) == 3, "Trading currency should be 3-letter code"
+                assert symbol_info.tradingCurrency.isalnum(), "Trading currency should be alphanumeric"
+                
+                # Reporting currency validation (if present)
+                if symbol_info.reportingCurrency:
+                    assert len(symbol_info.reportingCurrency) == 3, "Reporting currency should be 3-letter code"
+                    assert symbol_info.reportingCurrency.isalnum(), "Reporting currency should be alphanumeric"

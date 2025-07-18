@@ -5,6 +5,7 @@ import pytest
 from fmpsdk import analyst
 from fmpsdk.models import (
     FMPAnalystEstimates,
+    FMPHistoricalRating,
     FMPHistoricalStockGrade,
     FMPPriceTargetConsensus,
     FMPPriceTargetSummary,
@@ -13,15 +14,15 @@ from fmpsdk.models import (
     FMPStockGradeSummary,
 )
 
-from .conftest import extract_data_list
-
-
-def get_field_value(item, field_name, default=None):
-    """Helper function to safely get field value from dict or model."""
-    if isinstance(item, dict):
-        return item.get(field_name, default)
-    else:
-        return getattr(item, field_name, default)
+from tests.conftest import (
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
+    handle_api_call_with_validation,
+    assert_valid_response,
+    validate_api_response,
+)
+from fmpsdk.exceptions import InvalidQueryParameterException
 
 
 class TestAnalystEstimates:
@@ -64,8 +65,8 @@ class TestAnalystEstimates:
             ("NFLX", "annual"),
             ("NFLX", "quarter"),
             # Different Business Models
-            ("BRK.B", "annual"),  # Conglomerate
-            ("BRK.B", "quarter"),
+            ("BRK-B", "annual"),  # Conglomerate
+            ("BRK-B", "quarter"),
             ("REIT", "annual"),  # Real Estate
             ("WMT", "annual"),  # Retail
             ("WMT", "quarter"),
@@ -75,40 +76,38 @@ class TestAnalystEstimates:
     )
     def test_analyst_estimates_comprehensive(self, api_key, symbol, period):
         """Test analyst estimates across various symbols and periods."""
-        try:
-            result = analyst.analyst_estimates(
-                apikey=api_key, symbol=symbol, period=period, limit=4
-            )
-        except Exception as e:
-            # Handle premium endpoint or API errors gracefully
-            if "premium" in str(e).lower() or "parameter" in str(e).lower():
-                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
-            else:
-                raise
+        result, validation = handle_api_call_with_validation(
+            analyst.analyst_estimates,
+            'analyst_estimates',
+            apikey=api_key, 
+            symbol=symbol, 
+            period=period, 
+            limit=4
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            # Validate schema for first item
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPAnalystEstimates.model_validate(first_item)
-            else:
-                validated = first_item
-
-            assert validated.symbol == symbol
-            assert validated.date
+        # Get response models and validate
+        models = get_response_models(result, FMPAnalystEstimates)
+        validate_model_list(models, FMPAnalystEstimates, "analyst estimates comprehensive")
+        
+        if len(models) > 0:
+            # Validate business logic for first item
+            first_item = models[0]
+            
+            # Basic validation
+            assert first_item.symbol == symbol
+            assert first_item.date, "Date should not be empty"
 
             # Revenue estimates should be positive for most companies
-            if validated.revenueAvg is not None:
-                assert validated.revenueAvg > 0
+            if first_item.revenueAvg is not None:
+                assert first_item.revenueAvg > 0, "Revenue estimate should be positive"
 
             # Should have analyst counts
-            if validated.numAnalystsRevenue is not None:
-                assert validated.numAnalystsRevenue >= 0
-            if validated.numAnalystsEps is not None:
-                assert validated.numAnalystsEps >= 0
+            if first_item.numAnalystsRevenue is not None:
+                assert first_item.numAnalystsRevenue >= 0, "Analyst count should be non-negative"
+                assert first_item.numAnalystsRevenue <= 100, "Analyst count should be reasonable"
+            if first_item.numAnalystsEps is not None:
+                assert first_item.numAnalystsEps >= 0, "Analyst count should be non-negative"
+                assert first_item.numAnalystsEps <= 100, "Analyst count should be reasonable"
 
     @pytest.mark.parametrize(
         "symbol",
@@ -116,119 +115,124 @@ class TestAnalystEstimates:
     )
     def test_analyst_estimates_data_quality(self, api_key, symbol):
         """Test data quality aspects of analyst estimates."""
-        try:
-            result = analyst.analyst_estimates(
-                apikey=api_key, symbol=symbol, period="annual", limit=3
-            )
-        except Exception as e:
-            # Handle premium endpoint or API errors gracefully
-            if "premium" in str(e).lower() or "parameter" in str(e).lower():
-                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
-            else:
-                raise
+        result, validation = handle_api_call_with_validation(
+            analyst.analyst_estimates,
+            'analyst_estimates',
+            apikey=api_key, 
+            symbol=symbol, 
+            period="annual", 
+            limit=3
+        )
 
-        result_list = extract_data_list(result)
-        if not result_list:
-            pytest.skip(f"No analyst estimates data for {symbol}")
+        # Get response models and validate
+        models = get_response_models(result, FMPAnalystEstimates)
+        validate_model_list(models, FMPAnalystEstimates, "analyst estimates data quality")
 
-        for item in result_list:
-            if isinstance(item, dict):
-                estimate = FMPAnalystEstimates.model_validate(item)
-            else:
-                estimate = item
-
+        for item in models:
             # Basic data quality checks
-            assert estimate.symbol == symbol
-            assert estimate.date is not None
+            assert item.symbol == symbol
+            assert item.date is not None, "Date should not be empty"
 
             # Analyst counts should be reasonable
-            if estimate.numAnalystsRevenue is not None:
+            if item.numAnalystsRevenue is not None:
                 assert (
-                    0 <= estimate.numAnalystsRevenue <= 100
+                    0 <= item.numAnalystsRevenue <= 100
                 ), "Analyst count should be reasonable"
-            if estimate.numAnalystsEps is not None:
+            if item.numAnalystsEps is not None:
                 assert (
-                    0 <= estimate.numAnalystsEps <= 100
+                    0 <= item.numAnalystsEps <= 100
                 ), "Analyst count should be reasonable"
 
             # Estimates should be within reasonable ranges
-            if estimate.revenueAvg is not None:
-                assert estimate.revenueAvg > 0, "Revenue estimate should be positive"
+            if item.revenueAvg is not None:
+                assert item.revenueAvg > 0, "Revenue estimate should be positive"
                 assert (
-                    estimate.revenueAvg < 2e12
+                    item.revenueAvg < 2e12
                 ), "Revenue estimate should be reasonable (under $2T)"
 
     def test_analyst_estimates_annual_valid_symbol(self, api_key):
         """Test annual analyst estimates for valid symbol."""
-        result = analyst.analyst_estimates(
-            apikey=api_key, symbol="AAPL", period="annual"
+        result, validation = handle_api_call_with_validation(
+            analyst.analyst_estimates,
+            'analyst_estimates',
+            apikey=api_key, 
+            symbol="AAPL", 
+            period="annual"
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        # Get response models and validate
+        models = get_response_models(result, FMPAnalystEstimates)
+        validate_model_list(models, FMPAnalystEstimates, "analyst estimates annual")
+        assert len(models) > 0
 
-        # Validate schema for first item
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPAnalystEstimates.model_validate(first_item)
-        else:
-            validated = first_item
-
-        assert validated.symbol == "AAPL"
-        assert validated.date
-        assert validated.revenueAvg > 0
-        assert validated.epsAvg != 0  # Could be positive or negative
-        assert validated.numAnalystsRevenue > 0
-        assert validated.numAnalystsEps > 0
+        # Validate business logic for first item
+        first_item = models[0]
+        assert first_item.symbol == "AAPL"
+        assert first_item.date, "Date should not be empty"
+        assert first_item.revenueAvg > 0, "Revenue estimate should be positive"
+        assert first_item.epsAvg != 0, "EPS estimate should not be zero"  # Could be positive or negative
+        assert first_item.numAnalystsRevenue > 0, "Should have revenue analysts"
+        assert first_item.numAnalystsEps > 0, "Should have EPS analysts"
 
     def test_analyst_estimates_quarterly_valid_symbol(self, api_key):
         """Test quarterly analyst estimates for valid symbol."""
-        result = analyst.analyst_estimates(
-            apikey=api_key, symbol="MSFT", period="quarter"
+        result, validation = handle_api_call_with_validation(
+            analyst.analyst_estimates,
+            'analyst_estimates',
+            apikey=api_key, 
+            symbol="MSFT", 
+            period="quarter"
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        # Get response models and validate
+        models = get_response_models(result, FMPAnalystEstimates)
+        validate_model_list(models, FMPAnalystEstimates, "analyst estimates quarterly")
+        assert len(models) > 0
 
-        # Validate schema for first item
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPAnalystEstimates.model_validate(first_item)
-        else:
-            validated = first_item
-
-        assert validated.symbol == "MSFT"
-        assert validated.date
-        assert validated.revenueAvg > 0
-        assert validated.numAnalystsRevenue > 0
+        # Validate business logic for first item
+        first_item = models[0]
+        assert first_item.symbol == "MSFT"
+        assert first_item.date, "Date should not be empty"
+        assert first_item.revenueAvg > 0, "Revenue estimate should be positive"
+        assert first_item.numAnalystsRevenue > 0, "Should have revenue analysts"
 
     def test_analyst_estimates_with_limit(self, api_key):
         """Test analyst estimates with limit parameter."""
-        result = analyst.analyst_estimates(
-            apikey=api_key, symbol="GOOGL", period="annual", limit=5
+        result, validation = handle_api_call_with_validation(
+            analyst.analyst_estimates,
+            'analyst_estimates',
+            apikey=api_key, 
+            symbol="GOOGL", 
+            period="annual", 
+            limit=5
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) <= 5
+        # Get response models and validate
+        models = get_response_models(result, FMPAnalystEstimates)
+        validate_model_list(models, FMPAnalystEstimates, "analyst estimates with limit")
+        assert len(models) <= 5
 
     def test_analyst_estimates_multiple_companies(self, api_key):
         """Test analyst estimates for multiple high-coverage companies."""
         symbols = ["AAPL", "MSFT", "GOOGL", "AMZN"]
 
         for symbol in symbols:
-            result = analyst.analyst_estimates(
-                apikey=api_key, symbol=symbol, period="annual", limit=1
+            result, validation = handle_api_call_with_validation(
+                analyst.analyst_estimates,
+                'analyst_estimates',
+                apikey=api_key, 
+                symbol=symbol, 
+                period="annual", 
+                limit=1
             )
 
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
-                assert symbol_value == symbol
+            # Get response models and validate
+            models = get_response_models(result, FMPAnalystEstimates)
+            validate_model_list(models, FMPAnalystEstimates, f"analyst estimates for {symbol}")
+
+            if len(models) > 0:
+                first_item = models[0]
+                assert first_item.symbol == symbol
 
 
 class TestRatingsSnapshot:
@@ -255,7 +259,7 @@ class TestRatingsSnapshot:
             "GS",
             "MS",
             "C",
-            "BRK.B",
+            "BRK-B",
             "AXP",
             "COF",
             "SCHW",
@@ -362,56 +366,43 @@ class TestRatingsSnapshot:
     )
     def test_ratings_snapshot_comprehensive(self, api_key, symbol):
         """Test ratings snapshot across diverse sectors and market caps."""
-        try:
-            result = analyst.ratings_snapshot(apikey=api_key, symbol=symbol, limit=3)
-        except Exception as e:
-            # Handle premium endpoint or API errors gracefully
-            if "premium" in str(e).lower() or "parameter" in str(e).lower():
-                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
-            else:
-                raise
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_snapshot,
+            'ratings_snapshot',
+            apikey=api_key, 
+            symbol=symbol, 
+            limit=3
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        # Get response models and validate
+        models = get_response_models(result, FMPRatingSnapshot)
+        validate_model_list(models, FMPRatingSnapshot, f"ratings snapshot for {symbol}")
 
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPRatingSnapshot.model_validate(first_item)
-            else:
-                validated = first_item
-
-            assert validated.symbol == symbol
-            assert validated.rating is not None
+        if len(models) > 0:
+            first_item = models[0]
+            
+            assert first_item.symbol == symbol
+            assert first_item.rating is not None, "Rating should not be None"
 
             # Rating should be a valid rating
-            if validated.rating:
+            if first_item.rating:
                 valid_ratings = [
-                    "Strong Buy",
-                    "Buy",
-                    "Hold",
-                    "Sell",
-                    "Strong Sell",
-                    "Outperform",
-                    "Underperform",
-                    "Neutral",
-                    "Market Perform",
-                    "Overweight",
-                    "Underweight",
-                    "Equal Weight",
+                    "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell",
+                    "Outperform", "Underperform", "Neutral", "Market Perform",
+                    "Overweight", "Underweight", "Equal Weight"
                 ]
                 # Allow flexible matching since rating formats may vary, including single letters
                 assert (
                     any(
-                        rating.lower() in validated.rating.lower()
-                        for rating in valid_ratings
+                        rating_value.lower() in first_item.rating.lower()
+                        for rating_value in valid_ratings
                     )
-                    or len(validated.rating) >= 1
+                    or len(first_item.rating) >= 1
                 ), "Rating should be meaningful"
 
             # Overall score should be within reasonable range
-            if validated.overallScore is not None:
-                assert 0 <= validated.overallScore <= 10, "Overall score should be 0-10"
+            if first_item.overallScore is not None:
+                assert 0 <= first_item.overallScore <= 10, "Overall score should be 0-10"
 
     @pytest.mark.parametrize(
         "sector",
@@ -446,56 +437,83 @@ class TestRatingsSnapshot:
         symbols = sector_symbols.get(sector, ["AAPL"])
 
         for symbol in symbols:
-            result = analyst.ratings_snapshot(apikey=api_key, symbol=symbol, limit=1)
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+            result, validation = handle_api_call_with_validation(
+                analyst.ratings_snapshot,
+                'ratings_snapshot',
+                apikey=api_key, 
+                symbol=symbol, 
+                limit=1
+            )
+            # Get response models and validate
+            models = get_response_models(result, FMPRatingSnapshot)
+            validate_model_list(models, FMPRatingSnapshot, f"ratings snapshot for {symbol}", min_count=0)
 
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
+            if len(models) > 0:
+                first_item = models[0]
+                symbol_value = first_item.symbol
                 assert symbol_value == symbol
 
     def test_ratings_snapshot_valid_symbol(self, api_key):
         """Test ratings snapshot for valid symbol."""
-        result = analyst.ratings_snapshot(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_snapshot,
+            'ratings_snapshot',
+            apikey=api_key, 
+            symbol="AAPL"
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        # Get response models and validate
+        models = get_response_models(result, FMPRatingSnapshot)
+        validate_model_list(models, FMPRatingSnapshot, "ratings snapshot valid symbol", min_count=0)
 
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPRatingSnapshot.model_validate(first_item)
-            else:
-                validated = first_item
+        if len(models) > 0:
+            first_item = models[0]
+            rating_symbol = first_item.symbol
+            rating = first_item.rating
+            overall_score = first_item.overallScore
 
-            assert validated.symbol == "AAPL"
-            assert validated.rating
-            assert isinstance(validated.overallScore, int)
-            assert validated.overallScore >= 0
+            assert rating_symbol == "AAPL"
+            assert rating, "Rating should not be empty"
+            if overall_score is not None:
+                assert isinstance(overall_score, int), "Overall score should be an integer"
+                assert overall_score >= 0, "Overall score should be non-negative"
 
     def test_ratings_snapshot_technology_sector(self, api_key):
         """Test ratings snapshot for technology companies."""
         symbols = ["AAPL", "MSFT", "GOOGL", "TSLA"]
 
         for symbol in symbols:
-            result = analyst.ratings_snapshot(apikey=api_key, symbol=symbol, limit=1)
+            result, validation = handle_api_call_with_validation(
+                analyst.ratings_snapshot,
+                'ratings_snapshot',
+                apikey=api_key, 
+                symbol=symbol, 
+                limit=1
+            )
 
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+            # Get response models and validate
+            models = get_response_models(result, FMPRatingSnapshot)
+            validate_model_list(models, FMPRatingSnapshot, f"ratings snapshot technology for {symbol}", min_count=0)
 
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
+            if len(models) > 0:
+                first_item = models[0]
+                symbol_value = first_item.symbol
                 assert symbol_value == symbol
 
     def test_ratings_snapshot_with_limit(self, api_key):
         """Test ratings snapshot with limit parameter."""
-        result = analyst.ratings_snapshot(apikey=api_key, symbol="AAPL", limit=3)
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_snapshot,
+            'ratings_snapshot',
+            apikey=api_key, 
+            symbol="AAPL", 
+            limit=3
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) <= 3
+        # Get response models and validate
+        models = get_response_models(result, FMPRatingSnapshot)
+        validate_model_list(models, FMPRatingSnapshot, "ratings snapshot with limit", min_count=0)
+        assert len(models) <= 3
 
 
 class TestRatingsHistorical:
@@ -503,33 +521,43 @@ class TestRatingsHistorical:
 
     def test_ratings_historical_valid_symbol(self, api_key):
         """Test historical ratings for valid symbol."""
-        result = analyst.ratings_historical(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_historical,
+            'ratings_historical',
+            apikey=api_key, 
+            symbol="AAPL"
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        # Get response models and validate
+        models = get_response_models(result, FMPHistoricalRating)
+        validate_model_list(models, FMPHistoricalRating, "ratings historical valid symbol", min_count=0)
 
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPRatingSnapshot.model_validate(first_item)
-            else:
-                validated = first_item
+        if len(models) > 0:
+            first_item = models[0]
+            rating_symbol = first_item.symbol
+            rating = first_item.rating
 
-            assert validated.symbol == "AAPL"
-            assert validated.rating
+            assert rating_symbol == "AAPL"
+            assert rating, "Rating should not be empty"
 
     def test_ratings_historical_with_date_range(self, api_key):
         """Test historical ratings with date range."""
-        result = analyst.ratings_historical(
-            apikey=api_key, symbol="MSFT", from_date="2024-01-01", to_date="2024-12-31"
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_historical,
+            'ratings_historical',
+            apikey=api_key, 
+            symbol="MSFT", 
+            from_date="2024-01-01", 
+            to_date="2024-12-31"
         )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        # Get response models and validate
+        models = get_response_models(result, FMPHistoricalRating)
+        validate_model_list(models, FMPHistoricalRating, "ratings historical with date range", min_count=0)
 
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            symbol_value = get_field_value(first_item, "symbol")
+        if len(models) > 0:
+            first_item = models[0]
+            symbol_value = first_item.symbol
             assert symbol_value == "MSFT"
 
     def test_ratings_historical_multiple_symbols(self, api_key):
@@ -537,12 +565,17 @@ class TestRatingsHistorical:
         symbols = ["AAPL", "TSLA", "NVDA"]
 
         for symbol in symbols:
-            result = analyst.ratings_historical(
-                apikey=api_key, symbol=symbol, from_date="2024-06-01"
+            result, validation = handle_api_call_with_validation(
+                analyst.ratings_historical,
+                'ratings_historical',
+                apikey=api_key, 
+                symbol=symbol, 
+                from_date="2024-06-01"
             )
 
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+            # Get response models and validate
+            models = get_response_models(result, FMPHistoricalRating)
+            validate_model_list(models, FMPHistoricalRating, f"ratings historical for {symbol}", min_count=0)
 
 
 class TestPriceTargets:
@@ -550,41 +583,46 @@ class TestPriceTargets:
 
     def test_price_target_summary_valid_symbol(self, api_key):
         """Test price target summary for valid symbol."""
-        result = analyst.price_target_summary(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            analyst.price_target_summary,
+            'price_target_summary',
+            apikey=api_key, 
+            symbol="AAPL"
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPPriceTargetSummary.model_validate(first_item)
-            else:
-                validated = first_item
-
+        models = get_response_models(result, FMPPriceTargetSummary)
+        validate_model_list(models, FMPPriceTargetSummary, "price target summary valid symbol", min_count=0)
+        if len(models) > 0:
+            validated = models[0]
             assert validated.symbol == "AAPL"
-            assert validated.lastMonthCount >= 0
-            assert validated.allTimeCount >= 0
-            if validated.lastMonthAvgPriceTarget > 0:
-                assert validated.lastMonthAvgPriceTarget > 0
+            if validated.lastMonthCount is not None:
+                assert validated.lastMonthCount >= 0, "Last month count should be non-negative"
+            if validated.allTimeCount is not None:
+                assert validated.allTimeCount >= 0, "All time count should be non-negative"
+            if validated.lastMonthAvgPriceTarget is not None and validated.lastMonthAvgPriceTarget > 0:
+                assert validated.lastMonthAvgPriceTarget > 0, "Last month avg price target should be positive"
 
     def test_price_target_consensus_valid_symbol(self, api_key):
         """Test price target consensus for valid symbol."""
-        result = analyst.price_target_consensus(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            analyst.price_target_consensus,
+            'price_target_consensus',
+            apikey=api_key, 
+            symbol="AAPL"
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPPriceTargetConsensus.model_validate(first_item)
-            else:
-                validated = first_item
-
+        models = get_response_models(result, FMPPriceTargetConsensus)
+        validate_model_list(models, FMPPriceTargetConsensus, "price target consensus valid symbol", min_count=0)
+        if len(models) > 0:
+            validated = models[0]
             assert validated.symbol == "AAPL"
-            assert validated.targetConsensus > 0
-            assert validated.targetHigh >= validated.targetLow
+            if validated.targetConsensus is not None:
+                assert validated.targetConsensus > 0, "Target consensus should be positive"
+            if (
+                validated.targetHigh is not None
+                and validated.targetLow is not None
+            ):
+                assert validated.targetHigh >= validated.targetLow
 
     def test_price_targets_high_coverage_stocks(self, api_key):
         """Test price targets for high analyst coverage stocks."""
@@ -593,17 +631,13 @@ class TestPriceTargets:
         for symbol in symbols:
             # Test summary
             summary_result = analyst.price_target_summary(apikey=api_key, symbol=symbol)
-
-            summary_list = extract_data_list(summary_result)
-            assert isinstance(summary_list, list)
+            summary_models = get_response_models(summary_result, FMPPriceTargetSummary)
+            validate_model_list(summary_models, FMPPriceTargetSummary, f"price target summary for {symbol}", min_count=0)
 
             # Test consensus
-            consensus_result = analyst.price_target_consensus(
-                apikey=api_key, symbol=symbol
-            )
-
-            consensus_list = extract_data_list(consensus_result)
-            assert isinstance(consensus_list, list)
+            consensus_result = analyst.price_target_consensus(apikey=api_key, symbol=symbol)
+            consensus_models = get_response_models(consensus_result, FMPPriceTargetConsensus)
+            validate_model_list(consensus_models, FMPPriceTargetConsensus, f"price target consensus for {symbol}", min_count=0)
 
     @pytest.mark.parametrize(
         "symbol,limit",
@@ -623,16 +657,10 @@ class TestPriceTargets:
     def test_price_target_summary_with_limits(self, api_key, symbol, limit):
         """Test price target summary with various limits."""
         result = analyst.price_target_summary(apikey=api_key, symbol=symbol)
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPPriceTargetSummary.model_validate(first_item)
-            else:
-                validated = first_item
-
+        models = get_response_models(result, FMPPriceTargetSummary)
+        validate_model_list(models, FMPPriceTargetSummary, f"price target summary with limit for {symbol}", min_count=0)
+        if len(models) > 0:
+            validated = models[0]
             assert validated.symbol == symbol
             assert validated.lastMonthCount >= 0
             assert validated.allTimeCount >= 0
@@ -675,31 +703,15 @@ class TestPriceTargets:
     )
     def test_price_target_consensus_comprehensive(self, api_key, symbol):
         """Test price target consensus across various high-coverage stocks."""
-        try:
-            result = analyst.price_target_consensus(apikey=api_key, symbol=symbol)
-        except Exception as e:
-            # Handle premium endpoint or API errors gracefully
-            if "premium" in str(e).lower() or "parameter" in str(e).lower():
-                pytest.skip(f"Premium endpoint or parameter error for {symbol}: {e}")
-            else:
-                raise
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPPriceTargetConsensus.model_validate(first_item)
-            else:
-                validated = first_item
-
+        result = analyst.price_target_consensus(apikey=api_key, symbol=symbol)
+        models = get_response_models(result, FMPPriceTargetConsensus)
+        validate_model_list(models, FMPPriceTargetConsensus, f"price target consensus for {symbol}", min_count=0)
+        if len(models) > 0:
+            validated = models[0]
             assert validated.symbol == symbol
-
             # Price targets should be positive and logical
             if validated.targetConsensus is not None and validated.targetConsensus > 0:
                 assert validated.targetConsensus > 0
-
             if (
                 validated.targetHigh is not None
                 and validated.targetLow is not None
@@ -712,60 +724,40 @@ class TestPriceTargets:
     def test_price_targets_by_market_cap(self, api_key, market_cap):
         """Test price targets across different market cap categories."""
         market_cap_symbols = {
-            "large_cap": ["AAPL", "MSFT", "GOOGL", "AMZN", "BRK.B"],
+            "large_cap": ["AAPL", "MSFT", "GOOGL", "AMZN", "BRK-B"],
             "mid_cap": ["NVDA", "CRM", "NFLX", "AMD", "SHOP"],
             "small_cap": ["ROKU", "ZM", "PTON", "W", "SQ"],
         }
-
         symbols = market_cap_symbols.get(market_cap, ["AAPL"])
-
         for symbol in symbols[:3]:  # Test first 3 from each category
             result = analyst.price_target_summary(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
+            models = get_response_models(result, FMPPriceTargetSummary)
+            validate_model_list(models, FMPPriceTargetSummary, f"price target summary for {symbol}", min_count=0)
+            if len(models) > 0:
+                symbol_value = models[0].symbol
                 assert symbol_value == symbol
 
 
 class TestStockGrades:
     """Test stock grades functionality."""
-
     def test_stock_grades_valid_symbol(self, api_key):
         """Test stock grades for valid symbol."""
         result = analyst.stock_grades(apikey=api_key, symbol="AAPL")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPStockGrade.model_validate(first_item)
-            else:
-                validated = first_item
-
+        models = get_response_models(result, FMPStockGrade)
+        validate_model_list(models, FMPStockGrade, "stock grades valid symbol", min_count=0)
+        if len(models) > 0:
+            validated = models[0]
             assert validated.symbol == "AAPL"
             assert validated.date
             assert validated.gradingCompany
             assert validated.newGrade
-
     def test_historical_stock_grades_valid_symbol(self, api_key):
         """Test historical stock grades for valid symbol."""
         result = analyst.historical_stock_grades(apikey=api_key, symbol="AAPL")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPHistoricalStockGrade.model_validate(first_item)
-            else:
-                validated = first_item
-
+        models = get_response_models(result, FMPHistoricalStockGrade)
+        validate_model_list(models, FMPHistoricalStockGrade, "historical stock grades valid symbol", min_count=0)
+        if len(models) > 0:
+            validated = models[0]
             assert validated.symbol == "AAPL"
             assert validated.date
             assert validated.analystRatingsStrongBuy >= 0
@@ -773,21 +765,13 @@ class TestStockGrades:
             assert validated.analystRatingsHold >= 0
             assert validated.analystRatingsSell >= 0
             assert validated.analystRatingsStrongSell >= 0
-
     def test_stock_grades_summary_valid_symbol(self, api_key):
         """Test stock grades summary for valid symbol."""
         result = analyst.stock_grades_summary(apikey=api_key, symbol="AAPL")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPStockGradeSummary.model_validate(first_item)
-            else:
-                validated = first_item
-
+        models = get_response_models(result, FMPStockGradeSummary)
+        validate_model_list(models, FMPStockGradeSummary, "stock grades summary valid symbol", min_count=0)
+        if len(models) > 0:
+            validated = models[0]
             assert validated.symbol == "AAPL"
             assert validated.strongBuy >= 0
             assert validated.buy >= 0
@@ -795,33 +779,35 @@ class TestStockGrades:
             assert validated.sell >= 0
             assert validated.strongSell >= 0
             assert validated.consensus
-
     def test_historical_stock_grades_with_limit(self, api_key):
         """Test historical stock grades with limit parameter."""
         result = analyst.historical_stock_grades(
             apikey=api_key, symbol="MSFT", limit=10
         )
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) <= 10
-
+        models = get_response_models(result, FMPHistoricalStockGrade)
+        validate_model_list(models, FMPHistoricalStockGrade, "historical stock grades with limit", min_count=0)
+        assert len(models) <= 10
     def test_stock_grades_multiple_symbols(self, api_key):
         """Test stock grades for multiple symbols."""
         symbols = ["AAPL", "MSFT", "GOOGL", "TSLA"]
-
         for symbol in symbols:
             # Test current grades
             grades_result = analyst.stock_grades(apikey=api_key, symbol=symbol)
-
-            grades_list = extract_data_list(grades_result)
-            assert isinstance(grades_list, list)
-
+            grades_models = get_response_models(grades_result, FMPStockGrade)
+            validate_model_list(grades_models, FMPStockGrade, f"stock grades for {symbol}", min_count=0)
             # Test grades summary
             summary_result = analyst.stock_grades_summary(apikey=api_key, symbol=symbol)
-
-            summary_list = extract_data_list(summary_result)
-            assert isinstance(summary_list, list)
+            summary_models = get_response_models(summary_result, FMPStockGradeSummary)
+            validate_model_list(summary_models, FMPStockGradeSummary, f"stock grades summary for {symbol}", min_count=0)
+    def test_analyst_estimates_invalid_symbol(self, api_key):
+        """Test analyst estimates with invalid symbol."""
+        result = analyst.analyst_estimates(
+            apikey=api_key, symbol="INVALID", period="annual"
+        )
+        models = get_response_models(result, FMPAnalystEstimates)
+        validate_model_list(models, FMPAnalystEstimates, "analyst estimates invalid symbol", min_count=0)
+        # Invalid symbol typically returns empty list
+        assert len(models) == 0
 
 
 class TestAnalystErrorHandling:
@@ -829,46 +815,29 @@ class TestAnalystErrorHandling:
 
     def test_analyst_estimates_invalid_api_key(self):
         """Test analyst estimates with invalid API key."""
-        result = analyst.analyst_estimates(
-            apikey="invalid_key", symbol="AAPL", period="annual"
-        )
-
-        # Should return error message
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-        else:
-            # Some endpoints might return empty lists for invalid keys
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-
-    def test_analyst_estimates_invalid_symbol(self, api_key):
-        """Test analyst estimates with invalid symbol."""
-        result = analyst.analyst_estimates(
-            apikey=api_key, symbol="INVALID", period="annual"
-        )
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        # Invalid symbol typically returns empty list
-        assert len(result_list) == 0
+        
+        with pytest.raises(Exception) as exc_info:
+            analyst.analyst_estimates(
+                apikey="invalid_key", symbol="AAPL", period="annual"
+            )
+        assert "Invalid API KEY" in str(exc_info.value)
 
     def test_analyst_estimates_invalid_period(self, api_key):
         """Test analyst estimates with invalid period."""
-        result = analyst.analyst_estimates(
-            apikey=api_key, symbol="AAPL", period="invalid"
-        )
+        with pytest.raises(InvalidQueryParameterException) as exc_info:
+            analyst.analyst_estimates(
+                apikey=api_key, symbol="AAPL", period="invalid"
+            )
 
-        # Should handle invalid period gracefully
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        assert "Invalid or missing query parameter" in str(exc_info.value)
 
     def test_ratings_snapshot_empty_symbol(self, api_key):
         """Test ratings snapshot with empty symbol."""
-        result = analyst.ratings_snapshot(apikey=api_key, symbol="")
+        with pytest.raises(InvalidQueryParameterException) as exc_info:
+            analyst.ratings_snapshot(apikey=api_key, symbol="")
 
-        # Should handle empty symbol gracefully
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        assert "Invalid or missing query parameter" in str(exc_info.value)
+
 
 
 class TestAnalystResponseTimes:
@@ -888,8 +857,8 @@ class TestAnalystResponseTimes:
         # Should respond within 10 seconds
         assert response_time < 10.0
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        models = get_response_models(result, FMPAnalystEstimates)
+        validate_model_list(models, FMPAnalystEstimates, "analyst estimates response time", min_count=0)
 
     def test_ratings_snapshot_response_time(self, api_key):
         """Test ratings snapshot response time."""
@@ -903,8 +872,8 @@ class TestAnalystResponseTimes:
         # Should respond within 10 seconds
         assert response_time < 10.0
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        models = get_response_models(result, FMPRatingSnapshot)
+        validate_model_list(models, FMPRatingSnapshot, "ratings snapshot response time", min_count=0)
 
 
 class TestAnalystDataConsistency:
@@ -919,17 +888,17 @@ class TestAnalystDataConsistency:
             apikey=api_key, symbol=symbol, period="annual", limit=1
         )
 
-        estimates_list = extract_data_list(estimates_result)
+        estimates_models = get_response_models(estimates_result, FMPAnalystEstimates)
 
         # Get stock grades summary
         grades_result = analyst.stock_grades_summary(apikey=api_key, symbol=symbol)
 
-        grades_list = extract_data_list(grades_result)
+        grades_models = get_response_models(grades_result, FMPStockGradeSummary)
 
         # Both should have data for AAPL or both should be empty
-        if len(estimates_list) > 0 and len(grades_list) > 0:
-            estimates_symbol = get_field_value(estimates_list[0], "symbol")
-            grades_symbol = get_field_value(grades_list[0], "symbol")
+        if len(estimates_models) > 0 and len(grades_models) > 0:
+            estimates_symbol = estimates_models[0].symbol
+            grades_symbol = grades_models[0].symbol
             assert estimates_symbol == grades_symbol == symbol
 
     def test_price_target_summary_vs_consensus_consistency(self, api_key):
@@ -939,17 +908,17 @@ class TestAnalystDataConsistency:
         # Get price target summary
         summary_result = analyst.price_target_summary(apikey=api_key, symbol=symbol)
 
-        summary_list = extract_data_list(summary_result)
+        summary_models = get_response_models(summary_result, FMPPriceTargetSummary)
 
         # Get price target consensus
         consensus_result = analyst.price_target_consensus(apikey=api_key, symbol=symbol)
 
-        consensus_list = extract_data_list(consensus_result)
+        consensus_models = get_response_models(consensus_result, FMPPriceTargetConsensus)
 
         # Both should have data for symbol or both should be empty
-        if len(summary_list) > 0 and len(consensus_list) > 0:
-            summary_symbol = get_field_value(summary_list[0], "symbol")
-            consensus_symbol = get_field_value(consensus_list[0], "symbol")
+        if len(summary_models) > 0 and len(consensus_models) > 0:
+            summary_symbol = summary_models[0].symbol
+            consensus_symbol = consensus_models[0].symbol
             assert summary_symbol == consensus_symbol == symbol
 
     def test_current_vs_historical_grades_consistency(self, api_key):
@@ -959,17 +928,17 @@ class TestAnalystDataConsistency:
         # Get current stock grades
         current_result = analyst.stock_grades(apikey=api_key, symbol=symbol)
 
-        current_list = extract_data_list(current_result)
+        current_models = get_response_models(current_result, FMPStockGrade)
 
         # Get historical stock grades
         historical_result = analyst.historical_stock_grades(
             apikey=api_key, symbol=symbol, limit=5
         )
 
-        historical_list = extract_data_list(historical_result)
+        historical_models = get_response_models(historical_result, FMPHistoricalStockGrade)
 
         # Both should have data for symbol or both should be empty
-        if len(current_list) > 0 and len(historical_list) > 0:
-            current_symbol = get_field_value(current_list[0], "symbol")
-            historical_symbol = get_field_value(historical_list[0], "symbol")
+        if len(current_models) > 0 and len(historical_models) > 0:
+            current_symbol = current_models[0].symbol
+            historical_symbol = historical_models[0].symbol
             assert current_symbol == historical_symbol == symbol

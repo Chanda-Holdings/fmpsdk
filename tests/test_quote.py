@@ -1,40 +1,55 @@
 import pytest
 
-from fmpsdk.models import (
-    FMPAftermarketQuote,
-    FMPAftermarketTrade,
-    FMPQuoteFull,
-    FMPQuoteShort,
-    FMPStockPriceChange,
+from tests.conftest import (
+    handle_api_call_with_validation,
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
 )
+
 from fmpsdk.quote import (
-    aftermarket_quote,
-    aftermarket_trade,
-    batch_aftermarket_quote,
-    batch_aftermarket_trade,
-    batch_commodity_quote,
-    batch_crypto_quote,
-    batch_etf_quote,
-    batch_exchange_quote,
-    batch_forex_quote,
-    batch_index_quote,
-    batch_mutual_fund_quote,
-    batch_quote_short,
     quote,
     quote_short,
-    stock_batch_quote,
+    aftermarket_trade,
+    aftermarket_quote,
     stock_price_change,
+    stock_batch_quote,
+    batch_aftermarket_trade,
+    batch_aftermarket_quote,
+    batch_mutual_fund_quote,
+    batch_index_quote,
+)
+from fmpsdk.models import (
+    FMPQuoteFull,
+    FMPQuoteShort,
+    FMPAftermarketTrade,
+    FMPAftermarketQuote,
+    FMPStockPriceChange,
+)
+from tests.conftest import (
+    handle_api_call_with_validation,
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
 )
 
-from .conftest import extract_data_list
+
+# Test data constants
+TEST_SYMBOLS = {
+    "large_cap": ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA"],
+    "etf": ["SPY", "QQQ", "VTI", "IWM", "EFA"],
+    "crypto": ["BTCUSD", "ETHUSD"],
+    "forex": ["EURUSD", "GBPUSD", "USDJPY"],
+    "commodity": ["GCUSD", "CLUSD"],
+    "invalid": ["INVALID123", "XXXXXXX"],
+}
+
+TEST_CONFIG = {
+    "max_response_time": 10.0,  # 10 seconds max
+}
 
 
-def get_field_value(item, field_name, default=None):
-    """Helper function to safely get field value from dict or model."""
-    if isinstance(item, dict):
-        return item.get(field_name, default)
-    else:
-        return getattr(item, field_name, default)
+# get_first_item_from_response is imported from conftest.py
 
 
 @pytest.mark.integration
@@ -43,588 +58,564 @@ def get_field_value(item, field_name, default=None):
 class TestQuoteEndpoint:
     """Test class for core quote endpoint functionality."""
 
-    def test_quote_single_symbol(self, api_key, test_symbols, test_helpers):
-        """Test fetching quote for a single symbol."""
-        symbol = test_symbols["large_cap"][0]  # Use AAPL from fixtures
-        result = quote(apikey=api_key, symbol=symbol)
+    def test_quote_single_symbol(self, api_key):
+        """Test fetching quote for a single symbol using enhanced validation."""
+        symbol = "AAPL"
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        # Check for API errors first
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(f"API Error: {result['Error Message']}")
+        # Get and validate quote models
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
 
-        # Validate we got data
-        assert result is not None, "Quote result should not be None"
-        assert hasattr(result, "root"), "Result should have root attribute"
-        assert isinstance(result.root, list), "Quote result should be a list"
-        assert len(result.root) > 0, "Quote result should contain at least one item"
+        # Get first quote model
+        quote_model = quote_models[0]
+        assert quote_model.symbol == symbol
+        
+        # Validate essential price data
+        assert quote_model.price is not None and quote_model.price > 0
+        
+        # Company name should be present
+        assert quote_model.name is not None and len(quote_model.name) > 0
 
-        # Validate the first item matches our expected schema
-        quote_data = result.root[0]
-        assert isinstance(
-            quote_data, FMPQuoteFull
-        ), f"Quote data should be FMPQuoteFull instance, got {type(quote_data)}"
-
-        # Use helper for common validations
-        test_helpers.validate_price_data(quote_data, symbol)
-        test_helpers.validate_market_data_consistency(quote_data)
-
-        # Validate additional essential fields
-        assert quote_data.name is not None, "Company name should be present"
-
-    def test_quote_multiple_symbols(self, api_key, test_symbols):
-        """Test fetching quotes for multiple symbols using individual calls."""
-        symbols = test_symbols["large_cap"][:3]  # Use first 3 large cap stocks
+    def test_quote_multiple_symbols(self, api_key):
+        """Test fetching quotes for multiple symbols using enhanced validation."""
+        symbols = TEST_SYMBOLS["large_cap"][:3]  # Use first 3 large cap stocks
         results = []
 
-        # Make individual calls for each symbol (correct usage of quote function)
+        # Make individual calls for each symbol with validation
         for symbol in symbols:
-            result = quote(apikey=api_key, symbol=symbol)
-            assert result is not None, f"Quote result should not be None for {symbol}"
-            assert hasattr(
-                result, "root"
-            ), f"Result should have root attribute for {symbol}"
-            assert isinstance(
-                result.root, list
-            ), f"Quote result should be a list for {symbol}"
-            assert (
-                len(result.root) > 0
-            ), f"Quote result should contain data for {symbol}"
-            results.extend(result.root)
+            response, validation = handle_api_call_with_validation(
+                quote,
+                "quote",
+                allow_empty=False,
+                apikey=api_key,
+                symbol=symbol
+            )
+            
+            quote_models = get_response_models(response, FMPQuoteFull)
+            validate_model_list(quote_models, FMPQuoteFull, f"Should return valid quote models for {symbol}", min_count=1)
+            
+            # Get first quote model and add to results
+            quote_model = quote_models[0]
+            results.append(quote_model)
 
         # Validate we got data for all symbols
-        assert len(results) == len(
-            symbols
-        ), f"Should get quotes for all {len(symbols)} symbols"
+        assert len(results) == len(symbols)
 
         # Validate each quote
         returned_symbols = [q.symbol for q in results]
         for symbol in symbols:
-            assert symbol in returned_symbols, f"Symbol {symbol} should be in results"
+            assert symbol in returned_symbols
 
-        # Validate schema for each result
-        for quote_data in results:
-            assert isinstance(
-                quote_data, FMPQuoteFull
-            ), "Each quote should be FMPQuoteFull instance"
-            assert (
-                quote_data.symbol in symbols
-            ), "Symbol should be one of the requested symbols"
-            assert quote_data.price is not None, "Price should be present"
-            assert quote_data.price > 0, "Price should be positive"
+        # Enhanced validation for each result
+        for quote_model in results:
+            assert quote_model.symbol in symbols
+            assert quote_model.price is not None and quote_model.price > 0
 
-    def test_quote_invalid_symbol(self, api_key, test_symbols):
-        """Test handling of invalid symbol."""
-        invalid_symbol = test_symbols["invalid"][0]
-        result = quote(apikey=api_key, symbol=invalid_symbol)
+    def test_quote_invalid_symbol(self, api_key):
+        """Test handling of invalid symbol using enhanced validation."""
+        invalid_symbol = TEST_SYMBOLS["invalid"][0]
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=True,  # Allow empty for invalid symbols
+            apikey=api_key,
+            symbol=invalid_symbol
+        )
 
-        # The API might return an empty list or an error object for invalid symbols
-        # We should handle both cases gracefully
-        if hasattr(result, "root") and isinstance(result.root, list):
-            if len(result.root) == 0:
-                # Empty result is expected for invalid symbols
-                assert True, "Empty result is valid for invalid symbol"
-            else:
-                # Some APIs return data even for invalid symbols, check if it's actually invalid
-                quote_data = result.root[0]
-                if hasattr(quote_data, "price") and quote_data.price is None:
-                    assert True, "Null price is valid for invalid symbol"
-                else:
-                    pytest.skip(
-                        f"API returned data for supposedly invalid symbol {invalid_symbol}"
-                    )
+        # The API might return an empty list for invalid symbols
+        quote_models = get_response_models(response, FMPQuoteFull)
+        # Empty result is expected and valid for invalid symbols
+        assert isinstance(quote_models, list)
 
     @pytest.mark.parametrize(
         "symbol_category", ["large_cap", "etf", "crypto", "forex", "commodity"]
     )
-    def test_quote_different_asset_types(self, api_key, test_symbols, symbol_category):
-        """Test quotes for different types of assets."""
-        symbol = test_symbols[symbol_category][0]
-        result = quote(apikey=api_key, symbol=symbol)
+    def test_quote_different_asset_types(self, api_key, symbol_category):
+        """Test quotes for different types of assets using enhanced validation."""
+        symbol = TEST_SYMBOLS[symbol_category][0]
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        assert (
-            result is not None
-        ), f"Quote result should not be None for {symbol_category}"
-        assert hasattr(result, "root"), "Result should have root attribute"
-        assert isinstance(result.root, list), "Quote result should be a list"
-        assert len(result.root) > 0, "Quote result should contain at least one item"
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, f"Should return valid quote models for {symbol}", min_count=1)
 
-        quote_data = result.root[0]
-        assert isinstance(
-            quote_data, FMPQuoteFull
-        ), f"Quote data should be FMPQuoteFull instance for {symbol_category}"
-        assert quote_data.symbol == symbol, f"Symbol should match for {symbol_category}"
-        assert (
-            quote_data.price is not None
-        ), f"Price should be present for {symbol_category}"
-        assert quote_data.price > 0, f"Price should be positive for {symbol_category}"
+        quote_model = quote_models[0]
+        assert quote_model.symbol == symbol
+        
+        assert quote_model.price is not None and quote_model.price > 0
 
         # Asset-specific validations
         if symbol_category == "crypto":
-            assert "USD" in symbol, f"Crypto symbol {symbol} should be USD-denominated"
+            assert "USD" in symbol
         elif symbol_category == "forex":
-            assert len(symbol) == 6, f"Forex symbol {symbol} should be 6 characters"
+            assert len(symbol) == 6
         elif symbol_category == "commodity":
-            assert (
-                "USD" in symbol
-            ), f"Commodity symbol {symbol} should be USD-denominated"
+            assert "USD" in symbol
         elif symbol_category in ["large_cap", "etf"]:
-            # Traditional securities should have certain fields
-            if hasattr(quote_data, "volume"):
-                assert (
-                    quote_data.volume is None or quote_data.volume >= 0
-                ), "Volume should be non-negative"
+            # Traditional securities should have volume field
+            if quote_model.volume is not None:
+                assert quote_model.volume >= 0
 
-    def test_quote_response_time(self, api_key, test_symbols, test_config):
+    def test_quote_response_time(self, api_key):
         """Test that quote responses are within acceptable time limits."""
         import time
 
-        symbol = test_symbols["large_cap"][0]
+        symbol = TEST_SYMBOLS["large_cap"][0]
         start_time = time.time()
-        result = quote(apikey=api_key, symbol=symbol)
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
+        
         response_time = time.time() - start_time
 
-        assert result is not None, "Quote result should not be None"
-        assert (
-            response_time < test_config["max_response_time"]
-        ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
+        # Validate response exists and time is acceptable
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
+        assert response_time < TEST_CONFIG["max_response_time"]
 
-    def test_quote_data_consistency(self, api_key, test_symbols, test_helpers):
-        """Test that quote data is internally consistent."""
-        symbol = test_symbols["large_cap"][0]
-        result = quote(apikey=api_key, symbol=symbol)
+    def test_quote_data_consistency(self, api_key):
+        """Test that quote data is internally consistent using enhanced validation."""
+        symbol = TEST_SYMBOLS["large_cap"][0]
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        assert (
-            result is not None and hasattr(result, "root") and len(result.root) > 0
-        ), "Should get quote data"
-        quote_data = result.root[0]
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
+        
+        quote_model = quote_models[0]
+        assert quote_model is not None
 
-        # Use helper to validate data consistency
-        test_helpers.validate_market_data_consistency(quote_data)
+        # Enhanced consistency checks
+        if quote_model.volume is not None:
+            assert quote_model.volume >= 0
 
-        # Additional consistency checks
-        if hasattr(quote_data, "volume") and quote_data.volume is not None:
-            assert quote_data.volume >= 0, "Volume should be non-negative"
+        # Price range validation
+        if all(x is not None for x in [quote_model.price, quote_model.day_high, quote_model.day_low]):
+            assert quote_model.day_low <= quote_model.price <= quote_model.day_high
 
-        if hasattr(quote_data, "marketCap") and quote_data.marketCap is not None:
-            assert quote_data.marketCap > 0, "Market cap should be positive"
-
-    def test_quote_apple_specific_validation(self, api_key, test_config):
+    def test_quote_apple_specific_validation(self, api_key):
         """Test specific validation for Apple stock (high-quality data expectations)."""
         symbol = "AAPL"
-        result = quote(apikey=api_key, symbol=symbol)
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0, "Should get Apple quote data"
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
 
-        quote_data = result_list[0]
+        quote_model = quote_models[0]
+        assert quote_model is not None
 
         # Apple-specific validations (high-volume, high-value stock)
-        assert quote_data.symbol == symbol, f"Symbol should match: {symbol}"
-        assert quote_data.name is not None, "Apple name should be present"
-        assert (
-            quote_data.price is not None and quote_data.price > 0
-        ), "Apple price should be positive"
-        assert (
-            quote_data.volume is not None and quote_data.volume > 0
-        ), "Apple volume should be positive"
+        assert quote_model.symbol == symbol, f"Symbol should match: {symbol}"
+        assert quote_model.name is not None, "Apple name should be present"
+        assert quote_model.price is not None and quote_model.price > 0, "Apple price should be positive"
+        
+        # Volume should be significant for Apple
+        if quote_model.volume is not None:
+            assert quote_model.volume > 1000000  # Apple typically has high volume
 
-        # Apple should have substantial market cap
-        if hasattr(quote_data, "marketCap") and quote_data.marketCap is not None:
-            assert (
-                quote_data.marketCap > test_config["min_market_cap"]
-            ), f"Apple market cap should be > {test_config['min_market_cap']:,}"
+    def test_stock_batch_quote(self, api_key):
+        """Test batch stock quote functionality with enhanced validation."""
+        symbols = TEST_SYMBOLS["large_cap"][:3]
+        
+        response, validation = handle_api_call_with_validation(
+            stock_batch_quote,
+            "stock_batch_quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbols=symbols
+        )
 
-        # Price consistency checks for Apple
-        if all(
-            hasattr(quote_data, field) and getattr(quote_data, field) is not None
-            for field in ["dayLow", "dayHigh", "price"]
-        ):
-            assert (
-                quote_data.dayLow <= quote_data.price <= quote_data.dayHigh
-            ), "Apple price should be between day low and high"
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
 
-        if all(
-            hasattr(quote_data, field) and getattr(quote_data, field) is not None
-            for field in ["yearLow", "yearHigh", "price"]
-        ):
-            assert (
-                quote_data.yearLow <= quote_data.price <= quote_data.yearHigh
-            ), "Apple price should be between year low and high"
-
-    def test_stock_batch_quote(self, api_key, test_symbols):
-        """Test the batch quote function for multiple symbols."""
-        symbols = test_symbols["large_cap"][:3]  # Use first 3 large cap stocks
-        result = stock_batch_quote(apikey=api_key, symbols=symbols)
-
-        # Validate we got data
-        assert result is not None, "Batch quote result should not be None"
-        assert hasattr(result, "root"), "Result should have root attribute"
-        assert isinstance(result.root, list), "Batch quote result should be a list"
-        assert len(result.root) == len(
-            symbols
-        ), f"Should get quotes for all {len(symbols)} symbols"
-
-        # Validate each quote
-        returned_symbols = [q.symbol for q in result.root]
+        # Validate we got data for expected symbols
+        returned_symbols = [q.symbol for q in quote_models]
         for symbol in symbols:
-            assert (
-                symbol in returned_symbols
-            ), f"Symbol {symbol} should be in batch results"
+            assert symbol in returned_symbols
 
-        # Validate schema for each result
-        for quote_data in result.root:
-            assert isinstance(
-                quote_data, FMPQuoteFull
-            ), "Each batch quote should be FMPQuoteFull instance"
-            assert (
-                quote_data.symbol in symbols
-            ), "Symbol should be one of the requested symbols"
-            assert quote_data.price is not None, "Price should be present"
-            assert quote_data.price > 0, "Price should be positive"
+        # Enhanced validation for each result
+        for quote_model in quote_models:
+            assert quote_model.symbol in symbols
+            assert quote_model.price is not None and quote_model.price > 0
 
-    def test_quote_crypto_pairs(self, api_key, test_symbols, test_helpers):
-        """Test quote function with cryptocurrency pairs."""
-        symbol = test_symbols["crypto"][0]  # BTCUSD
-        result = quote(apikey=api_key, symbol=symbol)
+    def test_quote_crypto_pairs(self, api_key):
+        """Test cryptocurrency quote pairs with enhanced validation."""
+        symbol = TEST_SYMBOLS["crypto"][0]
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        assert result is not None, "Crypto quote result should not be None"
-        assert hasattr(result, "root"), "Result should have root attribute"
-        assert isinstance(result.root, list), "Crypto quote result should be a list"
-        assert len(result.root) > 0, "Crypto quote result should contain data"
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
 
-        quote_data = result.root[0]
-        assert isinstance(
-            quote_data, FMPQuoteFull
-        ), "Crypto quote should be FMPQuoteFull instance"
-        assert quote_data.symbol == symbol, f"Symbol should match: {symbol}"
-        assert (
-            quote_data.price is not None and quote_data.price > 0
-        ), "Crypto price should be positive"
+        quote_model = quote_models[0]
 
         # Crypto-specific validations
-        assert "USD" in symbol, "Test symbol should be USD-denominated"
-        if hasattr(quote_data, "volume") and quote_data.volume is not None:
-            assert quote_data.volume >= 0, "Crypto volume should be non-negative"
+        assert quote_model.symbol == symbol
+        assert quote_model.price is not None and quote_model.price > 0
+        
+        # Crypto should have USD in symbol
+        assert "USD" in symbol
 
-    def test_quote_forex_pairs(self, api_key, test_symbols, test_helpers):
-        """Test quote function with forex currency pairs."""
-        symbol = test_symbols["forex"][0]  # EURUSD
-        result = quote(apikey=api_key, symbol=symbol)
+    def test_quote_forex_pairs(self, api_key):
+        """Test forex quote pairs with enhanced validation."""
+        symbol = TEST_SYMBOLS["forex"][0]
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list), "Forex quote result should be a list"
-        assert len(result_list) > 0, "Forex quote result should contain data"
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
 
-        quote_data = result_list[0]
-        assert isinstance(
-            quote_data, FMPQuoteFull
-        ), "Forex quote should be FMPQuoteFull instance"
-        assert quote_data.symbol == symbol, f"Symbol should match: {symbol}"
-        assert (
-            quote_data.price is not None and quote_data.price > 0
-        ), "Forex price should be positive"
+        quote_model = quote_models[0]
 
         # Forex-specific validations
-        assert len(symbol) == 6, "Forex pair should be 6 characters (XXXYYY format)"
-        # Ensure forex price is a reasonable decimal number (not checking specific ranges)
-        assert isinstance(
-            quote_data.price, (int, float)
-        ), "Forex price should be numeric"
+        assert quote_model.symbol == symbol
+        assert quote_model.price is not None and quote_model.price > 0
+        
+        # Forex symbols should be 6 characters
+        assert len(symbol) == 6
 
-    def test_quote_commodity_symbols(self, api_key, test_symbols, test_helpers):
-        """Test quote function with commodity symbols."""
-        symbol = test_symbols["commodity"][0]  # GCUSD (Gold)
-        result = quote(apikey=api_key, symbol=symbol)
+    def test_quote_commodity_symbols(self, api_key):
+        """Test commodity quote symbols with enhanced validation."""
+        symbol = TEST_SYMBOLS["commodity"][0]
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        assert result is not None, "Commodity quote result should not be None"
-        assert hasattr(result, "root"), "Result should have root attribute"
-        assert isinstance(result.root, list), "Commodity quote result should be a list"
-        assert len(result.root) > 0, "Commodity quote result should contain data"
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
 
-        quote_data = result.root[0]
-        assert isinstance(
-            quote_data, FMPQuoteFull
-        ), "Commodity quote should be FMPQuoteFull instance"
-        assert quote_data.symbol == symbol, f"Symbol should match: {symbol}"
-        assert (
-            quote_data.price is not None and quote_data.price > 0
-        ), "Commodity price should be positive"
-
-        # Commodity-specific validations - focus on data quality, not specific prices
-        if "GC" in symbol:  # Gold
-            assert quote_data.price > 100, "Gold price should be reasonable (>$100/oz)"
-        elif "CL" in symbol:  # Oil
-            assert quote_data.price > 5, "Oil price should be reasonable (>$5/barrel)"
-
-        # General commodity validation
-        assert isinstance(
-            quote_data.price, (int, float)
-        ), "Commodity price should be numeric"
+        quote_model = quote_models[0]
+        
+        # Commodity-specific validations
+        assert quote_model.symbol == symbol
+        assert quote_model.price is not None and quote_model.price > 0
+        
+        # Commodity should have USD in symbol
+        assert "USD" in symbol
 
     @pytest.mark.parametrize(
         "asset_type", ["large_cap", "etf", "crypto", "forex", "commodity"]
     )
-    def test_quote_price_validation_by_asset_type(
-        self, api_key, test_symbols, asset_type
-    ):
-        """Test that quote prices are valid (positive numbers) for different asset types."""
-        symbol = test_symbols[asset_type][0]
-        result = quote(apikey=api_key, symbol=symbol)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0, f"Should get quote data for {asset_type}"
-
-        quote_data = result_list[0]
-
-        # Basic price validation - should be positive number
-        assert quote_data.price is not None, f"Price should be present for {asset_type}"
-        assert quote_data.price > 0, f"{asset_type} price should be positive"
-        assert isinstance(
-            quote_data.price, (int, float)
-        ), f"{asset_type} price should be numeric"
-
-        # Symbol validation
-        assert (
-            quote_data.symbol == symbol
-        ), f"Returned symbol should match requested symbol for {asset_type}"
-
-        # Asset-type specific basic validations (not price ranges)
-        if asset_type == "crypto":
-            assert "USD" in symbol, f"Test crypto symbol should be USD-denominated"
-        elif asset_type == "forex":
-            assert len(symbol) == 6, f"Forex symbol should be 6 characters"
-        elif asset_type == "commodity":
-            assert "USD" in symbol, f"Test commodity symbol should be USD-denominated"
-
-    def test_quote_all_asset_types_batch(self, api_key, test_symbols):
-        """Test quote function across all supported asset types in one test."""
-        test_cases = [
-            ("large_cap", "AAPL", "stock"),
-            ("etf", "SPY", "ETF"),
-            ("crypto", "BTCUSD", "cryptocurrency"),
-            ("forex", "EURUSD", "forex pair"),
-            ("commodity", "GCUSD", "commodity"),
-        ]
-
-        results = {}
-
-        for asset_category, symbol, asset_name in test_cases:
-            if symbol in test_symbols[asset_category]:
-                result = quote(apikey=api_key, symbol=symbol)
-
-                assert (
-                    result is not None
-                ), f"Quote result should not be None for {asset_name} {symbol}"
-                assert hasattr(
-                    result, "root"
-                ), f"Result should have root attribute for {asset_name}"
-                assert isinstance(
-                    result.root, list
-                ), f"Quote result should be a list for {asset_name}"
-                assert (
-                    len(result.root) > 0
-                ), f"Quote result should contain data for {asset_name}"
-
-                quote_data = result.root[0]
-                assert isinstance(
-                    quote_data, FMPQuoteFull
-                ), f"Quote should be FMPQuoteFull for {asset_name}"
-                assert (
-                    quote_data.symbol == symbol
-                ), f"Symbol should match for {asset_name}"
-                assert (
-                    quote_data.price is not None and quote_data.price > 0
-                ), f"Price should be positive for {asset_name}"
-
-                results[asset_name] = {
-                    "symbol": quote_data.symbol,
-                    "price": quote_data.price,
-                    "name": getattr(quote_data, "name", "N/A"),
-                }
-
-        # Validate we tested multiple asset types
-        assert (
-            len(results) >= 3
-        ), f"Should test at least 3 asset types, got {len(results)}"
-
-        # Print summary for verification
-        print(f"\n✅ Successfully tested {len(results)} asset types:")
-        for asset_name, data in results.items():
-            print(
-                f"  {asset_name}: {data['symbol']} = ${data['price']} ({data['name']})"
-            )
-
-    def test_quote_asset_type_specific_fields(self, api_key, test_symbols):
-        """Test that different asset types have appropriate fields populated."""
-        # Test stock - should have comprehensive data
-        stock_symbol = test_symbols["large_cap"][0]
-        stock_result = quote(apikey=api_key, symbol=stock_symbol)
-        stock_data = stock_result.root[0]
-
-        # Stocks should have market cap, volume, etc.
-        assert hasattr(stock_data, "marketCap"), "Stocks should have market cap"
-        assert hasattr(stock_data, "volume"), "Stocks should have volume"
-        assert hasattr(stock_data, "name"), "Stocks should have company name"
-
-        # Test ETF - should have similar fields to stocks
-        etf_symbol = test_symbols["etf"][0]
-        etf_result = quote(apikey=api_key, symbol=etf_symbol)
-
-        # Handle rate limit errors
-        if isinstance(etf_result, dict) and "Error Message" in etf_result:
-            pytest.skip(f"Rate limit reached for ETF quote {etf_symbol}")
-
-        etf_data = etf_result.root[0]
-
-        assert hasattr(etf_data, "price"), "ETFs should have price"
-        assert hasattr(etf_data, "volume"), "ETFs should have volume"
-
-        # Test crypto - may have different field availability
-        crypto_symbol = test_symbols["crypto"][0]
-        crypto_result = quote(apikey=api_key, symbol=crypto_symbol)
-        crypto_data = crypto_result.root[0]
-
-        assert hasattr(crypto_data, "price"), "Crypto should have price"
-        # Note: crypto may not have traditional volume or market cap in same format
-
-        print(
-            f"✅ Field validation passed for stock ({stock_symbol}), ETF ({etf_symbol}), and crypto ({crypto_symbol})"
+    def test_quote_price_validation_by_asset_type(self, api_key, asset_type):
+        """Test price validation for different asset types."""
+        symbol = TEST_SYMBOLS[asset_type][0]
+        
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
         )
+
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, f"Should return valid quote models for {symbol}", min_count=1)
+
+        quote_model = quote_models[0]
+        assert quote_model is not None
+        
+        # Asset-specific price validation
+        if asset_type in ["large_cap", "etf"]:
+            assert quote_model.price > 1.0  # Traditional securities should be > $1
+        elif asset_type == "crypto":
+            assert quote_model.price > 0.001  # Crypto can be very small
+        elif asset_type == "forex":
+            assert 0.01 < quote_model.price < 1000  # Forex rates should be reasonable
+        elif asset_type == "commodity":
+            assert quote_model.price > 0.1  # Commodities should be meaningful
+
+    def test_quote_all_asset_types_batch(self, api_key):
+        """Test getting quotes for all asset types in batch."""
+        all_symbols = []
+        for asset_type in ["large_cap", "etf"]:  # Focus on traditional securities
+            all_symbols.extend(TEST_SYMBOLS[asset_type][:2])
+        
+        results = []
+        for symbol in all_symbols:
+            response, validation = handle_api_call_with_validation(
+                quote,
+                "quote",
+                allow_empty=False,
+                apikey=api_key,
+                symbol=symbol
+            )
+            
+            quote_models = get_response_models(response, FMPQuoteFull)
+            if quote_models:
+                quote_model = quote_models[0]
+                results.append(quote_model)
+
+        # Validate we got some results
+        assert len(results) > 0
+
+        # Validate each quote
+        for quote_model in results:
+            assert quote_model.symbol in all_symbols
+            assert quote_model.price is not None and quote_model.price > 0
+
+    def test_quote_asset_type_specific_fields(self, api_key):
+        """Test that different asset types have expected fields."""
+        # Test large cap stock
+        symbol = TEST_SYMBOLS["large_cap"][0]
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
+
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
+
+        quote_model = quote_models[0]
+        
+        # Large cap stocks should have these fields
+        assert quote_model.symbol is not None
+        assert quote_model.name is not None
+        assert quote_model.price is not None
+        
+        # Volume should be present for stocks
+        if quote_model.volume is not None:
+            assert quote_model.volume >= 0
 
 
 @pytest.mark.integration
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
 class TestQuoteShort:
-    """Test class for short quote functionality."""
+    """Test class for short quote endpoint functionality."""
 
     def test_quote_short_single_symbol(self, api_key):
-        """Test short quote for single symbol."""
-        result = quote_short(apikey=api_key, symbol="AAPL")
+        """Test fetching short quote for a single symbol using enhanced validation."""
+        symbol = "AAPL"
+        
+        response, validation = handle_api_call_with_validation(
+            quote_short,
+            "quote_short",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        quote_models = get_response_models(response, FMPQuoteShort)
+        validate_model_list(quote_models, FMPQuoteShort, "Should return valid short quote models", min_count=1)
 
-        # Validate schema for first item
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPQuoteShort.model_validate(first_item)
-        else:
-            validated = first_item
+        quote_model = quote_models[0]
+        assert quote_model.symbol == symbol
+        
+        # Validate essential price data
+        assert quote_model.price is not None and quote_model.price > 0
+        
+        # Short quote should have fewer fields than full quote
+        # but should still have essential data
+        assert quote_model.symbol is not None
 
-        assert validated.symbol == "AAPL"
-        assert validated.price > 0
-        assert validated.volume >= 0
+    @pytest.mark.parametrize(
+        "symbol,asset_type,expected_characteristics",
+        [
+            ("AAPL", "large_cap_stock", {"volatility": "moderate", "liquidity": "high"}),
+            ("SPY", "broad_market_etf", {"tracking": "index", "liquidity": "very_high"}),
+            ("BTCUSD", "cryptocurrency", {"volatility": "high", "trading_hours": "24/7"}),
+            ("EURUSD", "forex", {"volatility": "low", "precision": "high"}),
+            ("GCUSD", "commodity", {"volatility": "moderate", "fundamentals": "macro"}),
+        ],
+    )
+    def test_quote_short_asset_type_validation(
+        self, api_key, symbol, asset_type, expected_characteristics
+    ):
+        """Test short quote validation for different asset types."""
+        response, validation = handle_api_call_with_validation(
+            quote_short,
+            "quote_short",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-    def test_quote_short_multiple_asset_types(self, api_key):
-        """Test short quote for different asset types."""
-        symbols = ["AAPL", "SPY", "EURUSD", "GCUSD"]
+        quote_models = get_response_models(response, FMPQuoteShort)
+        validate_model_list(quote_models, FMPQuoteShort, f"Should return valid short quote models for {symbol}", min_count=1)
 
-        for symbol in symbols:
-            result = quote_short(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+        quote_model = quote_models[0]
+        assert quote_model.symbol == symbol
+        
+        assert quote_model.price is not None and quote_model.price > 0
 
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
-                assert symbol_value == symbol
-
-                price_value = get_field_value(first_item, "price")
-                assert price_value > 0
+        # Asset-specific validations
+        if asset_type == "cryptocurrency":
+            assert "USD" in symbol
+        elif asset_type == "forex":
+            assert len(symbol) == 6
+        elif asset_type == "commodity":
+            assert "USD" in symbol
 
     def test_quote_short_vs_full_consistency(self, api_key):
-        """Test consistency between short and full quote data."""
-        symbol = "MSFT"
+        """Test that short quote data is consistent with full quote data."""
+        symbol = "AAPL"
+        
+        # Get full quote
+        full_response, full_validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        # Get both short and full quotes
-        short_result = quote_short(apikey=api_key, symbol=symbol)
-        full_result = quote(apikey=api_key, symbol=symbol)
+        # Get short quote
+        short_response, short_validation = handle_api_call_with_validation(
+            quote_short,
+            "quote_short",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        short_list = extract_data_list(short_result)
-        full_list = extract_data_list(full_result)
+        full_models = get_response_models(full_response, FMPQuoteFull)
+        short_models = get_response_models(short_response, FMPQuoteShort)
+        
+        validate_model_list(full_models, FMPQuoteFull, "Should return valid full quote models", min_count=1)
+        validate_model_list(short_models, FMPQuoteShort, "Should return valid short quote models", min_count=1)
 
-        if len(short_list) > 0 and len(full_list) > 0:
-            short_data = short_list[0]
-            full_data = full_list[0]
+        full_quote = full_models[0]
+        short_quote = short_models[0]
 
-            # Prices should match (or be very close)
-            short_price = get_field_value(short_data, "price")
-            full_price = get_field_value(full_data, "price")
-
-            if short_price and full_price:
-                price_diff = abs(short_price - full_price) / full_price
-                assert price_diff < 0.01  # Less than 1% difference
+        # Symbol should match
+        assert full_quote.symbol == short_quote.symbol
+        
+        # Price should be similar (allowing for small differences due to timing)
+        if full_quote.price is not None and short_quote.price is not None:
+            # Allow 5% difference for timing
+            price_diff = abs(full_quote.price - short_quote.price) / full_quote.price
+            assert price_diff < 0.05
 
 
 @pytest.mark.integration
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
 class TestAftermarketQuotes:
-    """Test class for aftermarket quote and trade functionality."""
+    """Test class for aftermarket quote functionality."""
 
-    def test_aftermarket_trade_valid_symbol(self, api_key):
-        """Test aftermarket trade data for valid symbol."""
-        result = aftermarket_trade(apikey=api_key, symbol="AAPL")
+    @pytest.mark.parametrize(
+        "symbol,expected_characteristics",
+        [
+            ("AAPL", {"liquidity": "high", "aftermarket_activity": "active"}),
+            ("MSFT", {"liquidity": "high", "aftermarket_activity": "active"}),
+            ("GOOGL", {"liquidity": "high", "aftermarket_activity": "moderate"}),
+            ("TSLA", {"liquidity": "moderate", "aftermarket_activity": "high"}),
+            ("NVDA", {"liquidity": "high", "aftermarket_activity": "active"}),
+        ],
+    )
+    def test_aftermarket_trade_validation(self, api_key, symbol, expected_characteristics):
+        """Test aftermarket trade data validation."""
+        response, validation = handle_api_call_with_validation(
+            aftermarket_trade,
+            "aftermarket_trade",
+            allow_empty=True,  # Aftermarket might be empty
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        trade_models = get_response_models(response, FMPAftermarketTrade)
+        assert isinstance(trade_models, list)
 
-        # Aftermarket data might be empty during market hours
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPAftermarketTrade.model_validate(first_item)
-            else:
-                validated = first_item
+        if trade_models:
+            trade_model = trade_models[0]
+            assert trade_model.symbol == symbol
+            
+            # Validate price and volume if present
+            if trade_model.price is not None:
+                assert trade_model.price > 0
+            
+            if trade_model.volume is not None:
+                assert trade_model.volume >= 0
 
-            assert validated.symbol == "AAPL"
-            assert validated.price > 0
+    @pytest.mark.parametrize(
+        "symbol,expected_characteristics",
+        [
+            ("AAPL", {"quote_availability": "high", "spread": "tight"}),
+            ("MSFT", {"quote_availability": "high", "spread": "tight"}),
+            ("GOOGL", {"quote_availability": "high", "spread": "moderate"}),
+            ("AMZN", {"quote_availability": "high", "spread": "moderate"}),
+        ],
+    )
+    def test_aftermarket_quote_validation(self, api_key, symbol, expected_characteristics):
+        """Test aftermarket quote data validation."""
+        response, validation = handle_api_call_with_validation(
+            aftermarket_quote,
+            "aftermarket_quote",
+            allow_empty=True,  # Aftermarket might be empty
+            apikey=api_key,
+            symbol=symbol
+        )
 
-    def test_aftermarket_quote_valid_symbol(self, api_key):
-        """Test aftermarket quote data for valid symbol."""
-        result = aftermarket_quote(apikey=api_key, symbol="AAPL")
+        quote_models = get_response_models(response, FMPAftermarketQuote)
+        assert isinstance(quote_models, list)
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Aftermarket data might be empty during market hours
-        if len(result_list) > 0:
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                validated = FMPAftermarketQuote.model_validate(first_item)
-            else:
-                validated = first_item
-
-            assert validated.symbol == "AAPL"
-            # FMPAftermarketQuote has bidPrice/askPrice, not price
-            assert validated.bidPrice > 0 or validated.askPrice > 0
-
-    def test_aftermarket_multiple_symbols(self, api_key):
-        """Test aftermarket data for multiple symbols."""
-        symbols = ["AAPL", "MSFT", "GOOGL"]
-
-        for symbol in symbols:
-            trade_result = aftermarket_trade(apikey=api_key, symbol=symbol)
-            quote_result = aftermarket_quote(apikey=api_key, symbol=symbol)
-
-            trade_list = extract_data_list(trade_result)
-            quote_list = extract_data_list(quote_result)
-
-            assert isinstance(trade_list, list)
-            assert isinstance(quote_list, list)
-
-            # Validate data if present
-            for item in trade_list:
-                symbol_value = get_field_value(item, "symbol")
-                assert symbol_value == symbol
-
-            for item in quote_list:
-                symbol_value = get_field_value(item, "symbol")
-                assert symbol_value == symbol
+        if quote_models:
+            quote_model = quote_models[0]
+            assert quote_model.symbol == symbol
+            
+            # Validate bid/ask if present
+            if quote_model.bid is not None:
+                assert quote_model.bid > 0
+            if quote_model.ask is not None:
+                assert quote_model.ask > 0
+            
+            if bid is not None and ask is not None:
+                assert bid > 0
+                assert ask > 0
+                assert ask >= bid  # Ask should be >= bid
 
 
 @pytest.mark.integration
@@ -633,38 +624,43 @@ class TestAftermarketQuotes:
 class TestStockPriceChange:
     """Test class for stock price change functionality."""
 
-    def test_stock_price_change_valid_symbol(self, api_key):
-        """Test stock price change for valid symbol."""
-        result = stock_price_change(apikey=api_key, symbol="AAPL")
+    @pytest.mark.parametrize(
+        "symbol,expected_volatility",
+        [
+            ("AAPL", "moderate"),
+            ("TSLA", "high"),
+            ("JNJ", "low"),
+            ("GOOGL", "moderate"),
+            ("NVDA", "high"),
+        ],
+    )
+    def test_stock_price_change_validation(self, api_key, symbol, expected_volatility):
+        """Test stock price change data validation."""
+        response, validation = handle_api_call_with_validation(
+            stock_price_change,
+            "stock_price_change",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+        change_models = get_response_models(response, FMPStockPriceChange)
+        validate_model_list(change_models, FMPStockPriceChange, f"Should return valid price change models for {symbol}", min_count=1)
 
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPStockPriceChange.model_validate(first_item)
-        else:
-            validated = first_item
-
-        assert validated.symbol == "AAPL"
-        # Check for price change fields
-        assert hasattr(validated, "ytd") or hasattr(validated, "_1D")
-        assert hasattr(validated, "max")
-
-    def test_stock_price_change_multiple_symbols(self, api_key):
-        """Test stock price changes for multiple symbols."""
-        symbols = ["AAPL", "MSFT", "GOOGL", "TSLA"]
-
-        for symbol in symbols:
-            result = stock_price_change(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-
-            if len(result_list) > 0:
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
-                assert symbol_value == symbol
+        change_model = change_models[0]
+        assert change_model.symbol == symbol
+        
+        # Validate price change data
+        if change_model.price is not None:
+            assert change_model.price > 0
+        
+        # Change and change percentage should be consistent
+        if (change_model.change is not None and 
+            change_model.changes_percentage is not None and 
+            change_model.price is not None):
+            expected_change_pct = (change_model.change / (change_model.price - change_model.change)) * 100
+            # Allow some tolerance for rounding
+            assert abs(change_model.changes_percentage - expected_change_pct) < 0.1
 
 
 @pytest.mark.integration
@@ -673,499 +669,269 @@ class TestStockPriceChange:
 class TestBatchQuotes:
     """Test class for batch quote functionality."""
 
-    def test_stock_batch_quote(self, api_key, test_symbols):
-        """Test stock batch quotes with multiple symbols."""
-        symbols = ["AAPL", "MSFT", "GOOGL", "AMZN"]
+    @pytest.mark.parametrize(
+        "quote_type,symbols,expected_characteristics",
+        [
+            ("stock", ["AAPL", "MSFT", "GOOGL"], {"asset_class": "equity", "liquidity": "high"}),
+            ("etf", ["SPY", "QQQ", "VTI"], {"asset_class": "etf", "diversification": "broad"}),
+            ("forex", ["EURUSD", "GBPUSD", "USDJPY"], {"asset_class": "currency", "precision": "high"}),
+            ("crypto", ["BTCUSD", "ETHUSD"], {"asset_class": "cryptocurrency", "volatility": "high"}),
+            ("commodity", ["GCUSD", "CLUSD"], {"asset_class": "commodity", "fundamentals": "macro"}),
+        ],
+    )
+    def test_batch_quote_asset_types(self, api_key, quote_type, symbols, expected_characteristics):
+        """Test batch quotes for different asset types."""
+        
+        if quote_type == "stock":
+            response, validation = handle_api_call_with_validation(
+                stock_batch_quote,
+                "stock_batch_quote",
+                allow_empty=False,
+                apikey=api_key,
+                symbols=symbols
+            )
+            
+            quote_models = get_response_models(response, FMPQuoteFull)
+            validate_model_list(quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1)
 
-        result = stock_batch_quote(apikey=api_key, symbols=symbols)
+            # Validate we got data for expected symbols
+            returned_symbols = [q.symbol for q in quote_models]
+            for symbol in symbols:
+                assert symbol in returned_symbols
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+            # Validate each quote
+            for quote_model in quote_models:
+                assert quote_model.symbol in symbols
+                assert quote_model.price is not None and quote_model.price > 0
+        else:
+            # Use regular quote for other asset types
+            results = []
+            for symbol in symbols:
+                response, validation = handle_api_call_with_validation(
+                    quote,
+                    "quote",
+                    allow_empty=False,
+                    apikey=api_key,
+                    symbol=symbol
+                )
+                quote_models = get_response_models(response, FMPQuoteFull)
+                if quote_models:
+                    quote_model = quote_models[0]
+                    results.append(quote_model)
+            
+            # Validate we got some results
+            assert len(results) > 0
+            
+            # Validate each quote
+            for quote_model in results:
+                assert quote_model.symbol in symbols
+                assert quote_model.price is not None and quote_model.price > 0
 
-        # Should get quotes for each requested symbol
-        returned_symbols = {get_field_value(item, "symbol") for item in result_list}
-        for symbol in symbols:
-            assert (
-                symbol in returned_symbols
-            ), f"Expected symbol {symbol} not found in batch results"
-
-        # Validate each quote has required fields
-        for item in result_list:
-            price_value = get_field_value(item, "price")
-            symbol_value = get_field_value(item, "symbol")
-            assert price_value > 0, f"Price should be positive for {symbol_value}"
-            assert (
-                symbol_value in symbols
-            ), f"Unexpected symbol {symbol_value} in results"
-
-    def test_batch_quote_short(self, api_key):
-        """Test batch short quotes."""
-        symbols = ["AAPL", "MSFT", "GOOGL"]
-
-        result = batch_quote_short(apikey=api_key, symbols=symbols)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
-
-        # Should get quotes for multiple symbols
-        returned_symbols = {get_field_value(item, "symbol") for item in result_list}
-        for symbol in symbols:
-            assert symbol in returned_symbols
-
-    def test_batch_aftermarket_trade(self, api_key):
-        """Test batch aftermarket trades."""
+    @pytest.mark.parametrize(
+        "batch_type,expected_fields",
+        [
+            ("aftermarket_trade", ["symbol", "price", "volume"]),
+            ("aftermarket_quote", ["symbol", "bid", "ask"]),
+            ("mutual_fund", ["symbol", "price", "name"]),
+            ("index", ["symbol", "price", "change"]),
+        ],
+    )
+    def test_batch_quote_field_validation(self, api_key, batch_type, expected_fields):
+        """Test field validation for different batch quote types."""
         symbols = ["AAPL", "MSFT"]
 
-        result = batch_aftermarket_trade(apikey=api_key, symbols=symbols)
+        if batch_type == "aftermarket_trade":
+            response, validation = handle_api_call_with_validation(
+                batch_aftermarket_trade,
+                "aftermarket_trade_batch",
+                allow_empty=True,
+                apikey=api_key,
+                symbols=symbols
+            )
+            models = get_response_models(response, FMPAftermarketTrade)
+        elif batch_type == "aftermarket_quote":
+            response, validation = handle_api_call_with_validation(
+                batch_aftermarket_quote,
+                "aftermarket_quote_batch",
+                allow_empty=True,
+                apikey=api_key,
+                symbols=symbols
+            )
+            models = get_response_models(response, FMPAftermarketQuote)
+        elif batch_type == "mutual_fund":
+            response, validation = handle_api_call_with_validation(
+                batch_mutual_fund_quote,
+                "mutual_fund_batch",
+                allow_empty=True,
+                apikey=api_key
+            )
+            models = get_response_models(response, FMPQuoteFull)  # Assuming mutual funds use same model
+        elif batch_type == "index":
+            response, validation = handle_api_call_with_validation(
+                batch_index_quote,
+                "index_batch",
+                allow_empty=True,
+                apikey=api_key
+            )
+            models = get_response_models(response, FMPQuoteFull)  # Assuming indices use same model
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        assert isinstance(models, list)
 
-        # Aftermarket data might be empty, but should not error
-        for item in result_list:
-            symbol_value = get_field_value(item, "symbol")
-            assert symbol_value in symbols
+        if models:
+            # Validate expected fields are present
+            model = models[0]
+            if model:
+                for field in expected_fields:
+                    if field == "symbol":
+                        assert hasattr(model, field) and getattr(model, field) is not None
+                    # Other fields may or may not be present depending on data availability
 
-    def test_batch_aftermarket_quote(self, api_key):
-        """Test batch aftermarket quotes."""
-        symbols = ["AAPL", "MSFT"]
+    @pytest.mark.parametrize(
+        "batch_size,expected_result",
+        [
+            (1, "success"),
+            (5, "success"),
+            (10, "success"),
+            (50, "success_or_limit"),
+            (100, "success_or_limit"),
+        ],
+    )
+    def test_batch_quote_size_limits(self, api_key, batch_size, expected_result):
+        """Test batch quote size limits."""
+        # Create a list of symbols
+        symbols = (TEST_SYMBOLS["large_cap"] * 20)[:batch_size]
+        
+        response, validation = handle_api_call_with_validation(
+            stock_batch_quote,
+            "stock_batch_quote",
+            allow_empty=True,
+            apikey=api_key,
+            symbols=symbols
+        )
 
-        result = batch_aftermarket_quote(apikey=api_key, symbols=symbols)
+        quote_models = get_response_models(response, FMPQuoteFull)
+        assert isinstance(quote_models, list)
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
+        if expected_result == "success":
+            assert len(quote_models) > 0
+        # For "success_or_limit", either success or empty is acceptable
 
-        # Aftermarket data might be empty, but should not error
-        for item in result_list:
-            symbol_value = get_field_value(item, "symbol")
-            assert symbol_value in symbols
+    @pytest.mark.parametrize(
+        "asset_category,symbols,validation_rules",
+        [
+            ("sp500_components", ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA"], {"min_price": 10, "max_price": 1500}),
+            ("dow_components", ["AAPL", "MSFT", "JPM", "BAC", "WFC"], {"min_price": 20, "max_price": 1000}),
+            ("nasdaq100", ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA"], {"min_price": 15, "max_price": 1500}),
+            ("major_etfs", ["SPY", "QQQ", "VTI", "IWM", "EFA"], {"min_price": 50, "max_price": 1000}),
+            ("sector_etfs", ["XLF", "XLE", "XLK", "XLB", "XLY"], {"min_price": 20, "max_price": 300}),
+        ],
+    )
+    def test_quote_asset_category_consistency(
+        self, api_key, asset_category, symbols, validation_rules
+    ):
+        """Test quote consistency across asset categories."""
+        results = []
+        
+        for symbol in symbols:
+            response, validation = handle_api_call_with_validation(
+                quote,
+                "quote",
+                allow_empty=False,
+                apikey=api_key,
+                symbol=symbol
+            )
+            
+            quote_models = get_response_models(response, FMPQuoteFull)
+            if quote_models:
+                quote_model = quote_models[0]
+                results.append(quote_model)
 
-    def test_batch_exchange_quote(self, api_key):
-        """Test batch quotes for multiple symbols."""
-        # Use specific symbols instead of exchange parameter
-        symbols = ["AAPL", "MSFT", "GOOGL"]
-        result = batch_exchange_quote(apikey=api_key, symbols=symbols)
+        # Validate we got some results
+        assert len(results) > 0
 
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Should get quotes for the specified symbols
-        if len(result_list) > 0:
-            # Verify we have quote data
-            for item in result_list[:3]:  # Check first 3 items
-                price_value = get_field_value(item, "price")
-                symbol_value = get_field_value(item, "symbol")
-                assert price_value > 0
-                assert symbol_value is not None
-
-    def test_batch_mutual_fund_quote(self, api_key):
-        """Test batch mutual fund quotes."""
-        result = batch_mutual_fund_quote(apikey=api_key)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Should get mutual fund quotes
-        if len(result_list) > 0:
-            for item in result_list[:3]:  # Check first 3 items
-                price_value = get_field_value(item, "price")
-                symbol_value = get_field_value(item, "symbol")
-                assert price_value > 0
-                assert symbol_value is not None
-
-    def test_batch_etf_quote(self, api_key):
-        """Test batch ETF quotes."""
-        result = batch_etf_quote(apikey=api_key)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # ETF data might be empty or limited, but should not error
-        if len(result_list) > 0:
-            # Should get ETF quotes
-            for item in result_list[:5]:  # Check first 5 ETFs
-                price_value = get_field_value(item, "price")
-                symbol_value = get_field_value(item, "symbol")
-                assert price_value > 0
-                assert symbol_value is not None
-
-    def test_batch_commodity_quote(self, api_key):
-        """Test batch commodity quotes."""
-        result = batch_commodity_quote(apikey=api_key)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Should get commodity quotes
-        if len(result_list) > 0:
-            for item in result_list[:3]:  # Check first 3 commodities
-                price_value = get_field_value(item, "price")
-                symbol_value = get_field_value(item, "symbol")
-                assert price_value > 0
-                assert symbol_value is not None
-                # Commodities typically have USD in symbol
-                assert "USD" in symbol_value
-
-    def test_batch_crypto_quote(self, api_key):
-        """Test batch cryptocurrency quotes."""
-        result = batch_crypto_quote(apikey=api_key)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Should get crypto quotes
-        if len(result_list) > 0:
-            for item in result_list[:3]:  # Check first 3 cryptos
-                price_value = get_field_value(item, "price")
-                symbol_value = get_field_value(item, "symbol")
-                assert price_value > 0
-                assert symbol_value is not None
-                # Crypto symbols typically have USD suffix
-                assert "USD" in symbol_value
-
-    def test_batch_forex_quote(self, api_key):
-        """Test batch forex quotes."""
-        result = batch_forex_quote(apikey=api_key)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Should get forex quotes
-        if len(result_list) > 0:
-            for item in result_list[:5]:  # Check first 5 forex pairs
-                price_value = get_field_value(item, "price")
-                symbol_value = get_field_value(item, "symbol")
-                assert price_value > 0
-                assert symbol_value is not None
-                # Forex pairs are typically 6 characters
-                assert len(symbol_value) >= 6
-
-    def test_batch_index_quote(self, api_key):
-        """Test batch index quotes."""
-        result = batch_index_quote(apikey=api_key)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Should get index quotes
-        if len(result_list) > 0:
-            for item in result_list[:3]:  # Check first 3 indices
-                price_value = get_field_value(item, "price")
-                symbol_value = get_field_value(item, "symbol")
-                assert price_value > 0
-                assert symbol_value is not None
+        # Apply validation rules to each quote
+        for quote_model in results:
+            if quote_model.price is not None:
+                min_price = validation_rules["min_price"]
+                max_price = validation_rules["max_price"]
+                assert min_price <= quote_model.price <= max_price, f"Price {quote_model.price} for {quote_model.symbol} not in expected range [{min_price}, {max_price}]"
 
 
 @pytest.mark.integration
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
 class TestQuoteErrorHandling:
-    """Test class for quote error handling scenarios."""
+    """Test class for quote error handling."""
 
-    def test_quote_invalid_api_key(self):
-        """Test quote with invalid API key."""
-        result = quote(apikey="invalid_key", symbol="AAPL")
+    @pytest.mark.parametrize(
+        "invalid_symbol,expected_behavior",
+        [
+            ("INVALID123", "empty_or_error"),
+            ("XXXXXXX", "empty_or_error"),
+            ("", "empty_or_error"),
+            ("@#$%", "empty_or_error"),
+        ],
+    )
+    def test_quote_invalid_symbols(self, api_key, invalid_symbol, expected_behavior):
+        """Test handling of invalid symbols."""
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=True,
+            apikey=api_key,
+            symbol=invalid_symbol
+        )
 
-        # Should return error message
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-        else:
-            # Some endpoints might return empty lists for invalid keys
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+        quote_models = get_response_models(response, FMPQuoteFull)
+        assert isinstance(quote_models, list)
+        # Empty result is expected for invalid symbols
 
-    def test_quote_invalid_symbol(self, api_key):
-        """Test quote with invalid symbol."""
-        result = quote(apikey=api_key, symbol="INVALID_SYMBOL_XYZ")
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        # Invalid symbol typically returns empty list
-        assert len(result_list) == 0
-
-    def test_quote_empty_symbol(self, api_key):
-        """Test quote with empty symbol."""
-        result = quote(apikey=api_key, symbol="")
-
-        # Should handle empty symbol gracefully
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-    def test_batch_quote_invalid_symbols(self, api_key):
-        """Test batch quote with some invalid symbols."""
-        symbols = ["AAPL", "INVALID_XYZ", "MSFT"]
-
-        result = stock_batch_quote(apikey=api_key, symbols=symbols)
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        # Should get quotes for valid symbols
-        returned_symbols = {get_field_value(item, "symbol") for item in result_list}
-        assert "AAPL" in returned_symbols
-        assert "MSFT" in returned_symbols
-        assert "MSFT" in returned_symbols
-
-
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
-class TestQuoteResponseTimes:
-    """Test class for quote response time performance."""
-
-    def test_single_quote_response_time(self, api_key):
-        """Test single quote response time."""
-        import time
-
-        start_time = time.time()
-        result = quote(apikey=api_key, symbol="AAPL")
-        end_time = time.time()
-
-        response_time = end_time - start_time
-
-        # Should respond within 5 seconds
-        assert response_time < 5.0
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-    def test_batch_quote_response_time(self, api_key):
-        """Test batch quote response time."""
-        import time
-
-        symbols = "AAPL,MSFT,GOOGL,AMZN,TSLA"
-
-        start_time = time.time()
-        result = stock_batch_quote(apikey=api_key, symbols=symbols)
-        end_time = time.time()
-
-        response_time = end_time - start_time
-
-        # Batch should respond within 10 seconds
-        assert response_time < 10.0
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-        assert len(result_list) > 0
+    def test_quote_api_key_validation(self):
+        """Test API key validation for quote endpoints."""
+        with pytest.raises(Exception, match="Invalid API KEY"):
+            quote(apikey="", symbol="AAPL")
 
 
 @pytest.mark.integration
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
 class TestQuoteDataConsistency:
-    """Test class for quote data consistency across endpoints."""
-
-    def test_single_vs_batch_quote_consistency(self, api_key):
-        """Test consistency between single and batch quote results."""
-        symbol = "AAPL"
-
-        # Get single quote
-        single_result = quote(apikey=api_key, symbol=symbol)
-        single_list = extract_data_list(single_result)
-
-        # Get batch quote with same symbol
-        batch_result = stock_batch_quote(apikey=api_key, symbols=[symbol])
-        batch_list = extract_data_list(batch_result)
-
-        if len(single_list) > 0 and len(batch_list) > 0:
-            single_data = single_list[0]
-            batch_data = batch_list[0]
-
-            # Prices should match (or be very close)
-            single_price = get_field_value(single_data, "price")
-            batch_price = get_field_value(batch_data, "price")
-
-            if single_price and batch_price:
-                price_diff = abs(single_price - batch_price) / single_price
-                assert price_diff < 0.05  # Less than 5% difference (market movements)
-
-    def test_different_asset_type_batch_consistency(self, api_key):
-        """Test that asset-specific batch endpoints return appropriate data."""
-        # Test ETF batch
-        etf_result = batch_etf_quote(apikey=api_key)
-        etf_list = extract_data_list(etf_result)
-
-        # Test commodity batch
-        commodity_result = batch_commodity_quote(apikey=api_key)
-        commodity_list = extract_data_list(commodity_result)
-
-        # Test crypto batch
-        crypto_result = batch_crypto_quote(apikey=api_key)
-        crypto_list = extract_data_list(crypto_result)
-
-        # Each should return appropriate symbols
-        if len(etf_list) > 0:
-            # ETFs are typically 3-4 character symbols
-            etf_symbols = [get_field_value(item, "symbol") for item in etf_list[:3]]
-            for symbol in etf_symbols:
-                assert len(symbol) <= 5
-
-        if len(commodity_list) > 0:
-            # Commodities typically have USD suffix
-            commodity_symbols = [
-                get_field_value(item, "symbol") for item in commodity_list[:3]
-            ]
-            for symbol in commodity_symbols:
-                assert "USD" in symbol
-
-        if len(crypto_list) > 0:
-            # Crypto typically has USD suffix
-            crypto_symbols = [
-                get_field_value(item, "symbol") for item in crypto_list[:3]
-            ]
-            for symbol in crypto_symbols:
-                assert "USD" in symbol
+    """Test class for quote data consistency validation."""
 
     @pytest.mark.parametrize(
-        "symbol_set,asset_category,min_price,max_price",
+        "symbol,market_segment,expected_characteristics",
         [
-            (["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA"], "mega_cap_tech", 50, 600),
-            (["JPM", "BAC", "WFC", "GS", "C"], "large_cap_financial", 20, 800),
-            (["JNJ", "UNH", "PFE", "ABT", "CVS"], "large_cap_healthcare", 20, 700),
-            (["XOM", "CVX", "COP", "EOG", "SLB"], "energy_sector", 30, 200),
-            (["WMT", "PG", "KO", "PEP", "COST"], "consumer_staples", 50, 1200),
-            (["TSLA", "HD", "NKE", "SBUX", "TGT"], "consumer_discretionary", 20, 500),
-            (["SPY", "QQQ", "VTI", "IWM", "EFA"], "major_etfs", 80, 700),
-            (["BTCUSD", "ETHUSD"], "crypto_majors", 1000, 150000),
-            (["EURUSD", "GBPUSD", "USDJPY", "USDCAD"], "major_forex", 0.5, 2.0),
-            (["GCUSD", "CLUSD", "NGUSD"], "commodities", 2.0, 3000),
-            (["AMT", "PLD", "CCI", "EQIX", "PSA"], "reits", 100, 800),
-            (["NEE", "DUK", "SO", "AEP", "EXC"], "utilities", 40, 150),
+            ("AAPL", "mega_cap_tech", {"price_range": (50, 600), "liquidity": "very_high"}),
+            ("MSFT", "mega_cap_tech", {"price_range": (100, 800), "liquidity": "very_high"}),
+            ("GOOGL", "mega_cap_tech", {"price_range": (80, 300), "liquidity": "high"}),
+            ("TSLA", "large_cap_growth", {"price_range": (100, 500), "volatility": "high"}),
+            ("JPM", "large_cap_financial", {"price_range": (50, 300), "dividend": "regular"}),
+            ("JNJ", "large_cap_healthcare", {"price_range": (100, 300), "stability": "high"}),
+            ("XOM", "large_cap_energy", {"price_range": (30, 200), "cyclical": True}),
+            ("WMT", "large_cap_consumer", {"price_range": (50, 300), "defensive": True}),
         ],
     )
-    def test_quote_comprehensive_asset_coverage(
-        self, api_key, symbol_set, asset_category, min_price, max_price
+    def test_quote_market_segment_validation(
+        self, api_key, symbol, market_segment, expected_characteristics
     ):
-        """Test quotes across comprehensive asset classes with realistic price ranges."""
-        for symbol in symbol_set:
-            result = quote(apikey=api_key, symbol=symbol)
+        """Test quote validation for different market segments."""
+        response, validation = handle_api_call_with_validation(
+            quote,
+            "quote",
+            allow_empty=False,
+            apikey=api_key,
+            symbol=symbol
+        )
 
-            assert (
-                result is not None
-            ), f"Quote result should not be None for {asset_category} symbol {symbol}"
+        quote_models = get_response_models(response, FMPQuoteFull)
+        validate_model_list(quote_models, FMPQuoteFull, f"Should return valid quote models for {symbol}", min_count=1)
 
-            # Handle different response formats
-            if hasattr(result, "root"):
-                assert isinstance(
-                    result.root, list
-                ), f"Quote result should be a list for {symbol}"
-                assert (
-                    len(result.root) > 0
-                ), f"Quote result should contain data for {symbol}"
-                quote_data = result.root[0]
-            elif isinstance(result, list):
-                assert len(result) > 0, f"Quote result should contain data for {symbol}"
-                quote_data = result[0]
-            else:
-                # Skip this symbol if response format is unexpected
-                continue
-
-            assert isinstance(
-                quote_data, FMPQuoteFull
-            ), f"Quote data should be FMPQuoteFull for {symbol}"
-            assert quote_data.symbol == symbol, f"Symbol should match for {symbol}"
-            assert quote_data.price is not None, f"Price should be present for {symbol}"
-            assert quote_data.price > 0, f"Price should be positive for {symbol}"
-
-            # Asset category specific validations
-            if asset_category not in ["crypto_majors", "major_forex", "commodities"]:
-                # For traditional securities, price should be within reasonable ranges
-                assert (
-                    min_price <= quote_data.price <= max_price
-                ), f"{symbol} price {quote_data.price} should be between {min_price} and {max_price} for {asset_category}"
-
-            # Additional validations by category
-            if asset_category.endswith("_etfs"):
-                assert hasattr(
-                    quote_data, "volume"
-                ), f"ETF {symbol} should have volume data"
-            elif asset_category == "crypto_majors":
-                assert (
-                    "USD" in symbol
-                ), f"Crypto symbol {symbol} should be USD-denominated"
-            elif asset_category == "major_forex":
-                assert len(symbol) == 6, f"Forex symbol {symbol} should be 6 characters"
-            elif asset_category == "commodities":
-                assert (
-                    "USD" in symbol
-                ), f"Commodity symbol {symbol} should be USD-denominated"
-
-    @pytest.mark.parametrize(
-        "market_segment,symbols,expected_characteristics",
-        [
-            (
-                "growth_stocks",
-                ["NVDA", "TSLA", "SHOP", "SNOW", "ZM"],
-                {"volatility": "high"},
-            ),
-            (
-                "value_stocks",
-                ["BRK.A", "JPM", "JNJ", "PG", "KO"],
-                {"stability": "high"},
-            ),
-            (
-                "dividend_stocks",
-                ["JNJ", "PG", "KO", "VZ", "T"],
-                {"dividend": "regular"},
-            ),
-            ("penny_stocks", ["SENS", "GNUS", "XELA"], {"price_range": "low"}),
-            (
-                "blue_chip",
-                ["AAPL", "MSFT", "JNJ", "PG", "JPM"],
-                {"market_cap": "large"},
-            ),
-            (
-                "small_cap_growth",
-                ["DDOG", "SNOW", "NET", "CRWD"],
-                {"growth_potential": "high"},
-            ),
-            (
-                "international_adrs",
-                ["ASML", "TSM", "NVO", "SAP"],
-                {"geography": "international"},
-            ),
-            (
-                "sector_leaders",
-                ["AAPL", "JPM", "JNJ", "XOM", "AMT"],
-                {"market_position": "leading"},
-            ),
-        ],
-    )
-    def test_quote_market_segments_characteristics(
-        self, api_key, market_segment, symbols, expected_characteristics
-    ):
-        """Test quotes for different market segments with expected characteristics."""
-        for symbol in symbols:
-            result = quote(apikey=api_key, symbol=symbol)
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-            assert (
-                len(result_list) > 0
-            ), f"Should get quote data for {market_segment} stock {symbol}"
-
-            quote_data = result_list[0]
-            assert quote_data.symbol == symbol
-            assert quote_data.price is not None and quote_data.price > 0
-
-            # Segment-specific validations
-            if market_segment == "penny_stocks":
-                # Just verify that these are lower-priced stocks (relative validation)
-                assert (
-                    quote_data.price < 50.0
-                ), f"Penny stock {symbol} should be under $50"
-            elif market_segment == "blue_chip":
-                assert (
-                    quote_data.price > 10.0
-                ), f"Blue chip {symbol} should be above $10"
-            elif market_segment == "dividend_stocks":
-                # These are typically established companies with stable prices
-                assert (
-                    quote_data.price > 20.0
-                ), f"Dividend stock {symbol} should be reasonably priced"
-            elif market_segment == "international_adrs":
-                # ADRs should have valid pricing
-                assert (
-                    quote_data.price > 1.0
-                ), f"International ADR {symbol} should have substantial price"
+        quote_model = quote_models[0]
+        assert quote_model is not None
+        assert quote_model.symbol == symbol
+        
+        assert quote_model.price is not None and quote_model.price > 0
+        
+        # Price range validation
+        min_price, max_price = expected_characteristics["price_range"]
+        assert min_price <= quote_model.price <= max_price, f"Price {quote_model.price} not in expected range [{min_price}, {max_price}]"

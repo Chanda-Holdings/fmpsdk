@@ -1,33 +1,151 @@
 import typing
 from typing import Any, Callable, TypeVar
+import time
 
 import pandas as pd
 
+from .exceptions import RateLimitExceededException
+
 T = TypeVar("T")
+
+def is_rate_limit_error(result):
+    """
+    Check if the response indicates a rate limiting error.
+
+    Args:
+        result: The API response object
+
+    Returns:
+        bool: True if this is a rate limiting error, False otherwise
+    """
+    # Check for dictionary responses with Error Message (FMP API specific)
+    if isinstance(result, dict) and "Error Message" in result:
+        error_msg = result["Error Message"].lower()
+        # FMP specific rate limiting message
+        if "limit reach" in error_msg:
+            return True
+        # Check for other common rate limiting keywords
+        rate_limit_keywords = [
+            "rate limit",
+            "too many requests",
+            "quota exceeded",
+            "api limit",
+            "requests per",
+            "upgrade your plan",  # FMP often says this for rate limits
+        ]
+        return any(keyword in error_msg for keyword in rate_limit_keywords)
+
+    # Check for HTTP status responses
+    if hasattr(result, "status_code"):
+        # 429 is the standard rate limiting status code
+        if result.status_code == 429:
+            return True
+        # Some APIs use other status codes for rate limiting
+        if result.status_code in [
+            503,
+            509,
+        ]:  # Service Unavailable, Bandwidth Limit Exceeded
+            if hasattr(result, "content"):
+                try:
+                    content = (
+                        result.content.decode("utf-8")
+                        if isinstance(result.content, bytes)
+                        else str(result.content)
+                    )
+                    return any(
+                        keyword in content.lower()
+                        for keyword in ["rate", "limit", "quota"]
+                    )
+                except (UnicodeDecodeError, AttributeError):
+                    pass
+
+    return False
 
 
 def iterate_over_pages(
-    func, args, page_limit=100
+    func, args, page_limit=100, max_retries=3, retry_delay=10
 ) -> typing.Union[typing.List, typing.Dict]:
+    """
+    Iterate over paginated API responses with rate limiting retry logic.
+    
+    Args:
+        func: The function to call for each page
+        args: Arguments to pass to the function
+        page_limit: Maximum number of pages to fetch (default: 100)
+        max_retries: Maximum number of retries for rate limiting (default: 3)
+        retry_delay: Delay in seconds between retries (default: 10)
+    
+    Returns:
+        Union[List, Dict]: Combined data from all pages
+        
+    Raises:
+        RateLimitExceededException: If rate limiting persists after max_retries
+        ValueError: If response type is unexpected
+        StopIteration: If page limit is reached
+    """
     page = 0
     data_list = []
     data_dict = {}
+    
     while True:
         args["page"] = page
-        response = func(**args)
+        
+        # Retry logic for rate limiting
+        last_exception = None
+        for attempt in range(max_retries + 1):
+            try:
+                response = func(**args)
+                
+                # Check if response indicates rate limiting
+                if is_rate_limit_error(response):
+                    if attempt < max_retries:
+                        print(f"Rate limiting detected on page {page}, attempt {attempt + 1}/{max_retries + 1}. "
+                              f"Waiting {retry_delay} seconds before retry...")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        raise RateLimitExceededException(f"Rate limiting persisted after {max_retries} retries on page {page}")
+                
+                # Successful response, break out of retry loop
+                break
+                
+            except Exception as e:
+                last_exception = e
+                # Check if this is a network-related error that we might want to retry
+                if hasattr(e, '__class__') and 'requests' in str(type(e)):
+                    if attempt < max_retries:
+                        print(f"Network error on page {page}, attempt {attempt + 1}/{max_retries + 1}: {str(e)[:100]}... "
+                              f"Waiting {retry_delay // 2} seconds before retry...")
+                        time.sleep(retry_delay // 2)  # Shorter delay for network errors
+                        continue
+                # For other exceptions, re-raise immediately
+                raise e
+        
+        # If we get here and have an exception, something went wrong
+        if last_exception and not hasattr(last_exception, '__class__'):
+            raise last_exception
+        
+        # Check for empty response (end of pagination)
         if len(response) == 0:
             break
 
+        # Process the response
         if isinstance(response, list):
             data_list.extend(response)
         elif isinstance(response, dict):
+            # Check if it's an error response
+            if "Error Message" in response:
+                if is_rate_limit_error(response):
+                    raise RateLimitExceededException(f"Rate limiting detected in response: {response['Error Message']}")
+                else:
+                    # Other API errors should be handled by the calling code
+                    return response
             data_dict.update(response)
         else:
             raise ValueError(f"Unexpected response type: {type(response)}")
 
         if page >= page_limit:
-            print(f"ERROR: Reached FMP page limit: {page}")
-            break
+            raise StopIteration("Reached FMP page limit")
 
         page += 1
 

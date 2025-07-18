@@ -2,15 +2,23 @@ import csv
 import io
 import json
 import logging
+import time
+import sys
 import typing
 
 import requests
+from .exceptions import SUCCESS_STATUS_CODES, PREMIUM_STATUS_CODES, RETRYABLE_STATUS_CODES, INVALID_API_KEY_STATUS_CODES, PremiumEndpointException, RateLimitExceededException, InvalidQueryParameterException, InvalidAPIKeyException
 
 BASE_URL_STABLE: str = "https://financialmodelingprep.com/stable/"
 BASE_URL_V4: str = "https://financialmodelingprep.com/api/v4/"
 
 CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
+RETRIES = 10
+RETRY_DELAY = 10
+# if "pytest" in sys.modules:
+#     RETRIES = 2
+#     RETRY_DELAY = 2
 
 # Disable excessive DEBUG messages.
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -26,13 +34,16 @@ def __get_base_url(version: str) -> str:
 
 
 def __return_json(
-    path: str, query_vars: typing.Dict, version: str = "stable"
+    path: str, query_vars: typing.Dict, version: str = "stable", retries: int = RETRIES, retry_delay: int = RETRY_DELAY
 ) -> typing.Optional[typing.List[typing.Any]]:
     """
     Query URL for JSON response for stable version of FMP API.
 
     :param path: Path after TLD of URL
     :param query_vars: Dictionary of query values (after "?" of URL)
+    :param version: API version to use ("stable" or "v4")
+    :param retries: Number of retries for rate limiting or retryable errors
+    :param retry_delay: Delay in seconds between retries
     :return: JSON response
     """
 
@@ -44,38 +55,74 @@ def __return_json(
             url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
         )
 
-        # Check for premium endpoint response (402 status code)
-        if response.status_code == 402:
-            return response  # Return the response object so premium detection can work
+        if response.status_code in RETRYABLE_STATUS_CODES:
+            logging.warning(
+                f"Rate limit or retryable error occurred: {response.status_code}. "
+                f"Query variables: {query_vars}"
+            )
+            if retries > 0:
+                logging.info(
+                    f"Retrying in {retry_delay} seconds... ({retries} retries left)"
+                )
+                time.sleep(retry_delay)
+                return __return_json(path, query_vars, version, retries - 1, retry_delay)
+            else:
+                logging.error(f"Max retries exceeded for {url}")
+                raise RateLimitExceededException(
+                    f"Rate limit exceeded or retryable error for {url}. "
+                    f"Query variables: {query_vars}"
+                    f"Response: {response.text}"
+                )
+            
+        if response.status_code in PREMIUM_STATUS_CODES:
+            raise PremiumEndpointException(
+                "This endpoint requires a premium subscription. Please upgrade your plan."
+            )
+        
+        if response.status_code in INVALID_API_KEY_STATUS_CODES:
+            raise InvalidAPIKeyException(
+                "Invalid API KEY"
+            )
 
         # Check for other non-200 status codes and return error response
-        if response.status_code != 200:
+        if response.status_code not in SUCCESS_STATUS_CODES:
             error_msg = f"API request failed with status code {response.status_code}"
             if response.content:
                 try:
                     error_content = response.content.decode("utf-8")
-                    error_msg += f": {error_content}"
-                    # Try to parse as JSON and return it
                     try:
+                        # Try to parse as JSON and return it
                         error_json = json.loads(error_content)
                         logging.error(
-                            f"{error_msg}\nURL: {url}\nQuery variables: {query_vars}"
+                            f"{error_msg}: {error_content}\nURL: {url}\nQuery variables: {query_vars}"
                         )
-                        return error_json  # type: ignore[no-any-return]
+                        # Handle both dict and list error responses
+                        if isinstance(error_json, dict):
+                            error_message = error_json.get('Error Message', 'Unknown error')
+                        else:
+                            error_message = str(error_json)
+                        raise Exception(
+                            f"API request failed with error: {error_message}",
+                            error_json               
+                        )
                     except json.JSONDecodeError:
-                        pass
+                        # Not valid JSON, continue with regular error handling
+                        error_msg += f": {error_content}"
                 except UnicodeDecodeError:
                     error_msg += f": {response.content!r}"
 
             logging.error(f"{error_msg}\nURL: {url}\nQuery variables: {query_vars}")
 
-            # Return a generic error message dict
-            return {  # type: ignore[no-any-return]
-                "Error Message": f"API request failed with status code {response.status_code}"
-            }
+            if "Invalid or missing query parameter" in error_msg:
+                raise InvalidQueryParameterException(error_msg)
+
+            raise Exception(
+                f"API request failed with status code {response.status_code}: {error_msg}"
+            )
 
         if len(response.content) > 0:
             if query_vars.get("datatype") == "csv":
+                # Handle CSV response
                 content = response.content.decode("utf-8")
                 try:
                     reader = csv.DictReader(io.StringIO(content))
@@ -84,6 +131,7 @@ def __return_json(
                     logging.error(f"Failed to parse CSV response: {e}")
                     raise e
             else:
+                # Handle JSON response
                 return_var = response.json()
 
         if len(response.content) == 0 or (
@@ -108,16 +156,16 @@ def __return_json(
     except requests.HTTPError as e:
         logging.error(f"HTTP error occurred: {e}")
         raise
-    except Exception as e:
-        logging.error(
-            f"A requests exception has occurred that we have not yet detailed an 'except' clause for.  "
-            f"Error: {e}\n"
-            f"URL: {url}\n"
-            f"Query variables: {query_vars}\n"
-            f"Response status code: {response.status_code if 'response' in locals() and response else 'No response'}\n"
-            f"Response content: {repr(response.content) if 'response' in locals() and response else 'No response'}\n"
-            f"Response text: {response.text if 'response' in locals() and response else 'No response text'}"
-        )
+    except (PremiumEndpointException, RateLimitExceededException):
+        # Allow our custom exceptions to bubble up
+        raise
+    except json.JSONDecodeError:
+        # Allow JSON decode errors to be handled by the caller
+        raise
+    except (UnicodeDecodeError, csv.Error) as e:
+        # Handle specific parsing errors
+        logging.error(f"Data parsing error: {e}")
+        raise
     return return_var
 
 

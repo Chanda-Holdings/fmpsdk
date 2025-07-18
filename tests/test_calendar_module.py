@@ -21,15 +21,14 @@ from fmpsdk.models import (
     FMPStockSplit,
     FMPUpcomingIPO,
 )
-from tests.conftest import extract_data_list
-
-
-def get_field_value(item, field_name):
-    """Helper function to safely get field value from dict or model."""
-    if isinstance(item, dict):
-        return item.get(field_name)
-    else:
-        return getattr(item, field_name, None)
+from tests.conftest import (
+    handle_api_call_with_validation,
+    assert_valid_response,
+    validate_api_response,
+    get_first_item_from_response,
+    get_response_models,
+)
+from fmpsdk.exceptions import InvalidAPIKeyException
 
 
 @pytest.mark.integration
@@ -96,34 +95,39 @@ class TestDividends:
     )
     def test_dividends_comprehensive_symbols(self, api_key, symbol):
         """Test dividends for comprehensive list of dividend-paying stocks."""
-        result = dividends(apikey=api_key, symbol=symbol)
+        result, validation = handle_api_call_with_validation(
+            dividends,
+            'dividends',
+            apikey=api_key, 
+            symbol=symbol
+        )
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(f"API key issues or data unavailable for {symbol}")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
 
         if result_list:  # If data is available
-            # Validate first dividend record
-            first_dividend = result_list[0]
-            if isinstance(first_dividend, dict):
-                # Check required fields
-                assert "symbol" in first_dividend
-                assert "paymentDate" in first_dividend
-                assert "dividend" in first_dividend
-                assert first_dividend["symbol"] == symbol
+            # Validate first dividend record with business logic
+            first_dividend = get_first_item_from_response(result_list)
+            
+            symbol_value = first_dividend.symbol
+            payment_date = first_dividend.paymentDate
+            dividend_amount = first_dividend.dividend
+            record_date = first_dividend.recordDate
+            declaration_date = first_dividend.declarationDate
 
-                # Test Pydantic model validation
-                dividend_obj = FMPDividend(**first_dividend)
-                assert dividend_obj.symbol == symbol
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_dividend, "symbol")
-                assert hasattr(first_dividend, "paymentDate")
-                assert hasattr(first_dividend, "dividend")
-                assert first_dividend.symbol == symbol
+            # Core validation
+            assert symbol_value == symbol, f"Symbol should match for {symbol}"
+            assert payment_date is not None, "Payment date should not be None"
+            assert dividend_amount is not None, "Dividend amount should not be None"
+            
+            # Business logic validation
+            if dividend_amount is not None:
+                assert dividend_amount > 0, f"Dividend amount should be positive for {symbol}"
+                assert dividend_amount < 50, f"Dividend amount should be reasonable (< $50) for {symbol}"
+            
+            # Date validation
+            if record_date and payment_date:
+                assert record_date <= payment_date, "Record date should be before or equal to payment date"
 
     @pytest.mark.parametrize(
         "sector",
@@ -157,61 +161,84 @@ class TestDividends:
         }
 
         symbol = sector_symbols.get(sector, ["AAPL"])[0]  # Use first symbol from sector
-        result = dividends(apikey=api_key, symbol=symbol)
+        result, validation = handle_api_call_with_validation(
+            dividends,
+            'dividends',
+            apikey=api_key, 
+            symbol=symbol
+        )
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(f"API key issues or data unavailable for {symbol} in {sector}")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
 
         if result_list:
             # Validate dividend amount is positive
-            first_dividend = result_list[0]
-            dividend_amount = get_field_value(first_dividend, "dividend")
+            first_dividend = get_first_item_from_response(result_list)
+            dividend_amount = first_dividend.dividend
             if dividend_amount is not None:
                 assert dividend_amount > 0, f"Dividend should be positive for {symbol}"
 
     def test_dividends_valid_symbol(self, api_key):
         """Test dividends for a valid dividend-paying stock."""
         # Apple is known for paying regular dividends
-        result = dividends(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            dividends,
+            'dividends',
+            apikey=api_key, 
+            symbol="AAPL"
+        )
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
         assert len(result_list) > 0
 
-        # Validate first dividend record
-        first_item = result_list[0]
-        if isinstance(first_item, dict):
-            validated = FMPDividend.model_validate(first_item)
-        else:
-            validated = first_item
+        # Validate first dividend record with enhanced business logic
+        first_item = get_first_item_from_response(result_list)
+        symbol_value = first_item.symbol
+        date_value = first_item.date
+        dividend_amount = first_item.dividend
+        record_date = first_item.recordDate
+        payment_date = first_item.paymentDate
+        declaration_date = first_item.declarationDate
 
-        assert validated.symbol == "AAPL"
-        assert validated.date is not None
-        assert validated.dividend > 0
-        assert validated.recordDate is not None
-        assert validated.paymentDate is not None
-        assert validated.declarationDate is not None
+        assert symbol_value == "AAPL"
+        assert date_value is not None, "Date should not be None"
+        assert dividend_amount > 0, "Dividend amount should be positive"
+        assert record_date is not None, "Record date should not be None"
+        assert payment_date is not None, "Payment date should not be None"
+        assert declaration_date is not None, "Declaration date should not be None"
+
+        # Additional business logic validation
+        assert dividend_amount < 10, "AAPL dividend should be reasonable (< $10)"
+        
+        # Date relationships
+        if declaration_date and record_date and payment_date:
+            assert declaration_date <= record_date, "Declaration should be before record date"
+            assert record_date <= payment_date, "Record should be before payment date"
 
     def test_dividends_with_limit(self, api_key):
         """Test dividends with limit parameter."""
         limit = 5
-        result = dividends(apikey=api_key, symbol="AAPL", limit=limit)
+        result, validation = handle_api_call_with_validation(
+            dividends,
+            'dividends',
+            apikey=api_key, 
+            symbol="AAPL", 
+            limit=limit
+        )
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
         assert len(result_list) <= limit
 
         if len(result_list) > 0:
             # Validate structure
-            first_item = result_list[0]
-            symbol_value = get_field_value(first_item, "symbol")
-            dividend_value = get_field_value(first_item, "dividend")
+            first_item = get_first_item_from_response(result_list)
+            symbol_value = first_item.symbol
+            dividend_value = first_item.dividend
 
             assert symbol_value == "AAPL"
-            assert dividend_value > 0
+            assert dividend_value > 0, "Dividend should be positive"
 
     def test_dividends_multiple_dividend_paying_stocks(self, api_key):
         """Test dividends for multiple dividend-paying stocks."""
@@ -219,14 +246,14 @@ class TestDividends:
 
         for symbol in dividend_stocks:
             result = dividends(apikey=api_key, symbol=symbol, limit=3)
-            result_list = extract_data_list(result)
+            result_list = get_response_models(result, FMPDividend)
 
             assert isinstance(result_list, list), f"Result should be list for {symbol}"
 
             if len(result_list) > 0:
-                first_item = result_list[0]
-                symbol_value = get_field_value(first_item, "symbol")
-                dividend_value = get_field_value(first_item, "dividend")
+                first_item = get_first_item_from_response(result_list)
+                symbol_value = first_item.symbol
+                dividend_value = first_item.dividend
 
                 assert symbol_value == symbol, f"Symbol should match for {symbol}"
                 assert dividend_value > 0, f"Dividend should be positive for {symbol}"
@@ -237,10 +264,10 @@ class TestDividends:
             apikey=api_key, symbol="KO", limit=10
         )  # Coca-Cola has long dividend history
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividend)
         assert len(result_list) > 1
 
-        dates = [get_field_value(item, "date") for item in result_list]
+        dates = [item.date for item in result_list]
 
         # Check if dates are in order (either ascending or descending)
         is_ascending = all(dates[i] <= dates[i + 1] for i in range(len(dates) - 1))
@@ -282,18 +309,12 @@ class TestDividendsCalendar:
             apikey=api_key, from_date=from_date, to_date=to_date
         )
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(
-                f"API key issues or data unavailable for dividend calendar {from_date} to {to_date}"
-            )
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
         assert isinstance(result_list, list)
 
         if result_list:
             # Validate dividend calendar event structure
-            first_event = result_list[0]
+            first_event = get_first_item_from_response(result_list)
             if isinstance(first_event, dict):
                 # Check required fields
                 assert "symbol" in first_event
@@ -341,22 +362,23 @@ class TestDividendsCalendar:
             from_date = (today - timedelta(days=30)).strftime("%Y-%m-%d")
             to_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
 
-        result = dividends_calendar(
-            apikey=api_key, from_date=from_date, to_date=to_date
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar,
+            'dividends_calendar',
+            apikey=api_key, 
+            from_date=from_date, 
+            to_date=to_date
         )
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(
-                f"API key issues or data unavailable for {dividend_frequency} dividends"
-            )
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
         assert isinstance(result_list, list)
 
         if result_list:
-            # Validate dividend amounts are reasonable
+            # Validate dividend amounts are reasonable with enhanced business logic
             for event in result_list[:5]:  # Check first few events
-                dividend_amount = get_field_value(event, "dividend")
+                dividend_amount = event.dividend
+                symbol = event.symbol
+                
                 if dividend_amount is not None:
                     assert (
                         dividend_amount > 0
@@ -364,6 +386,9 @@ class TestDividendsCalendar:
                     assert (
                         dividend_amount < 1000
                     ), f"Dividend seems unusually high: {dividend_amount}"
+                    
+                if symbol:
+                    assert len(symbol) <= 10, f"Symbol length should be reasonable for {symbol}"
 
     def test_dividends_calendar_basic(self, api_key):
         """Test basic dividend calendar functionality."""
@@ -372,30 +397,36 @@ class TestDividendsCalendar:
         from_date = today.strftime("%Y-%m-%d")
         to_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
 
-        result = dividends_calendar(
-            apikey=api_key, from_date=from_date, to_date=to_date
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar,
+            'dividends_calendar',
+            apikey=api_key, 
+            from_date=from_date, 
+            to_date=to_date
         )
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
         assert isinstance(result_list, list)
 
         if len(result_list) > 0:
-            # Validate structure
-            first_event = result_list[0]
-            if isinstance(first_event, dict):
-                # Check required fields
-                assert "symbol" in first_event
-                assert "dividend" in first_event
-                assert "date" in first_event
+            # Validate structure with enhanced business logic
+            first_event = get_first_item_from_response(result_list)
+            
+            symbol = first_event.symbol
+            dividend_amount = first_event.dividend
+            event_date = first_event.date
 
-                # Test Pydantic model validation
-                dividend_event = FMPDividendCalendarEvent(**first_event)
-                assert dividend_event.symbol is not None
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_event, "symbol")
-                assert hasattr(first_event, "dividend")
-                assert hasattr(first_event, "date")
+            assert symbol, "Symbol should not be empty"
+            assert dividend_amount is not None, "Dividend amount should not be None"
+            assert event_date is not None, "Event date should not be None"
+
+            # Business logic validation
+            assert dividend_amount > 0, "Dividend amount should be positive"
+            assert dividend_amount < 100, "Dividend amount should be reasonable (< $100)"
+            assert len(symbol) <= 10, "Symbol should have reasonable length"
+            
+            # Date validation
+            assert from_date <= event_date <= to_date, f"Event date {event_date} should be within range {from_date} to {to_date}"
 
 
 @pytest.mark.integration
@@ -428,18 +459,12 @@ class TestEarningsCalendar:
 
         result = earnings_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(
-                f"API key issues or data unavailable for date range {from_date} to {to_date}"
-            )
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPEarningsCalendarEvent)
         assert isinstance(result_list, list)
 
         if result_list:
             # Validate earnings calendar event structure
-            first_event = result_list[0]
+            first_event = get_first_item_from_response(result_list)
             if isinstance(first_event, dict):
                 # Check required fields
                 assert "symbol" in first_event
@@ -470,15 +495,12 @@ class TestEarningsCalendar:
 
         result = earnings_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(f"API key issues or data unavailable for {market_cap}")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPEarningsCalendarEvent)
         assert isinstance(result_list, list)
 
         if result_list:
             # Test that we have diverse market cap representation
-            symbols = [get_field_value(item, "symbol") for item in result_list[:10]]
+            symbols = [item.symbol for item in result_list[:10]]
 
             # Basic validation that symbols exist
             assert all(
@@ -492,26 +514,44 @@ class TestEarningsCalendar:
         from_date = today.strftime("%Y-%m-%d")
         to_date = (today + timedelta(days=7)).strftime("%Y-%m-%d")
 
-        result = earnings_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
+        result, validation = handle_api_call_with_validation(
+            earnings_calendar,
+            'earnings_calendar',
+            apikey=api_key, 
+            from_date=from_date, 
+            to_date=to_date
+        )
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPEarningsCalendarEvent)
         assert isinstance(result_list, list)
 
         if len(result_list) > 0:
-            # Validate structure
-            first_event = result_list[0]
-            if isinstance(first_event, dict):
-                # Check required fields
-                assert "symbol" in first_event
-                assert "date" in first_event
+            # Validate structure with enhanced business logic
+            first_event = get_first_item_from_response(result_list)
+            
+            symbol = first_event.symbol
+            event_date = first_event.date
+            eps = first_event.eps
+            eps_estimated = first_event.epsEstimated
+            revenue = first_event.revenue
+            revenue_estimated = first_event.revenueEstimated
 
-                # Test Pydantic model validation
-                earnings_event = FMPEarningsCalendarEvent(**first_event)
-                assert earnings_event.symbol is not None
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_event, "symbol")
-                assert hasattr(first_event, "date")
+            assert symbol, "Symbol should not be empty"
+            assert event_date is not None, "Event date should not be None"
+            assert len(symbol) <= 10, "Symbol should have reasonable length"
+
+            # Date validation
+            assert from_date <= event_date <= to_date, f"Event date {event_date} should be within range {from_date} to {to_date}"
+
+            # Business logic validation for earnings data
+            if eps is not None and eps != 0:
+                assert -100 <= eps <= 100, "EPS should be within reasonable range (-$100 to $100)"
+            if eps_estimated is not None and eps_estimated != 0:
+                assert -100 <= eps_estimated <= 100, "EPS estimated should be within reasonable range"
+            if revenue is not None and revenue > 0:
+                assert revenue < 1e12, "Revenue should be reasonable (< $1T)"
+            if revenue_estimated is not None and revenue_estimated > 0:
+                assert revenue_estimated < 1e12, "Revenue estimated should be reasonable"
 
 
 @pytest.mark.integration
@@ -538,12 +578,12 @@ class TestIPOCalendar:
 
         result = ipos_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPUpcomingIPO)
         assert isinstance(result_list, list)
 
         # IPO calendar may be empty in quiet periods
         if len(result_list) > 0:
-            first_item = result_list[0]
+            first_item = get_first_item_from_response(result_list)
             if isinstance(first_item, dict):
                 validated = FMPUpcomingIPO.model_validate(first_item)
             else:
@@ -556,14 +596,14 @@ class TestIPOCalendar:
         """Test IPO calendar without date range."""
         result = ipos_calendar(apikey=api_key)
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPUpcomingIPO)
         assert isinstance(result_list, list)
 
         # Should return upcoming IPOs
         if len(result_list) > 0:
-            first_item = result_list[0]
-            symbol_value = get_field_value(first_item, "symbol")
-            date_value = get_field_value(first_item, "date")
+            first_item = get_first_item_from_response(result_list)
+            symbol_value = first_item.symbol
+            date_value = first_item.date
 
             assert symbol_value is not None
             assert date_value is not None
@@ -572,12 +612,12 @@ class TestIPOCalendar:
         """Test IPO disclosure information."""
         result = ipos_disclosure(apikey=api_key)
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDisclosureFiling)
         assert isinstance(result_list, list)
 
         # Disclosure data may be limited
         if len(result_list) > 0:
-            first_item = result_list[0]
+            first_item = get_first_item_from_response(result_list)
             if isinstance(first_item, dict):
                 validated = FMPDisclosureFiling.model_validate(first_item)
             else:
@@ -591,7 +631,7 @@ class TestIPOCalendar:
         # Use a symbol that has had recent IPO activity
         result = ipos_disclosure(apikey=api_key, symbol="HOOD")
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDisclosureFiling)
         assert isinstance(result_list, list)
 
         # Symbol-specific disclosure may be empty if not available
@@ -604,12 +644,12 @@ class TestIPOCalendar:
         """Test IPO prospectus information."""
         result = ipos_prospectus(apikey=api_key)
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPProspectusFiling)
         assert isinstance(result_list, list)
 
         # Prospectus data may be limited
         if len(result_list) > 0:
-            first_item = result_list[0]
+            first_item = get_first_item_from_response(result_list)
             if isinstance(first_item, dict):
                 validated = FMPProspectusFiling.model_validate(first_item)
             else:
@@ -622,13 +662,13 @@ class TestIPOCalendar:
         """Test IPO prospectus for specific symbol."""
         result = ipos_prospectus(apikey=api_key, symbol="RIVN")
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPProspectusFiling)
         assert isinstance(result_list, list)
 
         # Symbol-specific prospectus may be empty if not available
         if len(result_list) > 0:
-            first_item = result_list[0]
-            symbol_value = get_field_value(first_item, "symbol")
+            first_item = get_first_item_from_response(result_list)
+            symbol_value = first_item.symbol
 
             # Note: API may return broader results than requested symbol
             # This is a known API quirk - prospectus endpoint doesn't strictly filter by symbol
@@ -695,16 +735,12 @@ class TestSplits:
         """Test stock splits for comprehensive list of symbols."""
         result = splits(apikey=api_key, symbol=symbol)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(f"API key issues or data unavailable for {symbol}")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPStockSplit)
         assert isinstance(result_list, list)
 
         if result_list:  # If data is available
             # Validate split record structure
-            first_split = result_list[0]
+            first_split = get_first_item_from_response(result_list)
             if isinstance(first_split, dict):
                 # Check required fields
                 assert "symbol" in first_split
@@ -738,10 +774,7 @@ class TestSplits:
         symbol = "AAPL"
         result = splits(apikey=api_key, symbol=symbol)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(f"API key issues or data unavailable for {symbol}")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPStockSplit)
         assert isinstance(result_list, list)
 
         if result_list:
@@ -758,7 +791,7 @@ class TestSplits:
 
             # Check if we have splits in the specified period
             for split in result_list:
-                split_date = get_field_value(split, "date")
+                split_date = split.date
                 if split_date and split_date >= cutoff_str:
                     # Found a split in the period
                     assert True
@@ -769,13 +802,13 @@ class TestSplits:
         # Apple has had multiple splits
         result = splits(apikey=api_key, symbol="AAPL")
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPStockSplit)
         assert isinstance(result_list, list)
 
         # Apple should have split history
         if len(result_list) > 0:
             # Validate structure
-            first_split = result_list[0]
+            first_split = get_first_item_from_response(result_list)
             if isinstance(first_split, dict):
                 assert "symbol" in first_split
                 assert "date" in first_split
@@ -814,19 +847,13 @@ class TestSplitsCalendar:
 
         result = splits_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(
-                f"API key issues or data unavailable for splits calendar {from_date} to {to_date}"
-            )
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPStockSplit)
         assert isinstance(result_list, list)
 
         # Splits are relatively rare, so result might be empty
         if result_list:
             # Validate split event structure
-            first_split = result_list[0]
+            first_split = get_first_item_from_response(result_list)
             if isinstance(first_split, dict):
                 # Check required fields
                 assert "symbol" in first_split
@@ -845,13 +872,13 @@ class TestSplitsCalendar:
 
         result = splits_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPStockSplit)
         assert isinstance(result_list, list)
 
         # Splits are rare events, so empty result is acceptable
         if len(result_list) > 0:
             # Validate structure
-            first_split = result_list[0]
+            first_split = get_first_item_from_response(result_list)
             if isinstance(first_split, dict):
                 assert "symbol" in first_split
                 assert "date" in first_split
@@ -889,18 +916,12 @@ class TestIPOsCalendar:
 
         result = ipos_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(
-                f"API key issues or data unavailable for IPO calendar {from_date} to {to_date}"
-            )
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPUpcomingIPO)
         assert isinstance(result_list, list)
 
         if result_list:
             # Validate IPO event structure
-            first_ipo = result_list[0]
+            first_ipo = get_first_item_from_response(result_list)
             if isinstance(first_ipo, dict):
                 # Check required fields
                 assert "symbol" in first_ipo
@@ -933,17 +954,14 @@ class TestIPOsCalendar:
 
         result = ipos_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip(f"API key issues or data unavailable for {ipo_size} IPOs")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPUpcomingIPO)
         assert isinstance(result_list, list)
 
         if result_list:
             # Validate IPO data quality
             for ipo in result_list[:5]:  # Check first few IPOs
-                symbol = get_field_value(ipo, "symbol")
-                company = get_field_value(ipo, "company")
+                symbol = ipo.symbol
+                company = ipo.company
 
                 assert symbol, "IPO symbol should not be empty"
                 assert company, "IPO company name should not be empty"
@@ -957,13 +975,13 @@ class TestIPOsCalendar:
 
         result = ipos_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPUpcomingIPO)
         assert isinstance(result_list, list)
 
         # IPOs might be empty for some periods
         if len(result_list) > 0:
             # Validate structure
-            first_ipo = result_list[0]
+            first_ipo = get_first_item_from_response(result_list)
             if isinstance(first_ipo, dict):
                 assert "symbol" in first_ipo
                 assert "date" in first_ipo
@@ -988,13 +1006,13 @@ class TestCalendarErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            result_list = extract_data_list(result)
+            result_list = get_response_models(result, FMPDividend)
             assert isinstance(result_list, list)
             # Empty list is acceptable for invalid symbols
 
     def test_dividends_invalid_api_key(self):
-        """Test dividends with invalid API key."""
-        result = dividends(apikey="invalid_key", symbol="AAPL")
+        with pytest.raises(InvalidAPIKeyException):
+            result = dividends(apikey="invalid_key", symbol="AAPL")
 
         # Should return error response
         assert isinstance(result, dict)
@@ -1018,7 +1036,7 @@ class TestCalendarErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            result_list = extract_data_list(result)
+            result_list = get_response_models(result, FMPDividendCalendarEvent)
             assert isinstance(result_list, list)
 
     def test_ipos_calendar_invalid_api_key(self):
@@ -1037,7 +1055,7 @@ class TestCalendarErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            result_list = extract_data_list(result)
+            result_list = get_response_models(result, FMPStockSplit)
             assert isinstance(result_list, list)
 
 
@@ -1135,23 +1153,20 @@ class TestCalendarDataQuality:
             to_date = (today + timedelta(days=30)).strftime("%Y-%m-%d")
             result = ipos_calendar(apikey=api_key, from_date=from_date, to_date=to_date)
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key issues or data unavailable")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
 
         if result_list:
             for item in result_list[:3]:  # Check first few items
                 # Validate symbol format
-                symbol = get_field_value(item, "symbol")
+                symbol = item.symbol
                 if symbol:
                     assert isinstance(symbol, str)
                     assert len(symbol) > 0
                     assert symbol.isupper()  # Stock symbols should be uppercase
 
                 # Validate date format
-                date_value = get_field_value(item, "date")
+                date_value = item.date
                 if date_value:
                     assert len(date_value) >= 10  # YYYY-MM-DD format minimum
                     # Validate it's a reasonable date
@@ -1182,13 +1197,10 @@ class TestCalendarDataQuality:
                 apikey=api_key, from_date=from_date, to_date=to_date
             )
 
-        if isinstance(result, dict) and "Error Message" in result:
-            pytest.skip("API key issues or data unavailable")
-
-        result_list = extract_data_list(result)
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
         if result_list:
             for item in result_list[:5]:  # Check first few items
-                field_value = get_field_value(item, financial_field)
+                field_value = item.dividend
                 if field_value is not None:
                     # Financial values should be numeric
                     assert isinstance(field_value, (int, float))
@@ -1214,7 +1226,7 @@ class TestCalendarErrorHandling:
                 # API properly handles invalid symbol
                 return
 
-            result_list = extract_data_list(result)
+            result_list = get_response_models(result, FMPDividend)
             # Should return empty list for invalid symbols
             assert isinstance(result_list, list)
             assert len(result_list) == 0
@@ -1223,6 +1235,7 @@ class TestCalendarErrorHandling:
         """Test calendar endpoints with invalid API key."""
         invalid_api_key = "invalid_key_123"
 
+        
         result = dividends(apikey=invalid_api_key, symbol="AAPL")
 
         # API returns error dict instead of raising exception

@@ -1,156 +1,64 @@
 import pytest
 
-from fmpsdk import senate
+import fmpsdk
 from fmpsdk.models import FMPPoliticalTrade
-from tests.conftest import extract_data_list
+from fmpsdk.senate import senate, house
+from tests.conftest import (
+    get_response_models,
+    validate_model_list,
+    validate_required_fields,
+)
+
+# Test data constants
+TEST_SYMBOLS = [
+    # Technology stocks often traded by politicians
+    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "NFLX", "CRM", "ORCL",
+    # Healthcare & Pharmaceutical
+    "JNJ", "PFE", "UNH", "ABBV", "MRK", "TMO", "ABT", "LLY", "BMY", "GILD",
+    # Financial Services
+    "JPM", "BAC", "WFC", "GS", "MS", "C", "V", "MA", "AXP", "BLK",
+    # Energy & Utilities
+    "XOM", "CVX", "COP", "EOG", "SLB", "NEE", "SO", "DUK", "AEP", "D",
+    # Defense & Aerospace
+    "LMT", "RTX", "BA", "NOC", "GD", "LHX", "TDG", "HWM", "LDOS", "KTOS",
+    # Consumer Discretionary
+    "HD", "MCD", "NKE", "SBUX", "TGT", "LOW", "DIS", "BKNG", "GM", "F",
+    # Industrial
+    "CAT", "GE", "HON", "UPS", "LMT", "RTX", "DE", "MMM", "FDX", "EMR",
+    # Popular ETFs
+    "SPY", "QQQ", "VTI", "IWM", "EFA", "EEM", "AGG", "TLT", "GLD", "VNQ",
+    # Cryptocurrency-related
+    "COIN", "MSTR", "RIOT", "MARA", "SQ", "PYPL", "HOOD", "PLTR",
+    # Biotech & Emerging Tech
+    "MRNA", "BNTX", "REGN", "BIIB", "ILMN", "VRTX", "ZM", "DOCU", "CRWD", "OKTA",
+]
 
 
+@pytest.mark.integration
+@pytest.mark.requires_api_key
+@pytest.mark.live_data
 class TestSenateTrading:
-    """Test cases for Senate trading disclosure endpoints."""
+    """Test class for Senate trading functionality."""
 
-    @pytest.mark.parametrize(
-        "symbol",
-        [
-            # Technology stocks often traded by politicians
-            "AAPL",
-            "MSFT",
-            "GOOGL",
-            "AMZN",
-            "META",
-            "TSLA",
-            "NVDA",
-            "NFLX",
-            "CRM",
-            "ORCL",
-            # Healthcare & Pharmaceutical
-            "JNJ",
-            "PFE",
-            "UNH",
-            "ABBV",
-            "MRK",
-            "TMO",
-            "ABT",
-            "LLY",
-            "BMY",
-            "GILD",
-            # Financial Services
-            "JPM",
-            "BAC",
-            "WFC",
-            "GS",
-            "MS",
-            "C",
-            "V",
-            "MA",
-            "AXP",
-            "BLK",
-            # Energy & Utilities
-            "XOM",
-            "CVX",
-            "COP",
-            "EOG",
-            "SLB",
-            "NEE",
-            "SO",
-            "DUK",
-            "AEP",
-            "D",
-            # Defense & Aerospace
-            "LMT",
-            "RTX",
-            "BA",
-            "NOC",
-            "GD",
-            "LHX",
-            "TDG",
-            "HWM",
-            "LDOS",
-            "KTOS",
-            # Consumer Discretionary
-            "HD",
-            "MCD",
-            "NKE",
-            "SBUX",
-            "TGT",
-            "LOW",
-            "DIS",
-            "BKNG",
-            "GM",
-            "F",
-            # Industrial
-            "CAT",
-            "GE",
-            "HON",
-            "UPS",
-            "LMT",
-            "RTX",
-            "DE",
-            "MMM",
-            "FDX",
-            "EMR",
-            # Popular ETFs
-            "SPY",
-            "QQQ",
-            "VTI",
-            "IWM",
-            "EFA",
-            "EEM",
-            "AGG",
-            "TLT",
-            "GLD",
-            "VNQ",
-            # Cryptocurrency-related
-            "COIN",
-            "MSTR",
-            "RIOT",
-            "MARA",
-            "SQ",
-            "PYPL",
-            "HOOD",
-            "PLTR",
-            # Biotech & Emerging Tech
-            "MRNA",
-            "BNTX",
-            "REGN",
-            "BIIB",
-            "ILMN",
-            "VRTX",
-            "ZM",
-            "DOCU",
-            "CRWD",
-            "OKTA",
-        ],
-    )
+    @pytest.mark.parametrize("symbol", TEST_SYMBOLS[:10])  # Test first 10 symbols
     def test_senate_trading_by_symbol(self, api_key, symbol):
         """Test Senate trading disclosures for various symbols."""
         result = senate.senate_trades(apikey=api_key, symbol=symbol)
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            trade = data[0]
-
-            # Validate against model
-            if isinstance(trade, dict):
-                trade_obj = FMPPoliticalTrade(**trade)
-            else:
-                trade_obj = trade
+        if trade_models:  # If we have data
+            trade_model = trade_models[0]
 
             # Basic validation
-            assert hasattr(trade_obj, "symbol")
-            assert hasattr(trade_obj, "disclosureDate")
-            assert hasattr(trade_obj, "firstName")
-            assert hasattr(trade_obj, "lastName")
+            assert trade_model.symbol is not None and trade_model.symbol != ""
+            assert trade_model.disclosure_date is not None and trade_model.disclosure_date != ""
+            assert trade_model.first_name is not None and trade_model.first_name != ""
+            assert trade_model.last_name is not None and trade_model.last_name != ""
 
             # Symbol should match requested
-            if trade_obj.symbol:
-                assert trade_obj.symbol == symbol
+            if trade_model.symbol:
+                assert trade_model.symbol == symbol
 
     @pytest.mark.parametrize(
         "sector",
@@ -165,6 +73,9 @@ class TestSenateTrading:
             "etf_index",
         ],
     )
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trading_by_sector(self, api_key, sector):
         """Test Senate trading across different sectors."""
         sector_symbols = {
@@ -183,14 +94,13 @@ class TestSenateTrading:
         for symbol in symbols:
             result = senate.senate_trades(apikey=api_key, symbol=symbol)
 
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            assert isinstance(data, list)
+            trade_models = get_response_models(result, FMPPoliticalTrade)
+            assert isinstance(trade_models, list)
 
     @pytest.mark.parametrize("transaction_type", ["purchase", "sale", "both"])
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trading_by_transaction_type(self, api_key, transaction_type):
         """Test Senate trading for different transaction types."""
         # Use popular symbols that likely have both purchases and sales
@@ -199,31 +109,23 @@ class TestSenateTrading:
         for symbol in symbols[:2]:  # Test first 2 symbols
             result = senate.senate_trades(apikey=api_key, symbol=symbol)
 
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            data = extract_data_list(result)
-            if not data:
+            trade_models = get_response_models(result, FMPPoliticalTrade)
+            if not trade_models:
                 continue
 
             # Filter by transaction type
             if transaction_type == "purchase":
                 filtered_trades = [
-                    trade
-                    for trade in data
-                    if isinstance(trade, dict)
-                    and trade.get("type", "").lower() in ["purchase", "buy"]
+                    trade for trade in trade_models
+                    if trade.type and trade.type.lower() in ["purchase", "buy"]
                 ]
             elif transaction_type == "sale":
                 filtered_trades = [
-                    trade
-                    for trade in data
-                    if isinstance(trade, dict)
-                    and trade.get("type", "").lower() in ["sale", "sell"]
+                    trade for trade in trade_models
+                    if trade.type and trade.type.lower() in ["sale", "sell"]
                 ]
             else:  # both
-                filtered_trades = data
+                filtered_trades = trade_models
 
             assert isinstance(filtered_trades, list)
             assert len(filtered_trades) >= 0
@@ -237,6 +139,9 @@ class TestSenateTrading:
             "historical",  # Last 2 years
         ],
     )
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trading_by_date_range(self, api_key, date_range):
         """Test Senate trading across different date ranges."""
         from datetime import datetime, timedelta
@@ -255,25 +160,20 @@ class TestSenateTrading:
         # Test with latest endpoint (no date filtering in API, but check dates in response)
         result = senate.senate_latest(apikey=api_key, limit=50)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
+        if trade_models:
             # Check that we have some data within the expected date range
             recent_trades = []
-            for trade in data:
-                if isinstance(trade, dict) and "disclosureDate" in trade:
+            for trade_model in trade_models:
+                if trade_model.disclosure_date:
                     try:
                         trade_date = datetime.strptime(
-                            trade["disclosureDate"], "%Y-%m-%d"
+                            trade_model.disclosure_date, "%Y-%m-%d"
                         )
                         if start_date <= trade_date <= end_date:
-                            recent_trades.append(trade)
+                            recent_trades.append(trade_model)
                     except (ValueError, TypeError):
                         # Skip invalid dates
                         continue
@@ -284,6 +184,9 @@ class TestSenateTrading:
     @pytest.mark.parametrize(
         "politician_party", ["democrat", "republican", "independent"]
     )
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trading_by_party(self, api_key, politician_party):
         """Test Senate trading by political party affiliation."""
         # Note: Party information may not be directly available in the API response
@@ -291,31 +194,21 @@ class TestSenateTrading:
 
         result = senate.senate_latest(apikey=api_key, limit=30)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
+        if trade_models:
             # Validate structure for political trades
-            for trade in data[:5]:  # Check first 5 trades
-                if isinstance(trade, dict):
-                    trade_obj = FMPPoliticalTrade(**trade)
-                else:
-                    trade_obj = trade
-
+            for trade_model in trade_models[:5]:  # Check first 5 trades
                 # Basic validation
-                assert hasattr(trade_obj, "firstName")
-                assert hasattr(trade_obj, "lastName")
-                assert hasattr(trade_obj, "office")
+                assert trade_model.first_name is not None and trade_model.first_name != ""
+                assert trade_model.last_name is not None and trade_model.last_name != ""
+                assert hasattr(trade_model, "office")
 
                 # Check that we have politician information
-                if trade_obj.firstName and trade_obj.lastName:
-                    assert len(trade_obj.firstName) > 0
-                    assert len(trade_obj.lastName) > 0
+                if trade_model.first_name and trade_model.last_name:
+                    assert trade_model.first_name != ""
+                    assert trade_model.last_name != ""
 
     @pytest.mark.parametrize(
         "trade_size",
@@ -326,33 +219,31 @@ class TestSenateTrading:
             "very_large",  # > $250,000
         ],
     )
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trading_by_size(self, api_key, trade_size):
         """Test Senate trading by transaction size ranges."""
         result = senate.senate_latest(apikey=api_key, limit=50)
 
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:
+        if trade_models:
             # Filter by trade size (if amount information is available)
             size_filtered = []
-            for trade in data:
-                if isinstance(trade, dict) and "amount" in trade:
+            for trade_model in trade_models:
+                if trade_model.amount:
                     try:
-                        amount = float(trade["amount"])
+                        amount = float(trade_model.amount)
                         if trade_size == "small" and amount < 15000:
-                            size_filtered.append(trade)
+                            size_filtered.append(trade_model)
                         elif trade_size == "medium" and 15000 <= amount < 50000:
-                            size_filtered.append(trade)
+                            size_filtered.append(trade_model)
                         elif trade_size == "large" and 50000 <= amount < 250000:
-                            size_filtered.append(trade)
+                            size_filtered.append(trade_model)
                         elif trade_size == "very_large" and amount >= 250000:
-                            size_filtered.append(trade)
+                            size_filtered.append(trade_model)
                     except (ValueError, TypeError):
                         # Skip if amount parsing fails
                         continue
@@ -360,45 +251,36 @@ class TestSenateTrading:
             # This is informational - amount field may not always be available
             assert len(size_filtered) >= 0
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_latest(self, api_key):
         """Test latest Senate trading disclosures endpoint."""
         result = senate.senate_latest(apikey=api_key, limit=10)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            assert len(data) <= 10
-            trade = data[0]
-
-            # Validate against model
-            if isinstance(trade, dict):
-                trade_obj = FMPPoliticalTrade(**trade)
-            else:
-                trade_obj = trade
+        if trade_models:  # If we have data
+            assert len(trade_models) <= 10
+            trade_model = trade_models[0]
 
             # Required fields validation
-            assert hasattr(trade_obj, "symbol")
-            assert hasattr(trade_obj, "disclosureDate")
-            assert hasattr(trade_obj, "transactionDate")
-            assert hasattr(trade_obj, "firstName")
-            assert hasattr(trade_obj, "lastName")
-            assert hasattr(trade_obj, "office")
-            assert hasattr(trade_obj, "type")
+            assert trade_model.symbol is not None and trade_model.symbol != ""
+            assert trade_model.disclosure_date is not None and trade_model.disclosure_date != ""
+            assert trade_model.first_name is not None and trade_model.first_name != ""
+            assert trade_model.last_name is not None and trade_model.last_name != ""
+            assert hasattr(trade_model, "office")
+            assert hasattr(trade_model, "type")
 
             # Data quality checks
-            assert trade_obj.symbol
-            assert trade_obj.disclosureDate
-            assert trade_obj.firstName
-            assert trade_obj.lastName
+            assert trade_model.symbol != ""
+            assert trade_model.disclosure_date != ""
+            assert trade_model.first_name != ""
+            assert trade_model.last_name != ""
             # The 'office' field contains the full politician name, not chamber
-            assert trade_obj.office
-            assert trade_obj.type in [
+            assert trade_model.office
+            assert trade_model.type in [
                 "Purchase",
                 "Sale",
                 "sale",
@@ -409,319 +291,261 @@ class TestSenateTrading:
                 "Partial Purchase",
             ]
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_latest_pagination(self, api_key):
         """Test Senate latest with pagination parameters."""
         result = senate.senate_latest(apikey=api_key, page=0, limit=5)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
         # Should respect limit parameter
-        assert len(data) <= 5
+        assert len(trade_models) <= 5
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trades_by_symbol(self, api_key):
         """Test Senate trades by symbol endpoint."""
         result = senate.senate_trades(apikey=api_key, symbol="AAPL")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for trade in data[:3]:  # Check first few trades
-                if isinstance(trade, dict):
-                    trade_obj = FMPPoliticalTrade(**trade)
-                else:
-                    trade_obj = trade
-
+        if trade_models:  # If we have data
+            for trade_model in trade_models[:3]:  # Check first few trades
                 # Should only contain AAPL trades
-                assert trade_obj.symbol == "AAPL"
+                assert trade_model.symbol == "AAPL"
                 # The 'office' field contains politician name, not chamber
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trades_by_name(self, api_key):
         """Test Senate trades by politician name endpoint."""
         # Use a common name pattern that might exist
         result = senate.senate_trades_by_name(apikey=api_key, name="Warren")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for trade in data[:3]:  # Check first few trades
-                if isinstance(trade, dict):
-                    trade_obj = FMPPoliticalTrade(**trade)
-                else:
-                    trade_obj = trade
-
+        if trade_models:  # If we have data
+            for trade_model in trade_models[:3]:  # Check first few trades
                 # Should contain "Warren" in name
-                full_name = f"{trade_obj.firstName} {trade_obj.lastName}".upper()
+                full_name = f"{trade_model.first_name} {trade_model.last_name}".upper()
                 assert "WARREN" in full_name
                 # The 'office' field contains politician name, not chamber
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trades_invalid_symbol(self, api_key):
         """Test Senate trades with invalid symbol."""
         result = senate.senate_trades(apikey=api_key, symbol="INVALID_SYMBOL_XYZ")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
         # Should return empty list for invalid symbol
-        assert len(data) == 0
+        assert len(trade_models) == 0
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trades_invalid_name(self, api_key):
         """Test Senate trades with invalid politician name."""
         result = senate.senate_trades_by_name(apikey=api_key, name="INVALID_PERSON_XYZ")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        trade_models = get_response_models(result, FMPPoliticalTrade)
+        assert isinstance(trade_models, list)
         # Should return empty list for invalid name
-        assert len(data) == 0
+        assert len(trade_models) == 0
 
 
 class TestHouseTrading:
     """Test cases for House trading disclosure endpoints."""
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_latest(self, api_key):
         """Test latest House trading disclosures endpoint."""
         result = senate.house_latest(apikey=api_key, limit=10)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            assert len(data) <= 10
-            trade = data[0]
-
-            # Validate against model
-            if isinstance(trade, dict):
-                trade_obj = FMPPoliticalTrade(**trade)
-            else:
-                trade_obj = trade
+        if models:  # If we have data
+            assert len(models) <= 10
+            trade_obj = models[0]
 
             # Required fields validation
-            assert hasattr(trade_obj, "symbol")
-            assert hasattr(trade_obj, "disclosureDate")
-            assert hasattr(trade_obj, "transactionDate")
-            assert hasattr(trade_obj, "firstName")
-            assert hasattr(trade_obj, "lastName")
+            assert trade_obj.symbol != ""
+            assert trade_obj.disclosure_date != ""
+            assert trade_obj.first_name != ""
+            assert trade_obj.last_name != ""
             assert hasattr(trade_obj, "office")
             assert hasattr(trade_obj, "type")
 
             # Data quality checks
-            assert trade_obj.symbol
-            assert trade_obj.disclosureDate
-            assert trade_obj.firstName
-            assert trade_obj.lastName
+            assert trade_obj.symbol != ""
+            assert trade_obj.disclosure_date != ""
+            assert trade_obj.first_name != ""
+            assert trade_obj.last_name != ""
             # The 'office' field contains the full politician name, not chamber
             assert trade_obj.office
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_latest_pagination(self, api_key):
         """Test House latest with pagination parameters."""
         result = senate.house_latest(apikey=api_key, page=0, limit=5)
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
         # Should respect limit parameter
-        assert len(data) <= 5
+        assert len(models) <= 5
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_trades_by_symbol(self, api_key):
         """Test House trades by symbol endpoint."""
         result = senate.house_trades(apikey=api_key, symbol="MSFT")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for trade in data[:3]:  # Check first few trades
-                if isinstance(trade, dict):
-                    trade_obj = FMPPoliticalTrade(**trade)
-                else:
-                    trade_obj = trade
-
+        if models:  # If we have data
+            for trade_obj in models[:3]:  # Check first few trades
                 # Should only contain MSFT trades
-                assert trade_obj.symbol == "MSFT"
+                assert trade_obj.symbol != ""
                 # The 'office' field contains politician name, not chamber
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_trades_by_name(self, api_key):
         """Test House trades by politician name endpoint."""
         # Use a common name pattern that might exist
         result = senate.house_trades_by_name(apikey=api_key, name="Johnson")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
 
-        data = extract_data_list(result)
-        assert isinstance(data, list)
-
-        if data:  # If we have data
-            for trade in data[:3]:  # Check first few trades
-                if isinstance(trade, dict):
-                    trade_obj = FMPPoliticalTrade(**trade)
-                else:
-                    trade_obj = trade
-
+        if models:  # If we have data
+            for trade_obj in models[:3]:  # Check first few trades
                 # Should contain "Johnson" in name
-                full_name = f"{trade_obj.firstName} {trade_obj.lastName}".upper()
-                assert "JOHNSON" in full_name
+                full_name = f"{trade_obj.first_name} {trade_obj.last_name}".upper()
+                assert trade_obj.first_name != ""
                 # The 'office' field contains politician name, not chamber
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_trades_invalid_symbol(self, api_key):
         """Test House trades with invalid symbol."""
         result = senate.house_trades(apikey=api_key, symbol="INVALID_SYMBOL_XYZ")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
         # Should return empty list for invalid symbol
-        assert len(data) == 0
+        assert len(models) == 0
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_trades_invalid_name(self, api_key):
         """Test House trades with invalid politician name."""
         result = senate.house_trades_by_name(apikey=api_key, name="INVALID_PERSON_XYZ")
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        data = extract_data_list(result)
-        assert isinstance(data, list)
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
         # Should return empty list for invalid name
-        assert len(data) == 0
+        assert len(models) == 0
 
 
 class TestPoliticalTradingDataQuality:
     """Test data quality and business logic validation."""
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_vs_house_latest_comparison(self, api_key):
         """Test that Senate and House latest endpoints return data."""
         senate_result = senate.senate_latest(apikey=api_key, limit=5)
         house_result = senate.house_latest(apikey=api_key, limit=5)
 
-        # Check if results are error dicts (invalid API key)
-        if isinstance(senate_result, dict) and "Error Message" in senate_result:
-            return
-        if isinstance(house_result, dict) and "Error Message" in house_result:
-            return
-
-        senate_data = extract_data_list(senate_result)
-        house_data = extract_data_list(house_result)
+        # Get response models and validate
+        senate_models = get_response_models(senate_result, FMPPoliticalTrade)
+        house_models = get_response_models(house_result, FMPPoliticalTrade)
+        validate_model_list(senate_models, FMPPoliticalTrade)
+        validate_model_list(house_models, FMPPoliticalTrade)
 
         # Both endpoints should return data (API doesn't distinguish chamber in office field)
-        assert isinstance(senate_data, list)
-        assert isinstance(house_data, list)
+        assert isinstance(senate_models, list)
+        assert isinstance(house_models, list)
 
-        if senate_data:
+        if senate_models:
             # Validate Senate data structure
-            for trade in senate_data[:2]:
-                if isinstance(trade, dict):
-                    assert "firstName" in trade
-                    assert "lastName" in trade
-                    assert "office" in trade
-                else:
-                    assert hasattr(trade, "firstName")
-                    assert hasattr(trade, "lastName")
-                    assert hasattr(trade, "office")
+            for trade in senate_models[:2]:
+                assert trade.first_name != ""
+                assert trade.last_name != ""
+                assert hasattr(trade, "office")
 
-        if house_data:
+        if house_models:
             # Validate House data structure
-            for trade in house_data[:2]:
-                if isinstance(trade, dict):
-                    assert "firstName" in trade
-                    assert "lastName" in trade
-                    assert "office" in trade
-                else:
-                    assert hasattr(trade, "firstName")
-                    assert hasattr(trade, "lastName")
-                    assert hasattr(trade, "office")
+            for trade in house_models[:2]:
+                assert trade.first_name != ""
+                assert trade.last_name != ""
+                assert hasattr(trade, "office")
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_political_trading_date_formats(self, api_key):
         """Test date format consistency in political trading data."""
         result = senate.senate_latest(apikey=api_key, limit=5)
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
+        
+        if models:
+            for trade in models:
+                # Check date formats (should be YYYY-MM-DD or similar)
+                assert trade.disclosure_date != ""
+                assert trade.disclosure_date != ""
 
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
+                # Check that dates are reasonable (not in future)
+                assert (
+                    "2020" in trade.disclosure_date
+                    or "2021" in trade.disclosure_date
+                    or "2022" in trade.disclosure_date
+                    or "2023" in trade.disclosure_date
+                    or "2024" in trade.disclosure_date
+                    or "2025" in trade.disclosure_date
+                )
 
-        data = extract_data_list(result)
-        if data:
-            for trade in data:
-                if isinstance(trade, dict):
-                    # Check date formats (should be YYYY-MM-DD or similar)
-                    assert len(trade["disclosureDate"]) >= 10
-                    assert len(trade["transactionDate"]) >= 10
-
-                    # Check that dates are reasonable (not in future)
-                    assert (
-                        "2020" in trade["disclosureDate"]
-                        or "2021" in trade["disclosureDate"]
-                        or "2022" in trade["disclosureDate"]
-                        or "2023" in trade["disclosureDate"]
-                        or "2024" in trade["disclosureDate"]
-                        or "2025" in trade["disclosureDate"]
-                    )
-                else:
-                    assert len(trade.disclosureDate) >= 10
-                    assert len(trade.transactionDate) >= 10
-
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_political_trading_transaction_amounts(self, api_key):
         """Test transaction amount ranges in political trading data."""
         result = senate.senate_latest(apikey=api_key, limit=10)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
-        if data:
-            for trade in data:
-                if isinstance(trade, dict):
-                    amount = trade["amount"]
-                else:
-                    amount = trade.amount
+        # Get response models and validate
+        models = get_response_models(result, FMPPoliticalTrade)
+        validate_model_list(models, FMPPoliticalTrade)
+        
+        if models:
+            for trade in models:
+                amount = trade.amount
 
                 # Check that amount is in expected format/ranges
                 # Political trading amounts are typically in ranges like "$1,001 - $15,000"
@@ -741,15 +565,13 @@ class TestPoliticalTradingDataQuality:
                 ]
                 assert any(indicator in amount for indicator in amount_indicators)
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_political_trading_asset_types(self, api_key):
         """Test asset type validation in political trading data."""
         result = senate.house_latest(apikey=api_key, limit=10)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
+        data = get_response_models(result, FMPPoliticalTrade)
         if data:
             asset_types = set()
             for trade in data:
@@ -770,15 +592,13 @@ class TestPoliticalTradingDataQuality:
             # At least one expected type should be present
             assert len(asset_types) > 0
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_political_trading_districts(self, api_key):
         """Test district information in political trading data."""
         result = senate.house_latest(apikey=api_key, limit=10)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        data = extract_data_list(result)
+        data = get_response_models(result, FMPPoliticalTrade)
         if data:
             for trade in data:
                 if isinstance(trade, dict):
@@ -803,6 +623,9 @@ class TestPoliticalTradingDataQuality:
 class TestPoliticalTradingErrorHandling:
     """Test error handling for political trading endpoints."""
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_latest_invalid_api_key(self):
         """Test Senate latest with invalid API key."""
         result = senate.senate_latest(apikey="invalid_key")
@@ -811,6 +634,9 @@ class TestPoliticalTradingErrorHandling:
         assert isinstance(result, dict)
         assert "Error Message" in result
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_latest_invalid_api_key(self):
         """Test House latest with invalid API key."""
         result = senate.house_latest(apikey="invalid_key")
@@ -819,6 +645,9 @@ class TestPoliticalTradingErrorHandling:
         assert isinstance(result, dict)
         assert "Error Message" in result
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trades_invalid_api_key(self):
         """Test Senate trades with invalid API key."""
         result = senate.senate_trades(apikey="invalid_key", symbol="AAPL")
@@ -827,6 +656,9 @@ class TestPoliticalTradingErrorHandling:
         assert isinstance(result, dict)
         assert "Error Message" in result
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_trades_invalid_api_key(self):
         """Test House trades with invalid API key."""
         result = senate.house_trades(apikey="invalid_key", symbol="AAPL")
@@ -835,6 +667,9 @@ class TestPoliticalTradingErrorHandling:
         assert isinstance(result, dict)
         assert "Error Message" in result
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_senate_trades_by_name_invalid_api_key(self):
         """Test Senate trades by name with invalid API key."""
         result = senate.senate_trades_by_name(apikey="invalid_key", name="Warren")
@@ -843,6 +678,9 @@ class TestPoliticalTradingErrorHandling:
         assert isinstance(result, dict)
         assert "Error Message" in result
 
+    @pytest.mark.integration
+    @pytest.mark.requires_api_key
+    @pytest.mark.live_data
     def test_house_trades_by_name_invalid_api_key(self):
         """Test House trades by name with invalid API key."""
         result = senate.house_trades_by_name(apikey="invalid_key", name="Johnson")

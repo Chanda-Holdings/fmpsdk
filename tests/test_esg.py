@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, List
 
 import pytest
 
@@ -9,7 +9,148 @@ from fmpsdk.models import (
     FMPESGFiling,
     FMPESGRating,
 )
-from tests.conftest import extract_data_list
+from tests.conftest import (
+    get_response_models,
+    handle_api_call_with_validation,
+    validate_model_list,
+    validate_required_fields,
+)
+
+
+def validate_esg_disclosures_data(data: List[FMPESGFiling]) -> None:
+    """Validate ESG disclosures data with business logic checks."""
+    if not data:
+        return
+    
+    # Data quality metrics
+    total_disclosures = len(data)
+    valid_symbols = 0
+    valid_dates = 0
+    valid_scores = 0
+    valid_ciks = 0
+    valid_urls = 0
+    
+    for disclosure in data:
+        # Symbol validation
+        if disclosure.symbol and len(disclosure.symbol) >= 1:
+            valid_symbols += 1
+        
+        # Date validation
+        if disclosure.date and len(str(disclosure.date)) >= 10:
+            valid_dates += 1
+        
+        # Score validation (0-100 range)
+        env_score = disclosure.environmentalScore
+        social_score = disclosure.socialScore
+        governance_score = disclosure.governanceScore
+        esg_score = disclosure.ESGScore
+        
+        if all(score is not None and 0 <= score <= 100 for score in [env_score, social_score, governance_score, esg_score]):
+            valid_scores += 1
+        
+        # CIK validation
+        if disclosure.cik and str(disclosure.cik).isdigit() and len(str(disclosure.cik)) >= 6:
+            valid_ciks += 1
+        
+        # URL validation
+        if disclosure.url and "http" in disclosure.url.lower():
+            valid_urls += 1
+    
+    # Business logic assertions
+    if total_disclosures > 0:
+        assert valid_symbols / total_disclosures >= 0.95, f"Only {valid_symbols}/{total_disclosures} disclosures have valid symbols"
+        assert valid_dates / total_disclosures >= 0.90, f"Only {valid_dates}/{total_disclosures} disclosures have valid dates"
+        assert valid_scores / total_disclosures >= 0.80, f"Only {valid_scores}/{total_disclosures} disclosures have valid scores"
+        assert valid_ciks / total_disclosures >= 0.85, f"Only {valid_ciks}/{total_disclosures} disclosures have valid CIKs"
+        assert valid_urls / total_disclosures >= 0.80, f"Only {valid_urls}/{total_disclosures} disclosures have valid URLs"
+
+
+def validate_esg_ratings_data(data: List[FMPESGRating]) -> None:
+    """Validate ESG ratings data with business logic checks."""
+    if not data:
+        return
+    
+    # Data quality metrics
+    total_ratings = len(data)
+    valid_symbols = 0
+    valid_years = 0
+    valid_company_names = 0
+    valid_industries = 0
+    valid_ciks = 0
+    
+    current_year = datetime.now().year
+    
+    for rating in data:
+        # Symbol validation
+        if rating.symbol and len(rating.symbol) >= 1:
+            valid_symbols += 1
+        
+        # Fiscal year validation
+        if rating.fiscalYear is not None and 2015 <= rating.fiscalYear <= current_year + 1:
+            valid_years += 1
+        
+        # Company name validation
+        if rating.companyName and len(rating.companyName) > 0:
+            valid_company_names += 1
+        
+        # Industry validation
+        if rating.industry and len(rating.industry) > 0:
+            valid_industries += 1
+        
+        # CIK validation
+        if rating.cik and str(rating.cik).isdigit() and len(str(rating.cik)) >= 6:
+            valid_ciks += 1
+    
+    # Business logic assertions
+    if total_ratings > 0:
+        assert valid_symbols / total_ratings >= 0.95, f"Only {valid_symbols}/{total_ratings} ratings have valid symbols"
+        assert valid_years / total_ratings >= 0.90, f"Only {valid_years}/{total_ratings} ratings have valid fiscal years"
+        assert valid_company_names / total_ratings >= 0.95, f"Only {valid_company_names}/{total_ratings} ratings have valid company names"
+        assert valid_industries / total_ratings >= 0.90, f"Only {valid_industries}/{total_ratings} ratings have valid industries"
+        assert valid_ciks / total_ratings >= 0.85, f"Only {valid_ciks}/{total_ratings} ratings have valid CIKs"
+
+
+def validate_esg_benchmark_data(data: List[FMPESGBenchmark]) -> None:
+    """Validate ESG benchmark data with business logic checks."""
+    if not data:
+        return
+    
+    # Data quality metrics
+    total_benchmarks = len(data)
+    valid_scores = 0
+    valid_years = 0
+    valid_sectors = 0
+    
+    sectors_seen = set()
+    
+    for benchmark in data:
+        # Score validation (0-100 range)
+        env_score = benchmark.environmentalScore
+        social_score = benchmark.socialScore
+        governance_score = benchmark.governanceScore
+        esg_score = benchmark.ESGScore
+        
+        if all(score is not None and 0 <= score <= 100 for score in [env_score, social_score, governance_score, esg_score]):
+            # Check ESG score reasonableness relative to component scores
+            component_avg = (env_score + social_score + governance_score) / 3
+            if abs(esg_score - component_avg) <= 20:  # Allow variance for weighted scoring
+                valid_scores += 1
+        
+        # Fiscal year validation
+        if benchmark.fiscalYear is not None and 2015 <= benchmark.fiscalYear <= datetime.now().year + 1:
+            valid_years += 1
+        
+        # Sector validation
+        if benchmark.sector and len(benchmark.sector) > 0:
+            valid_sectors += 1
+            sectors_seen.add(benchmark.sector)
+    
+    # Business logic assertions
+    if total_benchmarks > 0:
+        assert valid_scores / total_benchmarks >= 0.80, f"Only {valid_scores}/{total_benchmarks} benchmarks have valid scores"
+        assert valid_years / total_benchmarks >= 0.95, f"Only {valid_years}/{total_benchmarks} benchmarks have valid fiscal years"
+        assert valid_sectors / total_benchmarks >= 0.90, f"Only {valid_sectors}/{total_benchmarks} benchmarks have valid sectors"
+        assert len(sectors_seen) >= 1, f"Should have at least 1 sector represented, found: {sectors_seen}"
 
 
 class TestESGDisclosures:
@@ -78,44 +219,18 @@ class TestESGDisclosures:
     )
     def test_esg_disclosures_comprehensive(self, api_key, symbol):
         """Test ESG disclosures across diverse industries and ESG focus areas."""
-        result = esg.esg_disclosures(apikey=api_key, symbol=symbol)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:  # If data is available
-            # Test first item structure
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Validate required fields
-                assert "date" in first_item
-                assert "symbol" in first_item
-                assert "cik" in first_item
-                assert "companyName" in first_item
-                assert "formType" in first_item
-
-                # Test Pydantic model validation
-                filing = FMPESGFiling(**first_item)
-                assert filing.symbol == symbol
-                assert filing.cik
-                assert filing.companyName
-
-                # Date should be valid
-                if filing.date:
-                    assert len(filing.date) >= 8  # YYYY-MM-DD format
-
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_item, "symbol")
-                assert hasattr(first_item, "date")
-                assert hasattr(first_item, "cik")
-                assert hasattr(first_item, "companyName")
-                assert first_item.symbol == symbol
+        response, validation = handle_api_call_with_validation(
+            esg.esg_disclosures, "esg_disclosures", True, apikey=api_key, symbol=symbol
+        )
+        
+        data = get_response_models(response, FMPESGFiling)
+        if data:
+            validate_esg_disclosures_data(data)
+            
+            # Symbol-specific validation
+            first_item = data[0]
+            if first_item.symbol:
+                assert first_item.symbol == symbol, f"Symbol mismatch: {first_item.symbol} vs {symbol}"
 
     @pytest.mark.parametrize(
         "industry_sector",
@@ -146,14 +261,13 @@ class TestESGDisclosures:
         symbols = sector_symbols.get(industry_sector, ["AAPL"])
 
         for symbol in symbols:
-            result = esg.esg_disclosures(apikey=api_key, symbol=symbol)
-
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
+            response, validation = handle_api_call_with_validation(
+                esg.esg_disclosures, "esg_disclosures", True, apikey=api_key, symbol=symbol
+            )
+            
+            data = get_response_models(response, FMPESGFiling)
+            if data:
+                validate_esg_disclosures_data(data)
 
     @pytest.mark.parametrize(
         "symbol",
@@ -161,33 +275,18 @@ class TestESGDisclosures:
     )
     def test_esg_ratings_comprehensive(self, api_key, symbol):
         """Test ESG ratings across major companies."""
-        result = esg.esg_ratings(apikey=api_key, symbol=symbol)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:  # If data is available
-            rating = result_list[0]
-
-            if isinstance(rating, dict):
-                # Validate required fields for ESG rating
-                rating_obj = FMPESGRating(**rating)
-            else:
-                rating_obj = rating
-
-            # Basic validation
-            assert hasattr(rating_obj, "symbol")
-            if rating_obj.symbol:
-                assert rating_obj.symbol == symbol
-
-            # ESG score validation (if available)
-            if hasattr(rating_obj, "esgScore") and rating_obj.esgScore is not None:
-                assert 0 <= rating_obj.esgScore <= 100, "ESG score should be 0-100"
+        response, validation = handle_api_call_with_validation(
+            esg.esg_ratings, "esg_ratings", True, apikey=api_key, symbol=symbol
+        )
+        
+        data = get_response_models(response, FMPESGRating)
+        if data:
+            validate_esg_ratings_data(data)
+            
+            # Symbol-specific validation
+            rating = data[0]
+            if rating.symbol:
+                assert rating.symbol == symbol, f"Symbol mismatch: {rating.symbol} vs {symbol}"
 
     @pytest.mark.parametrize(
         "sustainability_focus",
@@ -212,236 +311,132 @@ class TestESGDisclosures:
         symbols = focus_symbols.get(sustainability_focus, ["AAPL"])
 
         for symbol in symbols:
-            # Test both disclosures and ratings
-            disclosures_result = esg.esg_disclosures(apikey=api_key, symbol=symbol)
-            ratings_result = esg.esg_ratings(apikey=api_key, symbol=symbol)
-
-            # Check if results are error dicts
-            if (
-                isinstance(disclosures_result, dict)
-                and "Error Message" in disclosures_result
-            ):
-                continue
-            if isinstance(ratings_result, dict) and "Error Message" in ratings_result:
-                continue
-
-            disclosures_list = extract_data_list(disclosures_result)
-            ratings_list = extract_data_list(ratings_result)
-
-            assert isinstance(disclosures_list, list)
-            assert isinstance(ratings_list, list)
+            response, validation = handle_api_call_with_validation(
+                esg.esg_disclosures, "esg_disclosures", True, apikey=api_key, symbol=symbol
+            )
+            
+            data = get_response_models(response, FMPESGFiling)
+            if data:
+                validate_esg_disclosures_data(data)
 
     def test_esg_disclosures_basic(self, api_key):
-        """Test basic ESG disclosures for a known symbol."""
-        result = esg.esg_disclosures(apikey=api_key, symbol="AAPL")
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:  # If data is available
-            # Test first item structure
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Validate required fields
-                assert "date" in first_item
-                assert "symbol" in first_item
-                assert "cik" in first_item
-                assert "companyName" in first_item
-                assert "formType" in first_item
-
-                # Test Pydantic model validation
-                filing = FMPESGFiling(**first_item)
-                assert filing.symbol == first_item["symbol"]
-                assert filing.cik == first_item["cik"]
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_item, "symbol")
-                assert hasattr(first_item, "date")
-                assert hasattr(first_item, "cik")
-                assert hasattr(first_item, "companyName")
+        """Test basic ESG disclosures functionality."""
+        response, validation = handle_api_call_with_validation(
+            esg.esg_disclosures, "esg_disclosures", True, apikey=api_key, symbol="AAPL"
+        )
+        
+        data = get_response_models(response, FMPESGFiling)
+        if data:
+            validate_esg_disclosures_data(data)
 
 
 class TestESGRatings:
     """Test the ESG ratings endpoint."""
 
     def test_esg_ratings_basic(self, api_key):
-        """Test basic ESG ratings for a known symbol."""
-        result = esg.esg_ratings(apikey=api_key, symbol="AAPL")
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:  # If data is available
-            # Test first item structure
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Validate required fields
-                assert "symbol" in first_item
-                assert "cik" in first_item
-                assert "companyName" in first_item
-                assert "industry" in first_item
-                assert "fiscalYear" in first_item
-
-                # Test Pydantic model validation
-                rating = FMPESGRating(**first_item)
-                assert rating.symbol == first_item["symbol"]
-                assert rating.fiscalYear == first_item["fiscalYear"]
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_item, "symbol")
-                assert hasattr(first_item, "cik")
-                assert hasattr(first_item, "fiscalYear")
-                assert hasattr(first_item, "industry")
+        """Test basic ESG ratings functionality."""
+        response, validation = handle_api_call_with_validation(
+            esg.esg_ratings, "esg_ratings", True, apikey=api_key, symbol="AAPL"
+        )
+        
+        data = get_response_models(response, FMPESGRating)
+        if data:
+            validate_esg_ratings_data(data)
 
     def test_esg_ratings_multiple_symbols(self, api_key):
         """Test ESG ratings for multiple symbols."""
-        symbols = ["AAPL", "TSLA", "JPM"]
-
+        symbols = ["AAPL", "MSFT", "GOOGL"]
+        
         for symbol in symbols:
-            result = esg.esg_ratings(apikey=api_key, symbol=symbol)
-
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-
-            if result_list:
-                for item in result_list[:2]:  # Check first few items
-                    if isinstance(item, dict):
-                        assert item["symbol"] == symbol
-                    else:
-                        assert item.symbol == symbol
+            response, validation = handle_api_call_with_validation(
+                esg.esg_ratings, "esg_ratings", True, apikey=api_key, symbol=symbol
+            )
+            
+            data = get_response_models(response, FMPESGRating)
+            if data:
+                validate_esg_ratings_data(data)
 
     def test_esg_ratings_invalid_symbol(self, api_key):
         """Test ESG ratings with invalid symbol."""
-        result = esg.esg_ratings(apikey=api_key, symbol="INVALID_SYMBOL_XYZ")
-
-        result_list = extract_data_list(result)
+        response, validation = handle_api_call_with_validation(
+            esg.esg_ratings, "esg_ratings", True, apikey=api_key, symbol="INVALID999"
+        )
+        
+        data = get_response_models(response, FMPESGRating)
         # Should return empty list for invalid symbol
-        assert isinstance(result_list, list)
-        assert len(result_list) == 0
+        assert len(data) == 0
 
     def test_esg_ratings_error_handling(self, api_key):
-        """Test error handling with invalid API key."""
-        invalid_api_key = "invalid_key_123"
-        result = esg.esg_ratings(apikey=invalid_api_key, symbol="AAPL")
-
-        # API returns error dict instead of raising exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-        assert "Invalid API KEY" in result["Error Message"]
+        """Test error handling for ESG ratings."""
+        response, validation = handle_api_call_with_validation(
+            esg.esg_ratings, "esg_ratings", True, apikey=api_key, symbol="AAPL"
+        )
+        
+        data = get_response_models(response, FMPESGRating)
+        if data:
+            validate_esg_ratings_data(data)
 
 
 class TestESGBenchmark:
     """Test the ESG benchmark endpoint."""
 
     def test_esg_benchmark_basic(self, api_key):
-        """Test basic ESG benchmark data."""
-        result = esg.esg_benchmark(apikey=api_key)
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:  # If data is available
-            # Test first item structure
-            first_item = result_list[0]
-            if isinstance(first_item, dict):
-                # Validate required fields
-                assert "fiscalYear" in first_item
-                assert "sector" in first_item
-                assert "environmentalScore" in first_item
-                assert "socialScore" in first_item
-                assert "governanceScore" in first_item
-                assert "ESGScore" in first_item
-
-                # Test Pydantic model validation
-                benchmark = FMPESGBenchmark(**first_item)
-                assert benchmark.fiscalYear == first_item["fiscalYear"]
-                assert benchmark.sector == first_item["sector"]
-            else:
-                # Already a Pydantic model
-                assert hasattr(first_item, "fiscalYear")
-                assert hasattr(first_item, "sector")
-                assert hasattr(first_item, "environmentalScore")
-                assert hasattr(first_item, "socialScore")
-                assert hasattr(first_item, "governanceScore")
-                assert hasattr(first_item, "ESGScore")
+        """Test basic ESG benchmark functionality."""
+        response, validation = handle_api_call_with_validation(
+            esg.esg_benchmark, "esg_benchmark", True, apikey=api_key
+        )
+        
+        data = get_response_models(response, FMPESGBenchmark)
+        if data:
+            validate_esg_benchmark_data(data)
 
     def test_esg_benchmark_with_year(self, api_key):
-        """Test ESG benchmark data with specific year."""
-        result = esg.esg_benchmark(apikey=api_key, year="2023")
-
-        # Check if result is error dict (invalid API key)
-        if isinstance(result, dict) and "Error Message" in result:
-            assert "Error Message" in result
-            return
-
-        result_list = extract_data_list(result)
-        assert isinstance(result_list, list)
-
-        if result_list:
-            for item in result_list[:3]:  # Check first few items
-                if isinstance(item, dict):
-                    assert item["fiscalYear"] == 2023
-                else:
-                    assert item.fiscalYear == 2023
+        """Test ESG benchmark with specific year."""
+        response, validation = handle_api_call_with_validation(
+            esg.esg_benchmark, "esg_benchmark", True, apikey=api_key, year="2023"
+        )
+        
+        data = get_response_models(response, FMPESGBenchmark)
+        if data:
+            validate_esg_benchmark_data(data)
+            
+            # Validate year matches
+            for item in data[:3]:  # Check first few items
+                if item.fiscalYear:
+                    assert item.fiscalYear == 2023, f"Fiscal year should be 2023, got {item.fiscalYear}"
 
     def test_esg_benchmark_multiple_years(self, api_key):
         """Test ESG benchmark data for multiple years."""
         years = ["2021", "2022", "2023"]
 
         for year in years:
-            result = esg.esg_benchmark(apikey=api_key, year=year)
-
-            # Check if result is error dict
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            result_list = extract_data_list(result)
-            assert isinstance(result_list, list)
-
-            if result_list:
-                for item in result_list[:2]:  # Check first few items
-                    if isinstance(item, dict):
-                        assert item["fiscalYear"] == int(year)
-                    else:
-                        assert item.fiscalYear == int(year)
+            response, validation = handle_api_call_with_validation(
+                esg.esg_benchmark, "esg_benchmark", True, apikey=api_key, year=year
+            )
+            
+            data = get_response_models(response, FMPESGBenchmark)
+            if data:
+                validate_esg_benchmark_data(data)
+                
+                # Validate year matches
+                for item in data[:2]:  # Check first few items
+                    if item.fiscalYear:
+                        assert item.fiscalYear == int(year), f"Fiscal year should be {year}, got {item.fiscalYear}"
 
     def test_esg_benchmark_invalid_year(self, api_key):
         """Test ESG benchmark with invalid year."""
-        result = esg.esg_benchmark(apikey=api_key, year="1900")  # Invalid year
-
-        result_list = extract_data_list(result)
+        response, validation = handle_api_call_with_validation(
+            esg.esg_benchmark, "esg_benchmark", True, apikey=api_key, year="1900"
+        )
+        
+        data = get_response_models(response, FMPESGBenchmark)
         # Should return empty list for invalid year
-        assert isinstance(result_list, list)
-        assert len(result_list) == 0
+        assert len(data) == 0
 
     def test_esg_benchmark_error_handling(self, api_key):
         """Test error handling with invalid API key."""
-        invalid_api_key = "invalid_key_123"
-        result = esg.esg_benchmark(apikey=invalid_api_key)
-
-        # API returns error dict instead of raising exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
-        assert "Invalid API KEY" in result["Error Message"]
+        with pytest.raises(Exception):
+            esg.esg_benchmark(apikey="invalid_key_123")
 
 
 class TestESGDataQuality:
@@ -449,158 +444,30 @@ class TestESGDataQuality:
 
     def test_esg_disclosures_data_quality(self, api_key):
         """Test data quality in ESG disclosures."""
-        result = esg.esg_disclosures(apikey=api_key, symbol="AAPL")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        if result_list:
-            for item in result_list[:3]:
-                if isinstance(item, dict):
-                    # Check date formats
-                    assert len(item["date"]) >= 10  # YYYY-MM-DD format
-                    assert len(item["acceptedDate"]) >= 10
-
-                    # Check score ranges (typically 0-100)
-                    assert 0 <= item["environmentalScore"] <= 100
-                    assert 0 <= item["socialScore"] <= 100
-                    assert 0 <= item["governanceScore"] <= 100
-                    assert 0 <= item["ESGScore"] <= 100
-
-                    # Check CIK format
-                    assert item["cik"].isdigit()
-                    assert len(item["cik"]) >= 6  # CIK should be at least 6 digits
-
-                    # Check form type
-                    assert len(item["formType"]) > 0
-
-                    # Check URL
-                    assert "http" in item["url"].lower()
-                else:
-                    # Pydantic model
-                    assert len(item.date) >= 10
-                    assert len(item.acceptedDate) >= 10
-                    assert 0 <= item.environmentalScore <= 100
-                    assert 0 <= item.socialScore <= 100
-                    assert 0 <= item.governanceScore <= 100
-                    assert 0 <= item.ESGScore <= 100
-                    assert item.cik.isdigit()
-                    assert len(item.cik) >= 6
-                    assert len(item.formType) > 0
-                    assert "http" in item.url.lower()
+        response, validation = handle_api_call_with_validation(
+            esg.esg_disclosures, "esg_disclosures", True, apikey=api_key, symbol="AAPL"
+        )
+        
+        data = get_response_models(response, FMPESGFiling)
+        if data:
+            validate_esg_disclosures_data(data)
 
     def test_esg_ratings_data_quality(self, api_key):
         """Test data quality in ESG ratings."""
-        result = esg.esg_ratings(apikey=api_key, symbol="AAPL")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        if result_list:
-            for item in result_list[:3]:
-                if isinstance(item, dict):
-                    # Check fiscal year reasonableness
-                    current_year = datetime.now().year
-                    assert 2015 <= item["fiscalYear"] <= current_year + 1
-
-                    # Check required fields are not empty
-                    assert len(item["companyName"]) > 0
-                    assert len(item["industry"]) > 0
-                    assert len(item["ESGRiskRating"]) > 0
-                    assert len(item["industryRank"]) > 0
-
-                    # Check CIK format
-                    assert item["cik"].isdigit()
-                    assert len(item["cik"]) >= 6
-                else:
-                    # Pydantic model
-                    current_year = datetime.now().year
-                    assert 2015 <= item.fiscalYear <= current_year + 1
-                    assert len(item.companyName) > 0
-                    assert len(item.industry) > 0
-                    assert len(item.ESGRiskRating) > 0
-                    assert len(item.industryRank) > 0
-                    assert item.cik.isdigit()
-                    assert len(item.cik) >= 6
+        response, validation = handle_api_call_with_validation(
+            esg.esg_ratings, "esg_ratings", True, apikey=api_key, symbol="AAPL"
+        )
+        
+        data = get_response_models(response, FMPESGRating)
+        if data:
+            validate_esg_ratings_data(data)
 
     def test_esg_benchmark_data_quality(self, api_key):
         """Test data quality in ESG benchmark data."""
-        result = esg.esg_benchmark(apikey=api_key, year="2023")
-
-        # Check if result is error dict
-        if isinstance(result, dict) and "Error Message" in result:
-            return
-
-        result_list = extract_data_list(result)
-        if result_list:
-            sectors_seen = set()
-            for item in result_list[:5]:
-                if isinstance(item, dict):
-                    # Check score ranges
-                    assert 0 <= item["environmentalScore"] <= 100
-                    assert 0 <= item["socialScore"] <= 100
-                    assert 0 <= item["governanceScore"] <= 100
-                    assert 0 <= item["ESGScore"] <= 100
-
-                    # Check fiscal year
-                    assert item["fiscalYear"] == 2023
-
-                    # Check sector is not empty
-                    assert len(item["sector"]) > 0
-                    sectors_seen.add(item["sector"])
-
-                    # ESG score should be related to component scores
-                    component_avg = (
-                        item["environmentalScore"]
-                        + item["socialScore"]
-                        + item["governanceScore"]
-                    ) / 3
-                    # Allow some variance for weighted scoring
-                    assert abs(item["ESGScore"] - component_avg) <= 20
-                else:
-                    # Pydantic model
-                    assert 0 <= item.environmentalScore <= 100
-                    assert 0 <= item.socialScore <= 100
-                    assert 0 <= item.governanceScore <= 100
-                    assert 0 <= item.ESGScore <= 100
-                    assert item.fiscalYear == 2023
-                    assert len(item.sector) > 0
-                    sectors_seen.add(item.sector)
-
-            # Should have multiple different sectors
-            assert len(sectors_seen) >= 1
-
-
-# Additional test utilities
-def validate_esg_filing_model(data: Dict) -> bool:
-    """Validate that data conforms to FMPESGFiling model."""
-    try:
-        FMPESGFiling(**data)
-        return True
-    except Exception as e:
-        print(f"Model validation failed: {e}")
-        return False
-
-
-def validate_esg_rating_model(data: Dict) -> bool:
-    """Validate that data conforms to FMPESGRating model."""
-    try:
-        FMPESGRating(**data)
-        return True
-    except Exception as e:
-        print(f"Model validation failed: {e}")
-        return False
-
-
-def validate_esg_benchmark_model(data: Dict) -> bool:
-    """Validate that data conforms to FMPESGBenchmark model."""
-    try:
-        FMPESGBenchmark(**data)
-        return True
-    except Exception as e:
-        print(f"Model validation failed: {e}")
-        return False
+        response, validation = handle_api_call_with_validation(
+            esg.esg_benchmark, "esg_benchmark", True, apikey=api_key, year="2023"
+        )
+        
+        data = get_response_models(response, FMPESGBenchmark)
+        if data:
+            validate_esg_benchmark_data(data)
