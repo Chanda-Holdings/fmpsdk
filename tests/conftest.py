@@ -20,40 +20,40 @@ def api_key():
     return key
 
 
-def pytest_configure(config):
-    """Configure pytest with custom markers and settings."""
-    # Register custom markers to avoid warnings
-    config.addinivalue_line(
-        "markers", "integration: mark test as integration test requiring API access"
-    )
-    config.addinivalue_line(
-        "markers", "unit: mark test as unit test not requiring external dependencies"
-    )
-    config.addinivalue_line(
-        "markers", "requires_api_key: mark test as requiring valid API key"
-    )
-    config.addinivalue_line("markers", "live_data: mark test as using live API data")
-    config.addinivalue_line("markers", "slow: mark test as potentially slow running")
-    config.addinivalue_line(
-        "markers", "premium: mark test as requiring premium API access"
-    )
+# def pytest_configure(config):
+#     """Configure pytest with custom markers and settings."""
+#     # Register custom markers to avoid warnings
+#     config.addinivalue_line(
+#         "markers", "integration: mark test as integration test requiring API access"
+#     )
+#     config.addinivalue_line(
+#         "markers", "unit: mark test as unit test not requiring external dependencies"
+#     )
+#     config.addinivalue_line(
+#         "markers", "requires_api_key: mark test as requiring valid API key"
+#     )
+#     config.addinivalue_line("markers", "live_data: mark test as using live API data")
+#     config.addinivalue_line("markers", "slow: mark test as potentially slow running")
+#     config.addinivalue_line(
+#         "markers", "premium: mark test as requiring premium API access"
+#     )
 
 
-def pytest_runtest_setup(item):
-    """
-    Setup function that runs before each test.
+# def pytest_runtest_setup(item):
+#     """
+#     Setup function that runs before each test.
 
-    This function handles test skipping based on markers and available resources.
-    """
-    # Skip tests that require API key if not available
-    if item.get_closest_marker("requires_api_key"):
-        if not os.getenv("FMP_API_KEY"):
-            pytest.skip("FMP_API_KEY environment variable not set")
+#     This function handles test skipping based on markers and available resources.
+#     """
+#     # Skip tests that require API key if not available
+#     if item.get_closest_marker("requires_api_key"):
+#         if not os.getenv("FMP_API_KEY"):
+#             pytest.skip("FMP_API_KEY environment variable not set")
 
-    # Skip premium tests if explicitly marked (can be enabled via command line)
-    if item.get_closest_marker("premium"):
-        if not item.config.getoption("--run-premium", default=False):
-            pytest.skip("Premium tests skipped (use --run-premium to run)")
+#     # Skip premium tests if explicitly marked (can be enabled via command line)
+#     if item.get_closest_marker("premium"):
+#         if not item.config.getoption("--run-premium", default=False):
+#             pytest.skip("Premium tests skipped (use --run-premium to run)")
 
 
 def handle_api_call(func, *args, **kwargs):
@@ -82,28 +82,28 @@ def handle_api_call(func, *args, **kwargs):
     # Let all other exceptions bubble up to fail the test
 
 
-def pytest_addoption(parser):
-    """Add custom command line options."""
-    parser.addoption(
-        "--run-premium",
-        action="store_true",
-        default=False,
-        help="Run tests marked as requiring premium API access",
-    )
-    parser.addoption(
-        "--api-key",
-        action="store",
-        default=None,
-        help="FMP API key to use for testing (overrides FMP_API_KEY env var)",
-    )
+# def pytest_addoption(parser):
+#     """Add custom command line options."""
+#     parser.addoption(
+#         "--run-premium",
+#         action="store_true",
+#         default=False,
+#         help="Run tests marked as requiring premium API access",
+#     )
+#     parser.addoption(
+#         "--api-key",
+#         action="store",
+#         default=None,
+#         help="FMP API key to use for testing (overrides FMP_API_KEY env var)",
+#     )
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_api_key_from_option(request):
-    """Set up API key from command line option if provided."""
-    api_key_option = request.config.getoption("--api-key")
-    if api_key_option:
-        os.environ["FMP_API_KEY"] = api_key_option
+# @pytest.fixture(scope="session", autouse=True)
+# def setup_api_key_from_option(request):
+#     """Set up API key from command line option if provided."""
+#     api_key_option = request.config.getoption("--api-key")
+#     if api_key_option:
+#         os.environ["FMP_API_KEY"] = api_key_option
 
 
 @pytest.fixture(scope="session")
@@ -265,52 +265,6 @@ def handle_api_call_with_validation(func, endpoint_name: str, *args, **kwargs):
         raise
 
 
-def assert_valid_response(response: Any) -> None:
-    """
-    Assert that a response is valid.
-
-    Args:
-        response: Response to validate
-    """
-    assert response is not None, "Response should not be None"
-
-    if isinstance(response, dict):
-        # Check for error messages
-        assert (
-            "Error Message" not in response
-        ), f"API returned error: {response.get('Error Message')}"
-    elif isinstance(response, list):
-        # List response is valid
-        pass
-    else:
-        # Other types are generally valid
-        pass
-
-
-def validate_api_response(response: Any, expected_type: type = None) -> Any:
-    """
-    Validate API response structure and optionally type.
-
-    Args:
-        response: Response to validate
-        expected_type: Expected response type (optional)
-
-    Returns:
-        Validated response
-    """
-    assert_valid_response(response)
-
-    if expected_type:
-        if expected_type == list:
-            if not isinstance(response, list):
-                # Convert single items to list
-                response = [response] if response is not None else []
-        elif expected_type == dict:
-            assert isinstance(response, dict), f"Expected dict, got {type(response)}"
-
-    return response
-
-
 def get_first_item_from_response(response: List[Any]) -> Any:
     """
     Get the first item from a response list.
@@ -325,16 +279,3 @@ def get_first_item_from_response(response: List[Any]) -> Any:
     assert len(response) > 0, "Response list must not be empty"
     return response[0]
 
-
-def get_all_items_from_response(response: List[Any]) -> List[Any]:
-    """
-    Get all items from a response list.
-
-    Args:
-        response: List response
-
-    Returns:
-        All items from the list
-    """
-    assert isinstance(response, list), "Response must be a list"
-    return response

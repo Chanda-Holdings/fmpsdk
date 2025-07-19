@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Dict
 
 import pytest
 
@@ -7,14 +6,11 @@ from fmpsdk import insider_trades
 from fmpsdk.models import (
     FMPAcquisitionOwnership,
     FMPInsiderTrade,
-    FMPInsiderTradeStatistics,
-    FMPInsiderTransactionType,
+    FMPInsiderTradeStatistics
 )
 from tests.conftest import (
     get_response_models,
-    handle_api_call_with_validation,
-    validate_model_list,
-    validate_required_fields,
+    handle_api_call_with_validation
 )
 
 

@@ -1,7 +1,5 @@
-import os
 import time
 from datetime import datetime
-from typing import List
 
 import pytest
 
@@ -10,9 +8,7 @@ from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPDCFCustomValuation, FMPDcfValuation
 from tests.conftest import (
     get_response_models,
-    handle_api_call_with_validation,
     validate_model_list,
-    validate_required_fields,
 )
 
 RESPONSE_TIME_LIMIT = 10

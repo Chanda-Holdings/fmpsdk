@@ -1,4 +1,3 @@
-import json
 import logging
 from unittest.mock import Mock, patch
 
@@ -7,12 +6,6 @@ import requests
 
 import fmpsdk.url_methods as url_methods
 from fmpsdk.url_methods import BASE_URL_STABLE, BASE_URL_V4
-from tests.conftest import (
-    get_response_models,
-    handle_api_call_with_validation,
-    validate_model_list,
-    validate_required_fields,
-)
 
 # Access the private functions before any classes to avoid name mangling
 get_base_url_func = url_methods.__get_base_url

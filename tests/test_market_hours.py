@@ -5,12 +5,9 @@ import pytest
 from fmpsdk import market_hours
 from fmpsdk.models import FMPExchangeHoliday, FMPExchangeMarketHours
 from tests.conftest import (
-    assert_valid_response,
     get_response_models,
     handle_api_call_with_validation,
-    validate_api_response,
-    validate_model_list,
-    validate_required_fields,
+    validate_model_list
 )
 
 

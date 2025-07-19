@@ -1,16 +1,8 @@
-import time
 from datetime import datetime
 
 import pytest
-from pydantic_core import ValidationError
 
 from fmpsdk.exceptions import PremiumEndpointException
-from fmpsdk.models import FMPEnterpriseValue  # Added for enterprise_values
-from fmpsdk.models import (
-    FMPLatestFinancialStatement,  # Added for financial_statements_latest
-)
-from fmpsdk.models import FMPOwnerEarnings  # Added for owner_earnings
-from fmpsdk.models import FMPRevenueSegmentation  # Added for revenue segmentation
 from fmpsdk.models import (
     FMPAsReportedBalanceSheet,
     FMPAsReportedCashFlowStatement,
@@ -20,6 +12,7 @@ from fmpsdk.models import (
     FMPBalanceSheetStatement,
     FMPCashFlowGrowth,
     FMPCashFlowStatement,
+    FMPEnterpriseValue,
     FMPFinancialRatios,
     FMPFinancialRatiosTTM,
     FMPFinancialReportDate,
@@ -29,6 +22,9 @@ from fmpsdk.models import (
     FMPIncomeStatementGrowth,
     FMPKeyMetrics,
     FMPKeyMetricsTTM,
+    FMPLatestFinancialStatement,
+    FMPOwnerEarnings,
+    FMPRevenueSegmentation,
 )
 from fmpsdk.statements import (
     balance_sheet_statement,
@@ -59,13 +55,10 @@ from fmpsdk.statements import (
     revenue_geographic_segmentation,
     revenue_product_segmentation,
 )
-from tests.conftest import get_response_models  # Direct Pydantic model access
-from tests.conftest import validate_model_list  # Model validation
-from tests.conftest import validate_required_fields  # Field validation
 from tests.conftest import (
-    assert_valid_response,
+    validate_model_list,
+    get_response_models,
     handle_api_call_with_validation,
-    validate_api_response,
 )
 
 

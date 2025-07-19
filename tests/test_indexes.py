@@ -1,18 +1,15 @@
 import pytest
 
 from fmpsdk import indexes
-from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPHistoricalIndexConstituent,
-    FMPIndex,
     FMPIndexConstituent,
     FMPIndexListItem,
     FMPSector,
 )
 from tests.conftest import (
     get_response_models,
-    validate_model_list,
-    validate_required_fields,
+    validate_model_list
 )
 
 

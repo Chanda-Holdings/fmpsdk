@@ -7,16 +7,13 @@ from pydantic import BaseModel, RootModel
 
 from fmpsdk.exceptions import RateLimitExceededException
 from fmpsdk.utils import (
-    is_rate_limit_error,
     iterate_over_pages,
     parse_response,
     to_dataframe,
     to_dict_list,
 )
 from tests.conftest import (
-    get_all_items_from_response,
-    get_first_item_from_response,
-    handle_api_call_with_validation,
+    get_first_item_from_response
 )
 
 

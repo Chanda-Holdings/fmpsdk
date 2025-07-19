@@ -9,8 +9,7 @@ from fmpsdk.models import (
 from tests.conftest import (
     get_first_item_from_response,
     get_response_models,
-    handle_api_call_with_validation,
-    validate_model_list,
+    handle_api_call_with_validation
 )
 
 

@@ -1,13 +1,11 @@
 import pytest
 
-import fmpsdk
 from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPPoliticalTrade
-from fmpsdk.senate import house, senate
+from fmpsdk.senate import senate
 from tests.conftest import (
     get_response_models,
     validate_model_list,
-    validate_required_fields,
 )
 
 # Test data constants

@@ -23,11 +23,9 @@ from fmpsdk.models import (
     FMPUpcomingIPO,
 )
 from tests.conftest import (
-    assert_valid_response,
     get_first_item_from_response,
     get_response_models,
     handle_api_call_with_validation,
-    validate_api_response,
 )
 
 
@@ -110,7 +108,6 @@ class TestDividends:
             payment_date = first_dividend.paymentDate
             dividend_amount = first_dividend.dividend
             record_date = first_dividend.recordDate
-            declaration_date = first_dividend.declarationDate
 
             # Core validation
             assert symbol_value == symbol, f"Symbol should match for {symbol}"

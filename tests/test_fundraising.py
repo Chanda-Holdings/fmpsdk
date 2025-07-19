@@ -18,10 +18,8 @@ from fmpsdk.models import (
     FMPEquityOfferingSearch,
 )
 from tests.conftest import (
-    assert_valid_response,
     get_response_models,
     handle_api_call_with_validation,
-    validate_api_response,
     validate_model_list,
     validate_required_fields,
 )

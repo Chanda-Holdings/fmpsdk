@@ -18,7 +18,6 @@ from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
     validate_model_list,
-    validate_required_fields,
 )
 
 

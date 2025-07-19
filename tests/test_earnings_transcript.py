@@ -15,13 +15,10 @@ from fmpsdk.models import (
     FMPEarningsTranscriptList,
 )
 from tests.conftest import (
-    assert_valid_response,
     get_first_item_from_response,
     get_response_models,
     handle_api_call_with_validation,
-    validate_api_response,
     validate_model_list,
-    validate_required_fields,
 )
 
 # Test configuration

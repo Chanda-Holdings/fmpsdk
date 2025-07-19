@@ -5,20 +5,13 @@ from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPCompanyNote,
     FMPCompanyProfile,
-    FMPDelistedCompany,
     FMPEmployeeCount,
-    FMPExecutiveCompensation,
-    FMPExecutiveProfile,
-    FMPHistoricalEmployeeCount,
     FMPMarketCap,
-    FMPMergerAcquisition,
-    FMPShareFloat,
     FMPStockPeer,
 )
 from tests.conftest import (
     get_response_models,
-    validate_model_list,
-    validate_required_fields,
+    validate_model_list
 )
 
 

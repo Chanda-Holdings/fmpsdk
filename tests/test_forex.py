@@ -1,12 +1,10 @@
 import pytest
 
 from fmpsdk import forex
-from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPForexPair
 from tests.conftest import (
     get_response_models,
-    validate_model_list,
-    validate_required_fields,
+    validate_model_list
 )
 
 
