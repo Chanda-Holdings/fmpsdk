@@ -7,9 +7,9 @@ from fmpsdk.models import (
     FMPFundHolder,
 )
 from tests.conftest import (
-    handle_api_call_with_validation,
     get_first_item_from_response,
     get_response_models,
+    handle_api_call_with_validation,
     validate_model_list,
 )
 
@@ -24,35 +24,142 @@ class TestMutualFundsDisclosure:
         "symbol,fund_family,fund_type,expected_characteristics",
         [
             # Vanguard Index Funds
-            ("VTSAX", "vanguard", "total_market_equity", {"expense_ratio": "low", "diversification": "broad"}),
-            ("VTIAX", "vanguard", "international_equity", {"geographic": "global", "currency_exposure": "international"}),
-            ("VBTLX", "vanguard", "bond_index", {"asset_class": "fixed_income", "duration": "intermediate"}),
-            ("VFWAX", "vanguard", "international_equity", {"geographic": "ex_us", "market_cap": "all"}),
-            ("VGTSX", "vanguard", "international_equity", {"share_class": "investor", "geographic": "global"}),
-            ("VEMAX", "vanguard", "emerging_markets", {"geographic": "emerging", "risk_level": "higher"}),
-            ("VMCSX", "vanguard", "mid_cap_equity", {"market_cap": "mid", "style": "blend"}),
-            
+            (
+                "VTSAX",
+                "vanguard",
+                "total_market_equity",
+                {"expense_ratio": "low", "diversification": "broad"},
+            ),
+            (
+                "VTIAX",
+                "vanguard",
+                "international_equity",
+                {"geographic": "global", "currency_exposure": "international"},
+            ),
+            (
+                "VBTLX",
+                "vanguard",
+                "bond_index",
+                {"asset_class": "fixed_income", "duration": "intermediate"},
+            ),
+            (
+                "VFWAX",
+                "vanguard",
+                "international_equity",
+                {"geographic": "ex_us", "market_cap": "all"},
+            ),
+            (
+                "VGTSX",
+                "vanguard",
+                "international_equity",
+                {"share_class": "investor", "geographic": "global"},
+            ),
+            (
+                "VEMAX",
+                "vanguard",
+                "emerging_markets",
+                {"geographic": "emerging", "risk_level": "higher"},
+            ),
+            (
+                "VMCSX",
+                "vanguard",
+                "mid_cap_equity",
+                {"market_cap": "mid", "style": "blend"},
+            ),
             # Fidelity Index Funds
             ("FXAIX", "fidelity", "sp500_index", {"benchmark": "sp500", "cost": "low"}),
-            ("FTIHX", "fidelity", "international_equity", {"geographic": "international", "diversification": "broad"}),
-            ("FXNAX", "fidelity", "bond_index", {"asset_class": "fixed_income", "quality": "investment_grade"}),
-            ("FSKAX", "fidelity", "total_market_equity", {"coverage": "total_market", "cap_weighted": True}),
-            ("FSMDX", "fidelity", "mid_cap_equity", {"market_cap": "mid", "style": "index"}),
-            ("FSSNX", "fidelity", "small_cap_equity", {"market_cap": "small", "growth_potential": "high"}),
-            
+            (
+                "FTIHX",
+                "fidelity",
+                "international_equity",
+                {"geographic": "international", "diversification": "broad"},
+            ),
+            (
+                "FXNAX",
+                "fidelity",
+                "bond_index",
+                {"asset_class": "fixed_income", "quality": "investment_grade"},
+            ),
+            (
+                "FSKAX",
+                "fidelity",
+                "total_market_equity",
+                {"coverage": "total_market", "cap_weighted": True},
+            ),
+            (
+                "FSMDX",
+                "fidelity",
+                "mid_cap_equity",
+                {"market_cap": "mid", "style": "index"},
+            ),
+            (
+                "FSSNX",
+                "fidelity",
+                "small_cap_equity",
+                {"market_cap": "small", "growth_potential": "high"},
+            ),
             # Schwab Index Funds
-            ("SWPPX", "schwab", "sp500_index", {"benchmark": "sp500", "institutional": True}),
-            ("SWTSX", "schwab", "total_market_equity", {"coverage": "total_market", "cost": "low"}),
-            ("SWISX", "schwab", "international_equity", {"geographic": "international", "developed": True}),
-            ("SWAGX", "schwab", "aggregate_bond", {"asset_class": "fixed_income", "diversification": "broad"}),
-            
+            (
+                "SWPPX",
+                "schwab",
+                "sp500_index",
+                {"benchmark": "sp500", "institutional": True},
+            ),
+            (
+                "SWTSX",
+                "schwab",
+                "total_market_equity",
+                {"coverage": "total_market", "cost": "low"},
+            ),
+            (
+                "SWISX",
+                "schwab",
+                "international_equity",
+                {"geographic": "international", "developed": True},
+            ),
+            (
+                "SWAGX",
+                "schwab",
+                "aggregate_bond",
+                {"asset_class": "fixed_income", "diversification": "broad"},
+            ),
             # Schwab ETFs
-            ("SCHB", "schwab", "broad_market_etf", {"structure": "etf", "trading": "intraday"}),
-            ("SCHF", "schwab", "international_etf", {"structure": "etf", "geographic": "international"}),
-            ("SCHZ", "schwab", "treasury_etf", {"structure": "etf", "duration": "intermediate"}),
-            ("SCHA", "schwab", "small_cap_etf", {"structure": "etf", "market_cap": "small"}),
-            ("SCHM", "schwab", "mid_cap_etf", {"structure": "etf", "market_cap": "mid"}),
-            ("SCHV", "schwab", "large_cap_value_etf", {"structure": "etf", "style": "value"}),
+            (
+                "SCHB",
+                "schwab",
+                "broad_market_etf",
+                {"structure": "etf", "trading": "intraday"},
+            ),
+            (
+                "SCHF",
+                "schwab",
+                "international_etf",
+                {"structure": "etf", "geographic": "international"},
+            ),
+            (
+                "SCHZ",
+                "schwab",
+                "treasury_etf",
+                {"structure": "etf", "duration": "intermediate"},
+            ),
+            (
+                "SCHA",
+                "schwab",
+                "small_cap_etf",
+                {"structure": "etf", "market_cap": "small"},
+            ),
+            (
+                "SCHM",
+                "schwab",
+                "mid_cap_etf",
+                {"structure": "etf", "market_cap": "mid"},
+            ),
+            (
+                "SCHV",
+                "schwab",
+                "large_cap_value_etf",
+                {"structure": "etf", "style": "value"},
+            ),
         ],
     )
     def test_funds_disclosure_holders_latest_comprehensive(
@@ -62,9 +169,8 @@ class TestMutualFundsDisclosure:
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure_holders_latest,
             "funds_disclosure_holders_latest",
-            allow_empty=True,  # Some funds may not have disclosure data
             apikey=api_key,
-            symbol=symbol
+            symbol=symbol,
         )
 
         result_list = get_response_models(response, FMPFundHolder)
@@ -72,27 +178,27 @@ class TestMutualFundsDisclosure:
 
         if result_list:
             holder = get_first_item_from_response(result_list)
-            
+
             # Validate essential fields
             cik = holder.cik
             holder_name = holder.holder
             shares = holder.shares
             date_reported = holder.dateReported
             weight_percent = holder.weightPercent
-            
+
             assert cik is not None and len(str(cik)) > 0
             assert holder_name is not None and len(holder_name) > 0
             assert date_reported is not None
-            
+
             # Validate data types and ranges
             if shares is not None:
                 assert isinstance(shares, int)
                 assert shares >= 0
-            
+
             if weight_percent is not None:
                 assert isinstance(weight_percent, float)
                 assert 0 <= weight_percent <= 100
-            
+
             # Fund family-specific validation
             if fund_family == "vanguard":
                 assert "vanguard" in symbol.lower() or "vg" in symbol.lower()
@@ -100,10 +206,12 @@ class TestMutualFundsDisclosure:
                 assert symbol.startswith("F") or "fidelity" in holder_name.lower()
             elif fund_family == "schwab":
                 assert symbol.startswith("SW") or symbol.startswith("SCH")
-            
+
             # Validate that institutional holders are reasonable
             if holder_name and "vanguard" in holder_name.lower():
-                assert weight_percent is None or weight_percent > 0.01  # Should have meaningful holdings
+                assert (
+                    weight_percent is None or weight_percent > 0.01
+                )  # Should have meaningful holdings
 
     @pytest.mark.parametrize(
         "year,quarter,period_type",
@@ -120,16 +228,17 @@ class TestMutualFundsDisclosure:
             ("2021", "Q3", "historical"),
         ],
     )
-    def test_funds_disclosure_historical_periods(self, api_key, year, quarter, period_type):
+    def test_funds_disclosure_historical_periods(
+        self, api_key, year, quarter, period_type
+    ):
         """Test fund disclosure across different historical periods."""
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure,
             "funds_disclosure",
-            allow_empty=True,
             apikey=api_key,
             symbol="VTSAX",
             year=year,
-            quarter=quarter
+            quarter=quarter,
         )
 
         result_list = get_response_models(response, FMPFundDisclosure)
@@ -137,7 +246,7 @@ class TestMutualFundsDisclosure:
 
         if result_list:
             disclosure = get_first_item_from_response(result_list)
-            
+
             # Validate essential fields
             cik = disclosure.cik
             date = disclosure.date
@@ -145,30 +254,30 @@ class TestMutualFundsDisclosure:
             balance = disclosure.balance
             val_usd = disclosure.valUsd
             pct_val = disclosure.pctVal
-            
+
             assert cik is not None
             assert date is not None
             assert symbol == "VTSAX"
-            
+
             # Validate financial data
             if balance is not None:
                 assert isinstance(balance, int)
                 assert balance >= 0
-            
+
             if val_usd is not None:
                 assert isinstance(val_usd, float)
                 assert val_usd >= 0
-            
+
             if pct_val is not None:
                 assert isinstance(pct_val, float)
                 assert 0 <= pct_val <= 100
-            
+
             # Period-specific validation
             if period_type == "recent":
                 assert year in ["2023", "2022"]
             elif period_type == "historical":
                 assert year in ["2022", "2021", "2020"]
-            
+
             # Date should match the requested period
             if date:
                 assert year in str(date)
@@ -176,37 +285,66 @@ class TestMutualFundsDisclosure:
     @pytest.mark.parametrize(
         "fund_category,symbols,expected_patterns",
         [
-            ("large_cap_growth", ["VTSAX", "FXAIX", "SWPPX"], {"market_cap": "large", "style": "growth"}),
-            ("international_equity", ["VTIAX", "FTIHX", "SWISX"], {"geographic": "international", "currency_risk": True}),
-            ("bond_funds", ["VBTLX", "FXNAX", "SWAGX"], {"asset_class": "fixed_income", "interest_rate_risk": True}),
-            ("sector_etfs", ["VGT", "XLF", "XLE"], {"structure": "etf", "sector_focused": True}),
-            ("target_date", ["VTTSX", "FDKLX", "SWYNX"], {"lifecycle": True, "glide_path": True}),
-            ("small_cap", ["FSSNX", "SCHA"], {"market_cap": "small", "volatility": "higher"}),
-            ("mid_cap", ["VMCSX", "FSMDX", "SCHM"], {"market_cap": "mid", "growth_potential": "moderate"}),
+            (
+                "large_cap_growth",
+                ["VTSAX", "FXAIX", "SWPPX"],
+                {"market_cap": "large", "style": "growth"},
+            ),
+            (
+                "international_equity",
+                ["VTIAX", "FTIHX", "SWISX"],
+                {"geographic": "international", "currency_risk": True},
+            ),
+            (
+                "bond_funds",
+                ["VBTLX", "FXNAX", "SWAGX"],
+                {"asset_class": "fixed_income", "interest_rate_risk": True},
+            ),
+            (
+                "sector_etfs",
+                ["VGT", "XLF", "XLE"],
+                {"structure": "etf", "sector_focused": True},
+            ),
+            (
+                "target_date",
+                ["VTTSX", "FDKLX", "SWYNX"],
+                {"lifecycle": True, "glide_path": True},
+            ),
+            (
+                "small_cap",
+                ["FSSNX", "SCHA"],
+                {"market_cap": "small", "volatility": "higher"},
+            ),
+            (
+                "mid_cap",
+                ["VMCSX", "FSMDX", "SCHM"],
+                {"market_cap": "mid", "growth_potential": "moderate"},
+            ),
             ("value_funds", ["SCHV"], {"style": "value", "dividend_focus": True}),
         ],
     )
-    def test_funds_disclosure_by_category(self, api_key, fund_category, symbols, expected_patterns):
+    def test_funds_disclosure_by_category(
+        self, api_key, fund_category, symbols, expected_patterns
+    ):
         """Test fund disclosure across different fund categories."""
         for symbol in symbols:
             response, validation = handle_api_call_with_validation(
                 mutual_funds.funds_disclosure_holders_latest,
                 "funds_disclosure_holders_latest",
-                allow_empty=True,
                 apikey=api_key,
-                symbol=symbol
+                symbol=symbol,
             )
 
             result_list = get_response_models(response, FMPFundHolder)
             assert isinstance(result_list, list)
-            
+
             if result_list:
                 # Validate that we have reasonable holder data
                 holder = get_first_item_from_response(result_list)
-                
+
                 holder_name = holder.holder
                 weight_percent = holder.weightPercent
-                
+
                 # Category-specific validation
                 if fund_category == "international_equity":
                     # International funds should have diverse holders
@@ -228,10 +366,26 @@ class TestMutualFundsDisclosure:
             ("Vanguard", "vanguard", {"min_results": 1, "name_contains": "vanguard"}),
             ("Fidelity", "fidelity", {"min_results": 1, "name_contains": "fidelity"}),
             ("Schwab", "schwab", {"min_results": 1, "name_contains": "schwab"}),
-            ("BlackRock", "blackrock", {"min_results": 1, "name_contains": "blackrock"}),
-            ("State Street", "state_street", {"min_results": 1, "name_contains": "state"}),
-            ("American Funds", "american_funds", {"min_results": 1, "name_contains": "american"}),
-            ("T. Rowe Price", "t_rowe_price", {"min_results": 1, "name_contains": "rowe"}),
+            (
+                "BlackRock",
+                "blackrock",
+                {"min_results": 1, "name_contains": "blackrock"},
+            ),
+            (
+                "State Street",
+                "state_street",
+                {"min_results": 1, "name_contains": "state"},
+            ),
+            (
+                "American Funds",
+                "american_funds",
+                {"min_results": 1, "name_contains": "american"},
+            ),
+            (
+                "T. Rowe Price",
+                "t_rowe_price",
+                {"min_results": 1, "name_contains": "rowe"},
+            ),
             ("Invesco", "invesco", {"min_results": 1, "name_contains": "invesco"}),
         ],
     )
@@ -242,9 +396,8 @@ class TestMutualFundsDisclosure:
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure_holders_search,
             "funds_disclosure_holders_search",
-            allow_empty=True,
             apikey=api_key,
-            name=search_term
+            name=search_term,
         )
 
         result_list = get_response_models(response, FMPFundHolder)
@@ -252,31 +405,31 @@ class TestMutualFundsDisclosure:
 
         if result_list:
             assert len(result_list) >= expected_results["min_results"]
-            
+
             # Validate search results
             for result in result_list[:3]:  # Check first 3 results
                 name = result.name
                 cik = result.cik
-                
+
                 assert name is not None
                 assert cik is not None
-                
+
                 # Check if search term appears in name (case-insensitive)
                 name_lower = name.lower()
                 search_lower = search_term.lower()
                 expected_contains = expected_results["name_contains"].lower()
-                
-                assert (expected_contains in name_lower or 
-                       any(word in name_lower for word in search_lower.split()))
+
+                assert expected_contains in name_lower or any(
+                    word in name_lower for word in search_lower.split()
+                )
 
     def test_funds_disclosure_dates(self, api_key):
         """Test fund disclosure dates endpoint."""
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure_dates,
             "funds_disclosure_dates",
-            allow_empty=True,
             apikey=api_key,
-            symbol="VTSAX"
+            symbol="VTSAX",
         )
 
         result_list = get_response_models(response, FMPFundDisclosureDate)
@@ -285,13 +438,13 @@ class TestMutualFundsDisclosure:
         if result_list:
             # Validate date structure
             date_item = get_first_item_from_response(result_list)
-            
+
             date = date_item.date
             symbol = date_item.symbol
-            
+
             assert date is not None
             assert symbol == "VTSAX"
-            
+
             # Validate date format and chronological order
             dates = [item.date for item in result_list if item.date]
             if len(dates) > 1:
@@ -308,20 +461,37 @@ class TestMutualFundsDataQuality:
     @pytest.mark.parametrize(
         "symbol,fund_type,data_quality_expectations",
         [
-            ("VTSAX", "broad_market", {"holder_diversity": "high", "weight_distribution": "balanced"}),
-            ("VTIAX", "international", {"geographic_diversity": "high", "currency_exposure": "diversified"}),
-            ("FXAIX", "sp500", {"holder_concentration": "moderate", "tracking": "tight"}),
-            ("SWPPX", "institutional", {"holder_quality": "high", "cost_efficiency": "high"}),
+            (
+                "VTSAX",
+                "broad_market",
+                {"holder_diversity": "high", "weight_distribution": "balanced"},
+            ),
+            (
+                "VTIAX",
+                "international",
+                {"geographic_diversity": "high", "currency_exposure": "diversified"},
+            ),
+            (
+                "FXAIX",
+                "sp500",
+                {"holder_concentration": "moderate", "tracking": "tight"},
+            ),
+            (
+                "SWPPX",
+                "institutional",
+                {"holder_quality": "high", "cost_efficiency": "high"},
+            ),
         ],
     )
-    def test_fund_holder_data_quality(self, api_key, symbol, fund_type, data_quality_expectations):
+    def test_fund_holder_data_quality(
+        self, api_key, symbol, fund_type, data_quality_expectations
+    ):
         """Test fund holder data quality and consistency."""
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure_holders_latest,
             "funds_disclosure_holders_latest",
-            allow_empty=True,
             apikey=api_key,
-            symbol=symbol
+            symbol=symbol,
         )
 
         result_list = get_response_models(response, FMPFundHolder)
@@ -330,30 +500,30 @@ class TestMutualFundsDataQuality:
         if result_list:
             total_weight = 0
             valid_holders = 0
-            
+
             for holder in result_list:
                 holder_name = holder.holder
                 weight_percent = holder.weightPercent
                 shares = holder.shares
-                
+
                 if holder_name:
                     assert len(holder_name) > 0
                     valid_holders += 1
-                
+
                 if weight_percent is not None:
                     assert 0 <= weight_percent <= 100
                     total_weight += weight_percent
-                
+
                 if shares is not None:
                     assert shares >= 0
-            
+
             # Data quality validation
             assert valid_holders > 0
-            
+
             # Weight percentages should be reasonable
             if total_weight > 0:
                 assert total_weight <= 105  # Allow for small discrepancies
-            
+
             # Fund type-specific validation
             if fund_type == "broad_market":
                 assert valid_holders >= 1  # Should have institutional holders
@@ -365,10 +535,30 @@ class TestMutualFundsDataQuality:
     @pytest.mark.parametrize(
         "symbol,year,quarter,consistency_checks",
         [
-            ("VTSAX", "2023", "Q4", {"temporal_consistency": True, "data_completeness": "high"}),
-            ("VTSAX", "2023", "Q3", {"temporal_consistency": True, "data_completeness": "high"}),
-            ("FXAIX", "2023", "Q4", {"temporal_consistency": True, "data_completeness": "moderate"}),
-            ("FXAIX", "2023", "Q3", {"temporal_consistency": True, "data_completeness": "moderate"}),
+            (
+                "VTSAX",
+                "2023",
+                "Q4",
+                {"temporal_consistency": True, "data_completeness": "high"},
+            ),
+            (
+                "VTSAX",
+                "2023",
+                "Q3",
+                {"temporal_consistency": True, "data_completeness": "high"},
+            ),
+            (
+                "FXAIX",
+                "2023",
+                "Q4",
+                {"temporal_consistency": True, "data_completeness": "moderate"},
+            ),
+            (
+                "FXAIX",
+                "2023",
+                "Q3",
+                {"temporal_consistency": True, "data_completeness": "moderate"},
+            ),
         ],
     )
     def test_fund_disclosure_temporal_consistency(
@@ -378,11 +568,10 @@ class TestMutualFundsDataQuality:
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure,
             "funds_disclosure",
-            allow_empty=True,
             apikey=api_key,
             symbol=symbol,
             year=year,
-            quarter=quarter
+            quarter=quarter,
         )
 
         result_list = get_response_models(response, FMPFundDisclosure)
@@ -394,13 +583,13 @@ class TestMutualFundsDataQuality:
                 date = disclosure.date
                 symbol_check = disclosure.symbol
                 val_usd = disclosure.valUsd
-                
+
                 assert date is not None
                 assert symbol_check == symbol
-                
+
                 if val_usd is not None:
                     assert val_usd >= 0
-                    
+
                 # Date should be within the requested period
                 if date:
                     assert year in str(date)
@@ -417,9 +606,8 @@ class TestMutualFundsErrorHandling:
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure_holders_latest,
             "funds_disclosure_holders_latest",
-            allow_empty=True,
             apikey=api_key,
-            symbol="INVALID_SYMBOL"
+            symbol="INVALID_SYMBOL",
         )
 
         result_list = get_response_models(response, FMPFundHolder)
@@ -431,11 +619,10 @@ class TestMutualFundsErrorHandling:
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure,
             "funds_disclosure",
-            allow_empty=True,
             apikey=api_key,
             symbol="VTSAX",
             year="2030",  # Future year
-            quarter="Q4"
+            quarter="Q4",
         )
 
         result_list = get_response_models(response, FMPFundDisclosure)
@@ -447,9 +634,8 @@ class TestMutualFundsErrorHandling:
         response, validation = handle_api_call_with_validation(
             mutual_funds.funds_disclosure_holders_search,
             "funds_disclosure_holders_search",
-            allow_empty=True,
             apikey=api_key,
-            name=""
+            name="",
         )
 
         result_list = get_response_models(response, FMPFundHolder)
@@ -461,6 +647,5 @@ class TestMutualFundsErrorHandling:
         # Test with invalid API key
         with pytest.raises(Exception):
             mutual_funds.funds_disclosure_holders_latest(
-                apikey="invalid_key",
-                symbol="VTSAX"
+                apikey="invalid_key", symbol="VTSAX"
             )

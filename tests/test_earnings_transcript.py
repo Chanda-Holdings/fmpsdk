@@ -1,5 +1,7 @@
-import pytest
 import time
+from datetime import datetime
+
+import pytest
 
 from fmpsdk.earnings_transcript import (
     earnings_transcript,
@@ -7,20 +9,20 @@ from fmpsdk.earnings_transcript import (
     earnings_transcript_latest,
     earnings_transcript_list,
 )
-from tests.conftest import (
-    get_response_models,
-    validate_model_list,
-    validate_required_fields,
-    handle_api_call_with_validation,
-    assert_valid_response,
-    validate_api_response,
-)
 from fmpsdk.models import (
     FMPEarningsTranscript,
     FMPEarningsTranscriptBySymbol,
     FMPEarningsTranscriptList,
 )
-
+from tests.conftest import (
+    assert_valid_response,
+    get_first_item_from_response,
+    get_response_models,
+    handle_api_call_with_validation,
+    validate_api_response,
+    validate_model_list,
+    validate_required_fields,
+)
 
 # Test configuration
 RESPONSE_TIME_LIMIT = 15.0  # seconds (transcript endpoints might be slower)
@@ -62,7 +64,6 @@ TEST_SYMBOLS = [
 ]  # Extended list of large companies with regular earnings calls
 
 
-
 @pytest.mark.integration
 @pytest.mark.requires_api_key
 @pytest.mark.live_data
@@ -79,15 +80,15 @@ class TestEarningsTranscriptLatest:
 
         result, validation = handle_api_call_with_validation(
             earnings_transcript_latest,
-            'earnings_transcript_latest',
+            "earnings_transcript_latest",
             apikey=api_key,
-            limit=limit
+            limit=limit,
         )
 
         # Check response time (transcript endpoints can be slower)
         elapsed_time = time.time() - start_time
         assert elapsed_time < RESPONSE_TIME_LIMIT
-        
+
         result_list = get_response_models(result, FMPEarningsTranscriptList)
         validate_model_list(result_list, FMPEarningsTranscriptList)
 
@@ -111,10 +112,10 @@ class TestEarningsTranscriptLatest:
         """Test extensive pagination scenarios for latest earnings transcripts."""
         result, validation = handle_api_call_with_validation(
             earnings_transcript_latest,
-            'earnings_transcript_latest',
+            "earnings_transcript_latest",
             apikey=api_key,
             limit=limit,
-            page=page
+            page=page,
         )
 
         # Check if result is error dict
@@ -143,9 +144,9 @@ class TestEarningsTranscriptLatest:
         """Test data quality for latest earnings transcripts."""
         result, validation = handle_api_call_with_validation(
             earnings_transcript_latest,
-            'earnings_transcript_latest',
+            "earnings_transcript_latest",
             apikey=api_key,
-            limit=10
+            limit=10,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
 
@@ -174,9 +175,9 @@ class TestEarningsTranscriptLatest:
         # Test with very large limit (might be rejected)
         result, validation = handle_api_call_with_validation(
             earnings_transcript_latest,
-            'earnings_transcript_latest',
+            "earnings_transcript_latest",
             apikey=api_key,
-            limit=10000
+            limit=10000,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
         # Should either work or return reasonable amount of data
@@ -185,9 +186,9 @@ class TestEarningsTranscriptLatest:
         # Test with zero limit
         result, validation = handle_api_call_with_validation(
             earnings_transcript_latest,
-            'earnings_transcript_latest',
+            "earnings_transcript_latest",
             apikey=api_key,
-            limit=0
+            limit=0,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
         validate_model_list(result_list, FMPEarningsTranscriptList)
@@ -211,8 +212,13 @@ class TestEarningsTranscript:
 
         start_time = time.time()
 
-        result = earnings_transcript(
-            apikey=api_key, symbol=symbol, year=test_year, quarter=test_quarter
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol=symbol,
+            year=test_year,
+            quarter=test_quarter,
         )
 
         elapsed_time = time.time() - start_time
@@ -239,8 +245,13 @@ class TestEarningsTranscript:
         symbol = "AAPL"  # Use Apple as it has consistent earnings calls
         quarter = 4  # Q4 typically has data
 
-        result = earnings_transcript(
-            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol=symbol,
+            year=year,
+            quarter=quarter,
         )
 
         # Check if result is error dict
@@ -264,8 +275,13 @@ class TestEarningsTranscript:
         symbol = "AAPL"
         year = 2023
 
-        result = earnings_transcript(
-            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol=symbol,
+            year=year,
+            quarter=quarter,
         )
 
         # Check if result is error dict
@@ -304,8 +320,13 @@ class TestEarningsTranscript:
         self, api_key, symbol, year, quarter
     ):
         """Test earnings transcripts for specific symbol/year/quarter combinations."""
-        result = earnings_transcript(
-            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol=symbol,
+            year=year,
+            quarter=quarter,
         )
 
         # Check if result is error dict
@@ -329,8 +350,13 @@ class TestEarningsTranscript:
         year = 2023
         quarter = 4
 
-        result = earnings_transcript(
-            apikey=api_key, symbol=symbol, year=year, quarter=quarter
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol=symbol,
+            year=year,
+            quarter=quarter,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
 
@@ -356,8 +382,13 @@ class TestEarningsTranscript:
         test_year = current_year - 1  # Use previous year to ensure data exists
 
         for symbol in TEST_SYMBOLS[:3]:  # Test first 3 symbols
-            result = earnings_transcript(
-                apikey=api_key, symbol=symbol, year=test_year, quarter=4
+            result, validation = handle_api_call_with_validation(
+                earnings_transcript,
+                "earnings_transcript",
+                apikey=api_key,
+                symbol=symbol,
+                year=test_year,
+                quarter=4,
             )
             result_list = get_response_models(result, FMPEarningsTranscriptList)
 
@@ -381,8 +412,13 @@ class TestEarningsTranscript:
         quarters = [1, 2, 3, 4]
 
         for quarter in quarters:
-            result = earnings_transcript(
-                apikey=api_key, symbol=symbol, year=year, quarter=quarter
+            result, validation = handle_api_call_with_validation(
+                earnings_transcript,
+                "earnings_transcript",
+                apikey=api_key,
+                symbol=symbol,
+                year=year,
+                quarter=quarter,
             )
             result_list = get_response_models(result, FMPEarningsTranscriptList)
 
@@ -401,8 +437,14 @@ class TestEarningsTranscript:
     @pytest.mark.live_data
     def test_earnings_transcript_with_limit(self, api_key):
         """Test earnings transcript with limit parameter."""
-        result = earnings_transcript(
-            apikey=api_key, symbol="AAPL", year=2023, quarter=4, limit="1"
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol="AAPL",
+            year=2023,
+            quarter=4,
+            limit="1",
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
 
@@ -414,8 +456,13 @@ class TestEarningsTranscript:
     @pytest.mark.live_data
     def test_earnings_transcript_content_validation(self, api_key):
         """Test earnings transcript content validation."""
-        result = earnings_transcript(
-            apikey=api_key, symbol="AAPL", year=2023, quarter=4
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol="AAPL",
+            year=2023,
+            quarter=4,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
 
@@ -434,23 +481,38 @@ class TestEarningsTranscript:
     def test_earnings_transcript_invalid_parameters(self, api_key):
         """Test earnings transcript with invalid parameters."""
         # Test invalid year (too old)
-        result = earnings_transcript(
-            apikey=api_key, symbol="AAPL", year=1990, quarter=1
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol="AAPL",
+            year=1990,
+            quarter=1,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
         assert isinstance(result_list, list)
         assert len(result_list) == 0
 
         # Test invalid quarter
-        result = earnings_transcript(
-            apikey=api_key, symbol="AAPL", year=2023, quarter=5
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol="AAPL",
+            year=2023,
+            quarter=5,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
         assert isinstance(result_list, list)
 
         # Test invalid symbol
-        result = earnings_transcript(
-            apikey=api_key, symbol="INVALID", year=2023, quarter=1
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript,
+            "earnings_transcript",
+            apikey=api_key,
+            symbol="INVALID",
+            year=2023,
+            quarter=1,
         )
         result_list = get_response_models(result, FMPEarningsTranscriptList)
         assert isinstance(result_list, list)
@@ -470,7 +532,12 @@ class TestEarningsTranscriptBySymbol:
     def test_earnings_transcript_by_symbol_comprehensive(self, api_key, symbol):
         """Test earnings transcript dates for comprehensive list of symbols."""
         start_time = time.time()
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol=symbol,
+        )
         response_time = time.time() - start_time
 
         # Check response time
@@ -522,7 +589,12 @@ class TestEarningsTranscriptBySymbol:
         self, api_key, symbol, expected_sector
     ):
         """Test earnings transcript dates for symbols across different sectors."""
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol=symbol,
+        )
 
         # Check if result is error dict
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
@@ -545,7 +617,12 @@ class TestEarningsTranscriptBySymbol:
     def test_earnings_transcript_by_symbol_basic(self, api_key):
         """Test getting earnings transcript dates by symbol."""
         start_time = time.time()
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol="AAPL",
+        )
         response_time = time.time() - start_time
 
         # Response time validation
@@ -572,7 +649,12 @@ class TestEarningsTranscriptBySymbol:
     def test_earnings_transcript_by_symbol_multiple_companies(self, api_key):
         """Test earnings transcript dates for multiple companies."""
         for symbol in TEST_SYMBOLS[:3]:  # Test first 3 symbols
-            result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+            result, validation = handle_api_call_with_validation(
+                earnings_transcript_by_symbol,
+                "earnings_transcript_by_symbol",
+                apikey=api_key,
+                symbol=symbol,
+            )
             result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
 
             assert result_list[0].symbol != ""
@@ -596,7 +678,12 @@ class TestEarningsTranscriptBySymbol:
     @pytest.mark.live_data
     def test_earnings_transcript_by_symbol_chronological_order(self, api_key):
         """Test that transcript dates are in chronological order."""
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol="AAPL",
+        )
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
 
         if len(result_list) > 1:
@@ -625,7 +712,12 @@ class TestEarningsTranscriptBySymbol:
     @pytest.mark.live_data
     def test_earnings_transcript_by_symbol_data_quality(self, api_key):
         """Test data quality for earnings transcript dates."""
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol="AAPL")
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol="AAPL",
+        )
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
 
         if result_list:
@@ -653,7 +745,12 @@ class TestEarningsTranscriptBySymbol:
     @pytest.mark.live_data
     def test_earnings_transcript_by_symbol_invalid_symbol(self, api_key):
         """Test earnings transcript dates with invalid symbol."""
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol="INVALID_SYMBOL")
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol="INVALID_SYMBOL",
+        )
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
 
         assert isinstance(result_list, list)
@@ -673,7 +770,12 @@ class TestEarningsTranscriptList:
     def test_earnings_transcript_list_comprehensive(self, api_key, symbol):
         """Test earnings transcript list for comprehensive symbol coverage."""
         start_time = time.time()
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol=symbol,
+        )
         response_time = time.time() - start_time
 
         # Check response time
@@ -727,7 +829,12 @@ class TestEarningsTranscriptList:
     @pytest.mark.live_data
     def test_earnings_transcript_list_by_market_cap(self, api_key, symbol, market_cap):
         """Test earnings transcript list for large cap companies."""
-        result = earnings_transcript_by_symbol(apikey=api_key, symbol=symbol)
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_by_symbol,
+            "earnings_transcript_by_symbol",
+            apikey=api_key,
+            symbol=symbol,
+        )
 
         # Check if result is error dict
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
@@ -754,7 +861,9 @@ class TestEarningsTranscriptList:
     def test_earnings_transcript_list_basic(self, api_key):
         """Test basic earnings transcript list functionality."""
         start_time = time.time()
-        result = earnings_transcript_list(apikey=api_key)
+        result, validation = handle_api_call_with_validation(
+            earnings_transcript_list, "earnings_transcript_list", apikey=api_key
+        )
         response_time = time.time() - start_time
 
         # Check response time

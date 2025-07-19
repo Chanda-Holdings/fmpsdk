@@ -28,10 +28,10 @@ class TestInsiderTrading:
         """Test basic insider trading search with comprehensive validation."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             symbol="AAPL",
-            limit=10
+            limit=10,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -64,7 +64,9 @@ class TestInsiderTrading:
 
             # CIK validation
             if reporting_cik:
-                assert reporting_cik.isdigit() or reporting_cik.replace("-", "").isdigit()
+                assert (
+                    reporting_cik.isdigit() or reporting_cik.replace("-", "").isdigit()
+                )
             if company_cik:
                 assert company_cik.isdigit() or company_cik.replace("-", "").isdigit()
 
@@ -77,11 +79,11 @@ class TestInsiderTrading:
         """Test insider trading with transaction type filter."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             symbol="TSLA",
             transactionType="P-Purchase",
-            limit=5
+            limit=5,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -98,10 +100,10 @@ class TestInsiderTrading:
         # Apple's CIK
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             companyCik="320193",
-            limit=5
+            limit=5,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -116,20 +118,20 @@ class TestInsiderTrading:
         """Test pagination in insider trading search."""
         result_page1, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             symbol="MSFT",
             page=0,
-            limit=5
+            limit=5,
         )
 
         result_page2, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             symbol="MSFT",
             page=1,
-            limit=5
+            limit=5,
         )
 
         result_list1 = get_response_models(result_page1, FMPInsiderTrade)
@@ -160,11 +162,10 @@ class TestInsiderTrading:
         """Test insider trading with invalid symbol."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
-            allow_empty=True,
+            "insider_trading",
             apikey=api_key,
             symbol="INVALID_SYMBOL_XYZ",
-            limit=5
+            limit=5,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -175,22 +176,24 @@ class TestInsiderTrading:
     @pytest.mark.parametrize(
         "symbol,expected_activity_level",
         [
-            ("AAPL", "high"),    # High insider activity
-            ("MSFT", "high"),    # High insider activity
+            ("AAPL", "high"),  # High insider activity
+            ("MSFT", "high"),  # High insider activity
             ("TSLA", "very_high"),  # Very high insider activity
-            ("GOOGL", "medium"), # Medium insider activity
-            ("JPM", "medium"),   # Medium insider activity
-            ("JNJ", "low"),      # Lower insider activity
+            ("GOOGL", "medium"),  # Medium insider activity
+            ("JPM", "medium"),  # Medium insider activity
+            ("JNJ", "low"),  # Lower insider activity
         ],
     )
-    def test_insider_trading_activity_levels(self, api_key, symbol, expected_activity_level):
+    def test_insider_trading_activity_levels(
+        self, api_key, symbol, expected_activity_level
+    ):
         """Test insider trading activity levels across different companies."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             symbol=symbol,
-            limit=20
+            limit=20,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -202,15 +205,12 @@ class TestInsiderTrading:
                 assert item.symbol == symbol
 
             # Activity level validation
-            activity_thresholds = {
-                "very_high": 10,
-                "high": 5,
-                "medium": 2,
-                "low": 0
-            }
-            
+            activity_thresholds = {"very_high": 10, "high": 5, "medium": 2, "low": 0}
+
             min_expected = activity_thresholds.get(expected_activity_level, 0)
-            assert len(result_list) >= min_expected, f"Expected at least {min_expected} trades for {symbol}"
+            assert (
+                len(result_list) >= min_expected
+            ), f"Expected at least {min_expected} trades for {symbol}"
 
 
 @pytest.mark.integration
@@ -223,9 +223,9 @@ class TestInsiderTradingLatest:
         """Test basic latest insider trading data with validation."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_latest,
-            'insider_trading_latest',
+            "insider_trading_latest",
             apikey=api_key,
-            limit=10
+            limit=10,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -236,7 +236,7 @@ class TestInsiderTradingLatest:
 
             # Enhanced validation for first item
             first_item = result_list[0]
-            
+
             # Business logic validation
             assert first_item.symbol is not None
             assert len(first_item.symbol) <= 10  # Reasonable symbol length
@@ -253,11 +253,10 @@ class TestInsiderTradingLatest:
 
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_latest,
-            'insider_trading_latest',
-            allow_empty=True,
+            "insider_trading_latest",
             apikey=api_key,
             date=recent_date,
-            limit=5
+            limit=5,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -273,18 +272,18 @@ class TestInsiderTradingLatest:
         """Test pagination in latest insider trading."""
         result_page1, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_latest,
-            'insider_trading_latest',
+            "insider_trading_latest",
             apikey=api_key,
             page=0,
-            limit=5
+            limit=5,
         )
 
         result_page2, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_latest,
-            'insider_trading_latest',
+            "insider_trading_latest",
             apikey=api_key,
             page=1,
-            limit=5
+            limit=5,
         )
 
         result_list1 = get_response_models(result_page1, FMPInsiderTrade)
@@ -308,9 +307,9 @@ class TestInsiderTradingStatistics:
         """Test basic insider trading statistics with validation."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_statistics,
-            'insider_trading_statistics',
+            "insider_trading_statistics",
             apikey=api_key,
-            symbol="AAPL"
+            symbol="AAPL",
         )
 
         result_list = get_response_models(result, FMPInsiderTradeStatistics)
@@ -326,7 +325,11 @@ class TestInsiderTradingStatistics:
             # Business logic validation
             assert symbol_value == "AAPL"
             if year:
-                assert isinstance(year, int) and year >= 2000 and year <= datetime.now().year
+                assert (
+                    isinstance(year, int)
+                    and year >= 2000
+                    and year <= datetime.now().year
+                )
             if quarter:
                 assert isinstance(quarter, int) and quarter >= 1 and quarter <= 4
 
@@ -345,9 +348,9 @@ class TestInsiderTradingStatistics:
         for symbol in symbols:
             result, validation = handle_api_call_with_validation(
                 insider_trades.insider_trading_statistics,
-                'insider_trading_statistics',
+                "insider_trading_statistics",
                 apikey=api_key,
-                symbol=symbol
+                symbol=symbol,
             )
 
             result_list = get_response_models(result, FMPInsiderTradeStatistics)
@@ -363,10 +366,9 @@ class TestInsiderTradingStatistics:
         """Test insider trading statistics with invalid symbol."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_statistics,
-            'insider_trading_statistics',
-            allow_empty=True,
+            "insider_trading_statistics",
             apikey=api_key,
-            symbol="INVALID_SYMBOL_XYZ"
+            symbol="INVALID_SYMBOL_XYZ",
         )
 
         result_list = get_response_models(result, FMPInsiderTradeStatistics)
@@ -384,9 +386,9 @@ class TestAcquisitionOwnership:
         """Test basic acquisition ownership with validation."""
         result, validation = handle_api_call_with_validation(
             insider_trades.acquisition_ownership,
-            'acquisition_ownership',
+            "acquisition_ownership",
             apikey=api_key,
-            symbol="AAPL"
+            symbol="AAPL",
         )
 
         result_list = get_response_models(result, FMPAcquisitionOwnership)
@@ -417,18 +419,18 @@ class TestAcquisitionOwnership:
         """Test pagination in acquisition ownership."""
         result_page1, validation = handle_api_call_with_validation(
             insider_trades.acquisition_ownership,
-            'acquisition_ownership',
+            "acquisition_ownership",
             apikey=api_key,
             symbol="MSFT",
-            page=0
+            page=0,
         )
 
         result_page2, validation = handle_api_call_with_validation(
             insider_trades.acquisition_ownership,
-            'acquisition_ownership',
+            "acquisition_ownership",
             apikey=api_key,
             symbol="MSFT",
-            page=1
+            page=1,
         )
 
         result_list1 = get_response_models(result_page1, FMPAcquisitionOwnership)
@@ -449,9 +451,9 @@ class TestAcquisitionOwnership:
         for symbol in symbols:
             result, validation = handle_api_call_with_validation(
                 insider_trades.acquisition_ownership,
-                'acquisition_ownership',
+                "acquisition_ownership",
                 apikey=api_key,
-                symbol=symbol
+                symbol=symbol,
             )
 
             result_list = get_response_models(result, FMPAcquisitionOwnership)
@@ -467,10 +469,9 @@ class TestAcquisitionOwnership:
         """Test acquisition ownership with invalid symbol."""
         result, validation = handle_api_call_with_validation(
             insider_trades.acquisition_ownership,
-            'acquisition_ownership',
-            allow_empty=True,
+            "acquisition_ownership",
             apikey=api_key,
-            symbol="INVALID_SYMBOL_XYZ"
+            symbol="INVALID_SYMBOL_XYZ",
         )
 
         result_list = get_response_models(result, FMPAcquisitionOwnership)
@@ -489,18 +490,18 @@ class TestInsiderTradesDataQuality:
         # Test regular insider trading
         result1, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             symbol="AAPL",
-            limit=10
+            limit=10,
         )
 
         # Test latest insider trading
         result2, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_latest,
-            'insider_trading_latest',
+            "insider_trading_latest",
             apikey=api_key,
-            limit=10
+            limit=10,
         )
 
         result_list1 = get_response_models(result1, FMPInsiderTrade)
@@ -514,7 +515,7 @@ class TestInsiderTradesDataQuality:
             # Check structure consistency
             item1 = result_list1[0]
             item2 = result_list2[0]
-            
+
             # Both should have basic fields
             assert item1.symbol is not None
             assert item2.symbol is not None
@@ -525,9 +526,9 @@ class TestInsiderTradesDataQuality:
         """Test insider trading statistics calculations."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading_statistics,
-            'insider_trading_statistics',
+            "insider_trading_statistics",
             apikey=api_key,
-            symbol="AAPL"
+            symbol="AAPL",
         )
 
         result_list = get_response_models(result, FMPInsiderTradeStatistics)
@@ -543,11 +544,20 @@ class TestInsiderTradesDataQuality:
 
                 if sales_count is not None and purchases_count is not None:
                     assert sales_count >= 0, "Sales count should be non-negative"
-                    assert purchases_count >= 0, "Purchases count should be non-negative"
+                    assert (
+                        purchases_count >= 0
+                    ), "Purchases count should be non-negative"
 
-                if acquired_transactions is not None and disposed_transactions is not None:
-                    assert acquired_transactions >= 0, "Acquired transactions should be non-negative"
-                    assert disposed_transactions >= 0, "Disposed transactions should be non-negative"
+                if (
+                    acquired_transactions is not None
+                    and disposed_transactions is not None
+                ):
+                    assert (
+                        acquired_transactions >= 0
+                    ), "Acquired transactions should be non-negative"
+                    assert (
+                        disposed_transactions >= 0
+                    ), "Disposed transactions should be non-negative"
 
                 # Validate amounts if present
                 total_acquired = item.totalAcquired
@@ -561,9 +571,9 @@ class TestInsiderTradesDataQuality:
         """Test acquisition ownership data quality."""
         result, validation = handle_api_call_with_validation(
             insider_trades.acquisition_ownership,
-            'acquisition_ownership',
+            "acquisition_ownership",
             apikey=api_key,
-            symbol="AAPL"
+            symbol="AAPL",
         )
 
         result_list = get_response_models(result, FMPAcquisitionOwnership)
@@ -577,7 +587,9 @@ class TestInsiderTradesDataQuality:
                     # Convert to float for validation (it's stored as string)
                     try:
                         percent_float = float(percent_of_class)
-                        assert 0 <= percent_float <= 100, "Percent of class should be between 0 and 100"
+                        assert (
+                            0 <= percent_float <= 100
+                        ), "Percent of class should be between 0 and 100"
                     except (ValueError, TypeError):
                         # Skip validation if not a valid number
                         pass
@@ -587,8 +599,10 @@ class TestInsiderTradesDataQuality:
                 if amount_owned is not None:
                     # Convert to int for validation (it's stored as string)
                     try:
-                        amount_int = int(amount_owned.replace(',', ''))
-                        assert amount_int >= 0, "Amount beneficially owned should be non-negative"
+                        amount_int = int(amount_owned.replace(",", ""))
+                        assert (
+                            amount_int >= 0
+                        ), "Amount beneficially owned should be non-negative"
                     except (ValueError, TypeError):
                         # Skip validation if not a valid number
                         pass
@@ -596,7 +610,9 @@ class TestInsiderTradesDataQuality:
                 # Validate basic required fields
                 assert item.symbol is not None, "Symbol should be present"
                 assert item.filingDate is not None, "Filing date should be present"
-                assert item.nameOfReportingPerson is not None, "Name of reporting person should be present"
+                assert (
+                    item.nameOfReportingPerson is not None
+                ), "Name of reporting person should be present"
 
 
 @pytest.mark.integration
@@ -623,15 +639,15 @@ class TestInsiderTradesComprehensive:
         ],
     )
     def test_insider_trading_comprehensive_coverage(
-            self, api_key, symbol, sector, expected_activity, market_cap_range
-        ):
+        self, api_key, symbol, sector, expected_activity, market_cap_range
+    ):
         """Test insider trading across comprehensive company coverage."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
+            "insider_trading",
             apikey=api_key,
             symbol=symbol,
-            limit=20
+            limit=20,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -674,17 +690,16 @@ class TestInsiderTradesComprehensive:
         ],
     )
     def test_insider_trading_transaction_types(
-            self, api_key, transaction_type, expected_frequency, transaction_nature
-        ):
+        self, api_key, transaction_type, expected_frequency, transaction_nature
+    ):
         """Test insider trading transaction types with validation."""
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
-            allow_empty=True,
+            "insider_trading",
             apikey=api_key,
             symbol="AAPL",
             transactionType=transaction_type,
-            limit=10
+            limit=10,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -703,37 +718,38 @@ class TestInsiderTradesComprehensive:
                 "very_common": 5,
                 "common": 2,
                 "uncommon": 1,
-                "rare": 0
+                "rare": 0,
             }
-            
+
             min_expected = frequency_expectations.get(expected_frequency, 0)
             if expected_frequency != "rare":
-                assert len(result_list) >= min_expected, f"Expected at least {min_expected} transactions for {transaction_type}"
+                assert (
+                    len(result_list) >= min_expected
+                ), f"Expected at least {min_expected} transactions for {transaction_type}"
 
     @pytest.mark.parametrize(
-            "date_range_days,analysis_period,expected_trade_volume",
-            [
-                (30, "recent", "current"),
-                (90, "quarterly", "moderate"),
-                (180, "semi_annual", "substantial"),
-                (365, "annual", "comprehensive"),
+        "date_range_days,analysis_period,expected_trade_volume",
+        [
+            (30, "recent", "current"),
+            (90, "quarterly", "moderate"),
+            (180, "semi_annual", "substantial"),
+            (365, "annual", "comprehensive"),
         ],
     )
     def test_insider_trading_temporal_analysis(
-            self, api_key, date_range_days, analysis_period, expected_trade_volume
-        ):
+        self, api_key, date_range_days, analysis_period, expected_trade_volume
+    ):
         """Test insider trading temporal analysis with validation."""
         # Calculate date range
         end_date = datetime.now()
         start_date = end_date - timedelta(days=date_range_days)
-        
+
         result, validation = handle_api_call_with_validation(
             insider_trades.insider_trading,
-            'insider_trading',
-            allow_empty=True,
+            "insider_trading",
             apikey=api_key,
             symbol="AAPL",
-            limit=50
+            limit=50,
         )
 
         result_list = get_response_models(result, FMPInsiderTrade)
@@ -754,6 +770,10 @@ class TestInsiderTradesComprehensive:
             if date_counts:
                 # Should have some temporal spread for longer periods
                 if analysis_period in ["annual", "semi_annual"]:
-                    assert len(date_counts) >= 1, f"Should have trades across time for {analysis_period}"
+                    assert (
+                        len(date_counts) >= 1
+                    ), f"Should have trades across time for {analysis_period}"
                 elif analysis_period in ["quarterly", "recent"]:
-                    assert len(date_counts) >= 1, f"Should have recent trades for {analysis_period}"
+                    assert (
+                        len(date_counts) >= 1
+                    ), f"Should have recent trades for {analysis_period}"

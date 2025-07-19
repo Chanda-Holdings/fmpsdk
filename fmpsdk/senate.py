@@ -167,26 +167,27 @@ def house_trades_by_name(
 # Create class-like wrappers for backwards compatibility with tests
 class SenateFunctions:
     """Wrapper class to provide dot notation access to senate functions."""
+
     @staticmethod
     def senate_latest(*args, **kwargs):
         return senate_latest(*args, **kwargs)
-    
-    @staticmethod 
+
+    @staticmethod
     def senate_trades(*args, **kwargs):
         return senate_trades(*args, **kwargs)
-    
+
     @staticmethod
     def senate_trades_by_name(*args, **kwargs):
         return senate_trades_by_name(*args, **kwargs)
-    
+
     @staticmethod
     def house_latest(*args, **kwargs):
         return house_latest(*args, **kwargs)
-    
+
     @staticmethod
     def house_trades(*args, **kwargs):
         return house_trades(*args, **kwargs)
-    
+
     @staticmethod
     def house_trades_by_name(*args, **kwargs):
         return house_trades_by_name(*args, **kwargs)
@@ -194,14 +195,15 @@ class SenateFunctions:
 
 class HouseFunctions:
     """Wrapper class to provide dot notation access to house functions."""
+
     @staticmethod
     def house_latest(*args, **kwargs):
         return house_latest(*args, **kwargs)
-    
+
     @staticmethod
     def house_trades(*args, **kwargs):
         return house_trades(*args, **kwargs)
-    
+
     @staticmethod
     def house_trades_by_name(*args, **kwargs):
         return house_trades_by_name(*args, **kwargs)

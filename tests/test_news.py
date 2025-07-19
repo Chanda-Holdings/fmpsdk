@@ -8,11 +8,11 @@ import pytest
 from fmpsdk import news
 from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
+    FMPHistoricalSentiment,
     FMPNewsArticle,
-    FMPPriceTargetNews, 
+    FMPPriceTargetNews,
     FMPStockGradeNews,
     FMPTrendingSentiment,
-    FMPHistoricalSentiment,
 )
 from tests.conftest import (
     get_response_models,
@@ -21,7 +21,9 @@ from tests.conftest import (
 )
 
 # Test configuration
-RESPONSE_TIME_LIMIT = 15.0  # seconds (news endpoints might be slower)
+RESPONSE_TIME_LIMIT = (
+    45.0  # seconds (news endpoints might be slower, especially crypto news)
+)
 
 
 @pytest.fixture
@@ -61,7 +63,9 @@ class TestNewsBasic:
             for article in models[:3]:  # Check first few items
                 # Enhanced business logic validation
                 assert article.publishedDate, "Published date should not be empty"
-                assert article.title or article.text, "Should have either title or text content"
+                assert (
+                    article.title or article.text
+                ), "Should have either title or text content"
 
                 # Date should be valid format
                 try:
@@ -71,14 +75,24 @@ class TestNewsBasic:
 
                 # Content validation
                 if article.title:
-                    assert len(article.title) <= 1000, "Title should be reasonable length"
-                    assert len(article.title) >= 5, "Title should have meaningful content"
+                    assert (
+                        len(article.title) <= 1000
+                    ), "Title should be reasonable length"
+                    assert (
+                        len(article.title) >= 5
+                    ), "Title should have meaningful content"
                 if article.text:
-                    assert len(article.text) >= 10, "Text should have meaningful content"
+                    assert (
+                        len(article.text) >= 10
+                    ), "Text should have meaningful content"
                 if article.url:
-                    assert article.url.startswith(('http://', 'https://')), "URL should be valid"
+                    assert article.url.startswith(
+                        ("http://", "https://")
+                    ), "URL should be valid"
                 if article.site:
-                    assert len(article.site) <= 100, "Site name should be reasonable length"
+                    assert (
+                        len(article.site) <= 100
+                    ), "Site name should be reasonable length"
 
     def test_company_press_releases_latest(self, api_key):
         """Test getting latest company press releases."""
@@ -96,18 +110,26 @@ class TestNewsBasic:
             for release in models[:3]:  # Check first few items
                 # Enhanced business logic validation
                 assert release.publishedDate, "Published date should not be empty"
-                assert release.title or release.text, "Should have either title or text content"
+                assert (
+                    release.title or release.text
+                ), "Should have either title or text content"
 
                 # Press releases should typically have a symbol
                 if release.symbol:
-                    assert len(release.symbol) <= 10, "Symbol should have reasonable length"
+                    assert (
+                        len(release.symbol) <= 10
+                    ), "Symbol should have reasonable length"
                     assert release.symbol.isupper(), "Symbol should be uppercase"
 
                 # Content quality validation
                 if release.title:
-                    assert len(release.title) >= 10, "Press release title should be substantial"
+                    assert (
+                        len(release.title) >= 10
+                    ), "Press release title should be substantial"
                 if release.text:
-                    assert len(release.text) >= 20, "Press release text should be substantial"
+                    assert (
+                        len(release.text) >= 20
+                    ), "Press release text should be substantial"
 
     def test_news_general_latest(self, api_key):
         """Test getting latest general market news."""
@@ -125,13 +147,19 @@ class TestNewsBasic:
             for article in models[:3]:  # Check first few items
                 # Enhanced business logic validation
                 assert article.publishedDate, "Published date should not be empty"
-                assert article.title or article.text, "Should have either title or text content"
+                assert (
+                    article.title or article.text
+                ), "Should have either title or text content"
 
                 # News freshness validation
                 try:
-                    news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                    news_date = datetime.strptime(
+                        article.publishedDate[:10], "%Y-%m-%d"
+                    )
                     days_old = (datetime.now() - news_date).days
-                    assert days_old <= 365, f"News should not be too old (found {days_old} days old)"
+                    assert (
+                        days_old <= 365
+                    ), f"News should not be too old (found {days_old} days old)"
                 except ValueError:
                     pytest.fail(f"Invalid date format: {article.publishedDate}")
 
@@ -151,15 +179,26 @@ class TestNewsBasic:
             for article in models[:3]:  # Check first few items
                 # Enhanced business logic validation
                 assert article.publishedDate, "Published date should not be empty"
-                assert article.title or article.text, "Should have either title or text content"
+                assert (
+                    article.title or article.text
+                ), "Should have either title or text content"
 
                 # Crypto-specific validation
                 if article.symbol:
                     # Crypto symbols often end with USD
-                    assert len(article.symbol) <= 15, "Crypto symbol should be reasonable length"
+                    assert (
+                        len(article.symbol) <= 15
+                    ), "Crypto symbol should be reasonable length"
                 if article.title:
                     # Crypto news might contain relevant keywords
-                    crypto_keywords = ['bitcoin', 'ethereum', 'crypto', 'blockchain', 'btc', 'eth']
+                    crypto_keywords = [
+                        "bitcoin",
+                        "ethereum",
+                        "crypto",
+                        "blockchain",
+                        "btc",
+                        "eth",
+                    ]
                     title_lower = article.title.lower()
                     # Not enforcing keywords as general news might not always contain them
 
@@ -170,10 +209,7 @@ class TestNewsWithParameters:
     def test_news_stock_latest_with_date_range(self, api_key, recent_date, older_date):
         """Test stock news with date range parameters."""
         result = news.news_stock_latest(
-            apikey=api_key, 
-            from_date=older_date, 
-            to_date=recent_date, 
-            limit=15
+            apikey=api_key, from_date=older_date, to_date=recent_date, limit=15
         )
 
         models = get_response_models(result, FMPNewsArticle)
@@ -188,14 +224,22 @@ class TestNewsWithParameters:
                 to_date_obj = datetime.strptime(recent_date, "%Y-%m-%d")
 
                 # Some tolerance for API behavior
-                assert article_date >= from_date_obj - timedelta(days=7), f"Article date {article_date} too early"
-                assert article_date <= to_date_obj + timedelta(days=7), f"Article date {article_date} too late"
+                assert article_date >= from_date_obj - timedelta(
+                    days=7
+                ), f"Article date {article_date} too early"
+                assert article_date <= to_date_obj + timedelta(
+                    days=7
+                ), f"Article date {article_date} too late"
 
                 # Enhanced validation
                 if article.symbol:
-                    assert len(article.symbol) <= 10, "Stock symbol should be reasonable length"
+                    assert (
+                        len(article.symbol) <= 10
+                    ), "Stock symbol should be reasonable length"
                 if article.title:
-                    assert len(article.title) >= 5, "Article title should have substance"
+                    assert (
+                        len(article.title) >= 5
+                    ), "Article title should have substance"
 
     def test_news_with_pagination(self, api_key):
         """Test news endpoints with pagination parameters."""
@@ -206,7 +250,9 @@ class TestNewsWithParameters:
 
         # Should respect limit (with some tolerance)
         if models:
-            assert len(models) <= 10, "Should respect pagination limit with some tolerance"
+            assert (
+                len(models) <= 10
+            ), "Should respect pagination limit with some tolerance"
 
             # Validate pagination results
             for article in models[:3]:
@@ -215,7 +261,9 @@ class TestNewsWithParameters:
 
     def test_crypto_news_with_date_filter(self, api_key, recent_date):
         """Test crypto news with date filtering."""
-        result = news.news_crypto_latest(apikey=api_key, from_date=recent_date, limit=10)
+        result = news.news_crypto_latest(
+            apikey=api_key, from_date=recent_date, limit=10
+        )
 
         models = get_response_models(result, FMPNewsArticle)
         validate_model_list(models, FMPNewsArticle)
@@ -224,15 +272,19 @@ class TestNewsWithParameters:
             for article in models[:3]:
                 # Enhanced crypto news validation
                 assert article.publishedDate, "Published date should be present"
-                
+
                 # Date should be after the filter date
                 article_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
                 filter_date = datetime.strptime(recent_date, "%Y-%m-%d")
-                assert article_date >= filter_date - timedelta(days=1), "Article should be after filter date"
+                assert article_date >= filter_date - timedelta(
+                    days=1
+                ), "Article should be after filter date"
 
                 # Crypto news quality validation
                 if article.symbol:
-                    assert len(article.symbol) <= 15, "Crypto symbol should be reasonable length"
+                    assert (
+                        len(article.symbol) <= 15
+                    ), "Crypto symbol should be reasonable length"
                 if article.title:
                     assert len(article.title) >= 5, "Title should have substance"
                 if article.site:
@@ -259,7 +311,9 @@ class TestNewsDataQuality:
 
                     # Published date should be recent (within last year)
                     if article.publishedDate:
-                        pub_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                        pub_date = datetime.strptime(
+                            article.publishedDate[:10], "%Y-%m-%d"
+                        )
                         assert pub_date >= datetime.now() - timedelta(days=365)
 
                     # URL validation if present
@@ -299,7 +353,9 @@ class TestNewsDataQuality:
             latest_article = models[0]
 
             # Most recent news should be within last 7 days (with tolerance for weekends)
-            latest_date = datetime.strptime(latest_article.publishedDate[:10], "%Y-%m-%d")
+            latest_date = datetime.strptime(
+                latest_article.publishedDate[:10], "%Y-%m-%d"
+            )
             days_old = (datetime.now() - latest_date).days
 
             # Allow up to 10 days for news data freshness
@@ -341,7 +397,8 @@ class TestNewsErrorHandling:
             assert "Error Message" in result
         else:
             models = get_response_models(result, FMPNewsArticle)
-            validate_model_list(models, FMPNewsArticle)
+            # Invalid pagination may return empty results, which is valid behavior
+            validate_model_list(models, FMPNewsArticle, min_count=0)
 
     def test_general_news_invalid_api_key(self):
         """Test general news with invalid API key."""
@@ -361,7 +418,10 @@ class TestNewsPerformance:
         """Test that all news endpoints respond within acceptable time."""
         endpoints = [
             ("stock_news", lambda: news.news_stock_latest(api_key, limit=10)),
-            ("press_releases", lambda: news.company_press_releases_latest(api_key, limit=10)),
+            (
+                "press_releases",
+                lambda: news.company_press_releases_latest(api_key, limit=10),
+            ),
             ("general_news", lambda: news.news_general_latest(api_key, limit=10)),
             ("crypto_news", lambda: news.news_crypto_latest(api_key, limit=10)),
         ]
@@ -372,7 +432,9 @@ class TestNewsPerformance:
             response_time = time.time() - start_time
 
             # Response time validation
-            assert response_time < RESPONSE_TIME_LIMIT, f"{endpoint_name} took too long: {response_time}s"
+            assert (
+                response_time < RESPONSE_TIME_LIMIT
+            ), f"{endpoint_name} took too long: {response_time}s"
 
             # Check if result is error dict (invalid API key)
             if isinstance(result, dict) and "Error Message" in result:
@@ -394,7 +456,9 @@ class TestNewsPerformance:
 
                 # Should have some variety in news sources
                 if len(models) >= 10:
-                    assert len(publishers) >= 1 or len(sites) >= 1  # At least some source diversity
+                    assert (
+                        len(publishers) >= 1 or len(sites) >= 1
+                    )  # At least some source diversity
 
     def test_press_release_vs_news_distinction(self, api_key):
         """Test distinction between press releases and general news."""
@@ -672,7 +736,9 @@ class TestNewsParameterValidation:
         ), f"Response time should be reasonable for {company_size} {symbol}"
 
         models = get_response_models(result, FMPNewsArticle)
-        validate_model_list(models, FMPNewsArticle, f"Result should be valid for {symbol}")
+        validate_model_list(
+            models, FMPNewsArticle, f"Result should be valid for {symbol}"
+        )
 
         if models:  # If we have data
             # Validate news volume expectations based on company size and sector
@@ -702,18 +768,26 @@ class TestNewsParameterValidation:
             # Validate news article structure for first few items
             for article in models[:3]:
                 # Validate news article data
-                assert article.publishedDate, f"News for {symbol} should have publish date"
-                assert article.title or article.text, f"News for {symbol} should have content"
+                assert (
+                    article.publishedDate
+                ), f"News for {symbol} should have publish date"
+                assert (
+                    article.title or article.text
+                ), f"News for {symbol} should have content"
 
                 # Date should be valid format and reasonably recent
                 try:
-                    news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                    news_date = datetime.strptime(
+                        article.publishedDate[:10], "%Y-%m-%d"
+                    )
                     days_old = (datetime.now() - news_date).days
                     assert (
                         days_old <= 365
                     ), f"News for {symbol} should be within last year"
                 except ValueError:
-                    pytest.fail(f"Invalid date format for {symbol}: {article.publishedDate}")
+                    pytest.fail(
+                        f"Invalid date format for {symbol}: {article.publishedDate}"
+                    )
 
     @pytest.mark.parametrize(
         "date_range_days,limit,expected_article_count_range,period_description",
@@ -746,7 +820,9 @@ class TestNewsParameterValidation:
         ), f"Response time should be reasonable for {period_description}"
 
         models = get_response_models(result, FMPNewsArticle)
-        validate_model_list(models, FMPNewsArticle, f"Result should be valid for {period_description}")
+        validate_model_list(
+            models, FMPNewsArticle, f"Result should be valid for {period_description}"
+        )
 
         if models:
             actual_count = len(models)
@@ -760,9 +836,13 @@ class TestNewsParameterValidation:
             if actual_count > 0:
                 # Validate date distribution for the period
                 dates = []
-                for article in models[: min(10, len(models))]:  # Check first 10 articles
+                for article in models[
+                    : min(10, len(models))
+                ]:  # Check first 10 articles
                     try:
-                        news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                        news_date = datetime.strptime(
+                            article.publishedDate[:10], "%Y-%m-%d"
+                        )
                         days_old = (datetime.now() - news_date).days
                         dates.append(days_old)
                     except ValueError:
@@ -830,7 +910,9 @@ class TestNewsParameterValidation:
             result = news.news_stock_latest(apikey=api_key, limit=20)
 
         models = get_response_models(result, FMPNewsArticle)
-        validate_model_list(models, FMPNewsArticle, f"Result should be valid for {news_type} news")
+        validate_model_list(
+            models, FMPNewsArticle, f"Result should be valid for {news_type} news"
+        )
 
         if models:
             content_validation = expected_characteristics
@@ -852,7 +934,9 @@ class TestNewsParameterValidation:
 
                 # Validate age
                 try:
-                    news_date = datetime.strptime(article.publishedDate[:10], "%Y-%m-%d")
+                    news_date = datetime.strptime(
+                        article.publishedDate[:10], "%Y-%m-%d"
+                    )
                     days_old = (datetime.now() - news_date).days
                     assert (
                         days_old <= content_validation["max_age_days"]

@@ -63,7 +63,7 @@ class TestCompanyProfile:
         # Validate first result with automatic model validation
         first_model = models[0]
         assert first_model.symbol == symbol
-        
+
         # Check market cap threshold
         if first_model.mktCap is not None:
             assert first_model.mktCap > market_cap_threshold
@@ -73,7 +73,7 @@ class TestCompanyProfile:
         response = company.company_profile(apikey=api_key, symbol="INVALID999")
 
         models = get_response_models(response, FMPCompanyProfile)
-        validate_model_list(models, FMPCompanyProfile)
+        validate_model_list(models, FMPCompanyProfile, min_count=0)
         # Should return empty list for invalid symbol
         assert isinstance(models, list)
 
@@ -92,7 +92,7 @@ class TestCompanyProfile:
     def test_company_profile_cik_invalid(self, api_key):
         """Test company profile with invalid CIK."""
         from fmpsdk.exceptions import InvalidQueryParameterException
-        
+
         with pytest.raises(InvalidQueryParameterException):
             company.company_profile_cik(apikey=api_key, cik="INVALID")
 
@@ -118,7 +118,7 @@ class TestCompanyNotes:
         """Test company notes with multiple symbols."""
         for symbol in ["AAPL", "MSFT", "GOOGL"]:
             response = company.company_notes(apikey=api_key, symbol=symbol)
-            
+
             models = get_response_models(response, FMPCompanyNote)
             validate_model_list(models, FMPCompanyNote)
 
@@ -155,7 +155,7 @@ class TestStockPeers:
         """Test stock peers across different sectors with validation."""
         for symbol in symbols:
             response = company.stock_peers(apikey=api_key, symbol=symbol)
-            
+
             models = get_response_models(response, FMPStockPeer)
             validate_model_list(models, FMPStockPeer)
 
@@ -178,7 +178,7 @@ class TestMarketCapitalization:
         # Validate market cap data
         first_model = models[0]
         assert first_model.symbol == "AAPL"
-        
+
         assert first_model.marketCap is not None
         assert isinstance(first_model.marketCap, (int, float))
         assert first_model.marketCap > 0
@@ -186,7 +186,7 @@ class TestMarketCapitalization:
     def test_market_capitalization_batch(self, api_key):
         """Test batch market capitalization with enhanced validation."""
         symbols = ["AAPL", "MSFT", "GOOGL"]
-        
+
         response = company.market_capitalization_batch(apikey=api_key, symbols=symbols)
 
         models = get_response_models(response, FMPMarketCap)
@@ -217,7 +217,7 @@ class TestEmployeeCount:
         if models:
             first_model = models[0]
             assert first_model.symbol == "AAPL"
-            
+
             if first_model.employeeCount is not None:
                 assert isinstance(first_model.employeeCount, (int, float))
                 assert first_model.employeeCount > 0
@@ -234,7 +234,7 @@ class TestCompanyErrorHandling:
     def test_company_profile_empty_symbol(self, api_key):
         """Test company profile with empty symbol."""
         from fmpsdk.exceptions import InvalidQueryParameterException
-        
+
         with pytest.raises(InvalidQueryParameterException):
             company.company_profile(apikey=api_key, symbol="")
 
@@ -250,7 +250,9 @@ class TestCompanyDataConsistency:
         profile_response = company.company_profile(apikey=api_key, symbol=symbol)
 
         # Get market cap data
-        market_cap_response = company.market_capitalization(apikey=api_key, symbol=symbol)
+        market_cap_response = company.market_capitalization(
+            apikey=api_key, symbol=symbol
+        )
 
         profile_models = get_response_models(profile_response, FMPCompanyProfile)
         market_cap_models = get_response_models(market_cap_response, FMPMarketCap)
@@ -261,12 +263,14 @@ class TestCompanyDataConsistency:
 
             # Both should have the same symbol
             assert profile_model.symbol == market_cap_model.symbol
-            
+
             # Market cap values should be reasonable
             profile_mkt_cap = profile_model.mktCap
             standalone_mkt_cap = market_cap_model.marketCap
-            
+
             if profile_mkt_cap is not None and standalone_mkt_cap is not None:
                 # Values should be in the same order of magnitude (allowing for timing differences)
-                ratio = max(profile_mkt_cap, standalone_mkt_cap) / min(profile_mkt_cap, standalone_mkt_cap)
+                ratio = max(profile_mkt_cap, standalone_mkt_cap) / min(
+                    profile_mkt_cap, standalone_mkt_cap
+                )
                 assert ratio < 2.0  # Should not differ by more than 2x

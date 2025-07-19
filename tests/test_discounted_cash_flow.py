@@ -6,19 +6,20 @@ from typing import List
 import pytest
 
 from fmpsdk import discounted_cash_flow
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPDCFCustomValuation, FMPDcfValuation
 from tests.conftest import (
     get_response_models,
+    handle_api_call_with_validation,
     validate_model_list,
     validate_required_fields,
-    handle_api_call_with_validation,
 )
-from fmpsdk.exceptions import InvalidAPIKeyException
 
 RESPONSE_TIME_LIMIT = 10
 
+
 class TestDCFValuation:
-    
+
     def test_dcf_valuation_basic(self, api_key):
         """Test basic DCF valuation for a well-known stock."""
         start_time = time.time()
@@ -29,15 +30,15 @@ class TestDCFValuation:
 
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDcfValuation)
         validate_model_list(models, FMPDcfValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDcfValuation)
-            
+
             # Validate DCF data using Pydantic model fields
             assert dcf_obj.symbol != ""
             assert dcf_obj.date != ""
@@ -61,15 +62,15 @@ class TestDCFValuation:
 
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDcfValuation)
         validate_model_list(models, FMPDcfValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDcfValuation)
-            
+
             # Validate DCF data using Pydantic model fields
             assert dcf_obj.symbol != ""
             assert dcf_obj.date != ""
@@ -89,15 +90,15 @@ class TestDCFValuation:
 
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
         validate_model_list(models, FMPDCFCustomValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
-            
+
             # Validate custom DCF data
             assert dcf_obj.symbol != ""
             assert dcf_obj.year
@@ -118,15 +119,15 @@ class TestDCFValuation:
 
         # Response time validation
         assert response_time < RESPONSE_TIME_LIMIT
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
         validate_model_list(models, FMPDCFCustomValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
-            
+
             # Validate custom levered DCF data
             assert dcf_obj.symbol != ""
             assert dcf_obj.year
@@ -149,15 +150,15 @@ class TestDCFCustomParameters:
             long_term_growth_rate=3.0,
             tax_rate=0.21,
         )
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
         validate_model_list(models, FMPDCFCustomValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
-            
+
             # Validate that custom parameters might be reflected
             assert dcf_obj.symbol != ""
             assert isinstance(dcf_obj.longTermGrowthRate, (int, float))
@@ -177,15 +178,15 @@ class TestDCFCustomParameters:
             risk_free_rate=4.0,
             beta=1.2,
         )
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
         validate_model_list(models, FMPDCFCustomValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
-            
+
             # Validate cost parameters
             assert dcf_obj.symbol != ""
             assert isinstance(dcf_obj.costOfEquity, (int, float))
@@ -210,11 +211,11 @@ class TestDCFCustomParameters:
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
         validate_model_list(models, FMPDCFCustomValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
-            
+
             # Validate levered DCF data
             assert dcf_obj.symbol != ""
             assert isinstance(dcf_obj.wacc, (int, float))
@@ -234,9 +235,9 @@ class TestDCFDataQuality:
             apikey=api_key, symbol="JPM"
         )
         # Work directly with the original Pydantic models
-        if hasattr(result, 'root') and result.root:
+        if hasattr(result, "root") and result.root:
             original_data = result.root
-            
+
             for dcf_obj in original_data[:3]:
                 assert isinstance(dcf_obj, FMPDcfValuation)
 
@@ -263,11 +264,11 @@ class TestDCFDataQuality:
         result = discounted_cash_flow.discounted_cash_flow_custom(
             apikey=api_key, symbol="JNJ"
         )
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
         validate_model_list(models, FMPDCFCustomValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
@@ -324,9 +325,9 @@ class TestDCFSymbols:
             )
 
             # Work directly with the original Pydantic models
-            if hasattr(result, 'root') and result.root:
+            if hasattr(result, "root") and result.root:
                 original_data = result.root
-                
+
                 for dcf_obj in original_data[:1]:  # Check first item
                     assert isinstance(dcf_obj, FMPDcfValuation)
 
@@ -347,9 +348,9 @@ class TestDCFSymbols:
             )
 
             # Work directly with the original Pydantic models
-            if hasattr(result, 'root') and result.root:
+            if hasattr(result, "root") and result.root:
                 original_data = result.root
-                
+
                 for dcf_obj in original_data[:1]:  # Check first item
                     assert isinstance(dcf_obj, FMPDcfValuation)
 
@@ -373,7 +374,7 @@ class TestDCFSymbols:
             # Get response models and validate
             models = get_response_models(result, FMPDCFCustomValuation)
             validate_model_list(models, FMPDCFCustomValuation)
-            
+
             # Validate first item
             if models:
                 dcf_obj = models[0]
@@ -527,20 +528,20 @@ class TestDCFCustom:
         result = discounted_cash_flow.discounted_cash_flow_custom(
             apikey=api_key, symbol="AAPL"
         )
-        
+
         # Validate the original response contains Pydantic models
-        if hasattr(result, 'root') and result.root:
+        if hasattr(result, "root") and result.root:
             original_data = result.root
             assert isinstance(original_data, list)
             if original_data:
                 for item in original_data[:3]:
                     assert isinstance(item, FMPDCFCustomValuation)
                     assert item.symbol != ""
-        
+
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
         validate_model_list(models, FMPDCFCustomValuation)
-        
+
         # Validate first few items
         for dcf_obj in models[:3]:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
@@ -600,16 +601,16 @@ class TestDCFCustom:
         result = discounted_cash_flow.discounted_cash_flow_custom_levered(
             apikey=api_key, symbol="TSLA"
         )
-        
+
         # Validate the original response contains Pydantic models
-        if hasattr(result, 'root') and result.root:
+        if hasattr(result, "root") and result.root:
             original_data = result.root
             assert isinstance(original_data, list)
             if original_data:
                 for item in original_data[:3]:
                     assert isinstance(item, FMPDCFCustomValuation)
                     assert item.symbol != ""
-        
+
         # Extract data for further testing
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)

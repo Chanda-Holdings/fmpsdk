@@ -19,30 +19,41 @@ class TestCryptocurrencyList:
     def test_cryptocurrency_list_success(self, api_key):
         """Test successful retrieval of cryptocurrency list using enhanced validation."""
         response = crypto.cryptocurrency_list(apikey=api_key)
-        
+
         models = get_response_models(response, FMPCryptocurrencyListItem)
         validate_model_list(models, FMPCryptocurrencyListItem, min_count=1)
 
         # Enhanced business logic validation using model attributes
         first_model = models[0]
-        
-        assert first_model.symbol is not None and len(first_model.symbol) > 0, "Symbol should not be empty"
-        assert first_model.name is not None and len(first_model.name) > 0, "Name should not be empty"
-        
+
+        assert (
+            first_model.symbol is not None and len(first_model.symbol) > 0
+        ), "Symbol should not be empty"
+        assert (
+            first_model.name is not None and len(first_model.name) > 0
+        ), "Name should not be empty"
+
         # Crypto-specific validation
-        assert len(first_model.symbol) <= 15, "Crypto symbol should be reasonable length"
+        assert (
+            len(first_model.symbol) <= 15
+        ), "Crypto symbol should be reasonable length"
         assert len(first_model.name) <= 100, "Crypto name should be reasonable length"
-        
+
         # Most crypto symbols should contain USD pairing
         if "USD" in first_model.symbol:
-            assert first_model.symbol.endswith("USD"), "USD-paired cryptos should end with USD"
+            assert first_model.symbol.endswith(
+                "USD"
+            ), "USD-paired cryptos should end with USD"
 
     def test_cryptocurrency_list_data_quality(self, api_key):
         """Test data quality of cryptocurrency list using enhanced validation."""
         response = crypto.cryptocurrency_list(apikey=api_key)
-        
+
         models = get_response_models(response, FMPCryptocurrencyListItem)
-        validate_model_list(models, FMPCryptocurrencyListItem, min_count=50, max_count=10000)
+        validate_model_list(models, FMPCryptocurrencyListItem, min_count=50)
+        assert (
+            len(models) <= 10000
+        ), f"Cryptocurrency list seems too large: {len(models)} items"
 
         # Data quality validation using model attributes
         valid_symbols = 0
@@ -57,23 +68,29 @@ class TestCryptocurrencyList:
                     valid_symbols += 1
                 if "USD" in model.symbol:
                     usd_paired += 1
-            
+
             if model.name and len(model.name) > 2:
                 named_cryptos += 1
 
         # Quality checks
-        assert valid_symbols >= len(models) * 0.8, "At least 80% of symbols should be valid"
-        assert named_cryptos >= len(models) * 0.9, "At least 90% should have meaningful names"
+        assert (
+            valid_symbols >= len(models) * 0.8
+        ), "At least 80% of symbols should be valid"
+        assert (
+            named_cryptos >= len(models) * 0.9
+        ), "At least 90% should have meaningful names"
         assert usd_paired >= len(models) * 0.7, "At least 70% should be USD-paired"
-        
+
         # Uniqueness check
         unique_symbols = set(symbols)
-        assert len(unique_symbols) == len(symbols), "All crypto symbols should be unique"
+        assert len(unique_symbols) == len(
+            symbols
+        ), "All crypto symbols should be unique"
 
     def test_cryptocurrency_list_stress_test(self, api_key):
         """Stress test for cryptocurrency list endpoint with enhanced validation."""
         results = []
-        
+
         # Test multiple rapid calls
         for i in range(3):
             response = crypto.cryptocurrency_list(apikey=api_key)
@@ -82,7 +99,9 @@ class TestCryptocurrencyList:
             results.append(len(models))
 
         # All calls should return consistent results
-        assert all(count == results[0] for count in results), "Crypto list should be consistent across calls"
+        assert all(
+            count == results[0] for count in results
+        ), "Crypto list should be consistent across calls"
 
     @pytest.mark.parametrize(
         "crypto_category",
@@ -100,7 +119,7 @@ class TestCryptocurrencyList:
     def test_cryptocurrency_list_by_category(self, api_key, crypto_category):
         """Test cryptocurrency list contains expected categories using enhanced validation."""
         response = crypto.cryptocurrency_list(apikey=api_key)
-        
+
         models = get_response_models(response, FMPCryptocurrencyListItem)
         validate_model_list(models, FMPCryptocurrencyListItem, min_count=1)
 
@@ -154,10 +173,10 @@ class TestCryptocurrencyList:
     def test_cryptocurrency_list_contains_major_cryptos(self, api_key, expected_crypto):
         """Test that cryptocurrency list contains major cryptocurrencies using enhanced validation."""
         response = crypto.cryptocurrency_list(apikey=api_key)
-        
+
         models = get_response_models(response, FMPCryptocurrencyListItem)
         validate_model_list(models, FMPCryptocurrencyListItem, min_count=1)
-        
+
         symbols = [model.symbol for model in models if model.symbol]
 
         # Check for exact match or partial match (symbol format may vary)
@@ -177,7 +196,7 @@ class TestCryptocurrencyList:
         market_cap_cryptos = {
             "top_10": [
                 "BTC",
-                "ETH", 
+                "ETH",
                 "BNB",
                 "XRP",
                 "ADA",
@@ -228,10 +247,10 @@ class TestCryptocurrencyList:
         expected_symbols = market_cap_cryptos.get(market_cap_tier, ["BTC"])
 
         response = crypto.cryptocurrency_list(apikey=api_key)
-        
+
         models = get_response_models(response, FMPCryptocurrencyListItem)
         validate_model_list(models, FMPCryptocurrencyListItem, min_count=1)
-        
+
         symbols = [model.symbol.upper() for model in models if model.symbol]
 
         found_count = 0
@@ -245,10 +264,10 @@ class TestCryptocurrencyList:
     def test_cryptocurrency_list_business_logic_validation(self, api_key):
         """Test comprehensive business logic validation for cryptocurrency data."""
         response = crypto.cryptocurrency_list(apikey=api_key)
-        
+
         models = get_response_models(response, FMPCryptocurrencyListItem)
         validate_model_list(models, FMPCryptocurrencyListItem, min_count=1)
-        
+
         # Test specific business logic for crypto data
         categories_found = set()
         major_cryptos = ["btc", "eth", "bnb", "xrp", "ada"]
@@ -259,26 +278,43 @@ class TestCryptocurrencyList:
             # Enhanced validation for each crypto using model attributes
             if model.symbol:
                 # Symbol format validation
-                assert model.symbol.isupper() or model.symbol.isdigit() or "-" in model.symbol, f"Symbol should be uppercase or contain digits/hyphens: {model.symbol}"
-                
+                assert (
+                    model.symbol.isupper()
+                    or model.symbol.isdigit()
+                    or "-" in model.symbol
+                ), f"Symbol should be uppercase or contain digits/hyphens: {model.symbol}"
+
                 # Symbol length validation
-                assert 3 <= len(model.symbol) <= 15, f"Symbol length should be reasonable: {model.symbol}"
-            
+                assert (
+                    3 <= len(model.symbol) <= 15
+                ), f"Symbol length should be reasonable: {model.symbol}"
+
             if model.name:
                 # Name validation
                 assert len(model.name) >= 2, f"Name should be meaningful: {model.name}"
-                assert len(model.name) <= 100, f"Name should not be too long: {model.name}"
-            
+                assert (
+                    len(model.name) <= 100
+                ), f"Name should not be too long: {model.name}"
+
             # Category detection
             name_lower = model.name.lower() if model.name else ""
             symbol_lower = model.symbol.lower() if model.symbol else ""
 
-            if any(crypto in name_lower or crypto in symbol_lower for crypto in major_cryptos):
+            if any(
+                crypto in name_lower or crypto in symbol_lower
+                for crypto in major_cryptos
+            ):
                 categories_found.add("major")
-            if any(token in name_lower or token in symbol_lower for token in defi_tokens):
+            if any(
+                token in name_lower or token in symbol_lower for token in defi_tokens
+            ):
                 categories_found.add("defi")
-            if any(stable in name_lower or stable in symbol_lower for stable in stablecoins):
+            if any(
+                stable in name_lower or stable in symbol_lower for stable in stablecoins
+            ):
                 categories_found.add("stablecoins")
 
         # Should cover at least one major crypto category
-        assert len(categories_found) >= 1, "Should cover at least one major crypto category"
+        assert (
+            len(categories_found) >= 1
+        ), "Should cover at least one major crypto category"

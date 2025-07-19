@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Optional, Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, RootModel
 
@@ -54,7 +54,7 @@ class FMPStockScreenerResult(BaseModel):
     industry: Optional[str] = None
     beta: Optional[float] = None
     price: float
-    lastAnnualDividend: float
+    lastAnnualDividend: Optional[float] = None
     volume: int
     exchange: str
     exchangeShortName: str
@@ -201,24 +201,26 @@ class FMPRatingSnapshot(BaseModel):
     priceToEarningsScore: int
     priceToBookScore: int
 
+
 class FMPRatingSnapshotV3(BaseModel):
-        symbol: str
-        date: str
-        rating: str
-        ratingScore: int
-        ratingRecommendation: str
-        ratingDetailsDCFScore: int
-        ratingDetailsDCFRecommendation: str
-        ratingDetailsROEScore: int
-        ratingDetailsROERecommendation: str
-        ratingDetailsROAScore: int
-        ratingDetailsROARecommendation: str
-        ratingDetailsDEScore: int
-        ratingDetailsDERecommendation: str
-        ratingDetailsPEScore: int
-        ratingDetailsPERecommendation: str
-        ratingDetailsPBScore: int
-        ratingDetailsPBRecommendation: str
+    symbol: str
+    date: str
+    rating: str
+    ratingScore: int
+    ratingRecommendation: str
+    ratingDetailsDCFScore: int
+    ratingDetailsDCFRecommendation: str
+    ratingDetailsROEScore: int
+    ratingDetailsROERecommendation: str
+    ratingDetailsROAScore: int
+    ratingDetailsROARecommendation: str
+    ratingDetailsDEScore: int
+    ratingDetailsDERecommendation: str
+    ratingDetailsPEScore: int
+    ratingDetailsPERecommendation: str
+    ratingDetailsPBScore: int
+    ratingDetailsPBRecommendation: str
+
 
 class FMPHistoricalRating(BaseModel):
     symbol: str
@@ -369,10 +371,10 @@ class FMPUpcomingIPO(BaseModel):
 
 class FMPDisclosureFiling(BaseModel):
     symbol: str
+    cik: str
     filingDate: str
     acceptedDate: str
     effectivenessDate: str
-    cik: str
     form: str
     url: str
 
@@ -869,10 +871,10 @@ class FMPFundInfo(BaseModel):
     securityCusip: str
     domicile: str
     website: str
-    etfCompany: str
+    etfCompany: Optional[str]
     expenseRatio: float
     assetsUnderManagement: int
-    avgVolume: int
+    avgVolume: float
     inceptionDate: str
     nav: float
     navCurrency: str
@@ -1193,6 +1195,18 @@ class FMPForm13FFiling(BaseModel):
     cik: str
     name: str
     date: str
+    filingDate: str
+    acceptedDate: str
+    formType: str
+    link: str
+    finalLink: str
+
+
+class FMPSECFiling(BaseModel):
+    """Model for SEC filings search results"""
+
+    symbol: str
+    cik: str
     filingDate: str
     acceptedDate: str
     formType: str

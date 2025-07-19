@@ -122,7 +122,7 @@ def institutional_ownership_extract_analytics_by_holder(
     list
         Extracted data from Form 13F filings.
     """
-    path = "institutional-ownership/extract-analystics/holder"
+    path = "institutional-ownership/extract-analytics/holder"
     query_vars = {"apikey": apikey, "symbol": symbol, "year": year, "quarter": quarter}
     if page is not None:
         query_vars["page"] = str(page)

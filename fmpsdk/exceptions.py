@@ -1,9 +1,8 @@
-
-
-RETRYABLE_STATUS_CODES = {429}
-INVALID_API_KEY_STATUS_CODES = {401}
-PREMIUM_STATUS_CODES = {402}
-SUCCESS_STATUS_CODES = {200}
+RETRYABLE_STATUS_CODE = 429
+INVALID_API_KEY_STATUS_CODE = 401
+PREMIUM_STATUS_CODE = 402
+SUCCESS_STATUS_CODE = 200
+POSSIBLE_INVALID_EXCHANGE_CODE = 400
 
 
 class PremiumEndpointException(Exception):
@@ -19,4 +18,8 @@ class InvalidQueryParameterException(Exception):
 
 
 class InvalidAPIKeyException(Exception):
+    pass
+
+
+class InvalidExchangeCodeException(Exception):
     pass

@@ -3,16 +3,16 @@ import logging
 from unittest.mock import Mock, patch
 
 import pytest
-from tests.conftest import (
-    handle_api_call_with_validation,
-    get_response_models,
-    validate_model_list,
-    validate_required_fields,
-)
 import requests
 
 import fmpsdk.url_methods as url_methods
 from fmpsdk.url_methods import BASE_URL_STABLE, BASE_URL_V4
+from tests.conftest import (
+    get_response_models,
+    handle_api_call_with_validation,
+    validate_model_list,
+    validate_required_fields,
+)
 
 # Access the private functions before any classes to avoid name mangling
 get_base_url_func = url_methods.__get_base_url
@@ -79,7 +79,7 @@ class TestReturnJson:
     def test_premium_endpoint_402_response(self, mock_get):
         """Test premium endpoint 402 status code raises PremiumEndpointException."""
         from fmpsdk.exceptions import PremiumEndpointException
-        
+
         # Mock 402 response (premium endpoint)
         mock_response = Mock()
         mock_response.status_code = 402
@@ -115,9 +115,10 @@ class TestReturnJson:
         mock_response.status_code = 404
         mock_response.content = b"Not Found"
         mock_response.text = "Not Found"
+        mock_response.reason = "Not Found"
         mock_get.return_value = mock_response
 
-        with pytest.raises(Exception, match="API request failed with status code 404"):
+        with pytest.raises(Exception, match=r"API request failed with status code 404"):
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
@@ -129,13 +130,14 @@ class TestReturnJson:
         # Mock response with content that can't be decoded
         mock_response = Mock()
         mock_response.status_code = 404  # Use non-retryable status
+        mock_response.reason = "Not Found"
         mock_response.content = Mock()
         mock_response.content.decode.side_effect = UnicodeDecodeError(
             "utf-8", b"\xff\xfe", 0, 1, "invalid start byte"
         )
         mock_get.return_value = mock_response
 
-        with pytest.raises(Exception, match="API request failed with status code 404"):
+        with pytest.raises(Exception, match=r"API request failed with status code 404"):
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
@@ -274,6 +276,7 @@ class TestReturnJson:
     @pytest.mark.live_data
     def test_generic_exception_with_response_info(self, mock_get):
         """Test generic exception with response information available raises the exception."""
+
         # Create a side effect that raises exception
         def side_effect(*args, **kwargs):
             # Simulate that an exception occurred during processing
@@ -450,7 +453,9 @@ class TestUrlMethodsIntegration:
         mock_response.json.return_value = []
         mock_get.return_value = mock_response
 
-        result = return_json_func("company/profile", {"apikey": "test", "symbol": "AAPL"})
+        result = return_json_func(
+            "company/profile", {"apikey": "test", "symbol": "AAPL"}
+        )
 
         # Verify URL construction
         call_args = mock_get.call_args

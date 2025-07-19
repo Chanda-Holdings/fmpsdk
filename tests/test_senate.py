@@ -1,8 +1,9 @@
 import pytest
 
 import fmpsdk
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPPoliticalTrade
-from fmpsdk.senate import senate, house
+from fmpsdk.senate import house, senate
 from tests.conftest import (
     get_response_models,
     validate_model_list,
@@ -12,25 +13,113 @@ from tests.conftest import (
 # Test data constants
 TEST_SYMBOLS = [
     # Technology stocks often traded by politicians
-    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "NFLX", "CRM", "ORCL",
+    "AAPL",
+    "MSFT",
+    "GOOGL",
+    "AMZN",
+    "META",
+    "TSLA",
+    "NVDA",
+    "NFLX",
+    "CRM",
+    "ORCL",
     # Healthcare & Pharmaceutical
-    "JNJ", "PFE", "UNH", "ABBV", "MRK", "TMO", "ABT", "LLY", "BMY", "GILD",
+    "JNJ",
+    "PFE",
+    "UNH",
+    "ABBV",
+    "MRK",
+    "TMO",
+    "ABT",
+    "LLY",
+    "BMY",
+    "GILD",
     # Financial Services
-    "JPM", "BAC", "WFC", "GS", "MS", "C", "V", "MA", "AXP", "BLK",
+    "JPM",
+    "BAC",
+    "WFC",
+    "GS",
+    "MS",
+    "C",
+    "V",
+    "MA",
+    "AXP",
+    "BLK",
     # Energy & Utilities
-    "XOM", "CVX", "COP", "EOG", "SLB", "NEE", "SO", "DUK", "AEP", "D",
+    "XOM",
+    "CVX",
+    "COP",
+    "EOG",
+    "SLB",
+    "NEE",
+    "SO",
+    "DUK",
+    "AEP",
+    "D",
     # Defense & Aerospace
-    "LMT", "RTX", "BA", "NOC", "GD", "LHX", "TDG", "HWM", "LDOS", "KTOS",
+    "LMT",
+    "RTX",
+    "BA",
+    "NOC",
+    "GD",
+    "LHX",
+    "TDG",
+    "HWM",
+    "LDOS",
+    "KTOS",
     # Consumer Discretionary
-    "HD", "MCD", "NKE", "SBUX", "TGT", "LOW", "DIS", "BKNG", "GM", "F",
+    "HD",
+    "MCD",
+    "NKE",
+    "SBUX",
+    "TGT",
+    "LOW",
+    "DIS",
+    "BKNG",
+    "GM",
+    "F",
     # Industrial
-    "CAT", "GE", "HON", "UPS", "LMT", "RTX", "DE", "MMM", "FDX", "EMR",
+    "CAT",
+    "GE",
+    "HON",
+    "UPS",
+    "LMT",
+    "RTX",
+    "DE",
+    "MMM",
+    "FDX",
+    "EMR",
     # Popular ETFs
-    "SPY", "QQQ", "VTI", "IWM", "EFA", "EEM", "AGG", "TLT", "GLD", "VNQ",
+    "SPY",
+    "QQQ",
+    "VTI",
+    "IWM",
+    "EFA",
+    "EEM",
+    "AGG",
+    "TLT",
+    "GLD",
+    "VNQ",
     # Cryptocurrency-related
-    "COIN", "MSTR", "RIOT", "MARA", "SQ", "PYPL", "HOOD", "PLTR",
+    "COIN",
+    "MSTR",
+    "RIOT",
+    "MARA",
+    "SQ",
+    "PYPL",
+    "HOOD",
+    "PLTR",
     # Biotech & Emerging Tech
-    "MRNA", "BNTX", "REGN", "BIIB", "ILMN", "VRTX", "ZM", "DOCU", "CRWD", "OKTA",
+    "MRNA",
+    "BNTX",
+    "REGN",
+    "BIIB",
+    "ILMN",
+    "VRTX",
+    "ZM",
+    "DOCU",
+    "CRWD",
+    "OKTA",
 ]
 
 
@@ -52,9 +141,12 @@ class TestSenateTrading:
 
             # Basic validation
             assert trade_model.symbol is not None and trade_model.symbol != ""
-            assert trade_model.disclosure_date is not None and trade_model.disclosure_date != ""
-            assert trade_model.first_name is not None and trade_model.first_name != ""
-            assert trade_model.last_name is not None and trade_model.last_name != ""
+            assert (
+                trade_model.disclosureDate is not None
+                and trade_model.disclosureDate != ""
+            )
+            assert trade_model.firstName is not None and trade_model.firstName != ""
+            assert trade_model.lastName is not None and trade_model.lastName != ""
 
             # Symbol should match requested
             if trade_model.symbol:
@@ -116,12 +208,14 @@ class TestSenateTrading:
             # Filter by transaction type
             if transaction_type == "purchase":
                 filtered_trades = [
-                    trade for trade in trade_models
+                    trade
+                    for trade in trade_models
                     if trade.type and trade.type.lower() in ["purchase", "buy"]
                 ]
             elif transaction_type == "sale":
                 filtered_trades = [
-                    trade for trade in trade_models
+                    trade
+                    for trade in trade_models
                     if trade.type and trade.type.lower() in ["sale", "sell"]
                 ]
             else:  # both
@@ -167,10 +261,10 @@ class TestSenateTrading:
             # Check that we have some data within the expected date range
             recent_trades = []
             for trade_model in trade_models:
-                if trade_model.disclosure_date:
+                if trade_model.disclosureDate:
                     try:
                         trade_date = datetime.strptime(
-                            trade_model.disclosure_date, "%Y-%m-%d"
+                            trade_model.disclosureDate, "%Y-%m-%d"
                         )
                         if start_date <= trade_date <= end_date:
                             recent_trades.append(trade_model)
@@ -201,14 +295,14 @@ class TestSenateTrading:
             # Validate structure for political trades
             for trade_model in trade_models[:5]:  # Check first 5 trades
                 # Basic validation
-                assert trade_model.first_name is not None and trade_model.first_name != ""
-                assert trade_model.last_name is not None and trade_model.last_name != ""
+                assert trade_model.firstName is not None and trade_model.firstName != ""
+                assert trade_model.lastName is not None and trade_model.lastName != ""
                 assert hasattr(trade_model, "office")
 
                 # Check that we have politician information
-                if trade_model.first_name and trade_model.last_name:
-                    assert trade_model.first_name != ""
-                    assert trade_model.last_name != ""
+                if trade_model.firstName and trade_model.lastName:
+                    assert trade_model.firstName != ""
+                    assert trade_model.lastName != ""
 
     @pytest.mark.parametrize(
         "trade_size",
@@ -267,17 +361,20 @@ class TestSenateTrading:
 
             # Required fields validation
             assert trade_model.symbol is not None and trade_model.symbol != ""
-            assert trade_model.disclosure_date is not None and trade_model.disclosure_date != ""
-            assert trade_model.first_name is not None and trade_model.first_name != ""
-            assert trade_model.last_name is not None and trade_model.last_name != ""
+            assert (
+                trade_model.disclosureDate is not None
+                and trade_model.disclosureDate != ""
+            )
+            assert trade_model.firstName is not None and trade_model.firstName != ""
+            assert trade_model.lastName is not None and trade_model.lastName != ""
             assert hasattr(trade_model, "office")
             assert hasattr(trade_model, "type")
 
             # Data quality checks
             assert trade_model.symbol != ""
-            assert trade_model.disclosure_date != ""
-            assert trade_model.first_name != ""
-            assert trade_model.last_name != ""
+            assert trade_model.disclosureDate != ""
+            assert trade_model.firstName != ""
+            assert trade_model.lastName != ""
             # The 'office' field contains the full politician name, not chamber
             assert trade_model.office
             assert trade_model.type in [
@@ -333,7 +430,7 @@ class TestSenateTrading:
         if trade_models:  # If we have data
             for trade_model in trade_models[:3]:  # Check first few trades
                 # Should contain "Warren" in name
-                full_name = f"{trade_model.first_name} {trade_model.last_name}".upper()
+                full_name = f"{trade_model.firstName} {trade_model.lastName}".upper()
                 assert "WARREN" in full_name
                 # The 'office' field contains politician name, not chamber
 
@@ -382,17 +479,17 @@ class TestHouseTrading:
 
             # Required fields validation
             assert trade_obj.symbol != ""
-            assert trade_obj.disclosure_date != ""
-            assert trade_obj.first_name != ""
-            assert trade_obj.last_name != ""
+            assert trade_obj.disclosureDate != ""
+            assert trade_obj.firstName != ""
+            assert trade_obj.lastName != ""
             assert hasattr(trade_obj, "office")
             assert hasattr(trade_obj, "type")
 
             # Data quality checks
             assert trade_obj.symbol != ""
-            assert trade_obj.disclosure_date != ""
-            assert trade_obj.first_name != ""
-            assert trade_obj.last_name != ""
+            assert trade_obj.disclosureDate != ""
+            assert trade_obj.firstName != ""
+            assert trade_obj.lastName != ""
             # The 'office' field contains the full politician name, not chamber
             assert trade_obj.office
 
@@ -441,8 +538,8 @@ class TestHouseTrading:
         if models:  # If we have data
             for trade_obj in models[:3]:  # Check first few trades
                 # Should contain "Johnson" in name
-                full_name = f"{trade_obj.first_name} {trade_obj.last_name}".upper()
-                assert trade_obj.first_name != ""
+                full_name = f"{trade_obj.firstName} {trade_obj.lastName}".upper()
+                assert trade_obj.firstName != ""
                 # The 'office' field contains politician name, not chamber
 
     @pytest.mark.integration
@@ -454,7 +551,8 @@ class TestHouseTrading:
 
         # Get response models and validate
         models = get_response_models(result, FMPPoliticalTrade)
-        validate_model_list(models, FMPPoliticalTrade)
+        # Invalid symbol may return empty results, which is valid behavior
+        validate_model_list(models, FMPPoliticalTrade, min_count=0)
         # Should return empty list for invalid symbol
         assert len(models) == 0
 
@@ -467,7 +565,8 @@ class TestHouseTrading:
 
         # Get response models and validate
         models = get_response_models(result, FMPPoliticalTrade)
-        validate_model_list(models, FMPPoliticalTrade)
+        # Invalid name may return empty results, which is valid behavior
+        validate_model_list(models, FMPPoliticalTrade, min_count=0)
         # Should return empty list for invalid name
         assert len(models) == 0
 
@@ -496,15 +595,15 @@ class TestPoliticalTradingDataQuality:
         if senate_models:
             # Validate Senate data structure
             for trade in senate_models[:2]:
-                assert trade.first_name != ""
-                assert trade.last_name != ""
+                assert trade.firstName != ""
+                assert trade.lastName != ""
                 assert hasattr(trade, "office")
 
         if house_models:
             # Validate House data structure
             for trade in house_models[:2]:
-                assert trade.first_name != ""
-                assert trade.last_name != ""
+                assert trade.firstName != ""
+                assert trade.lastName != ""
                 assert hasattr(trade, "office")
 
     @pytest.mark.integration
@@ -516,21 +615,21 @@ class TestPoliticalTradingDataQuality:
         # Get response models and validate
         models = get_response_models(result, FMPPoliticalTrade)
         validate_model_list(models, FMPPoliticalTrade)
-        
+
         if models:
             for trade in models:
                 # Check date formats (should be YYYY-MM-DD or similar)
-                assert trade.disclosure_date != ""
-                assert trade.disclosure_date != ""
+                assert trade.disclosureDate != ""
+                assert trade.disclosureDate != ""
 
                 # Check that dates are reasonable (not in future)
                 assert (
-                    "2020" in trade.disclosure_date
-                    or "2021" in trade.disclosure_date
-                    or "2022" in trade.disclosure_date
-                    or "2023" in trade.disclosure_date
-                    or "2024" in trade.disclosure_date
-                    or "2025" in trade.disclosure_date
+                    "2020" in trade.disclosureDate
+                    or "2021" in trade.disclosureDate
+                    or "2022" in trade.disclosureDate
+                    or "2023" in trade.disclosureDate
+                    or "2024" in trade.disclosureDate
+                    or "2025" in trade.disclosureDate
                 )
 
     @pytest.mark.integration
@@ -542,7 +641,7 @@ class TestPoliticalTradingDataQuality:
         # Get response models and validate
         models = get_response_models(result, FMPPoliticalTrade)
         validate_model_list(models, FMPPoliticalTrade)
-        
+
         if models:
             for trade in models:
                 amount = trade.amount
@@ -628,63 +727,45 @@ class TestPoliticalTradingErrorHandling:
     @pytest.mark.live_data
     def test_senate_latest_invalid_api_key(self):
         """Test Senate latest with invalid API key."""
-        result = senate.senate_latest(apikey="invalid_key")
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            senate.senate_latest(apikey="invalid_key")
 
     @pytest.mark.integration
     @pytest.mark.requires_api_key
     @pytest.mark.live_data
     def test_house_latest_invalid_api_key(self):
         """Test House latest with invalid API key."""
-        result = senate.house_latest(apikey="invalid_key")
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            senate.house_latest(apikey="invalid_key")
 
     @pytest.mark.integration
     @pytest.mark.requires_api_key
     @pytest.mark.live_data
     def test_senate_trades_invalid_api_key(self):
         """Test Senate trades with invalid API key."""
-        result = senate.senate_trades(apikey="invalid_key", symbol="AAPL")
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            senate.senate_trades(apikey="invalid_key", symbol="AAPL")
 
     @pytest.mark.integration
     @pytest.mark.requires_api_key
     @pytest.mark.live_data
     def test_house_trades_invalid_api_key(self):
         """Test House trades with invalid API key."""
-        result = senate.house_trades(apikey="invalid_key", symbol="AAPL")
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            senate.house_trades(apikey="invalid_key", symbol="AAPL")
 
     @pytest.mark.integration
     @pytest.mark.requires_api_key
     @pytest.mark.live_data
     def test_senate_trades_by_name_invalid_api_key(self):
         """Test Senate trades by name with invalid API key."""
-        result = senate.senate_trades_by_name(apikey="invalid_key", name="Warren")
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            senate.senate_trades_by_name(apikey="invalid_key", name="Warren")
 
     @pytest.mark.integration
     @pytest.mark.requires_api_key
     @pytest.mark.live_data
     def test_house_trades_by_name_invalid_api_key(self):
         """Test House trades by name with invalid API key."""
-        result = senate.house_trades_by_name(apikey="invalid_key", name="Johnson")
-
-        # Should return error dict, not raise exception
-        assert isinstance(result, dict)
-        assert "Error Message" in result
+        with pytest.raises(InvalidAPIKeyException):
+            senate.house_trades_by_name(apikey="invalid_key", name="Johnson")

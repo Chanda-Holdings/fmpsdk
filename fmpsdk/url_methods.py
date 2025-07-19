@@ -3,11 +3,18 @@ import io
 import json
 import logging
 import time
-import sys
 import typing
 
 import requests
-from .exceptions import SUCCESS_STATUS_CODES, PREMIUM_STATUS_CODES, RETRYABLE_STATUS_CODES, INVALID_API_KEY_STATUS_CODES, PremiumEndpointException, RateLimitExceededException, InvalidQueryParameterException, InvalidAPIKeyException
+
+from .exceptions import (
+    RETRYABLE_STATUS_CODE,
+    SUCCESS_STATUS_CODE,
+    InvalidQueryParameterException,
+    PremiumEndpointException,
+    RateLimitExceededException,
+)
+from .utils import raise_for_exception
 
 BASE_URL_STABLE: str = "https://financialmodelingprep.com/stable/"
 BASE_URL_V4: str = "https://financialmodelingprep.com/api/v4/"
@@ -34,7 +41,11 @@ def __get_base_url(version: str) -> str:
 
 
 def __return_json(
-    path: str, query_vars: typing.Dict, version: str = "stable", retries: int = RETRIES, retry_delay: int = RETRY_DELAY
+    path: str,
+    query_vars: typing.Dict,
+    version: str = "stable",
+    retries: int = RETRIES,
+    retry_delay: int = RETRY_DELAY,
 ) -> typing.Optional[typing.List[typing.Any]]:
     """
     Query URL for JSON response for stable version of FMP API.
@@ -55,7 +66,7 @@ def __return_json(
             url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
         )
 
-        if response.status_code in RETRYABLE_STATUS_CODES:
+        if response.status_code == RETRYABLE_STATUS_CODE:
             logging.warning(
                 f"Rate limit or retryable error occurred: {response.status_code}. "
                 f"Query variables: {query_vars}"
@@ -65,7 +76,9 @@ def __return_json(
                     f"Retrying in {retry_delay} seconds... ({retries} retries left)"
                 )
                 time.sleep(retry_delay)
-                return __return_json(path, query_vars, version, retries - 1, retry_delay)
+                return __return_json(
+                    path, query_vars, version, retries - 1, retry_delay
+                )
             else:
                 logging.error(f"Max retries exceeded for {url}")
                 raise RateLimitExceededException(
@@ -73,20 +86,12 @@ def __return_json(
                     f"Query variables: {query_vars}"
                     f"Response: {response.text}"
                 )
-            
-        if response.status_code in PREMIUM_STATUS_CODES:
-            raise PremiumEndpointException(
-                "This endpoint requires a premium subscription. Please upgrade your plan."
-            )
-        
-        if response.status_code in INVALID_API_KEY_STATUS_CODES:
-            raise InvalidAPIKeyException(
-                "Invalid API KEY"
-            )
+
+        raise_for_exception(response)
 
         # Check for other non-200 status codes and return error response
-        if response.status_code not in SUCCESS_STATUS_CODES:
-            error_msg = f"API request failed with status code {response.status_code}"
+        if response.status_code != SUCCESS_STATUS_CODE:
+            error_msg = response.reason
             if response.content:
                 try:
                     error_content = response.content.decode("utf-8")
@@ -98,12 +103,14 @@ def __return_json(
                         )
                         # Handle both dict and list error responses
                         if isinstance(error_json, dict):
-                            error_message = error_json.get('Error Message', 'Unknown error')
+                            error_message = error_json.get(
+                                "Error Message", "Unknown error"
+                            )
                         else:
                             error_message = str(error_json)
                         raise Exception(
                             f"API request failed with error: {error_message}",
-                            error_json               
+                            error_json,
                         )
                     except json.JSONDecodeError:
                         # Not valid JSON, continue with regular error handling

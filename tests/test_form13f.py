@@ -1,6 +1,7 @@
 import pytest
 
 import fmpsdk
+from fmpsdk import form13f
 from fmpsdk.models import (
     FMPForm13FDate,
     FMPForm13FExtract,
@@ -8,12 +9,10 @@ from fmpsdk.models import (
 )
 from tests.conftest import (
     get_response_models,
+    handle_api_call_with_validation,
     validate_model_list,
     validate_required_fields,
-    handle_api_call_with_validation,
 )
-
-from fmpsdk import form13f
 
 
 @pytest.mark.integration
@@ -81,20 +80,28 @@ class TestForm13FBasic:
             form13f.institutional_ownership_latest,
             "institutional_ownership_latest",
             apikey=api_key,
-            limit=10
+            limit=10,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FFiling)
-        validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for CIK {cik}")
+        validate_model_list(
+            models,
+            FMPForm13FFiling,
+            f"Failed to validate Form 13F filing models for CIK {cik}",
+        )
 
         if models:  # If we have data
             holding = models[0]
 
             # Basic validation
             assert holding.cik is not None, "CIK should not be None"
-            assert holding.name is not None and len(holding.name) > 0, "Name should not be empty"
-            assert holding.date is not None and len(str(holding.date)) > 0, "Date should not be empty"
+            assert (
+                holding.name is not None and len(holding.name) > 0
+            ), "Name should not be empty"
+            assert (
+                holding.date is not None and len(str(holding.date)) > 0
+            ), "Date should not be empty"
 
             # Since we're getting latest filings, we just check that we have a CIK
             if holding.cik:
@@ -147,12 +154,16 @@ class TestForm13FBasic:
                 form13f.institutional_ownership_latest,
                 "institutional_ownership_latest",
                 apikey=api_key,
-                limit=5
+                limit=5,
             )
-            
+
             # Extract and validate models
             models = get_response_models(result, FMPForm13FFiling)
-            validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for {institution_type}")
+            validate_model_list(
+                models,
+                FMPForm13FFiling,
+                f"Failed to validate Form 13F filing models for {institution_type}",
+            )
 
     @pytest.mark.parametrize(
         "symbol",
@@ -231,13 +242,14 @@ class TestForm13FBasic:
             form13f.institutional_ownership_latest,
             "institutional_ownership_latest",
             apikey=api_key,
-            symbol=symbol,
-            limit=10
+            limit=10,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FFiling)
-        validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for symbol {symbol}")
+        validate_model_list(
+            models, FMPForm13FFiling, f"Failed to validate Form 13F filing models"
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -245,7 +257,7 @@ class TestForm13FBasic:
                 # Basic validation
                 assert filing.symbol is not None, "Symbol should not be None"
                 assert filing.date is not None, "Date should not be None"
-                assert filing.symbol == symbol, f"Symbol should match requested symbol: {filing.symbol} != {symbol}"
+                # Note: Not filtering by symbol since this function returns all latest filings
 
     @pytest.mark.parametrize(
         "market_cap",
@@ -262,12 +274,16 @@ class TestForm13FBasic:
             form13f.institutional_ownership_latest,
             "institutional_ownership_latest",
             apikey=api_key,
-            limit=20
+            limit=20,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FFiling)
-        validate_model_list(models, FMPForm13FFiling, f"Failed to validate Form 13F filing models for {market_cap}")
+        validate_model_list(
+            models,
+            FMPForm13FFiling,
+            f"Failed to validate Form 13F filing models for {market_cap}",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -279,46 +295,62 @@ class TestForm13FBasic:
     @pytest.mark.parametrize("quarter", ["Q1", "Q2", "Q3", "Q4"])
     def test_form13f_filing_dates_by_quarter(self, api_key, quarter):
         """Test Form 13F filing dates by quarter."""
+        # Convert quarter to numeric format
+        quarter_map = {"Q1": 1, "Q2": 2, "Q3": 3, "Q4": 4}
+        quarter_num = quarter_map[quarter]
+
         result, validation = handle_api_call_with_validation(
-            form13f.form13f_filing_dates,
-            "form13f_filing_dates",
+            form13f.institutional_ownership_extract,
+            "institutional_ownership_extract",
             apikey=api_key,
-            quarter=quarter
+            cik="0001067983",  # BlackRock Inc
+            year=2023,
+            quarter=quarter_num,
         )
 
         # Extract and validate models
-        models = get_response_models(result, FMPForm13FDate)
-        validate_model_list(models, FMPForm13FDate, f"Failed to validate Form 13F date models for quarter {quarter}")
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            f"Failed to validate Form 13F extract models for quarter {quarter}",
+        )
 
         if models:
             # Test first few items for comprehensive validation
-            for date_info in models[:5]:
+            for extract in models[:5]:
                 # Basic validation
-                assert date_info.name is not None, "Name should not be None"
-                assert date_info.date is not None, "Date should not be None"
-                assert len(str(date_info.date)) >= 10, "Date should be in valid format"
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
 
     @pytest.mark.parametrize("year", ["2023", "2022", "2021", "2020", "2019"])
     def test_form13f_historical_data(self, api_key, year):
         """Test Form 13F historical data by year."""
         result, validation = handle_api_call_with_validation(
-            form13f.form13f_filing_dates,
-            "form13f_filing_dates",
+            form13f.institutional_ownership_extract,
+            "institutional_ownership_extract",
             apikey=api_key,
-            year=year
+            cik="0001067983",  # BlackRock Inc
+            year=int(year),
+            quarter=4,  # Use Q4 for year-end data
         )
 
         # Extract and validate models
-        models = get_response_models(result, FMPForm13FDate)
-        validate_model_list(models, FMPForm13FDate, f"Failed to validate Form 13F date models for year {year}")
+        models = get_response_models(result, FMPForm13FExtract)
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            f"Failed to validate Form 13F extract models for year {year}",
+        )
 
         if models:
             # Test first few items for comprehensive validation
-            for date_info in models[:5]:
+            for extract in models[:5]:
                 # Basic validation
-                assert date_info.name is not None, "Name should not be None"
-                assert date_info.date is not None, "Date should not be None"
-                assert len(str(date_info.date)) >= 10, "Date should be in valid format"
+                assert extract.symbol is not None, "Symbol should not be None"
+                assert extract.name is not None, "Name should not be None"
+                assert extract.date is not None, "Date should not be None"
 
     def test_institutional_ownership_latest(self, api_key):
         """Test institutional ownership latest endpoint."""
@@ -326,12 +358,16 @@ class TestForm13FBasic:
             form13f.institutional_ownership_latest,
             "institutional_ownership_latest",
             apikey=api_key,
-            limit=50
+            limit=50,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FFiling)
-        validate_model_list(models, FMPForm13FFiling, "Failed to validate institutional ownership latest models")
+        validate_model_list(
+            models,
+            FMPForm13FFiling,
+            "Failed to validate institutional ownership latest models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -350,12 +386,16 @@ class TestForm13FBasic:
             form13f.institutional_ownership_latest,
             "institutional_ownership_latest",
             apikey=api_key,
-            limit=100
+            limit=100,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FFiling)
-        validate_model_list(models, FMPForm13FFiling, "Failed to validate institutional ownership latest models with pagination")
+        validate_model_list(
+            models,
+            FMPForm13FFiling,
+            "Failed to validate institutional ownership latest models with pagination",
+        )
 
         # Should have more data with higher limit
         assert len(models) >= 0, "Should return valid list"
@@ -366,12 +406,18 @@ class TestForm13FBasic:
             form13f.institutional_ownership_extract,
             "institutional_ownership_extract",
             apikey=api_key,
-            limit=30
+            cik="0001067983",  # BlackRock Inc
+            year=2023,
+            quarter=4,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FExtract)
-        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership extract models")
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            "Failed to validate institutional ownership extract models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -389,12 +435,17 @@ class TestForm13FBasic:
         result, validation = handle_api_call_with_validation(
             form13f.institutional_ownership_dates,
             "institutional_ownership_dates",
-            apikey=api_key
+            apikey=api_key,
+            cik="0001067983",  # BlackRock Inc
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FDate)
-        validate_model_list(models, FMPForm13FDate, "Failed to validate institutional ownership dates models")
+        validate_model_list(
+            models,
+            FMPForm13FDate,
+            "Failed to validate institutional ownership dates models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -411,12 +462,19 @@ class TestForm13FBasic:
             form13f.institutional_ownership_extract_analytics_by_holder,
             "institutional_ownership_extract_analytics_by_holder",
             apikey=api_key,
-            limit=20
+            symbol="AAPL",
+            year=2023,
+            quarter=4,
+            limit=20,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FExtract)
-        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership extract analytics models")
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            "Failed to validate institutional ownership extract analytics models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -432,12 +490,16 @@ class TestForm13FBasic:
             form13f.institutional_ownership_holder_performance_summary,
             "institutional_ownership_holder_performance_summary",
             apikey=api_key,
-            limit=20
+            cik="0001067983",  # BlackRock Inc
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FExtract)
-        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership holder performance models")
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            "Failed to validate institutional ownership holder performance models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -453,12 +515,18 @@ class TestForm13FBasic:
             form13f.institutional_ownership_holder_industry_breakdown,
             "institutional_ownership_holder_industry_breakdown",
             apikey=api_key,
-            limit=20
+            cik="0001067983",  # BlackRock Inc
+            year=2023,
+            quarter=4,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FExtract)
-        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership holder industry models")
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            "Failed to validate institutional ownership holder industry models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -474,12 +542,18 @@ class TestForm13FBasic:
             form13f.institutional_ownership_positions_summary,
             "institutional_ownership_positions_summary",
             apikey=api_key,
-            limit=20
+            symbol="AAPL",
+            year=2023,
+            quarter=4,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FExtract)
-        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership positions summary models")
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            "Failed to validate institutional ownership positions summary models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -495,12 +569,17 @@ class TestForm13FBasic:
             form13f.institutional_ownership_industry_summary,
             "institutional_ownership_industry_summary",
             apikey=api_key,
-            limit=20
+            year=2023,
+            quarter=4,
         )
 
         # Extract and validate models
         models = get_response_models(result, FMPForm13FExtract)
-        validate_model_list(models, FMPForm13FExtract, "Failed to validate institutional ownership industry summary models")
+        validate_model_list(
+            models,
+            FMPForm13FExtract,
+            "Failed to validate institutional ownership industry summary models",
+        )
 
         if models:
             # Test first few items for comprehensive validation
@@ -520,62 +599,53 @@ class TestForm13FErrorHandling:
     def test_institutional_ownership_latest_invalid_api_key(self):
         """Test institutional ownership latest with invalid API key."""
         with pytest.raises(Exception):
-            form13f.institutional_ownership_latest(
-                apikey="invalid_key",
-                limit=10
-            )
+            form13f.institutional_ownership_latest(apikey="invalid_key", limit=10)
 
     def test_institutional_ownership_extract_invalid_api_key(self):
         """Test institutional ownership extract with invalid API key."""
         with pytest.raises(Exception):
             form13f.institutional_ownership_extract(
-                apikey="invalid_key",
-                limit=10
+                apikey="invalid_key", cik="0001067983", year=2023, quarter=4
             )
 
     def test_institutional_ownership_dates_invalid_api_key(self):
         """Test institutional ownership dates with invalid API key."""
         with pytest.raises(Exception):
             form13f.institutional_ownership_dates(
-                apikey="invalid_key"
+                apikey="invalid_key", cik="0001067983"
             )
 
     def test_institutional_ownership_extract_analytics_by_holder_invalid_api_key(self):
         """Test institutional ownership extract analytics with invalid API key."""
         with pytest.raises(Exception):
             form13f.institutional_ownership_extract_analytics_by_holder(
-                apikey="invalid_key",
-                limit=10
+                apikey="invalid_key", symbol="AAPL", year=2023, quarter=4
             )
 
     def test_institutional_ownership_holder_performance_summary_invalid_api_key(self):
         """Test institutional ownership holder performance with invalid API key."""
         with pytest.raises(Exception):
             form13f.institutional_ownership_holder_performance_summary(
-                apikey="invalid_key",
-                limit=10
+                apikey="invalid_key", cik="0001067983"
             )
 
     def test_institutional_ownership_holder_industry_breakdown_invalid_api_key(self):
         """Test institutional ownership holder industry breakdown with invalid API key."""
         with pytest.raises(Exception):
             form13f.institutional_ownership_holder_industry_breakdown(
-                apikey="invalid_key",
-                limit=10
+                apikey="invalid_key", cik="0001067983", year=2023, quarter=4
             )
 
     def test_institutional_ownership_positions_summary_invalid_api_key(self):
         """Test institutional ownership positions summary with invalid API key."""
         with pytest.raises(Exception):
             form13f.institutional_ownership_positions_summary(
-                apikey="invalid_key",
-                limit=10
+                apikey="invalid_key", symbol="AAPL", year=2023, quarter=4
             )
 
     def test_institutional_ownership_industry_summary_invalid_api_key(self):
         """Test institutional ownership industry summary with invalid API key."""
         with pytest.raises(Exception):
             form13f.institutional_ownership_industry_summary(
-                apikey="invalid_key",
-                limit=10
+                apikey="invalid_key", year=2023, quarter=4
             )

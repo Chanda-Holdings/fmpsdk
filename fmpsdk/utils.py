@@ -1,12 +1,37 @@
+import time
 import typing
 from typing import Any, Callable, TypeVar
-import time
 
 import pandas as pd
 
-from .exceptions import RateLimitExceededException
+from .exceptions import (
+    INVALID_API_KEY_STATUS_CODE,
+    POSSIBLE_INVALID_EXCHANGE_CODE,
+    PREMIUM_STATUS_CODE,
+    InvalidAPIKeyException,
+    InvalidExchangeCodeException,
+    PremiumEndpointException,
+    RateLimitExceededException,
+)
 
 T = TypeVar("T")
+
+
+def raise_for_exception(response):
+    if response.status_code == PREMIUM_STATUS_CODE:
+        raise PremiumEndpointException(
+            "This endpoint requires a premium subscription. Please upgrade your plan."
+        )
+
+    if response.status_code == INVALID_API_KEY_STATUS_CODE:
+        raise InvalidAPIKeyException("Invalid API KEY")
+
+    if response.status_code == POSSIBLE_INVALID_EXCHANGE_CODE:
+        if "invalid exchange" in response.reason.lower():
+            raise InvalidExchangeCodeException(
+                "Invalid exchange code provided. Please check the exchange code."
+            )
+
 
 def is_rate_limit_error(result):
     """
@@ -67,92 +92,117 @@ def iterate_over_pages(
 ) -> typing.Union[typing.List, typing.Dict]:
     """
     Iterate over paginated API responses with rate limiting retry logic.
-    
+
     Args:
         func: The function to call for each page
         args: Arguments to pass to the function
         page_limit: Maximum number of pages to fetch (default: 100)
         max_retries: Maximum number of retries for rate limiting (default: 3)
         retry_delay: Delay in seconds between retries (default: 10)
-    
+
     Returns:
         Union[List, Dict]: Combined data from all pages
-        
+
     Raises:
         RateLimitExceededException: If rate limiting persists after max_retries
         ValueError: If response type is unexpected
         StopIteration: If page limit is reached
     """
-    page = 0
     data_list = []
     data_dict = {}
-    
-    while True:
+
+    # Pre-determine response type handling functions to avoid repeated checks
+    def _extract_data(response):
+        """Extract actual data from response, handling RootModel objects."""
+        return response.root if hasattr(response, "root") else response
+
+    def _is_empty_response(data):
+        """Check if response indicates end of pagination."""
+        if data is None:
+            return True
+        if hasattr(data, "__len__"):
+            return len(data) == 0
+        return False
+
+    def _handle_response_data(data, is_list_response):
+        """Process response data efficiently based on type."""
+        if isinstance(data, list):
+            if is_list_response:
+                data_list.extend(data)
+            return True
+        elif isinstance(data, dict):
+            # Early return for error responses
+            if "Error Message" in data:
+                if is_rate_limit_error(data):
+                    raise RateLimitExceededException(
+                        f"Rate limiting detected in response: {data['Error Message']}"
+                    )
+                return data  # Return error for caller to handle
+            if not is_list_response:
+                data_dict.update(data)
+            return True
+        return False
+
+    # Determine response type after first successful call
+    response_type_determined = False
+    is_list_response = True
+
+    for page in range(page_limit + 1):
         args["page"] = page
-        
-        # Retry logic for rate limiting
-        last_exception = None
+
+        # Streamlined retry logic
+        response = None
         for attempt in range(max_retries + 1):
             try:
                 response = func(**args)
-                
-                # Check if response indicates rate limiting
+
+                # Quick rate limit check
                 if is_rate_limit_error(response):
                     if attempt < max_retries:
-                        print(f"Rate limiting detected on page {page}, attempt {attempt + 1}/{max_retries + 1}. "
-                              f"Waiting {retry_delay} seconds before retry...")
+                        print(
+                            f"Rate limiting detected on page {page}, attempt {attempt + 1}. "
+                            f"Waiting {retry_delay}s..."
+                        )
                         time.sleep(retry_delay)
                         continue
-                    else:
-                        raise RateLimitExceededException(f"Rate limiting persisted after {max_retries} retries on page {page}")
-                
-                # Successful response, break out of retry loop
-                break
-                
+                    raise RateLimitExceededException(
+                        f"Rate limiting persisted after {max_retries} retries on page {page}"
+                    )
+
+                break  # Successful response
+
             except Exception as e:
-                last_exception = e
-                # Check if this is a network-related error that we might want to retry
-                if hasattr(e, '__class__') and 'requests' in str(type(e)):
-                    if attempt < max_retries:
-                        print(f"Network error on page {page}, attempt {attempt + 1}/{max_retries + 1}: {str(e)[:100]}... "
-                              f"Waiting {retry_delay // 2} seconds before retry...")
-                        time.sleep(retry_delay // 2)  # Shorter delay for network errors
-                        continue
-                # For other exceptions, re-raise immediately
+                # Simplified network error detection
+                if attempt < max_retries and "requests" in str(type(e)):
+                    print(
+                        f"Network error on page {page}, attempt {attempt + 1}. "
+                        f"Retrying in {retry_delay // 2}s..."
+                    )
+                    time.sleep(retry_delay // 2)
+                    continue
                 raise e
-        
-        # If we get here and have an exception, something went wrong
-        if last_exception and not hasattr(last_exception, '__class__'):
-            raise last_exception
-        
-        # Check for empty response (end of pagination)
-        if len(response) == 0:
+
+        # Extract actual data
+        actual_data = _extract_data(response)
+
+        # Check for end of pagination
+        if _is_empty_response(actual_data):
             break
 
-        # Process the response
-        if isinstance(response, list):
-            data_list.extend(response)
-        elif isinstance(response, dict):
-            # Check if it's an error response
-            if "Error Message" in response:
-                if is_rate_limit_error(response):
-                    raise RateLimitExceededException(f"Rate limiting detected in response: {response['Error Message']}")
-                else:
-                    # Other API errors should be handled by the calling code
-                    return response
-            data_dict.update(response)
-        else:
-            raise ValueError(f"Unexpected response type: {type(response)}")
+        # Determine response type on first successful response
+        if not response_type_determined:
+            is_list_response = isinstance(actual_data, list)
+            response_type_determined = True
 
-        if page >= page_limit:
-            raise StopIteration("Reached FMP page limit")
+        # Process response
+        result = _handle_response_data(actual_data, is_list_response)
+        if isinstance(result, dict):  # Error response
+            return result
+        elif not result:
+            raise ValueError(f"Unexpected response type: {type(actual_data)}")
 
-        page += 1
-
-    if len(data_list) == 0 and len(data_dict) > 0:
-        return data_dict
-    else:
-        return data_list
+    # Return appropriate data structure
+    return data_list if data_list else data_dict
 
 
 def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -221,6 +271,31 @@ def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
     if response is None:
         return []
 
+    # Handle HTTP Response objects (premium endpoint errors) - for compatibility
+    # Check this BEFORE checking for 'root' attribute since Mock objects have 'root'
+    if hasattr(response, "status_code"):
+        return [{"status_code": response.status_code, "error": "HTTP response object"}]
+
+    # Handle RootModel objects (Pydantic v2) - check for 'root' attribute
+    if hasattr(response, "root"):
+        actual_data = response.root
+        if actual_data is None:
+            return []
+        # If root contains a list, process it
+        if isinstance(actual_data, list):
+            if not actual_data:  # Empty list
+                return []
+            return [
+                item.model_dump() if hasattr(item, "model_dump") else item
+                for item in actual_data
+            ]
+        # If root contains a dict (like error responses), return it as a single-item list
+        elif isinstance(actual_data, dict):
+            return [actual_data]
+        # For other types in root, convert to string representation
+        else:
+            return [{"root_data": str(actual_data), "type": str(type(actual_data))}]
+
     # Handle direct List[FMPObject] - primary use case
     if isinstance(response, list):
         if not response:  # Empty list
@@ -233,10 +308,6 @@ def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:
     # Handle error responses (dict with "Error Message") - for compatibility
     if isinstance(response, dict) and "Error Message" in response:
         return [response]
-
-    # Handle HTTP Response objects (premium endpoint errors) - for compatibility
-    if hasattr(response, "status_code"):
-        return [{"status_code": response.status_code, "error": "HTTP response object"}]
 
     # Fallback for unexpected types
     return [{"unexpected_response": str(response), "type": str(type(response))}]
