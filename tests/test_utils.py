@@ -1081,7 +1081,7 @@ class TestUtilsCoverageGaps:
         mock_response.content = b'{"Error Message": "Not Found"}'
 
         # Should raise a general Exception for 404 status codes
-        with pytest.raises(Exception, match="API request failed with error"):
+        with pytest.raises(Exception, match="Resource not found. Status code: 404"):
             raise_for_exception(mock_response)
 
     def test_is_rate_limit_error_function(self):

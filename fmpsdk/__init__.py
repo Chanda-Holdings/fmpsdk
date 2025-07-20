@@ -297,7 +297,6 @@ from .sec_filings import (
     sec_filings_search_form_type,
     sec_filings_search_symbol,
     sec_profile,
-    sec_rss_feeds,
 )
 
 # Senate trades functions
@@ -560,7 +559,6 @@ __all__ = [
     "sec_filings_search_form_type",
     "sec_filings_search_symbol",
     "sec_profile",
-    "sec_rss_feeds",
     # Senate
     "house_latest",
     "house_trades",

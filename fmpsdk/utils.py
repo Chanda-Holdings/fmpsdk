@@ -50,6 +50,13 @@ def raise_for_exception(response):
             f"HTTPS read timeout occurred. Status code: {response.status_code}"
         )
 
+    if response.status_code == 404:
+        raise Exception(
+            f"Resource not found. Status code: {response.status_code}. "
+            "Please check the endpoint or parameters.",
+            response.url,
+        )
+
     if response.status_code != SUCCESS_STATUS_CODE:
         error_msg = response.reason
         if response.content:
@@ -65,6 +72,8 @@ def raise_for_exception(response):
                     raise Exception(
                         f"API request failed with error: {error_message}",
                         error_json,
+                        error_msg,
+                        response.status_code,
                     )
                 except json.JSONDecodeError:
                     # Not valid JSON, continue with regular error handling

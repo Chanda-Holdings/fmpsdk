@@ -83,7 +83,7 @@ class TestReturnJson:
         mock_response.text = '{"Error Message": "Invalid API key"}'
         mock_get.return_value = mock_response
 
-        with pytest.raises(Exception, match="API request failed with error"):
+        with pytest.raises(Exception, match="Resource not found. Status code: 404"):
             return_json_func("test/path", {"apikey": "invalid"})
 
     @patch("fmpsdk.url_methods.requests.get")
@@ -97,7 +97,7 @@ class TestReturnJson:
         mock_response.reason = "Not Found"
         mock_get.return_value = mock_response
 
-        with pytest.raises(Exception, match=r"API request failed with status code 404"):
+        with pytest.raises(Exception, match=r"Resource not found. Status code: 404"):
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
@@ -113,7 +113,7 @@ class TestReturnJson:
         )
         mock_get.return_value = mock_response
 
-        with pytest.raises(Exception, match=r"API request failed with status code 404"):
+        with pytest.raises(Exception, match=r"Resource not found. Status code: 404"):
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")

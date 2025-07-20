@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import pytest
 
 from fmpsdk import sec_filings
-from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPCompanyProfile,
     FMPCompanySECFilings,
@@ -15,61 +14,6 @@ from tests.conftest import (
     handle_api_call_with_validation,
     validate_model_list,
 )
-
-
-class TestSECRSSFeeds:
-    """Test class for SEC RSS feeds functionality."""
-
-    def test_sec_rss_feeds_success(self, api_key):
-        """Test SEC RSS feeds with enhanced validation."""
-        # Test that the endpoint works and returns valid data (may be empty)
-        result, validation = handle_api_call_with_validation(
-            sec_filings.sec_rss_feeds, "sec_rss_feeds", apikey=api_key, limit=10
-        )
-
-        if not validation["success"]:
-            pytest.skip(f"Test skipped: {validation['reason']}")
-
-        # Should return a list (may be empty)
-        if hasattr(result, "root"):
-            assert isinstance(result.root, list)
-        else:
-            assert isinstance(result, list)
-
-    def test_sec_rss_feeds_with_limit(self, api_key):
-        """Test SEC RSS feeds with different limits."""
-        result, validation = handle_api_call_with_validation(
-            sec_filings.sec_rss_feeds, "sec_rss_feeds", apikey=api_key, limit=5
-        )
-
-        if not validation["success"]:
-            pytest.skip(f"Test skipped: {validation['reason']}")
-
-        # Should return a list (may be empty)
-        if hasattr(result, "root"):
-            assert isinstance(result.root, list)
-            assert len(result.root) <= 5
-        else:
-            assert isinstance(result, list)
-            assert len(result) <= 5
-
-    @pytest.mark.parametrize("limit", [1, 5, 10, 20, 50])
-    def test_sec_rss_feeds_limit_validation(self, api_key, limit):
-        """Test SEC RSS feeds with various limits."""
-        result, validation = handle_api_call_with_validation(
-            sec_filings.sec_rss_feeds, "sec_rss_feeds", apikey=api_key, limit=limit
-        )
-
-        if not validation["success"]:
-            pytest.skip(f"Test skipped: {validation['reason']}")
-
-        # Should return a list with correct limit (may be empty)
-        if hasattr(result, "root"):
-            assert isinstance(result.root, list)
-            assert len(result.root) <= limit
-        else:
-            assert isinstance(result, list)
-            assert len(result) <= limit
 
 
 class TestSECFilings8K:
@@ -959,8 +903,8 @@ class TestIndustryClassification:
         if models:
             first_model = models[0]
             # Should have industry classification details
-            assert hasattr(first_model, "industry")
-            assert hasattr(first_model, "sector")
+            assert hasattr(first_model, "industryTitle")
+            assert hasattr(first_model, "sicCode")
 
     def test_industry_classification_search(self, api_key):
         """Test industry classification search functionality."""
@@ -968,7 +912,7 @@ class TestIndustryClassification:
             sec_filings.industry_classification_search,
             "industry_classification_search",
             apikey=api_key,
-            industry="Technology",
+            symbol="AAPL",
         )
 
         if not validation["success"]:
@@ -981,16 +925,18 @@ class TestIndustryClassification:
             # Should find technology-related classifications
             tech_found = False
             for model in models[:5]:
-                if hasattr(model, "industry") and model.industry:
-                    if "tech" in model.industry.lower():
+                if hasattr(model, "industryTitle") and model.industryTitle:
+                    if "tech" in model.industryTitle.lower():
                         tech_found = True
                         break
-                if hasattr(model, "sector") and model.sector:
-                    if "tech" in model.sector.lower():
+                if (
+                    hasattr(model, "name") and model.name
+                ):  # Some models may have name field
+                    if "tech" in model.name.lower():
                         tech_found = True
                         break
 
-            # At least some results should be technology-related
+            # At least some results should be technology-related or we should have valid results
             assert tech_found or len(models) > 0
 
     def test_industry_classification_all(self, api_key):
@@ -1261,8 +1207,6 @@ class TestSECFilingsCoverage:
             sec_filings.industry_classification_list,
             "industry_classification_list",
             apikey=api_key,
-            page=0,
-            limit=10,
         )
 
         models = get_response_models(result, FMPIndustryClassification)
@@ -1274,9 +1218,7 @@ class TestSECFilingsCoverage:
             sec_filings.industry_classification_search,
             "industry_classification_search",
             apikey=api_key,
-            industry="Technology",
-            page=0,
-            limit=5,
+            symbol="AAPL",
         )
 
         models = get_response_models(result, FMPIndustryClassification)

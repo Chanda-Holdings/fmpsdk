@@ -13,26 +13,6 @@ from .utils import parse_response
 
 
 @parse_response
-def sec_rss_feeds(
-    apikey: str,
-    limit: int = None,
-    filename: str = None,
-) -> typing.Union[typing.List[typing.Dict], None]:
-    """
-    Query FMP /rss_feed/ API.
-
-    :param apikey: Your API key.
-    :param limit: Number of rows to return.
-    :param filename: Optional filename parameter (for compatibility).
-    :return: A list of dictionaries.
-    """
-    path = "rss_feed"
-    query_vars = {"apikey": apikey}
-    query_vars["limit"] = str(limit)
-    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
-
-
-@parse_response
 def sec_filings_8k(
     apikey: str, from_date: str, to_date: str, page: int = None, limit: int = None
 ) -> RootModel[typing.List[Any]]:
@@ -330,11 +310,7 @@ def sec_profile(
 
 @parse_response
 def industry_classification_list(
-    apikey: str,
-    industry_title: str = None,
-    sic_code: str = None,
-    page: int = None,
-    limit: int = None,
+    apikey: str, industry_title: str = None, sic_code: str = None
 ) -> RootModel[typing.List[FMPIndustryClassification]]:
     """
     Get a list of industry classifications.
@@ -346,26 +322,18 @@ def industry_classification_list(
         Industry title to filter by.
     sic_code : str, optional
         SIC code to filter by.
-    page : int, optional
-        Page number for pagination.
-    limit : int, optional
-        Limit the number of results.
 
     Returns
     -------
     list
         List of industry classifications.
     """
-    path = "standard-industry-classification-list"
+    path = "standard-industrial-classification-list"
     query_vars = {"apikey": apikey}
     if industry_title:
         query_vars["industry_title"] = industry_title
     if sic_code:
         query_vars["sic_code"] = sic_code
-    if page:
-        query_vars["page"] = str(page)
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
@@ -375,9 +343,6 @@ def industry_classification_search(
     symbol: str = None,
     cik: str = None,
     sicCode: str = None,
-    industry: str = None,
-    page: int = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPIndustryClassification]]:
     """
     Search industry classification by symbol.
@@ -391,12 +356,6 @@ def industry_classification_search(
         Central Index Key (CIK).
     sicCode : str, optional
         SIC code.
-    industry : str, optional
-        Industry name to search.
-    page : int, optional
-        Page number for pagination.
-    limit : int, optional
-        Limit the number of results.
 
     Returns
     -------
@@ -411,12 +370,6 @@ def industry_classification_search(
         query_vars["cik"] = cik
     if sicCode:
         query_vars["sicCode"] = sicCode
-    if industry:
-        query_vars["industry"] = industry
-    if page:
-        query_vars["page"] = str(page)
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 

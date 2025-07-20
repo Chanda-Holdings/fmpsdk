@@ -374,7 +374,6 @@ ENDPOINT_MODEL_MAP = {
     "batch_forex_quote": RootModel[List[FMPQuoteShort]],
     "batch_index_quote": RootModel[List[FMPQuoteShort]],
     # SEC Filings
-    "sec_rss_feeds": RootModel[List[Any]],
     "sec_filings_8k": RootModel[List[Any]],
     "sec_filings_financials": RootModel[List[Any]],
     "sec_filings_search_form_type": RootModel[List[Any]],
