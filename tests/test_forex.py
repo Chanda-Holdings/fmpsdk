@@ -1,16 +1,11 @@
 import pytest
 
 from fmpsdk import forex
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPForexPair
-from tests.conftest import (
-    get_response_models,
-    validate_model_list
-)
+from tests.conftest import get_response_models, validate_model_list
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestForexList:
     """Test the forex_list function with enhanced validation."""
 
@@ -383,5 +378,5 @@ class TestForexList:
     def test_forex_invalid_inputs(self, api_key):
         """Test forex functions with invalid inputs."""
         # Test with invalid API key
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             forex.forex_list(apikey="invalid_key")

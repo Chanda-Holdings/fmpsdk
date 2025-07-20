@@ -8,6 +8,7 @@ from .models import (
     FMPDelistedCompany,
     FMPEmployeeCount,
     FMPExecutiveCompensation,
+    FMPExecutiveCompensationBenchmark,
     FMPExecutiveProfile,
     FMPHistoricalEmployeeCount,
     FMPMarketCap,
@@ -411,9 +412,9 @@ def key_executives_compensation(
 @parse_response
 def executive_compensation_benchmark(
     apikey: str, year: str = None
-) -> RootModel[typing.List[FMPExecutiveCompensation]]:
+) -> RootModel[typing.List[FMPExecutiveCompensationBenchmark]]:
     """
-    Retrieve key executives compensation for a given symbol.
+    Retrieve executive compensation benchmark data.
 
     Parameters
     ----------
@@ -424,8 +425,8 @@ def executive_compensation_benchmark(
 
     Returns
     -------
-    FMPExecutiveCompensation
-        List of key executives as a Pydantic model.
+    FMPExecutiveCompensationBenchmark
+        List of executive compensation benchmarks as a Pydantic model.
     """
     path = "executive-compensation-benchmark"
     query_vars = {"apikey": apikey}

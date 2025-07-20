@@ -22,6 +22,7 @@ from .analyst import (
     price_target_consensus,
     price_target_summary,
     ratings_historical,
+    ratings_historical_v3,
     ratings_snapshot,
     stock_grades,
     stock_grades_summary,
@@ -54,6 +55,7 @@ from .bulk import (
 from .calendar_module import (
     dividends,
     dividends_calendar,
+    dividends_calendar_v3,
     earnings_calendar,
     ipos_calendar,
     ipos_disclosure,
@@ -352,6 +354,7 @@ __all__ = [
     "price_target_consensus",
     "price_target_summary",
     "ratings_historical",
+    "ratings_historical_v3",
     "ratings_snapshot",
     "stock_grades",
     "stock_grades_summary",
@@ -378,6 +381,7 @@ __all__ = [
     # Calendar
     "dividends",
     "dividends_calendar",
+    "dividends_calendar_v3",
     "earnings_calendar",
     "ipos_calendar",
     "ipos_disclosure",

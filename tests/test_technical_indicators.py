@@ -1,5 +1,6 @@
 import pytest
 
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPTechnicalIndicator
 from fmpsdk.technical_indicators import technical_indicators
 from tests.conftest import (
@@ -9,9 +10,6 @@ from tests.conftest import (
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestTechnicalIndicatorsComprehensive:
     """Test class for comprehensive technical indicators functionality."""
 
@@ -689,9 +687,6 @@ class TestTechnicalIndicatorsComprehensive:
                     assert item.close > 0, "Intraday close should be positive"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestTechnicalIndicatorsValidation:
     """Test validation and error handling for technical indicators."""
 
@@ -742,7 +737,7 @@ class TestTechnicalIndicatorsValidation:
 
     def test_technical_indicators_api_key_validation(self):
         """Test technical indicators with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             technical_indicators(
                 apikey="invalid_key",
                 symbol="AAPL",

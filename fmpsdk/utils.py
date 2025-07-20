@@ -1,3 +1,4 @@
+import json
 import time
 import typing
 from typing import Any, Callable, TypeVar
@@ -5,12 +6,17 @@ from typing import Any, Callable, TypeVar
 import pandas as pd
 
 from .exceptions import (
+    HTTPS_READ_TIMEOUT_CODE,
     INVALID_API_KEY_STATUS_CODE,
     POSSIBLE_INVALID_EXCHANGE_CODE,
     PREMIUM_STATUS_CODE,
+    RATE_LIMIT_STATUS_CODE,
+    SUCCESS_STATUS_CODE,
     InvalidAPIKeyException,
     InvalidExchangeCodeException,
+    InvalidQueryParameterException,
     PremiumEndpointException,
+    PremiumQueryParameterException,
     RateLimitExceededException,
 )
 
@@ -19,9 +25,11 @@ T = TypeVar("T")
 
 def raise_for_exception(response):
     if response.status_code == PREMIUM_STATUS_CODE:
-        raise PremiumEndpointException(
-            "This endpoint requires a premium subscription. Please upgrade your plan."
-        )
+        if "Premium Endpoint" in response.text:
+            raise PremiumEndpointException(response.text.strip())
+
+        if "Premium Query Parameter" in response.text:
+            raise PremiumQueryParameterException(response.text.strip())
 
     if response.status_code == INVALID_API_KEY_STATUS_CODE:
         raise InvalidAPIKeyException("Invalid API KEY")
@@ -32,59 +40,44 @@ def raise_for_exception(response):
                 "Invalid exchange code provided. Please check the exchange code."
             )
 
+    if response.status_code == RATE_LIMIT_STATUS_CODE:
+        raise RateLimitExceededException(
+            f"Rate limit exceeded. Please try again later. Status code: {response.status_code}"
+        )
 
-def is_rate_limit_error(result):
-    """
-    Check if the response indicates a rate limiting error.
+    if response.status_code == HTTPS_READ_TIMEOUT_CODE:
+        raise Exception(
+            f"HTTPS read timeout occurred. Status code: {response.status_code}"
+        )
 
-    Args:
-        result: The API response object
-
-    Returns:
-        bool: True if this is a rate limiting error, False otherwise
-    """
-    # Check for dictionary responses with Error Message (FMP API specific)
-    if isinstance(result, dict) and "Error Message" in result:
-        error_msg = result["Error Message"].lower()
-        # FMP specific rate limiting message
-        if "limit reach" in error_msg:
-            return True
-        # Check for other common rate limiting keywords
-        rate_limit_keywords = [
-            "rate limit",
-            "too many requests",
-            "quota exceeded",
-            "api limit",
-            "requests per",
-            "upgrade your plan",  # FMP often says this for rate limits
-        ]
-        return any(keyword in error_msg for keyword in rate_limit_keywords)
-
-    # Check for HTTP status responses
-    if hasattr(result, "status_code"):
-        # 429 is the standard rate limiting status code
-        if result.status_code == 429:
-            return True
-        # Some APIs use other status codes for rate limiting
-        if result.status_code in [
-            503,
-            509,
-        ]:  # Service Unavailable, Bandwidth Limit Exceeded
-            if hasattr(result, "content"):
+    if response.status_code != SUCCESS_STATUS_CODE:
+        error_msg = response.reason
+        if response.content:
+            try:
+                error_content = response.content.decode("utf-8")
                 try:
-                    content = (
-                        result.content.decode("utf-8")
-                        if isinstance(result.content, bytes)
-                        else str(result.content)
+                    # Try to parse as JSON and return it
+                    error_json = json.loads(error_content)
+                    if isinstance(error_json, dict):
+                        error_message = error_json.get("Error Message", "Unknown error")
+                    else:
+                        error_message = str(error_json)
+                    raise Exception(
+                        f"API request failed with error: {error_message}",
+                        error_json,
                     )
-                    return any(
-                        keyword in content.lower()
-                        for keyword in ["rate", "limit", "quota"]
-                    )
-                except (UnicodeDecodeError, AttributeError):
-                    pass
+                except json.JSONDecodeError:
+                    # Not valid JSON, continue with regular error handling
+                    error_msg += f": {error_content}"
+            except UnicodeDecodeError:
+                error_msg += f": {response.content!r}"
 
-    return False
+        if "Invalid or missing query parameter" in error_msg:
+            raise InvalidQueryParameterException(error_msg)
+
+        raise Exception(
+            f"API request failed with status code {response.status_code}: {error_msg}"
+        )
 
 
 def iterate_over_pages(
@@ -131,13 +124,6 @@ def iterate_over_pages(
                 data_list.extend(data)
             return True
         elif isinstance(data, dict):
-            # Early return for error responses
-            if "Error Message" in data:
-                if is_rate_limit_error(data):
-                    raise RateLimitExceededException(
-                        f"Rate limiting detected in response: {data['Error Message']}"
-                    )
-                return data  # Return error for caller to handle
             if not is_list_response:
                 data_dict.update(data)
             return True
@@ -156,8 +142,29 @@ def iterate_over_pages(
             try:
                 response = func(**args)
 
-                # Quick rate limit check
-                if is_rate_limit_error(response):
+                # Check for rate limiting in different response types
+                is_rate_limited = False
+
+                # Check HTTP response objects with status codes
+                if (
+                    hasattr(response, "status_code")
+                    and response.status_code == RATE_LIMIT_STATUS_CODE
+                ):
+                    is_rate_limited = True
+
+                # Check dictionary responses for rate limit error messages
+                elif isinstance(response, dict) and "Error Message" in response:
+                    error_msg = str(response["Error Message"]).lower()
+                    rate_limit_patterns = [
+                        "limit reach",
+                        "rate limit",
+                        "too many requests",
+                        "upgrade your plan",
+                    ]
+                    if any(pattern in error_msg for pattern in rate_limit_patterns):
+                        is_rate_limited = True
+
+                if is_rate_limited:
                     if attempt < max_retries:
                         print(
                             f"Rate limiting detected on page {page}, attempt {attempt + 1}. "

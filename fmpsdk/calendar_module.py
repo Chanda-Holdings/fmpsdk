@@ -6,6 +6,7 @@ from .models import (
     FMPDisclosureFiling,
     FMPDividend,
     FMPDividendCalendarEvent,
+    FMPDividendCalendarEventV3,
     FMPEarningsCalendarEvent,
     FMPEarningsReport,
     FMPProspectusFiling,
@@ -46,7 +47,7 @@ def dividends_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-) -> RootModel[typing.List[FMPDividendCalendarEvent]]:
+) -> RootModel[typing.List[FMPDividendCalendarEventV3]]:
     """
     Get dividends calendar using the /stable/dividends-calendar endpoint.
 
@@ -64,6 +65,31 @@ def dividends_calendar(
     if to_date:
         query_vars["to"] = to_date
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
+
+
+@parse_response
+def dividends_calendar_v3(
+    apikey: str,
+    from_date: str = None,
+    to_date: str = None,
+) -> RootModel[typing.List[FMPDividendCalendarEvent]]:
+    """
+    Get dividends calendar using the /v3/stock_dividend_calendat endpoint.
+
+    Parameters:
+        apikey (str): Your API key.
+        from_date (str, optional): Start date (YYYY-MM-DD).
+        to_date (str, optional): End date (YYYY-MM-DD).
+    Returns:
+        List of dictionaries with dividends calendar.
+    """
+    path = "stock_dividend_calendar"
+    query_vars = {"apikey": apikey}
+    if from_date:
+        query_vars["from"] = from_date
+    if to_date:
+        query_vars["to"] = to_date
+    return __return_json(path=path, query_vars=query_vars, version="v3")  # type: ignore[no-any-return]
 
 
 @parse_response

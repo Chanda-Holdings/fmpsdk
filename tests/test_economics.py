@@ -12,7 +12,7 @@ from fmpsdk.models import (
 from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
-    validate_model_list
+    validate_model_list,
 )
 
 
@@ -28,9 +28,6 @@ def older_date():
     return (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestEconomicsBasic:
     """Basic functionality tests for economics endpoints with enhanced validation."""
 
@@ -253,9 +250,6 @@ class TestEconomicsBasic:
                 ), "Total equity risk premium should be within reasonable range"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestEconomicsDataQuality:
     """Data quality and consistency tests for economics endpoints with enhanced validation."""
 

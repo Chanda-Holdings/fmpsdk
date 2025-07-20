@@ -3,14 +3,14 @@ from typing import List
 import pytest
 
 from fmpsdk import commodity
-from fmpsdk.models import (  # Corrected - this is what the API actually returns
+from fmpsdk.exceptions import InvalidAPIKeyException
+from fmpsdk.models import (
     FMPCommodityListItem,
 )
 from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
     validate_model_list,
-    validate_required_fields,
 )
 
 
@@ -106,7 +106,6 @@ class TestCommodityList:
             commodity.commodity_list, "commodity_list", True, apikey=api_key
         )
 
-        # NEW: Direct model validation - no conversion needed!
         commodities = get_response_models(response, FMPCommodityListItem)
         validate_model_list(commodities, FMPCommodityListItem, min_count=1)
         if commodities:
@@ -114,7 +113,7 @@ class TestCommodityList:
 
     def test_commodity_list_invalid_api_key(self):
         """Test handling of invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             commodity.commodity_list(apikey="invalid_api_key")
 
     @pytest.mark.parametrize(

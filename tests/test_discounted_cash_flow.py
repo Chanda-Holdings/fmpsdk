@@ -45,9 +45,6 @@ class TestDCFValuation:
             assert dcf_obj.dcf > 0
             assert dcf_obj.Stock_Price > 0
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_levered_valuation(self, api_key):
         """Test levered DCF valuation."""
         start_time = time.time()
@@ -73,9 +70,6 @@ class TestDCFValuation:
             assert isinstance(dcf_obj.dcf, (int, float))
             assert isinstance(dcf_obj.Stock_Price, (int, float))
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_basic(self, api_key):
         """Test custom DCF valuation without parameters."""
         start_time = time.time()
@@ -102,9 +96,6 @@ class TestDCFValuation:
             assert isinstance(dcf_obj.price, (int, float))
             assert isinstance(dcf_obj.beta, (int, float))
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_levered_basic(self, api_key):
         """Test custom levered DCF valuation without parameters."""
         start_time = time.time()
@@ -134,9 +125,6 @@ class TestDCFValuation:
 class TestDCFCustomParameters:
     """Test DCF models with custom parameters."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_with_growth_parameters(self, api_key):
         """Test custom DCF with growth parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -160,9 +148,6 @@ class TestDCFCustomParameters:
             assert isinstance(dcf_obj.longTermGrowthRate, (int, float))
             assert isinstance(dcf_obj.taxRate, (int, float))
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_with_cost_parameters(self, api_key):
         """Test custom DCF with cost of capital parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -189,9 +174,6 @@ class TestDCFCustomParameters:
             assert isinstance(dcf_obj.costofDebt, (int, float))
             assert isinstance(dcf_obj.beta, (int, float))
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_levered_with_parameters(self, api_key):
         """Test custom levered DCF with multiple parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom_levered(
@@ -222,9 +204,6 @@ class TestDCFCustomParameters:
 class TestDCFDataQuality:
     """Test DCF data quality and consistency."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_valuation_consistency(self, api_key):
         """Test DCF valuation data consistency."""
         result = discounted_cash_flow.discounted_cash_flow_valuation(
@@ -252,9 +231,6 @@ class TestDCFDataQuality:
                     dcf_obj.Stock_Price < 10000
                 ), "Stock price seems unreasonably high"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_calculation_consistency(self, api_key):
         """Test custom DCF calculation consistency."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -308,9 +284,6 @@ class TestDCFDataQuality:
 class TestDCFSymbols:
     """Test DCF calculations across different types of companies."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_large_cap_tech(self, api_key):
         """Test DCF for large-cap tech companies."""
         symbols = ["AAPL", "MSFT", "GOOGL"]
@@ -331,9 +304,6 @@ class TestDCFSymbols:
                     assert dcf_obj.dcf > 0
                     assert dcf_obj.Stock_Price > 0
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_financial_companies(self, api_key):
         """Test DCF for financial companies."""
         symbols = ["JPM", "BAC", "WFC"]
@@ -352,9 +322,6 @@ class TestDCFSymbols:
 
                     assert dcf_obj.symbol != ""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_growth_companies(self, api_key):
         """Test DCF for growth companies."""
         symbols = ["NVDA", "TSLA", "CRM"]
@@ -381,9 +348,6 @@ class TestDCFSymbols:
 class TestDCFErrorHandling:
     """Test error handling for DCF endpoints."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_invalid_api_key(self):
         """Test DCF with invalid API key."""
         with pytest.raises(InvalidAPIKeyException) as exc_info:
@@ -394,9 +358,6 @@ class TestDCFErrorHandling:
         # Should return error message
         assert "Invalid API KEY" in str(exc_info.value)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_invalid_symbol(self, api_key):
         """Test DCF with invalid symbol."""
         result = discounted_cash_flow.discounted_cash_flow_valuation(
@@ -408,9 +369,6 @@ class TestDCFErrorHandling:
         assert isinstance(models, list)
         # Empty list is acceptable for invalid symbols
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_invalid_parameters(self, api_key):
         """Test custom DCF with invalid parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -424,9 +382,6 @@ class TestDCFErrorHandling:
         models = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(models, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_levered_invalid_api_key(self):
         """Test levered DCF with invalid API key."""
         with pytest.raises(InvalidAPIKeyException) as exc_info:
@@ -437,9 +392,6 @@ class TestDCFErrorHandling:
         # Should return error message
         assert "Invalid API KEY" in str(exc_info.value)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_levered_invalid_api_key(self):
         """Test custom levered DCF with invalid API key."""
         with pytest.raises(InvalidAPIKeyException) as exc_info:
@@ -454,9 +406,6 @@ class TestDCFErrorHandling:
 class TestDCFPerformance:
     """Test DCF endpoint performance."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_response_times(self, api_key):
         """Test that all DCF endpoints respond within acceptable time."""
         endpoints = [
@@ -491,9 +440,6 @@ class TestDCFPerformance:
             models = get_response_models(result, FMPDCFCustomValuation)
             assert isinstance(models, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_dcf_custom_high_growth_scenario(self, api_key):
         """Test custom DCF with high growth scenario."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -516,9 +462,6 @@ class TestDCFPerformance:
 class TestDCFCustom:
     """Tests for custom DCF calculation functions."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_basic(self, api_key):
         """Test custom DCF calculation with basic parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -543,9 +486,6 @@ class TestDCFCustom:
             assert isinstance(dcf_obj, FMPDCFCustomValuation)
             assert dcf_obj.symbol != ""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_with_all_parameters(self, api_key):
         """Test custom DCF with all optional parameters to cover missing lines."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -573,9 +513,6 @@ class TestDCFCustom:
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_partial_parameters(self, api_key):
         """Test custom DCF with subset of parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -589,9 +526,6 @@ class TestDCFCustom:
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_levered_dcf_basic(self, api_key):
         """Test custom levered DCF calculation with basic parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom_levered(
@@ -617,9 +551,6 @@ class TestDCFCustom:
                 assert isinstance(item, FMPDCFCustomValuation)
                 assert item.symbol != ""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_levered_dcf_with_all_parameters(self, api_key):
         """Test custom levered DCF with all optional parameters to cover missing lines."""
         result = discounted_cash_flow.discounted_cash_flow_custom_levered(
@@ -647,9 +578,6 @@ class TestDCFCustom:
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_levered_dcf_partial_parameters(self, api_key):
         """Test custom levered DCF with subset of parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom_levered(
@@ -669,9 +597,6 @@ class TestDCFCustom:
 class TestDCFParameterValidation:
     """Test parameter validation and edge cases for DCF functions."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_invalid_api_key(self):
         """Test custom DCF with invalid API key."""
         with pytest.raises(InvalidAPIKeyException) as exc_info:
@@ -681,9 +606,6 @@ class TestDCFParameterValidation:
 
         assert "Invalid API KEY" in str(exc_info.value)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_levered_dcf_invalid_api_key(self):
         """Test custom levered DCF with invalid API key."""
         with pytest.raises(InvalidAPIKeyException) as exc_info:
@@ -693,9 +615,6 @@ class TestDCFParameterValidation:
 
         assert "Invalid API KEY" in str(exc_info.value)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_extreme_parameters(self, api_key):
         """Test custom DCF with extreme parameter values."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -708,9 +627,6 @@ class TestDCFParameterValidation:
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_zero_parameters(self, api_key):
         """Test custom DCF with zero values for parameters."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -723,9 +639,6 @@ class TestDCFParameterValidation:
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_negative_parameters(self, api_key):
         """Test custom DCF with negative parameter values."""
         result = discounted_cash_flow.discounted_cash_flow_custom(
@@ -741,9 +654,6 @@ class TestDCFParameterValidation:
 class TestDCFPerformance:
     """Test DCF endpoint performance."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_dcf_response_time(self, api_key):
         """Test that custom DCF responds within acceptable time."""
         start_time = time.time()
@@ -756,9 +666,6 @@ class TestDCFPerformance:
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_custom_levered_dcf_response_time(self, api_key):
         """Test that custom levered DCF responds within acceptable time."""
         start_time = time.time()

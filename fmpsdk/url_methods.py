@@ -8,9 +8,8 @@ import typing
 import requests
 
 from .exceptions import (
-    RETRYABLE_STATUS_CODE,
-    SUCCESS_STATUS_CODE,
-    InvalidQueryParameterException,
+    HTTPS_READ_TIMEOUT_CODE,
+    RATE_LIMIT_STATUS_CODE,
     PremiumEndpointException,
     RateLimitExceededException,
 )
@@ -18,14 +17,12 @@ from .utils import raise_for_exception
 
 BASE_URL_STABLE: str = "https://financialmodelingprep.com/stable/"
 BASE_URL_V4: str = "https://financialmodelingprep.com/api/v4/"
+BASE_URL_V3: str = "https://financialmodelingprep.com/api/v3/"
 
 CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
 RETRIES = 10
 RETRY_DELAY = 10
-# if "pytest" in sys.modules:
-#     RETRIES = 2
-#     RETRY_DELAY = 2
 
 # Disable excessive DEBUG messages.
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -36,7 +33,8 @@ def __get_base_url(version: str) -> str:
     """
     Get the base URL for the API requests.
     """
-    result: str = BASE_URL_V4 if version == "v4" else BASE_URL_STABLE
+    base_urls = {"stable": BASE_URL_STABLE, "v4": BASE_URL_V4, "v3": BASE_URL_V3}
+    result: str = base_urls.get(version, BASE_URL_STABLE)
     return result
 
 
@@ -53,7 +51,7 @@ def __return_json(
     :param path: Path after TLD of URL
     :param query_vars: Dictionary of query values (after "?" of URL)
     :param version: API version to use ("stable" or "v4")
-    :param retries: Number of retries for rate limiting or retryable errors
+    :param retries: Number of retries for rate limiting
     :param retry_delay: Delay in seconds between retries
     :return: JSON response
     """
@@ -66,11 +64,15 @@ def __return_json(
             url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
         )
 
-        if response.status_code == RETRYABLE_STATUS_CODE:
+        if (
+            response.status_code == RATE_LIMIT_STATUS_CODE
+            or response.status_code == HTTPS_READ_TIMEOUT_CODE
+        ):
             logging.warning(
-                f"Rate limit or retryable error occurred: {response.status_code}. "
+                f"{'Rate limit' if response.status_code == RATE_LIMIT_STATUS_CODE else 'HTTPS read timeout'} occurred: {response.status_code}. "
                 f"Query variables: {query_vars}"
             )
+            # Once retries are exhausted, raise_for_exception will handle it
             if retries > 0:
                 logging.info(
                     f"Retrying in {retry_delay} seconds... ({retries} retries left)"
@@ -79,53 +81,8 @@ def __return_json(
                 return __return_json(
                     path, query_vars, version, retries - 1, retry_delay
                 )
-            else:
-                logging.error(f"Max retries exceeded for {url}")
-                raise RateLimitExceededException(
-                    f"Rate limit exceeded or retryable error for {url}. "
-                    f"Query variables: {query_vars}"
-                    f"Response: {response.text}"
-                )
 
         raise_for_exception(response)
-
-        # Check for other non-200 status codes and return error response
-        if response.status_code != SUCCESS_STATUS_CODE:
-            error_msg = response.reason
-            if response.content:
-                try:
-                    error_content = response.content.decode("utf-8")
-                    try:
-                        # Try to parse as JSON and return it
-                        error_json = json.loads(error_content)
-                        logging.error(
-                            f"{error_msg}: {error_content}\nURL: {url}\nQuery variables: {query_vars}"
-                        )
-                        # Handle both dict and list error responses
-                        if isinstance(error_json, dict):
-                            error_message = error_json.get(
-                                "Error Message", "Unknown error"
-                            )
-                        else:
-                            error_message = str(error_json)
-                        raise Exception(
-                            f"API request failed with error: {error_message}",
-                            error_json,
-                        )
-                    except json.JSONDecodeError:
-                        # Not valid JSON, continue with regular error handling
-                        error_msg += f": {error_content}"
-                except UnicodeDecodeError:
-                    error_msg += f": {response.content!r}"
-
-            logging.error(f"{error_msg}\nURL: {url}\nQuery variables: {query_vars}")
-
-            if "Invalid or missing query parameter" in error_msg:
-                raise InvalidQueryParameterException(error_msg)
-
-            raise Exception(
-                f"API request failed with status code {response.status_code}: {error_msg}"
-            )
 
         if len(response.content) > 0:
             if query_vars.get("datatype") == "csv":

@@ -72,7 +72,7 @@ def search_name(
 @parse_response
 def search_cik(
     apikey: str,
-    query: str,
+    cik: str,
     limit: int = None,
 ) -> RootModel[typing.List[FMPCompanyCIKSearch]]:
     """
@@ -80,13 +80,13 @@ def search_cik(
 
     Parameters:
         apikey (str): Your API key.
-        query (str): The search query (CIK or company name).
+        cik (str): The CIK to search for.
         limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with CIK search results.
     """
     path = "search-cik"
-    query_vars = {"apikey": apikey, "cik": query}
+    query_vars = {"apikey": apikey, "cik": cik}
     if limit:
         query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]

@@ -17,7 +17,7 @@ from fmpsdk.models import (
 from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
-    validate_model_list
+    validate_model_list,
 )
 
 # Test configuration
@@ -32,9 +32,6 @@ def recent_date():
     return (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestDirectoryBasic:
     """Basic functionality tests for directory endpoints with enhanced validation."""
 
@@ -271,9 +268,6 @@ class TestDirectoryBasic:
                 assert len(stock.name) <= 200, "Stock name should be reasonable length"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestDirectorySymbolChanges:
     """Test symbol change functionality."""
 
@@ -328,9 +322,6 @@ class TestDirectorySymbolChanges:
                 assert len(change.newSymbol) >= 1, "New symbol should not be empty"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestDirectoryAvailableEndpoints:
     """Test available endpoints functionality."""
 
@@ -459,9 +450,6 @@ class TestDirectoryAvailableEndpoints:
                 assert len(index.name) <= 200, "Index name should be reasonable length"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestDirectoryDataQuality:
     """Test data quality for directory endpoints."""
 

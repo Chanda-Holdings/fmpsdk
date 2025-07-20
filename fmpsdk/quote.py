@@ -233,17 +233,20 @@ def batch_aftermarket_quote(
 @parse_response
 def batch_exchange_quote(
     apikey: str,
-    symbols: typing.List[str],
+    symbols: typing.List[str] = None,
+    exchange: str = None,
 ) -> RootModel[typing.List[FMPQuoteFull]]:
     """
-    Get batch exchange quote for multiple symbols.
+    Get batch exchange quote for multiple symbols or by exchange.
 
     Parameters
     ----------
     apikey : str
         Your FMP API key.
-    symbols : list
+    symbols : list, optional
         List of symbols (e.g., ['AAPL', 'GOOGL']).
+    exchange : str, optional
+        Exchange name (e.g., 'NYSE').
 
     Returns
     -------
@@ -251,7 +254,13 @@ def batch_exchange_quote(
         List of batch exchange quote data.
     """
     path = "batch-exchange-quote"
-    query_vars = {"apikey": apikey, "symbols": ",".join(symbols)}
+    query_vars = {"apikey": apikey}
+
+    if symbols:
+        query_vars["symbols"] = ",".join(symbols)
+    elif exchange:
+        query_vars["exchange"] = exchange
+
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 

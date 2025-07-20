@@ -232,12 +232,7 @@ def sec_filings_search_cik(
 
 @parse_response
 def sec_filings_company_search_name(
-    apikey: str,
-    company: str,
-    from_date: str,
-    to_date: str,
-    page: int = None,
-    limit: int = None,
+    apikey: str, company: str
 ) -> RootModel[typing.List[FMPCompanySECFilings]]:
     """
     Search SEC filings by company name.
@@ -245,16 +240,8 @@ def sec_filings_company_search_name(
     ----------
     apikey : str
         Your FMP API key.
-    company : str
+    company : str, optional
         Company name.
-    from_date : str
-        Start date for the filings (format: 'YYYY-MM-DD').
-    to_date : str
-        End date for the filings (format: 'YYYY-MM-DD').
-    page : int, optional
-        Page number for pagination (default is None).
-    limit : int, optional
-        Number of results per page (default is None).
 
     Returns
     -------
@@ -262,16 +249,8 @@ def sec_filings_company_search_name(
         List of SEC filings for the company name.
     """
     path = "sec-filings-company-search/name"
-    query_vars = {
-        "apikey": apikey,
-        "company": company,
-        "from": from_date,
-        "to": to_date,
-    }
-    if page is not None:
-        query_vars["page"] = str(page)
-    if limit is not None:
-        query_vars["limit"] = str(limit)
+    query_vars = {"apikey": apikey, "company": company}
+
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 
@@ -279,45 +258,25 @@ def sec_filings_company_search_name(
 def sec_filings_company_search_symbol(
     apikey: str,
     symbol: str,
-    from_date: str,
-    to_date: str,
-    page: int = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPCompanySECFilings]]:
     """
-    Search SEC filings by company symbol.
+    Search SEC filings by symbol.
     Parameters
     ----------
     apikey : str
         Your FMP API key.
     symbol : str
         Ticker symbol (e.g., 'AAPL').
-    from_date : str
-        Start date for the filings (format: 'YYYY-MM-DD').
-    to_date : str
-        End date for the filings (format: 'YYYY-MM-DD').
-    page : int, optional
-        Page number for pagination (default is None).
-    limit : int, optional
-        Number of results per page (default is None).
 
     Returns
     -------
     list
-        List of SEC filings for the company symbol.
+        List of SEC filings for the symbol.
     """
     path = "sec-filings-company-search/symbol"
-    query_vars = {
-        "apikey": apikey,
-        "symbol": symbol,
-        "from": from_date,
-        "to": to_date,
-    }
-    if page is not None:
-        query_vars["page"] = str(page)
-    if limit is not None:
-        query_vars["limit"] = str(limit)
-    return __return_json(path, query_vars)  # type: ignore[no-any-return]
+    query_vars = {"apikey": apikey, "symbol": symbol}
+
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
@@ -371,7 +330,11 @@ def sec_profile(
 
 @parse_response
 def industry_classification_list(
-    apikey: str, industry_title: str = None, sic_code: str = None
+    apikey: str,
+    industry_title: str = None,
+    sic_code: str = None,
+    page: int = None,
+    limit: int = None,
 ) -> RootModel[typing.List[FMPIndustryClassification]]:
     """
     Get a list of industry classifications.
@@ -383,6 +346,10 @@ def industry_classification_list(
         Industry title to filter by.
     sic_code : str, optional
         SIC code to filter by.
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Limit the number of results.
 
     Returns
     -------
@@ -395,12 +362,22 @@ def industry_classification_list(
         query_vars["industry_title"] = industry_title
     if sic_code:
         query_vars["sic_code"] = sic_code
-    return __return_json(path, query_vars)  # type: ignore[no-any-return]
+    if page:
+        query_vars["page"] = str(page)
+    if limit:
+        query_vars["limit"] = str(limit)
+    return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
 @parse_response
 def industry_classification_search(
-    apikey: str, symbol: str = None, cik: str = None, sicCode: str = None
+    apikey: str,
+    symbol: str = None,
+    cik: str = None,
+    sicCode: str = None,
+    industry: str = None,
+    page: int = None,
+    limit: int = None,
 ) -> RootModel[typing.List[FMPIndustryClassification]]:
     """
     Search industry classification by symbol.
@@ -414,6 +391,12 @@ def industry_classification_search(
         Central Index Key (CIK).
     sicCode : str, optional
         SIC code.
+    industry : str, optional
+        Industry name to search.
+    page : int, optional
+        Page number for pagination.
+    limit : int, optional
+        Limit the number of results.
 
     Returns
     -------
@@ -428,6 +411,12 @@ def industry_classification_search(
         query_vars["cik"] = cik
     if sicCode:
         query_vars["sicCode"] = sicCode
+    if industry:
+        query_vars["industry"] = industry
+    if page:
+        query_vars["page"] = str(page)
+    if limit:
+        query_vars["limit"] = str(limit)
     return __return_json(path, query_vars)  # type: ignore[no-any-return]
 
 

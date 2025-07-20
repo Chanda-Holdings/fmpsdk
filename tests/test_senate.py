@@ -121,9 +121,6 @@ TEST_SYMBOLS = [
 ]
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestSenateTrading:
     """Test class for Senate trading functionality."""
 
@@ -163,9 +160,6 @@ class TestSenateTrading:
             "etf_index",
         ],
     )
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trading_by_sector(self, api_key, sector):
         """Test Senate trading across different sectors."""
         sector_symbols = {
@@ -188,9 +182,6 @@ class TestSenateTrading:
             assert isinstance(trade_models, list)
 
     @pytest.mark.parametrize("transaction_type", ["purchase", "sale", "both"])
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trading_by_transaction_type(self, api_key, transaction_type):
         """Test Senate trading for different transaction types."""
         # Use popular symbols that likely have both purchases and sales
@@ -231,9 +222,6 @@ class TestSenateTrading:
             "historical",  # Last 2 years
         ],
     )
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trading_by_date_range(self, api_key, date_range):
         """Test Senate trading across different date ranges."""
         from datetime import datetime, timedelta
@@ -276,9 +264,6 @@ class TestSenateTrading:
     @pytest.mark.parametrize(
         "politician_party", ["democrat", "republican", "independent"]
     )
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trading_by_party(self, api_key, politician_party):
         """Test Senate trading by political party affiliation."""
         # Note: Party information may not be directly available in the API response
@@ -311,9 +296,6 @@ class TestSenateTrading:
             "very_large",  # > $250,000
         ],
     )
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trading_by_size(self, api_key, trade_size):
         """Test Senate trading by transaction size ranges."""
         result = senate.senate_latest(apikey=api_key, limit=50)
@@ -343,9 +325,6 @@ class TestSenateTrading:
             # This is informational - amount field may not always be available
             assert len(size_filtered) >= 0
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_latest(self, api_key):
         """Test latest Senate trading disclosures endpoint."""
         result = senate.senate_latest(apikey=api_key, limit=10)
@@ -386,9 +365,6 @@ class TestSenateTrading:
                 "Partial Purchase",
             ]
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_latest_pagination(self, api_key):
         """Test Senate latest with pagination parameters."""
         result = senate.senate_latest(apikey=api_key, page=0, limit=5)
@@ -398,9 +374,6 @@ class TestSenateTrading:
         # Should respect limit parameter
         assert len(trade_models) <= 5
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trades_by_symbol(self, api_key):
         """Test Senate trades by symbol endpoint."""
         result = senate.senate_trades(apikey=api_key, symbol="AAPL")
@@ -414,9 +387,6 @@ class TestSenateTrading:
                 assert trade_model.symbol == "AAPL"
                 # The 'office' field contains politician name, not chamber
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trades_by_name(self, api_key):
         """Test Senate trades by politician name endpoint."""
         # Use a common name pattern that might exist
@@ -432,9 +402,6 @@ class TestSenateTrading:
                 assert "WARREN" in full_name
                 # The 'office' field contains politician name, not chamber
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trades_invalid_symbol(self, api_key):
         """Test Senate trades with invalid symbol."""
         result = senate.senate_trades(apikey=api_key, symbol="INVALID_SYMBOL_XYZ")
@@ -444,9 +411,6 @@ class TestSenateTrading:
         # Should return empty list for invalid symbol
         assert len(trade_models) == 0
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trades_invalid_name(self, api_key):
         """Test Senate trades with invalid politician name."""
         result = senate.senate_trades_by_name(apikey=api_key, name="INVALID_PERSON_XYZ")
@@ -460,9 +424,6 @@ class TestSenateTrading:
 class TestHouseTrading:
     """Test cases for House trading disclosure endpoints."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_latest(self, api_key):
         """Test latest House trading disclosures endpoint."""
         result = senate.house_latest(apikey=api_key, limit=10)
@@ -475,25 +436,21 @@ class TestHouseTrading:
             assert len(models) <= 10
             trade_obj = models[0]
 
-            # Required fields validation
-            assert trade_obj.symbol != ""
+            # Required fields validation - symbol can be empty for non-stock trades
+            assert trade_obj.symbol is not None  # Can be empty string but not None
             assert trade_obj.disclosureDate != ""
             assert trade_obj.firstName != ""
             assert trade_obj.lastName != ""
             assert hasattr(trade_obj, "office")
             assert hasattr(trade_obj, "type")
 
-            # Data quality checks
-            assert trade_obj.symbol != ""
+            # Data quality checks (symbol can be empty for non-stock assets like bonds)
             assert trade_obj.disclosureDate != ""
             assert trade_obj.firstName != ""
             assert trade_obj.lastName != ""
             # The 'office' field contains the full politician name, not chamber
             assert trade_obj.office
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_latest_pagination(self, api_key):
         """Test House latest with pagination parameters."""
         result = senate.house_latest(apikey=api_key, page=0, limit=5)
@@ -504,9 +461,6 @@ class TestHouseTrading:
         # Should respect limit parameter
         assert len(models) <= 5
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_trades_by_symbol(self, api_key):
         """Test House trades by symbol endpoint."""
         result = senate.house_trades(apikey=api_key, symbol="MSFT")
@@ -521,9 +475,6 @@ class TestHouseTrading:
                 assert trade_obj.symbol != ""
                 # The 'office' field contains politician name, not chamber
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_trades_by_name(self, api_key):
         """Test House trades by politician name endpoint."""
         # Use a common name pattern that might exist
@@ -540,9 +491,6 @@ class TestHouseTrading:
                 assert trade_obj.firstName != ""
                 # The 'office' field contains politician name, not chamber
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_trades_invalid_symbol(self, api_key):
         """Test House trades with invalid symbol."""
         result = senate.house_trades(apikey=api_key, symbol="INVALID_SYMBOL_XYZ")
@@ -554,9 +502,6 @@ class TestHouseTrading:
         # Should return empty list for invalid symbol
         assert len(models) == 0
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_trades_invalid_name(self, api_key):
         """Test House trades with invalid politician name."""
         result = senate.house_trades_by_name(apikey=api_key, name="INVALID_PERSON_XYZ")
@@ -572,9 +517,6 @@ class TestHouseTrading:
 class TestPoliticalTradingDataQuality:
     """Test data quality and business logic validation."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_vs_house_latest_comparison(self, api_key):
         """Test that Senate and House latest endpoints return data."""
         senate_result = senate.senate_latest(apikey=api_key, limit=5)
@@ -604,9 +546,6 @@ class TestPoliticalTradingDataQuality:
                 assert trade.lastName != ""
                 assert hasattr(trade, "office")
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_political_trading_date_formats(self, api_key):
         """Test date format consistency in political trading data."""
         result = senate.senate_latest(apikey=api_key, limit=5)
@@ -630,9 +569,6 @@ class TestPoliticalTradingDataQuality:
                     or "2025" in trade.disclosureDate
                 )
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_political_trading_transaction_amounts(self, api_key):
         """Test transaction amount ranges in political trading data."""
         result = senate.senate_latest(apikey=api_key, limit=10)
@@ -662,9 +598,6 @@ class TestPoliticalTradingDataQuality:
                 ]
                 assert any(indicator in amount for indicator in amount_indicators)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_political_trading_asset_types(self, api_key):
         """Test asset type validation in political trading data."""
         result = senate.house_latest(apikey=api_key, limit=10)
@@ -689,9 +622,6 @@ class TestPoliticalTradingDataQuality:
             # At least one expected type should be present
             assert len(asset_types) > 0
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_political_trading_districts(self, api_key):
         """Test district information in political trading data."""
         result = senate.house_latest(apikey=api_key, limit=10)
@@ -720,49 +650,31 @@ class TestPoliticalTradingDataQuality:
 class TestPoliticalTradingErrorHandling:
     """Test error handling for political trading endpoints."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_latest_invalid_api_key(self):
         """Test Senate latest with invalid API key."""
         with pytest.raises(InvalidAPIKeyException):
             senate.senate_latest(apikey="invalid_key")
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_latest_invalid_api_key(self):
         """Test House latest with invalid API key."""
         with pytest.raises(InvalidAPIKeyException):
             senate.house_latest(apikey="invalid_key")
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trades_invalid_api_key(self):
         """Test Senate trades with invalid API key."""
         with pytest.raises(InvalidAPIKeyException):
             senate.senate_trades(apikey="invalid_key", symbol="AAPL")
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_trades_invalid_api_key(self):
         """Test House trades with invalid API key."""
         with pytest.raises(InvalidAPIKeyException):
             senate.house_trades(apikey="invalid_key", symbol="AAPL")
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_senate_trades_by_name_invalid_api_key(self):
         """Test Senate trades by name with invalid API key."""
         with pytest.raises(InvalidAPIKeyException):
             senate.senate_trades_by_name(apikey="invalid_key", name="Warren")
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_house_trades_by_name_invalid_api_key(self):
         """Test House trades by name with invalid API key."""
         with pytest.raises(InvalidAPIKeyException):

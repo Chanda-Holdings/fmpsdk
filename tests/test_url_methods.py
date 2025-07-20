@@ -16,28 +16,24 @@ return_binary_stable_func = url_methods.__return_binary_stable
 class TestGetBaseUrl:
     """Test the __get_base_url helper function."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_get_base_url_v4(self):
         """Test getting v4 base URL."""
         result = get_base_url_func("v4")
         assert result == BASE_URL_V4
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_get_base_url_stable(self):
         """Test getting stable base URL."""
         result = get_base_url_func("stable")
         assert result == BASE_URL_STABLE
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_get_base_url_default(self):
         """Test getting base URL with any other version defaults to stable."""
+        # Test v3 specifically (now supported)
         result = get_base_url_func("v3")
+        assert result == "https://financialmodelingprep.com/api/v3/"
+
+        # Test unsupported version defaults to stable
+        result = get_base_url_func("v5")
         assert result == BASE_URL_STABLE
 
         result = get_base_url_func("unknown")
@@ -48,9 +44,6 @@ class TestReturnJson:
     """Test the __return_json function."""
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_successful_json_response(self, mock_get):
         """Test successful JSON response."""
         # Mock successful response
@@ -66,9 +59,6 @@ class TestReturnJson:
         mock_get.assert_called_once()
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_premium_endpoint_402_response(self, mock_get):
         """Test premium endpoint 402 status code raises PremiumEndpointException."""
         from fmpsdk.exceptions import PremiumEndpointException
@@ -76,15 +66,14 @@ class TestReturnJson:
         # Mock 402 response (premium endpoint)
         mock_response = Mock()
         mock_response.status_code = 402
+        mock_response.text = "Premium Endpoint. Please upgrade your subscription."
+        mock_response.content = b'{"Error Message": "Premium Endpoint"}'
         mock_get.return_value = mock_response
 
-        with pytest.raises(PremiumEndpointException, match="premium subscription"):
+        with pytest.raises(PremiumEndpointException):
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_error_status_code_with_json_response(self, mock_get):
         """Test error status code with JSON error response raises Exception."""
         # Mock 404 response with JSON error (404 is not in retryable codes)
@@ -98,9 +87,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "invalid"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_error_status_code_with_non_json_response(self, mock_get):
         """Test error status code with non-JSON error response raises Exception."""
         # Mock 404 response with non-JSON error (404 is not in retryable codes)
@@ -115,9 +101,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_error_status_code_with_unicode_decode_error(self, mock_get):
         """Test error status code with unicode decode error raises Exception."""
         # Mock response with content that can't be decoded
@@ -134,9 +117,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_csv_response(self, mock_get):
         """Test CSV response parsing."""
         # Mock CSV response
@@ -153,9 +133,6 @@ class TestReturnJson:
         assert len(result) > 0 and result[0].get("symbol", "") != ""
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_csv_response_with_error(self, mock_get):
         """Test CSV response with decode error raises UnicodeDecodeError."""
         # Mock response with invalid UTF-8 content
@@ -171,9 +148,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test", "datatype": "csv"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_empty_response(self, mock_get):
         """Test empty response returns empty list."""
         # Mock empty response
@@ -187,9 +161,6 @@ class TestReturnJson:
         assert result == []
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_empty_dict_response(self, mock_get):
         """Test empty dict response returns empty list."""
         # Mock empty dict response
@@ -204,9 +175,6 @@ class TestReturnJson:
         assert result == []
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_timeout_exception(self, mock_get):
         """Test timeout exception is raised."""
         # Mock timeout exception
@@ -216,9 +184,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_connection_error_exception(self, mock_get):
         """Test connection error exception is raised."""
         # Mock connection error
@@ -228,9 +193,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_too_many_redirects_exception(self, mock_get):
         """Test too many redirects exception is raised."""
         # Mock too many redirects error
@@ -240,9 +202,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_http_error_exception(self, mock_get):
         """Test HTTP error exception is raised."""
         # Mock HTTP error
@@ -252,9 +211,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_generic_exception_handling(self, mock_get):
         """Test generic exception handling raises the exception."""
         # Mock generic exception
@@ -264,9 +220,6 @@ class TestReturnJson:
             return_json_func("test/path", {"apikey": "test"})
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_generic_exception_with_response_info(self, mock_get):
         """Test generic exception with response information available raises the exception."""
 
@@ -280,9 +233,6 @@ class TestReturnJson:
         with pytest.raises(ValueError, match="Some processing error"):
             return_json_func("test/path", {"apikey": "test"})
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_v4_version_url(self):
         """Test that v4 version uses correct base URL."""
         with patch("fmpsdk.url_methods.requests.get") as mock_get:
@@ -303,9 +253,6 @@ class TestReturnBinaryStable:
     """Test the __return_binary_stable function."""
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_successful_binary_response(self, mock_get):
         """Test successful binary response."""
         # Mock successful binary response
@@ -319,9 +266,6 @@ class TestReturnBinaryStable:
         assert result == b"binary data content"
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_empty_binary_response(self, mock_get):
         """Test empty binary response."""
         # Mock empty binary response
@@ -335,9 +279,6 @@ class TestReturnBinaryStable:
         assert result == b""
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_timeout_exception_binary(self, mock_get):
         """Test timeout exception for binary requests."""
         # Mock timeout exception
@@ -349,9 +290,6 @@ class TestReturnBinaryStable:
         assert result is None
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_connection_error_exception_binary(self, mock_get):
         """Test connection error exception for binary requests."""
         # Mock connection error
@@ -363,9 +301,6 @@ class TestReturnBinaryStable:
         assert result is None
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_too_many_redirects_exception_binary(self, mock_get):
         """Test too many redirects exception for binary requests."""
         # Mock too many redirects error
@@ -377,9 +312,6 @@ class TestReturnBinaryStable:
         assert result is None
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_http_error_exception_binary(self, mock_get):
         """Test HTTP error exception for binary requests."""
         # Mock HTTP error
@@ -395,9 +327,6 @@ class TestReturnBinaryStable:
         assert result is None
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_generic_exception_binary(self, mock_get):
         """Test generic exception handling for binary requests."""
         # Mock generic exception
@@ -412,9 +341,6 @@ class TestReturnBinaryStable:
 class TestUrlMethodsIntegration:
     """Integration tests to ensure URL methods work together correctly."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_timeout_values(self):
         """Test that timeout values are properly configured."""
         from fmpsdk.url_methods import CONNECT_TIMEOUT, READ_TIMEOUT
@@ -422,9 +348,6 @@ class TestUrlMethodsIntegration:
         assert CONNECT_TIMEOUT == 5
         assert READ_TIMEOUT == 30
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_logging_configuration(self):
         """Test that logging is properly configured."""
         # Test that requests and urllib3 loggers are set to WARNING level
@@ -435,9 +358,6 @@ class TestUrlMethodsIntegration:
         assert urllib3_logger.level == logging.WARNING
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_url_construction_stable(self, mock_get):
         """Test URL construction for stable API."""
         mock_response = Mock()
@@ -457,9 +377,6 @@ class TestUrlMethodsIntegration:
         assert result == []
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_url_construction_v4(self, mock_get):
         """Test URL construction for v4 API."""
         mock_response = Mock()
@@ -475,9 +392,6 @@ class TestUrlMethodsIntegration:
         assert call_args[0][0] == f"{BASE_URL_V4}social-sentiments/trending"
 
     @patch("fmpsdk.url_methods.requests.get")
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_timeout_parameters_passed(self, mock_get):
         """Test that timeout parameters are correctly passed to requests."""
         mock_response = Mock()

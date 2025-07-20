@@ -202,7 +202,20 @@ class FMPRatingSnapshot(BaseModel):
     priceToBookScore: int
 
 
-class FMPRatingSnapshotV3(BaseModel):
+class FMPHistoricalRating(BaseModel):
+    symbol: str
+    date: str
+    rating: str
+    overallScore: int
+    discountedCashFlowScore: int
+    returnOnEquityScore: int
+    returnOnAssetsScore: int
+    debtToEquityScore: int
+    priceToEarningsScore: int
+    priceToBookScore: int
+
+
+class FMPHistoricalRatingV3(BaseModel):
     symbol: str
     date: str
     rating: str
@@ -220,19 +233,6 @@ class FMPRatingSnapshotV3(BaseModel):
     ratingDetailsPERecommendation: str
     ratingDetailsPBScore: int
     ratingDetailsPBRecommendation: str
-
-
-class FMPHistoricalRating(BaseModel):
-    symbol: str
-    date: str
-    rating: str
-    overallScore: int
-    discountedCashFlowScore: int
-    returnOnEquityScore: int
-    returnOnAssetsScore: int
-    debtToEquityScore: int
-    priceToEarningsScore: int
-    priceToBookScore: int
 
 
 class FMPPriceTargetSummary(BaseModel):
@@ -335,6 +335,17 @@ class FMPDividendCalendarEvent(BaseModel):
     dividend: float
     yield_: Optional[float] = None
     frequency: str
+
+
+class FMPDividendCalendarEventV3(BaseModel):
+    date: str
+    label: str
+    adjDividend: float
+    symbol: str
+    dividend: float
+    recordDate: Optional[str] = None
+    paymentDate: Optional[str] = None
+    declarationDate: Optional[str] = None
 
 
 class FMPEarningsReport(BaseModel):

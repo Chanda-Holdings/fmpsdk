@@ -4,11 +4,11 @@ from pydantic import RootModel
 
 from .models import (
     FMPAnalystEstimates,
+    FMPHistoricalRatingV3,
     FMPHistoricalStockGrade,
     FMPPriceTargetConsensus,
     FMPPriceTargetSummary,
     FMPRatingSnapshot,
-    FMPRatingSnapshotV3,
     FMPStockGrade,
     FMPStockGradeSummary,
 )
@@ -89,7 +89,7 @@ def ratings_historical(
 @parse_response
 def ratings_historical_v3(
     apikey: str, symbol: str, limit: int = None
-) -> RootModel[typing.List[FMPRatingSnapshotV3]]:
+) -> RootModel[typing.List[FMPHistoricalRatingV3]]:
     """
     Get historical ratings using the /v3/historical-rating endpoint.
 

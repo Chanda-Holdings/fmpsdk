@@ -5,6 +5,7 @@ import pytest
 from fmpsdk.calendar_module import (
     dividends,
     dividends_calendar,
+    dividends_calendar_v3,
     earnings_calendar,
     ipos_calendar,
     ipos_disclosure,
@@ -17,6 +18,7 @@ from fmpsdk.models import (
     FMPDisclosureFiling,
     FMPDividend,
     FMPDividendCalendarEvent,
+    FMPDividendCalendarEventV3,
     FMPEarningsCalendarEvent,
     FMPProspectusFiling,
     FMPStockSplit,
@@ -29,9 +31,6 @@ from tests.conftest import (
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestDividends:
     """Test class for historical dividend data functionality."""
 
@@ -270,9 +269,6 @@ class TestDividends:
         ), "Dividends should be in chronological order"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestDividendsCalendar:
     """Test class for dividend calendar functionality."""
 
@@ -287,6 +283,7 @@ class TestDividendsCalendar:
             (-30, 30),  # Month before and after
             (-7, 14),  # Week before, 2 weeks after
             (0, 365),  # Next year
+            (-365, 0),  # Last year
         ],
     )
     def test_dividends_calendar_periods(self, api_key, calendar_period):
@@ -427,9 +424,6 @@ class TestDividendsCalendar:
             ), f"Event date {event_date} should be within range {from_date} to {to_date}"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestEarningsCalendar:
     """Test class for earnings calendar functionality."""
 
@@ -560,16 +554,13 @@ class TestEarningsCalendar:
                 ), "Revenue estimated should be reasonable"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestIPOCalendar:
     """Test class for IPO calendar and related functionality."""
 
     def test_ipos_calendar_current_quarter(self, api_key):
         """Test IPO calendar for current quarter."""
         today = datetime.now()
-        # Get current quarter
+        # Get currentfix  quarter
         quarter_start = datetime(today.year, ((today.month - 1) // 3) * 3 + 1, 1)
         if quarter_start.month == 10:
             quarter_end = datetime(today.year + 1, 1, 1) - timedelta(days=1)
@@ -683,9 +674,6 @@ class TestIPOCalendar:
             assert len(symbol_value) > 0
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestSplits:
     """Test class for stock splits functionality."""
 
@@ -825,9 +813,6 @@ class TestSplits:
                 assert first_split.symbol == "AAPL"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestSplitsCalendar:
     """Test class for splits calendar functionality."""
 
@@ -893,9 +878,6 @@ class TestSplitsCalendar:
                 assert hasattr(first_split, "date")
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestIPOsCalendar:
     """Test class for IPO calendar functionality."""
 
@@ -998,9 +980,6 @@ class TestIPOsCalendar:
                 assert hasattr(first_ipo, "company")
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCalendarErrorHandling:
     """Test class for calendar error handling."""
 
@@ -1065,9 +1044,6 @@ class TestCalendarErrorHandling:
             assert isinstance(result_list, list)
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCalendarResponseTimes:
     """Test class for calendar response time validation."""
 
@@ -1111,9 +1087,6 @@ class TestCalendarResponseTimes:
         ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCalendarDataQuality:
     """Test data quality and business logic validation for calendar endpoints."""
 
@@ -1277,3 +1250,238 @@ class TestCalendarErrorHandling:
 
         with pytest.raises(InvalidAPIKeyException):
             result = dividends(apikey=invalid_api_key, symbol="AAPL")
+
+
+class TestDividendsCalendarV3:
+    """Test class for V3 dividends calendar functionality."""
+
+    def test_dividends_calendar_v3_basic(self, api_key):
+        """Test basic dividends calendar v3 functionality."""
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+        )
+
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
+
+        if result_list:
+            assert isinstance(result_list, list)
+
+            # Validate first item structure
+            first_item = result_list[0]
+            assert hasattr(first_item, "symbol")
+            assert hasattr(first_item, "date")
+            assert hasattr(first_item, "recordDate")
+            assert hasattr(first_item, "paymentDate")
+            assert hasattr(first_item, "declarationDate")
+            assert hasattr(first_item, "adjDividend")
+            assert hasattr(first_item, "dividend")
+
+            # Basic validation
+            assert first_item.symbol is not None
+            assert first_item.date is not None
+            assert isinstance(first_item.adjDividend, (int, float))
+            assert isinstance(first_item.dividend, (int, float))
+
+    def test_dividends_calendar_v3_with_date_range(self, api_key):
+        """Test dividends calendar v3 with date range parameters."""
+        # Test with a recent date range
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+            from_date=start_date,
+            to_date=end_date,
+        )
+
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        assert isinstance(result_list, list)
+
+        # Validate date filtering if results are returned
+        if result_list:
+            for item in result_list[:5]:  # Check first 5 items
+                assert hasattr(item, "date")
+                assert hasattr(item, "symbol")
+                # Date should be within range (basic validation)
+                assert item.date is not None
+                assert len(item.symbol) > 0
+
+    @pytest.mark.parametrize(
+        "from_date,to_date,description",
+        [
+            # Different date range scenarios
+            ("2024-01-01", "2024-01-31", "january_2024"),
+            ("2024-06-01", "2024-06-30", "june_2024"),
+            ("2024-12-01", "2024-12-31", "december_2024"),
+        ],
+    )
+    def test_dividends_calendar_v3_date_ranges(
+        self, api_key, from_date, to_date, description
+    ):
+        """Test dividends calendar v3 with various date ranges."""
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+            from_date=from_date,
+            to_date=to_date,
+        )
+
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        assert isinstance(result_list, list)
+
+        # Basic validation - results may be empty for some date ranges
+        if result_list:
+            for item in result_list[:3]:
+                assert hasattr(item, "symbol")
+                assert hasattr(item, "date")
+                assert hasattr(item, "dividend")
+                assert item.symbol is not None
+                assert len(item.symbol) > 0
+
+    def test_dividends_calendar_v3_data_quality(self, api_key):
+        """Test dividends calendar v3 data quality and consistency."""
+        # Get recent dividend data
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+            from_date=start_date,
+            to_date=end_date,
+        )
+
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            # Data quality checks
+            for item in result_list[:10]:  # Check first 10 items
+                # Symbol validation
+                assert item.symbol is not None
+                assert len(item.symbol) >= 1
+                assert (
+                    len(item.symbol) <= 20
+                )  # Allow for international symbols with exchange suffixes
+                assert (
+                    item.symbol.replace(".", "").replace("-", "").isalnum()
+                    or "." in item.symbol
+                )
+
+                # Date validation
+                assert item.date is not None
+                assert len(item.date) == 10  # YYYY-MM-DD format
+
+                # Dividend amount validation
+                assert isinstance(item.dividend, (int, float))
+                assert isinstance(item.adjDividend, (int, float))
+                assert item.dividend >= 0  # Dividends should be non-negative
+                assert item.adjDividend >= 0
+
+                # Optional date fields validation
+                if hasattr(item, "recordDate") and item.recordDate:
+                    assert len(item.recordDate) == 10
+                if hasattr(item, "paymentDate") and item.paymentDate:
+                    assert len(item.paymentDate) == 10
+                if hasattr(item, "declarationDate") and item.declarationDate:
+                    assert len(item.declarationDate) == 10
+
+    def test_dividends_calendar_v3_edge_cases(self, api_key):
+        """Test dividends calendar v3 edge cases."""
+        # Test with future date range (should return empty or minimal results)
+        future_start = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+        future_end = (datetime.now() + timedelta(days=395)).strftime("%Y-%m-%d")
+
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+            from_date=future_start,
+            to_date=future_end,
+        )
+
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        assert isinstance(result_list, list)
+        # Future dates may have some scheduled dividends, so we just check it's a list
+
+    def test_dividends_calendar_v3_partial_date_parameters(self, api_key):
+        """Test dividends calendar v3 with partial date parameters."""
+        # Test with only from_date
+        start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+            from_date=start_date,
+        )
+
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        assert isinstance(result_list, list)
+
+        # Test with only to_date
+        end_date = datetime.now().strftime("%Y-%m-%d")
+
+        result, validation = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+            to_date=end_date,
+        )
+
+        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        assert isinstance(result_list, list)
+
+    def test_dividends_calendar_v3_comparison_with_v1(self, api_key):
+        """Test dividends calendar v3 compared to regular dividends_calendar."""
+        # Get data from both endpoints for comparison
+        test_date = datetime.now().strftime("%Y-%m-%d")
+
+        # V3 endpoint
+        result_v3, validation_v3 = handle_api_call_with_validation(
+            dividends_calendar_v3,
+            "dividends_calendar_v3",
+            apikey=api_key,
+            from_date=test_date,
+            to_date=test_date,
+        )
+
+        # Regular endpoint
+        result_v1, validation_v1 = handle_api_call_with_validation(
+            dividends_calendar,
+            "dividends_calendar",
+            apikey=api_key,
+            from_date=test_date,
+            to_date=test_date,
+        )
+
+        result_list_v3 = get_response_models(result_v3, FMPDividendCalendarEvent)
+        result_list_v1 = get_response_models(result_v1, FMPDividendCalendarEvent)
+
+        # Both should return lists
+        assert isinstance(result_list_v3, list)
+        assert isinstance(result_list_v1, list)
+
+        # If both have data, they should have similar structure
+        if result_list_v3 and result_list_v1:
+            v3_item = result_list_v3[0]
+            v1_item = result_list_v1[0]
+
+            # Both should have basic dividend fields
+            assert hasattr(v3_item, "symbol")
+            assert hasattr(v3_item, "dividend")
+            assert hasattr(v1_item, "symbol")
+            assert hasattr(v1_item, "dividend")
+
+    def test_dividends_calendar_v3_invalid_api_key(self):
+        """Test dividends calendar v3 with invalid API key."""
+        invalid_api_key = "invalid_key_123"
+
+        with pytest.raises(InvalidAPIKeyException):
+            result = dividends_calendar_v3(apikey=invalid_api_key)

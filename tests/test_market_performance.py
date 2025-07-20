@@ -35,9 +35,6 @@ def get_test_date():
 class TestSectorPerformance:
     """Test sector performance functions."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_sector_performance_snapshot(self, api_key):
         """Test sector performance snapshot."""
         test_date = get_test_date()
@@ -54,9 +51,6 @@ class TestSectorPerformance:
                 first_model, "sectorName"
             ), "Should have sector field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_sector_performance_with_exchange(self, api_key):
         """Test sector performance with exchange filter."""
         test_date = get_test_date()
@@ -66,9 +60,6 @@ class TestSectorPerformance:
         models = get_response_models(result, FMPSectorPerformanceSnapshot)
         validate_model_list(models, FMPSectorPerformanceSnapshot)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_sector_performance_with_sector_filter(self, api_key):
         """Test sector performance with sector filter."""
         test_date = get_test_date()
@@ -78,9 +69,6 @@ class TestSectorPerformance:
         models = get_response_models(result, FMPSectorPerformanceSnapshot)
         validate_model_list(models, FMPSectorPerformanceSnapshot)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_sector_performance(self, api_key):
         """Test historical sector performance."""
         result = market_performance.historical_sector_performance(
@@ -95,9 +83,6 @@ class TestSectorPerformance:
                 first_model, "sector"
             ), "Should have date or sector field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_sector_performance_with_dates(self, api_key):
         """Test historical sector performance with date range."""
         from_date = "2023-01-01"
@@ -108,9 +93,6 @@ class TestSectorPerformance:
         models = get_response_models(result, FMPHistoricalSectorPerformance)
         validate_model_list(models, FMPHistoricalSectorPerformance)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_sector_performance_with_exchange(self, api_key):
         """Test historical sector performance with exchange."""
         result = market_performance.historical_sector_performance(
@@ -119,9 +101,6 @@ class TestSectorPerformance:
         models = get_response_models(result, FMPHistoricalSectorPerformance)
         validate_model_list(models, FMPHistoricalSectorPerformance)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_sector_pe_snapshot(self, api_key):
         """Test sector PE snapshot."""
         test_date = get_test_date()
@@ -135,9 +114,6 @@ class TestSectorPerformance:
                 first_model, "pe"
             ), "Should have sector or PE field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_sector_pe_snapshot_with_exchange(self, api_key):
         """Test sector PE snapshot with exchange filter."""
         test_date = get_test_date()
@@ -147,9 +123,6 @@ class TestSectorPerformance:
         models = get_response_models(result, FMPSectorPESnapshot)
         validate_model_list(models, FMPSectorPESnapshot)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_sector_pe_snapshot_with_sector_filter(self, api_key):
         """Test sector PE snapshot with sector filter."""
         test_date = get_test_date()
@@ -159,9 +132,6 @@ class TestSectorPerformance:
         models = get_response_models(result, FMPSectorPESnapshot)
         validate_model_list(models, FMPSectorPESnapshot)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_sector_pe(self, api_key):
         """Test historical sector PE."""
         result = market_performance.historical_sector_pe(
@@ -176,9 +146,6 @@ class TestSectorPerformance:
                 first_model, "sector"
             ), "Should have date or sector field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_sector_pe_with_dates(self, api_key):
         """Test historical sector PE with date range."""
         from_date = "2023-01-01"
@@ -189,9 +156,6 @@ class TestSectorPerformance:
         models = get_response_models(result, FMPHistoricalSectorPE)
         validate_model_list(models, FMPHistoricalSectorPE)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_sector_pe_with_exchange(self, api_key):
         """Test historical sector PE with exchange."""
         result = market_performance.historical_sector_pe(
@@ -204,9 +168,6 @@ class TestSectorPerformance:
 class TestIndustryPerformance:
     """Test industry performance functions."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_industry_performance_snapshot(self, api_key):
         """Test industry performance snapshot."""
         test_date = get_test_date()
@@ -222,9 +183,6 @@ class TestIndustryPerformance:
                 first_model, "industryName"
             ), "Should have industry field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_industry_performance_with_exchange(self, api_key):
         """Test industry performance with exchange filter."""
         test_date = get_test_date()
@@ -234,9 +192,6 @@ class TestIndustryPerformance:
         models = get_response_models(result, FMPIndustryPerformanceSnapshot)
         validate_model_list(models, FMPIndustryPerformanceSnapshot, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_industry_performance_with_industry_filter(self, api_key):
         """Test industry performance with industry filter."""
         test_date = get_test_date()
@@ -247,9 +202,6 @@ class TestIndustryPerformance:
         # Allow empty results as industry data might not be available for all dates
         validate_model_list(models, FMPIndustryPerformanceSnapshot, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_industry_performance(self, api_key):
         """Test historical industry performance."""
         result = market_performance.historical_industry_performance(
@@ -265,9 +217,6 @@ class TestIndustryPerformance:
                 first_model, "industry"
             ), "Should have date or industry field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_industry_performance_with_dates(self, api_key):
         """Test historical industry performance with date range."""
         from_date = "2023-01-01"
@@ -279,9 +228,6 @@ class TestIndustryPerformance:
         # Allow empty results as historical data might not be available for all date ranges
         validate_model_list(models, FMPHistoricalIndustryPerformance, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_industry_performance_with_exchange(self, api_key):
         """Test historical industry performance with exchange."""
         result = market_performance.historical_industry_performance(
@@ -290,9 +236,6 @@ class TestIndustryPerformance:
         models = get_response_models(result, FMPHistoricalIndustryPerformance)
         validate_model_list(models, FMPHistoricalIndustryPerformance, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_industry_pe_snapshot(self, api_key):
         """Test industry PE snapshot."""
         test_date = get_test_date()
@@ -306,9 +249,6 @@ class TestIndustryPerformance:
                 first_model, "pe"
             ), "Should have industry or PE field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_industry_pe_snapshot_with_exchange(self, api_key):
         """Test industry PE snapshot with exchange filter."""
         test_date = get_test_date()
@@ -318,9 +258,6 @@ class TestIndustryPerformance:
         models = get_response_models(result, FMPIndustryPESnapshot)
         validate_model_list(models, FMPIndustryPESnapshot, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_industry_pe_snapshot_with_industry_filter(self, api_key):
         """Test industry PE snapshot with industry filter."""
         test_date = get_test_date()
@@ -330,9 +267,6 @@ class TestIndustryPerformance:
         models = get_response_models(result, FMPIndustryPESnapshot)
         validate_model_list(models, FMPIndustryPESnapshot, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_industry_pe(self, api_key):
         """Test historical industry PE."""
         result = market_performance.historical_industry_pe(
@@ -347,9 +281,6 @@ class TestIndustryPerformance:
                 first_model, "industry"
             ), "Should have date or industry field"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_industry_pe_with_dates(self, api_key):
         """Test historical industry PE with date range."""
         from_date = "2023-01-01"
@@ -360,9 +291,6 @@ class TestIndustryPerformance:
         models = get_response_models(result, FMPHistoricalIndustryPE)
         validate_model_list(models, FMPHistoricalIndustryPE, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_historical_industry_pe_with_exchange(self, api_key):
         """Test historical industry PE with exchange."""
         result = market_performance.historical_industry_pe(
@@ -375,9 +303,6 @@ class TestIndustryPerformance:
 class TestMarketMovers:
     """Test market mover functions."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_biggest_gainers(self, api_key):
         """Test biggest gainers."""
         result = market_performance.biggest_gainers(apikey=api_key)
@@ -397,9 +322,6 @@ class TestMarketMovers:
                     float(first_model.changePercentage) > 0
                 ), "Biggest gainers should have positive change"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_biggest_losers(self, api_key):
         """Test biggest losers."""
         result = market_performance.biggest_losers(apikey=api_key)
@@ -419,9 +341,6 @@ class TestMarketMovers:
                     float(first_model.changePercentage) < 0
                 ), "Biggest losers should have negative change"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_most_active_stocks(self, api_key):
         """Test most active stocks."""
         result = market_performance.most_active_stocks(apikey=api_key)
@@ -442,9 +361,6 @@ class TestMarketMovers:
 class TestMarketPerformanceComprehensive:
     """Comprehensive market performance tests."""
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_all_sector_functions_consistency(self, api_key):
         """Test that all sector functions work consistently."""
         test_date = get_test_date()
@@ -482,9 +398,6 @@ class TestMarketPerformanceComprehensive:
         validate_model_list(pe_snapshot_models, FMPSectorPESnapshot)
         validate_model_list(historical_pe_models, FMPHistoricalSectorPE)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_all_industry_functions_consistency(self, api_key):
         """Test that all industry functions work consistently."""
         test_date = get_test_date()
@@ -526,9 +439,6 @@ class TestMarketPerformanceComprehensive:
         validate_model_list(pe_snapshot_models, FMPIndustryPESnapshot)
         validate_model_list(historical_pe_models, FMPHistoricalIndustryPE, min_count=0)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_market_mover_functions_consistency(self, api_key):
         """Test that all market mover functions work consistently."""
         gainers_result = market_performance.biggest_gainers(apikey=api_key)
@@ -544,9 +454,6 @@ class TestMarketPerformanceComprehensive:
         validate_model_list(losers_models, FMPMarketMover)
         validate_model_list(active_models, FMPMarketMover)
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_response_times(self, api_key):
         """Test that all functions respond within reasonable time."""
         test_date = get_test_date()
@@ -581,9 +488,6 @@ class TestMarketPerformanceComprehensive:
                 response_time < 45.0
             ), f"{func.__name__} took {response_time:.2f}s, expected < 45.0s"
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_date_validation(self, api_key):
         """Test functions with different date formats."""
         # Test recent date
@@ -607,9 +511,6 @@ class TestMarketPerformanceComprehensive:
             industry_models, FMPIndustryPerformanceSnapshot, min_count=0
         )
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_sector_and_industry_names(self, api_key):
         """Test with different sector and industry names."""
         test_date = get_test_date()
@@ -644,9 +545,6 @@ class TestMarketPerformanceComprehensive:
                 min_count=0,
             )
 
-    @pytest.mark.integration
-    @pytest.mark.requires_api_key
-    @pytest.mark.live_data
     def test_invalid_api_keys(self):
         """Test all functions with invalid API keys."""
         from fmpsdk.exceptions import InvalidAPIKeyException

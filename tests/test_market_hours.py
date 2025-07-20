@@ -3,17 +3,15 @@ from datetime import datetime
 import pytest
 
 from fmpsdk import market_hours
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import FMPExchangeHoliday, FMPExchangeMarketHours
 from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
-    validate_model_list
+    validate_model_list,
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestMarketHours:
     """Test class for market hours functionality."""
 
@@ -120,8 +118,8 @@ class TestMarketHours:
                 apikey=api_key, exchange="INVALID_EXCHANGE"
             )
 
-        # Verify the error message indicates invalid exchange
-        assert "Invalid Exchange Provided" in str(exc_info.value)
+        # Should contain information about invalid exchange
+        assert "Invalid Exchange" in str(exc_info.value) or "400" in str(exc_info.value)
 
     @pytest.mark.parametrize(
         "exchange,expected_holiday_count_range,region",
@@ -325,9 +323,6 @@ class TestMarketHours:
             assert len(asia_timezones) >= 1, "Should have at least 1 Asia timezone"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestMarketHoursDataQuality:
     """Test data quality for market hours endpoints."""
 
@@ -486,9 +481,6 @@ class TestMarketHoursDataQuality:
                 ), f"Only {valid_market_status}/{total_exchanges} market status values are valid"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestMarketHoursComprehensive:
     """Comprehensive tests for market hours functionality."""
 

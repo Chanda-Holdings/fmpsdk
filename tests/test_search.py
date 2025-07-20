@@ -1,10 +1,11 @@
 import pytest
 
 from fmpsdk import search
-from fmpsdk.exceptions import InvalidQueryParameterException
+from fmpsdk.exceptions import InvalidAPIKeyException, InvalidQueryParameterException
 from fmpsdk.models import (
     FMPCompanyCIKSearch,
     FMPCompanyNameSearch,
+    FMPCompanyProfile,
     FMPCusipSearch,
     FMPIsinSearch,
     FMPStockScreenerResult,
@@ -13,13 +14,10 @@ from fmpsdk.models import (
 from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
-    validate_model_list
+    validate_model_list,
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestSymbolSearch:
     """Test class for symbol search functionality with comprehensive validation."""
 
@@ -134,7 +132,7 @@ class TestSymbolSearch:
     ):
         """Test comprehensive symbol search with business logic validation."""
         response, validation = handle_api_call_with_validation(
-            search.search_symbol, "search_symbol", apikey=api_key, query=query, limit=50
+            search.search_symbol, "search_symbol", apikey=api_key, query=query, limit=20
         )
 
         search_results = get_response_models(response, FMPSymbolSearch)
@@ -295,9 +293,6 @@ class TestSymbolSearch:
                         assert exchange_info in ["AMEX", "ASE"]
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCompanyNameSearch:
     """Test class for company name search functionality."""
 
@@ -472,9 +467,6 @@ class TestCompanyNameSearch:
                 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCIKSearch:
     """Test class for CIK (Central Index Key) search functionality."""
 
@@ -494,7 +486,7 @@ class TestCIKSearch:
     ):
         """Test CIK search with validation."""
         response, validation = handle_api_call_with_validation(
-            search.search_cik, "search_cik", apikey=api_key, query=cik_input, limit=10
+            search.search_cik, "search_cik", apikey=api_key, cik=cik_input, limit=10
         )
 
         search_results = get_response_models(response, FMPCompanyCIKSearch)
@@ -528,7 +520,7 @@ class TestCIKSearch:
             search.search_cik,
             "search_cik",
             apikey=api_key,
-            query="320193",  # Use Apple's CIK instead of company name
+            cik="320193",  # Use Apple's CIK instead of company name
             limit=5,
         )
 
@@ -559,15 +551,12 @@ class TestCIKSearch:
                 search.search_cik,
                 "search_cik",
                 apikey=api_key,
-                query="Apple",  # Company names are not supported
+                cik="Apple",  # Company names are not supported
             )
 
         assert "Invalid or missing query parameter" in str(exc_info.value)
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCUSIPSearch:
     """Test class for CUSIP search functionality."""
 
@@ -621,9 +610,6 @@ class TestCUSIPSearch:
         # Invalid CUSIP should return empty results (which is correct)
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestISINSearch:
     """Test class for ISIN search functionality."""
 
@@ -680,9 +666,6 @@ class TestISINSearch:
                         assert expected_company.lower() in name.lower()
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestStockScreener:
     """Test class for stock screener functionality."""
 
@@ -817,9 +800,6 @@ class TestStockScreener:
             assert symbol.isalnum() or "-" in symbol or "." in symbol
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestSearchErrorHandling:
     """Test class for search error handling and edge cases."""
 
@@ -851,7 +831,7 @@ class TestSearchErrorHandling:
         elif search_function.__name__ == "search_isin":
             param_name = "isin"
         elif search_function.__name__ == "search_cik":
-            param_name = "query"  # CIK search function uses 'query' parameter
+            param_name = "cik"  # CIK search function uses 'cik' parameter
         else:
             param_name = "query"
 
@@ -888,7 +868,7 @@ class TestSearchErrorHandling:
 
     def test_search_api_key_validation(self):
         """Test search API key validation."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             search.search_symbol(apikey="invalid_key", query="AAPL")
 
     @pytest.mark.parametrize(
@@ -920,3 +900,215 @@ class TestSearchErrorHandling:
         elif expected_result == "max_results_capped":
             # API should cap results at reasonable limit
             assert len(search_results) <= 1000
+
+
+class TestAdditionalSearchFunctions:
+    """Tests for additional search functions that need coverage."""
+
+    def test_search_exchange_variants(self, api_key):
+        """Test search exchange variants functionality."""
+        response = search.search_exchange_variants(apikey=api_key, symbol="AAPL")
+
+        search_results = get_response_models(response, FMPCompanyProfile)
+        validate_model_list(search_results, FMPCompanyProfile)
+
+        if search_results:
+            # Should find Apple variants across different exchanges
+            apple_found = False
+            for result in search_results[:10]:
+                if hasattr(result, "symbol") and result.symbol:
+                    if "AAPL" in result.symbol.upper():
+                        apple_found = True
+                        break
+                if hasattr(result, "companyName") and result.companyName:
+                    if "APPLE" in result.companyName.upper():
+                        apple_found = True
+                        break
+
+            assert apple_found or len(search_results) > 0
+
+    @pytest.mark.parametrize("test_symbol", ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"])
+    def test_search_exchange_variants_multiple(self, api_key, test_symbol):
+        """Test search exchange variants with multiple symbols."""
+        response = search.search_exchange_variants(apikey=api_key, symbol=test_symbol)
+
+        search_results = get_response_models(response, FMPCompanyProfile)
+        validate_model_list(search_results, FMPCompanyProfile)
+
+        # Should return some results for major symbols
+        if search_results:
+            # Basic validation that results have symbol information
+            for result in search_results[:5]:
+                if hasattr(result, "symbol"):
+                    assert result.symbol is not None
+                    assert len(result.symbol) > 0
+
+
+class TestSearchEdgeCases:
+    """Tests for search edge cases and error conditions."""
+
+    def test_search_cusip_edge_cases(self, api_key):
+        """Test CUSIP search with edge cases."""
+        # Test with Apple's CUSIP
+        cusip = "037833100"  # Apple Inc CUSIP
+        response = search.search_cusip(apikey=api_key, cusip=cusip)
+
+        search_results = get_response_models(response, FMPCusipSearch)
+        validate_model_list(search_results, FMPCusipSearch)
+
+        if search_results:
+            first_result = search_results[0]
+            # Should find Apple
+            if hasattr(first_result, "symbol"):
+                assert first_result.symbol == "AAPL"
+
+    def test_search_isin_edge_cases(self, api_key):
+        """Test ISIN search with edge cases."""
+        # Test with Apple's ISIN
+        isin = "US0378331005"  # Apple Inc ISIN
+        response = search.search_isin(apikey=api_key, isin=isin)
+
+        search_results = get_response_models(response, FMPIsinSearch)
+        validate_model_list(search_results, FMPIsinSearch)
+
+        if search_results:
+            first_result = search_results[0]
+            # Should find Apple
+            if hasattr(first_result, "symbol"):
+                assert first_result.symbol == "AAPL"
+
+    def test_search_invalid_inputs(self, api_key):
+        """Test search functions with invalid inputs."""
+        # Test search_cusip with invalid CUSIP
+        response = search.search_cusip(apikey=api_key, cusip="INVALID123")
+        search_results = get_response_models(response, FMPCusipSearch)
+        # Should handle gracefully
+        assert isinstance(search_results, list)
+
+        # Test search_isin with invalid ISIN
+        response = search.search_isin(apikey=api_key, isin="INVALID123")
+        search_results = get_response_models(response, FMPIsinSearch)
+        # Should handle gracefully
+        assert isinstance(search_results, list)
+
+    def test_company_screener_comprehensive(self, api_key):
+        """Test company screener with comprehensive parameters."""
+        response = search.company_screener(
+            apikey=api_key,
+            market_cap_more_than=1000000000,  # $1B+
+            beta_more_than=0.5,
+            volume_more_than=100000,
+            sector="Technology",
+            industry="Software",
+            country="US",
+            is_etf=False,
+            is_actively_trading=True,
+            limit=20,
+        )
+
+        screener_results = get_response_models(response, FMPStockScreenerResult)
+        validate_model_list(screener_results, FMPStockScreenerResult, min_count=0)
+
+        if screener_results:
+            for result in screener_results[:5]:
+                # Should match screening criteria where possible
+                if hasattr(result, "marketCap") and result.marketCap:
+                    assert result.marketCap >= 1000000000
+
+                if hasattr(result, "sector") and result.sector:
+                    # Should be technology-related
+                    assert (
+                        "tech" in result.sector.lower() or result.sector == "Technology"
+                    )
+
+    def test_company_screener_basic_parameters(self, api_key):
+        """Test company screener with basic parameters."""
+        response = search.company_screener(
+            apikey=api_key, market_cap_more_than=10000000000, limit=10  # $10B+
+        )
+
+        screener_results = get_response_models(response, FMPStockScreenerResult)
+        validate_model_list(screener_results, FMPStockScreenerResult, min_count=0)
+
+        if screener_results:
+            # Should return large cap companies
+            for result in screener_results[:3]:
+                if hasattr(result, "marketCap") and result.marketCap:
+                    assert result.marketCap >= 10000000000
+
+    @pytest.mark.parametrize(
+        "sector", ["Technology", "Healthcare", "Financials", "Energy", "Consumer"]
+    )
+    def test_company_screener_by_sector(self, api_key, sector):
+        """Test company screener filtering by different sectors."""
+        response = search.company_screener(apikey=api_key, sector=sector, limit=5)
+
+        screener_results = get_response_models(response, FMPStockScreenerResult)
+        validate_model_list(screener_results, FMPStockScreenerResult, min_count=0)
+
+        if screener_results:
+            # Should return companies in the specified sector
+            sector_matches = 0
+            for result in screener_results:
+                if hasattr(result, "sector") and result.sector:
+                    if sector.lower() in result.sector.lower():
+                        sector_matches += 1
+
+            # At least some should match the sector (allowing for API variations)
+            assert sector_matches > 0 or len(screener_results) > 0
+
+
+class TestSearchDataQuality:
+    """Tests for search data quality and consistency."""
+
+    def test_search_symbol_data_consistency(self, api_key):
+        """Test search symbol data consistency."""
+        response = search.search_symbol(apikey=api_key, query="AAPL")
+
+        search_results = get_response_models(response, FMPSymbolSearch)
+        validate_model_list(search_results, FMPSymbolSearch, min_count=1)
+
+        if search_results:
+            apple_result = search_results[0]
+            assert apple_result.symbol == "AAPL"
+
+            # Should have basic company information
+            if hasattr(apple_result, "name"):
+                assert "apple" in apple_result.name.lower()
+
+    def test_search_name_data_consistency(self, api_key):
+        """Test search name data consistency."""
+        response = search.search_name(apikey=api_key, query="Microsoft")
+
+        search_results = get_response_models(response, FMPCompanyNameSearch)
+        validate_model_list(search_results, FMPCompanyNameSearch)
+
+        if search_results:
+            # Should find Microsoft
+            microsoft_found = False
+            for result in search_results[:5]:
+                if hasattr(result, "name") and result.name:
+                    if "microsoft" in result.name.lower():
+                        microsoft_found = True
+                        if hasattr(result, "symbol"):
+                            # Allow for exchange-specific symbol formats
+                            assert "MSFT" in result.symbol
+                        break
+
+            assert microsoft_found or len(search_results) > 0
+
+    def test_search_cik_data_consistency(self, api_key):
+        """Test search CIK data consistency."""
+        # Apple's CIK
+        response = search.search_cik(apikey=api_key, cik="0000320193")
+
+        search_results = get_response_models(response, FMPCompanyCIKSearch)
+        validate_model_list(search_results, FMPCompanyCIKSearch)
+
+        if search_results:
+            first_result = search_results[0]
+            # Should find Apple with matching CIK
+            if hasattr(first_result, "cik"):
+                assert first_result.cik == "0000320193"
+            if hasattr(first_result, "symbol"):
+                assert first_result.symbol == "AAPL"

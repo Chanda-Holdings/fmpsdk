@@ -8,9 +8,6 @@ from tests.conftest import (
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCryptocurrencyList:
     """Test the cryptocurrency_list function with enhanced validation."""
 

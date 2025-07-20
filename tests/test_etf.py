@@ -1,6 +1,7 @@
 import pytest
 
 from fmpsdk import etf
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPFundAssetExposure,
     FMPFundCountryAllocation,
@@ -8,10 +9,7 @@ from fmpsdk.models import (
     FMPFundInfo,
     FMPFundSectorWeighting,
 )
-from tests.conftest import (
-    get_response_models,
-    handle_api_call_with_validation
-)
+from tests.conftest import get_response_models, handle_api_call_with_validation
 
 
 class TestETFInfo:
@@ -528,5 +526,7 @@ class TestETFDataQuality:
         )
 
         # Test with invalid API key (should raise InvalidAPIKeyException)
-        with pytest.raises(Exception):  # Expecting an exception for invalid API key
+        from fmpsdk.exceptions import InvalidAPIKeyException
+
+        with pytest.raises(InvalidAPIKeyException):
             etf.etf_info(apikey="invalid_key", symbol="SPY")

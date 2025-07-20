@@ -3,10 +3,11 @@ import time
 import pytest
 
 from fmpsdk import analyst
-from fmpsdk.exceptions import InvalidQueryParameterException
+from fmpsdk.exceptions import InvalidAPIKeyException, InvalidQueryParameterException
 from fmpsdk.models import (
     FMPAnalystEstimates,
     FMPHistoricalRating,
+    FMPHistoricalRatingV3,
     FMPHistoricalStockGrade,
     FMPPriceTargetConsensus,
     FMPPriceTargetSummary,
@@ -634,6 +635,72 @@ class TestRatingsHistorical:
                 min_count=0,
             )
 
+    def test_ratings_historical_v3_valid_symbol(self, api_key):
+        """Test historical ratings v3 for valid symbol."""
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_historical_v3,
+            "ratings_historical_v3",
+            apikey=api_key,
+            symbol="AAPL",
+        )
+
+        # Get response models and validate
+        models = get_response_models(result, FMPHistoricalRatingV3)
+        validate_model_list(
+            models,
+            FMPHistoricalRatingV3,
+            "ratings historical v3 valid symbol",
+            min_count=0,
+        )
+
+        if len(models) > 0:
+            first_item = models[0]
+            # Basic validation that the model has the expected structure
+            assert hasattr(first_item, "symbol"), "Model should have symbol attribute"
+            if hasattr(first_item, "symbol") and first_item.symbol:
+                assert first_item.symbol == "AAPL"
+
+    def test_ratings_historical_v3_with_limit(self, api_key):
+        """Test historical ratings v3 with limit parameter."""
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_historical_v3,
+            "ratings_historical_v3",
+            apikey=api_key,
+            symbol="AAPL",
+            limit=5,
+        )
+
+        models = get_response_models(result, FMPHistoricalRatingV3)
+        validate_model_list(
+            models,
+            FMPHistoricalRatingV3,
+            "ratings historical v3 with limit",
+            min_count=0,
+        )
+
+        # If we have results, they should not exceed the limit
+        if len(models) > 0:
+            assert len(models) <= 5, "Results should not exceed specified limit"
+
+    @pytest.mark.parametrize("symbol", ["AAPL", "MSFT", "GOOGL", "TSLA", "META"])
+    def test_ratings_historical_v3_multiple_symbols(self, api_key, symbol):
+        """Test historical ratings v3 for multiple symbols."""
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_historical_v3,
+            "ratings_historical_v3",
+            apikey=api_key,
+            symbol=symbol,
+            limit=3,
+        )
+
+        models = get_response_models(result, FMPHistoricalRatingV3)
+        validate_model_list(
+            models,
+            FMPHistoricalRatingV3,
+            f"ratings historical v3 for {symbol}",
+            min_count=0,
+        )
+
 
 class TestPriceTargets:
     """Test price target functionality."""
@@ -952,7 +1019,7 @@ class TestAnalystErrorHandling:
     def test_analyst_estimates_invalid_api_key(self):
         """Test analyst estimates with invalid API key."""
 
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(InvalidAPIKeyException) as exc_info:
             analyst.analyst_estimates(
                 apikey="invalid_key", symbol="AAPL", period="annual"
             )

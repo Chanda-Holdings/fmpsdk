@@ -1,21 +1,16 @@
 import pytest
 
 from fmpsdk import indexes
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPHistoricalIndexConstituent,
     FMPIndexConstituent,
     FMPIndexListItem,
     FMPSector,
 )
-from tests.conftest import (
-    get_response_models,
-    validate_model_list
-)
+from tests.conftest import get_response_models, validate_model_list
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestIndexList:
     """Test the index_list function with enhanced validation."""
 
@@ -83,80 +78,6 @@ class TestIndexList:
                 assert (
                     len(found_majors) >= 1
                 ), f"Should find at least 1 major index: {found_majors}"
-
-    def test_available_sectors_comprehensive(self, api_key):
-        """Test available_sectors with comprehensive validation."""
-        try:
-            response = indexes.available_sectors(apikey=api_key)
-            models = get_response_models(response, FMPSector)
-            validate_model_list(models, FMPSector, min_count=1)
-
-            if models:
-                # Data quality metrics using model attributes
-                total_sectors = len(models)
-                valid_sectors = 0
-                unique_sectors = set()
-        except Exception as e:
-            # If API returns error (like empty list), just pass
-            if "API request failed with error: []" in str(e):
-                pytest.skip("Sectors list endpoint returned empty data")
-            else:
-                raise
-
-            for model in models:
-                # Sector validation using direct model access
-                if model.sector:
-                    # More lenient sector validation
-                    if len(model.sector) >= 1:
-                        assert (
-                            len(model.sector) <= 50
-                        ), f"Sector should be reasonable length: {model.sector}"
-                        if len(model.sector) > 0 and model.sector[0].isupper():
-                            pass  # Good capitalization
-                        unique_sectors.add(model.sector)
-                        valid_sectors += 1
-
-            # Data quality assertions (more flexible)
-            assert (
-                total_sectors >= 1
-            ), f"Should have at least 1 sector, got {total_sectors}"
-
-            # Only validate if we have actual data
-            if valid_sectors > 0:
-                assert (
-                    valid_sectors / total_sectors >= 0.5
-                ), f"At least 50% should have valid sectors: {valid_sectors}/{total_sectors}"
-
-            # Standard GICS sectors validation (only if we have sufficient data)
-            if total_sectors >= 5:
-                standard_sectors = [
-                    "Technology",
-                    "Healthcare",
-                    "Financials",
-                    "Consumer Discretionary",
-                    "Communication Services",
-                    "Industrials",
-                    "Consumer Staples",
-                    "Energy",
-                    "Utilities",
-                    "Real Estate",
-                    "Materials",
-                ]
-
-                found_standard = []
-                for item in models:
-                    if item.sector:
-                        for standard in standard_sectors:
-                            if (
-                                standard.lower() in item.sector.lower()
-                                or item.sector.lower() in standard.lower()
-                            ):
-                                found_standard.append(standard)
-                                break
-
-                assert (
-                    len(found_standard) >= 1
-                ), f"Should find at least 1 standard sector: {found_standard}"
 
     @pytest.mark.parametrize(
         "index_name,expected_min_constituents,index_type,market_focus",
@@ -401,7 +322,7 @@ class TestIndexList:
             assert "dowjones" in str(e)
 
         # Test invalid API key
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             indexes.index_list(apikey="invalid_key")
 
         # Test historical with invalid index

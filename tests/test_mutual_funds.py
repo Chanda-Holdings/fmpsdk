@@ -1,6 +1,7 @@
 import pytest
 
 from fmpsdk import mutual_funds
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPFundDisclosure,
     FMPFundDisclosureDate,
@@ -9,13 +10,10 @@ from fmpsdk.models import (
 from tests.conftest import (
     get_first_item_from_response,
     get_response_models,
-    handle_api_call_with_validation
+    handle_api_call_with_validation,
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestMutualFundsDisclosure:
     """Test class for mutual fund disclosure endpoints with comprehensive validation."""
 
@@ -451,9 +449,6 @@ class TestMutualFundsDisclosure:
                 assert dates == sorted(dates, reverse=True)
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestMutualFundsDataQuality:
     """Test class for mutual fund data quality and consistency validation."""
 
@@ -594,9 +589,6 @@ class TestMutualFundsDataQuality:
                     assert year in str(date)
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestMutualFundsErrorHandling:
     """Test class for mutual fund error handling and edge cases."""
 
@@ -644,7 +636,7 @@ class TestMutualFundsErrorHandling:
     def test_funds_disclosure_api_key_validation(self):
         """Test API key validation for fund disclosure endpoints."""
         # Test with invalid API key
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             mutual_funds.funds_disclosure_holders_latest(
                 apikey="invalid_key", symbol="VTSAX"
             )

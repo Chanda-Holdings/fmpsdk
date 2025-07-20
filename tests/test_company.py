@@ -5,14 +5,16 @@ from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPCompanyNote,
     FMPCompanyProfile,
+    FMPDelistedCompany,
     FMPEmployeeCount,
+    FMPExecutiveCompensation,
+    FMPExecutiveProfile,
     FMPMarketCap,
+    FMPMergerAcquisition,
+    FMPShareFloat,
     FMPStockPeer,
 )
-from tests.conftest import (
-    get_response_models,
-    validate_model_list
-)
+from tests.conftest import get_response_models, validate_model_list
 
 
 class TestCompanyProfile:
@@ -267,3 +269,207 @@ class TestCompanyDataConsistency:
                     profile_mkt_cap, standalone_mkt_cap
                 )
                 assert ratio < 2.0  # Should not differ by more than 2x
+
+
+class TestDelistedCompanies:
+    """Tests for delisted companies functions."""
+
+    def test_delisted_companies_basic(self, api_key):
+        """Test basic delisted companies functionality."""
+        response = company.delisted_companies(apikey=api_key)
+
+        models = get_response_models(response, FMPDelistedCompany)
+        validate_model_list(models, FMPDelistedCompany)
+
+        # Should return some delisted companies
+        if models:
+            first_model = models[0]
+            assert first_model.symbol is not None
+            assert first_model.companyName is not None
+
+    def test_delisted_companies_with_pagination(self, api_key):
+        """Test delisted companies with pagination parameters."""
+        response = company.delisted_companies(apikey=api_key, page=0, limit=10)
+
+        models = get_response_models(response, FMPDelistedCompany)
+        validate_model_list(
+            models, FMPDelistedCompany, min_count=0
+        )  # Changed to min_count
+
+
+class TestHistoricalEmployeeCount:
+    """Tests for historical employee count functions."""
+
+    def test_historical_employee_count_valid_symbol(self, api_key):
+        """Test historical employee count with valid symbol."""
+        response = company.historical_employee_count(apikey=api_key, symbol="AAPL")
+
+        models = get_response_models(response, FMPEmployeeCount)
+        validate_model_list(models, FMPEmployeeCount)
+
+        if models:
+            first_model = models[0]
+            assert first_model.symbol == "AAPL"
+            if first_model.employeeCount is not None:
+                assert first_model.employeeCount > 0
+
+    def test_historical_employee_count_with_limit(self, api_key):
+        """Test historical employee count with limit parameter."""
+        response = company.historical_employee_count(
+            apikey=api_key, symbol="AAPL", limit=5
+        )
+
+        models = get_response_models(response, FMPEmployeeCount)
+        validate_model_list(
+            models, FMPEmployeeCount, min_count=0
+        )  # Changed to min_count
+
+
+class TestSharesFloat:
+    """Tests for shares float functions."""
+
+    def test_shares_float_valid_symbol(self, api_key):
+        """Test shares float with valid symbol."""
+        response = company.shares_float(apikey=api_key, symbol="AAPL")
+
+        models = get_response_models(response, FMPShareFloat)
+        validate_model_list(models, FMPShareFloat)
+
+        if models:
+            first_model = models[0]
+            assert first_model.symbol == "AAPL"
+            if first_model.floatShares is not None:
+                assert first_model.floatShares > 0
+
+    def test_shares_float_all_basic(self, api_key):
+        """Test shares float all functionality."""
+        response = company.shares_float_all(apikey=api_key)
+
+        models = get_response_models(response, FMPShareFloat)
+        validate_model_list(models, FMPShareFloat)
+
+        # Should return multiple companies' float data
+        if models:
+            # Check that we have different symbols
+            symbols = {model.symbol for model in models[:10]}
+            assert len(symbols) > 1
+
+
+class TestHistoricalMarketCapitalization:
+    """Tests for historical market capitalization functions."""
+
+    def test_historical_market_capitalization_basic(self, api_key):
+        """Test historical market capitalization functionality."""
+        response = company.historical_market_capitalization(
+            apikey=api_key, symbol="AAPL"
+        )
+
+        models = get_response_models(response, FMPMarketCap)
+        validate_model_list(models, FMPMarketCap, min_count=0)
+
+        if models:
+            first_model = models[0]
+            assert first_model.symbol == "AAPL"
+            if first_model.marketCap is not None:
+                assert first_model.marketCap > 0
+
+    def test_historical_market_capitalization_with_limit(self, api_key):
+        """Test historical market capitalization with limit parameter."""
+        response = company.historical_market_capitalization(
+            apikey=api_key, symbol="AAPL", limit=10
+        )
+
+        models = get_response_models(response, FMPMarketCap)
+        validate_model_list(models, FMPMarketCap, min_count=0)
+
+    def test_historical_market_capitalization_with_date_range(self, api_key):
+        """Test historical market capitalization with date range."""
+        response = company.historical_market_capitalization(
+            apikey=api_key,
+            symbol="AAPL",
+            from_date="2023-01-01",
+            to_date="2023-12-31",
+            limit=5,
+        )
+
+        models = get_response_models(response, FMPMarketCap)
+        validate_model_list(models, FMPMarketCap, min_count=0)
+
+
+class TestMergersAcquisitions:
+    """Tests for mergers and acquisitions functions."""
+
+    def test_mergers_acquisitions_basic(self, api_key):
+        """Test basic mergers and acquisitions functionality."""
+        response = company.mergers_acquisitions(apikey=api_key)
+
+        models = get_response_models(response, FMPMergerAcquisition)
+        validate_model_list(models, FMPMergerAcquisition)
+
+        if models:
+            first_model = models[0]
+            # Basic validation that the model has expected structure
+            assert hasattr(first_model, "symbol")
+            assert hasattr(first_model, "companyName")
+
+    def test_mergers_acquisitions_with_pagination(self, api_key):
+        """Test mergers and acquisitions with pagination."""
+        response = company.mergers_acquisitions(apikey=api_key, page=0)
+
+        models = get_response_models(response, FMPMergerAcquisition)
+        validate_model_list(models, FMPMergerAcquisition)
+
+    def test_mergers_acquisitions_search(self, api_key):
+        """Test mergers and acquisitions search by name."""
+        response = company.mergers_acquisitions_search(apikey=api_key, name="Apple")
+
+        models = get_response_models(response, FMPMergerAcquisition)
+        validate_model_list(models, FMPMergerAcquisition, min_count=0)
+
+        # Just validate that we got some response (results may vary)
+        assert isinstance(models, list)
+
+
+class TestKeyExecutives:
+    """Tests for key executives functions."""
+
+    def test_key_executives_valid_symbol(self, api_key):
+        """Test key executives with valid symbol."""
+        response = company.key_executives(apikey=api_key, symbol="AAPL")
+
+        models = get_response_models(response, FMPExecutiveProfile)
+        validate_model_list(models, FMPExecutiveProfile)
+
+        if models:
+            first_model = models[0]
+            assert hasattr(first_model, "name")
+            assert hasattr(first_model, "title")
+
+    def test_key_executives_compensation(self, api_key):
+        """Test key executives compensation."""
+        response = company.key_executives_compensation(apikey=api_key, symbol="AAPL")
+
+        models = get_response_models(response, FMPExecutiveCompensation)
+        validate_model_list(models, FMPExecutiveCompensation)
+
+        if models:
+            first_model = models[0]
+            # Should have executive compensation details
+            assert hasattr(first_model, "nameAndPosition")  # Fixed field name
+            assert hasattr(first_model, "companyName")
+
+    def test_executive_compensation_benchmark(self, api_key):
+        """Test executive compensation benchmark."""
+        response = company.executive_compensation_benchmark(apikey=api_key, year=2023)
+
+        models = get_response_models(response, FMPExecutiveCompensation)
+        validate_model_list(models, FMPExecutiveCompensation)
+
+        if models:
+            first_model = models[0]
+            # Should contain benchmark compensation data
+            assert hasattr(
+                first_model, "industryTitle"
+            )  # Correct attribute name for benchmark data
+            if hasattr(first_model, "year"):
+                assert first_model.year == 2023

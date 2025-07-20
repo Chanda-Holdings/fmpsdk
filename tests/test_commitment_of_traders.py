@@ -805,7 +805,7 @@ class TestCommitmentOfTradersErrorHandling:
 
     def test_cot_list_invalid_api_key(self):
         """Test COT list with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             commitment_of_traders.commitment_of_traders_report_list(
                 apikey="invalid_key",
             )

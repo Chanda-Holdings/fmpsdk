@@ -14,96 +14,7 @@ def api_key():
     The API key should be provided via environment variable FMP_API_KEY.
     If not provided, tests requiring API key will be skipped.
     """
-    key = os.getenv("FMP_API_KEY")
-    if not key:
-        pytest.skip("FMP_API_KEY environment variable not set")
-    return key
-
-
-# def pytest_configure(config):
-#     """Configure pytest with custom markers and settings."""
-#     # Register custom markers to avoid warnings
-#     config.addinivalue_line(
-#         "markers", "integration: mark test as integration test requiring API access"
-#     )
-#     config.addinivalue_line(
-#         "markers", "unit: mark test as unit test not requiring external dependencies"
-#     )
-#     config.addinivalue_line(
-#         "markers", "requires_api_key: mark test as requiring valid API key"
-#     )
-#     config.addinivalue_line("markers", "live_data: mark test as using live API data")
-#     config.addinivalue_line("markers", "slow: mark test as potentially slow running")
-#     config.addinivalue_line(
-#         "markers", "premium: mark test as requiring premium API access"
-#     )
-
-
-# def pytest_runtest_setup(item):
-#     """
-#     Setup function that runs before each test.
-
-#     This function handles test skipping based on markers and available resources.
-#     """
-#     # Skip tests that require API key if not available
-#     if item.get_closest_marker("requires_api_key"):
-#         if not os.getenv("FMP_API_KEY"):
-#             pytest.skip("FMP_API_KEY environment variable not set")
-
-#     # Skip premium tests if explicitly marked (can be enabled via command line)
-#     if item.get_closest_marker("premium"):
-#         if not item.config.getoption("--run-premium", default=False):
-#             pytest.skip("Premium tests skipped (use --run-premium to run)")
-
-
-def handle_api_call(func, *args, **kwargs):
-    """
-    Helper function to handle API calls in integration tests.
-
-    Automatically converts PremiumEndpointException to test skips.
-    All other exceptions will cause test failures.
-
-    Args:
-        func: The API function to call
-        *args: Positional arguments to pass to the function
-        **kwargs: Keyword arguments to pass to the function
-
-    Returns:
-        The result of the API call
-
-    Raises:
-        pytest.skip: If PremiumEndpointException is encountered
-        Any other exception: If other errors occur (will fail the test)
-    """
-    try:
-        return func(*args, **kwargs)
-    except PremiumEndpointException as e:
-        pytest.skip(f"Premium endpoint detected: {e}")
-    # Let all other exceptions bubble up to fail the test
-
-
-# def pytest_addoption(parser):
-#     """Add custom command line options."""
-#     parser.addoption(
-#         "--run-premium",
-#         action="store_true",
-#         default=False,
-#         help="Run tests marked as requiring premium API access",
-#     )
-#     parser.addoption(
-#         "--api-key",
-#         action="store",
-#         default=None,
-#         help="FMP API key to use for testing (overrides FMP_API_KEY env var)",
-#     )
-
-
-# @pytest.fixture(scope="session", autouse=True)
-# def setup_api_key_from_option(request):
-#     """Set up API key from command line option if provided."""
-#     api_key_option = request.config.getoption("--api-key")
-#     if api_key_option:
-#         os.environ["FMP_API_KEY"] = api_key_option
+    return os.getenv("FMP_API_KEY")
 
 
 @pytest.fixture(scope="session")
@@ -278,4 +189,3 @@ def get_first_item_from_response(response: List[Any]) -> Any:
     assert isinstance(response, list), "Response must be a list"
     assert len(response) > 0, "Response list must not be empty"
     return response[0]
-

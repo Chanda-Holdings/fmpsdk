@@ -21,9 +21,6 @@ from tests.conftest import (
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestHistoricalPriceEODLight:
     """Test class for historical EOD light data functionality."""
 
@@ -125,9 +122,6 @@ class TestHistoricalPriceEODLight:
         assert is_ascending or is_descending, "Dates should be in chronological order"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestHistoricalPriceEODFull:
     """Test class for historical EOD full data functionality."""
 
@@ -235,9 +229,6 @@ class TestHistoricalPriceEODFull:
                 assert point.close > 0, f"Close price should be positive for {symbol}"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestHistoricalPriceAdjustments:
     """Test class for price adjustment functionality."""
 
@@ -311,9 +302,6 @@ class TestHistoricalPriceAdjustments:
         assert len(regular_data) == len(non_split_data)
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestHistoricalChart:
     """Test class for intraday historical chart functionality."""
 
@@ -387,9 +375,6 @@ class TestHistoricalChart:
             ), "Intraday data should be in chronological order"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestChartErrorHandling:
     """Test class for chart error handling."""
 
@@ -440,9 +425,6 @@ class TestChartErrorHandling:
             validate_model_list(data_points, FMPIntradayDataPoint, min_count=0)
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestChartResponseTimes:
     """Test class for chart response time validation."""
 
@@ -473,9 +455,6 @@ class TestChartResponseTimes:
         ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestChartDataConsistency:
     """Test class for chart data consistency validation."""
 

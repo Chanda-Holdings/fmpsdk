@@ -4,15 +4,13 @@ from typing import List
 import pytest
 
 from fmpsdk import esg
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPESGBenchmark,
     FMPESGFiling,
     FMPESGRating,
 )
-from tests.conftest import (
-    get_response_models,
-    handle_api_call_with_validation
-)
+from tests.conftest import get_response_models, handle_api_call_with_validation
 
 
 def validate_esg_disclosures_data(data: List[FMPESGFiling]) -> None:
@@ -495,7 +493,7 @@ class TestESGBenchmark:
 
     def test_esg_benchmark_error_handling(self, api_key):
         """Test error handling with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             esg.esg_benchmark(apikey="invalid_key_123")
 
 

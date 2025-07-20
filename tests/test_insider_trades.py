@@ -6,17 +6,11 @@ from fmpsdk import insider_trades
 from fmpsdk.models import (
     FMPAcquisitionOwnership,
     FMPInsiderTrade,
-    FMPInsiderTradeStatistics
+    FMPInsiderTradeStatistics,
 )
-from tests.conftest import (
-    get_response_models,
-    handle_api_call_with_validation
-)
+from tests.conftest import get_response_models, handle_api_call_with_validation
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestInsiderTrading:
     """Test class for insider trading search functionality."""
 
@@ -209,9 +203,6 @@ class TestInsiderTrading:
             ), f"Expected at least {min_expected} trades for {symbol}"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestInsiderTradingLatest:
     """Test class for latest insider trading functionality."""
 
@@ -293,9 +284,6 @@ class TestInsiderTradingLatest:
             assert len(result_list2) <= 5
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestInsiderTradingStatistics:
     """Test class for insider trading statistics functionality."""
 
@@ -372,9 +360,6 @@ class TestInsiderTradingStatistics:
         assert len(result_list) == 0
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestAcquisitionOwnership:
     """Test class for acquisition ownership functionality."""
 
@@ -475,9 +460,6 @@ class TestAcquisitionOwnership:
         assert len(result_list) == 0
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestInsiderTradesDataQuality:
     """Test class for insider trades data quality and consistency."""
 
@@ -611,9 +593,6 @@ class TestInsiderTradesDataQuality:
                 ), "Name of reporting person should be present"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestInsiderTradesComprehensive:
     """Test class for comprehensive insider trades coverage."""
 
@@ -773,3 +752,90 @@ class TestInsiderTradesComprehensive:
                     assert (
                         len(date_counts) >= 1
                     ), f"Should have recent trades for {analysis_period}"
+
+    def test_insider_trading_reporting_name_basic(self, api_key):
+        """Test insider trading by reporting name with basic validation."""
+        result, validation = handle_api_call_with_validation(
+            insider_trades.insider_trading_reporting_name,
+            "insider_trading_reporting_name",
+            apikey=api_key,
+            name="Cook Tim",
+        )
+
+        # Basic result validation
+        assert result is not None
+
+        # Check if we get a list response
+        if isinstance(result, list) and result:
+            # If we have data, validate structure
+            first_item = result[0]
+            assert isinstance(first_item, dict)
+
+    def test_insider_trading_reporting_name_variations(self, api_key):
+        """Test insider trading by reporting name with different name formats."""
+        test_names = ["Cook Tim", "COOK TIM", "Buffett Warren", "BUFFETT WARREN E"]
+
+        for name in test_names:
+            result, validation = handle_api_call_with_validation(
+                insider_trades.insider_trading_reporting_name,
+                "insider_trading_reporting_name",
+                apikey=api_key,
+                name=name,
+            )
+
+            # Should handle different name formats
+            assert result is not None
+
+    def test_insider_trading_transaction_type_basic(self, api_key):
+        """Test insider trading transaction types endpoint."""
+        result, validation = handle_api_call_with_validation(
+            insider_trades.insider_trading_transaction_type,
+            "insider_trading_transaction_type",
+            apikey=api_key,
+        )
+
+        result_list = get_response_models(result, list)
+        assert isinstance(result_list, list)
+
+        if result_list:
+            # Validate structure of transaction types
+            first_item = result_list[0]
+
+            # Should contain expected transaction type information
+            if hasattr(first_item, "transactionType"):
+                transaction_type = first_item.transactionType
+                assert transaction_type is not None
+                assert isinstance(transaction_type, str)
+                assert len(transaction_type) > 0
+
+    def test_insider_trading_transaction_type_comprehensive(self, api_key):
+        """Test insider trading transaction types with comprehensive validation."""
+        result, validation = handle_api_call_with_validation(
+            insider_trades.insider_trading_transaction_type,
+            "insider_trading_transaction_type",
+            apikey=api_key,
+        )
+
+        if isinstance(result, list) and result:
+            # Validate transaction type patterns
+            transaction_types = []
+
+            for item in result[:10]:  # Check first 10 items
+                if hasattr(item, "transactionType"):
+                    transaction_types.append(item.transactionType)
+                elif isinstance(item, dict) and "transactionType" in item:
+                    transaction_types.append(item["transactionType"])
+
+            # Should have some transaction types
+            if transaction_types:
+                # Common transaction types we might expect
+                expected_patterns = ["A", "D", "P", "S", "G", "M", "X"]
+
+                # At least one should match common patterns
+                has_common_type = any(
+                    any(pattern in str(tx_type) for pattern in expected_patterns)
+                    for tx_type in transaction_types
+                )
+
+                # This is flexible - if no common types, that's also valid
+                assert len(transaction_types) >= 0

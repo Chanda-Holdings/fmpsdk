@@ -21,7 +21,7 @@ from tests.conftest import (
 
 # Test configuration
 RESPONSE_TIME_LIMIT = (
-    45.0  # seconds (news endpoints might be slower, especially crypto news)
+    60.0  # seconds (news endpoints might be slower, especially crypto news)
 )
 
 

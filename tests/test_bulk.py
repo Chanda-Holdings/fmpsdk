@@ -4,6 +4,7 @@ from typing import List, Union
 import pytest
 
 from fmpsdk import bulk
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPBalanceSheetGrowth,
     FMPBalanceSheetStatement,
@@ -27,7 +28,7 @@ from fmpsdk.models import (
 from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
-    validate_model_list
+    validate_model_list,
 )
 
 
@@ -838,7 +839,7 @@ class TestBulkErrorHandling:
 
     def test_bulk_profiles_invalid_api_key(self):
         """Test bulk profiles with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             bulk.bulk_profiles(apikey="invalid_key", part="1")
 
     def test_income_statement_bulk_invalid_year(self, api_key):

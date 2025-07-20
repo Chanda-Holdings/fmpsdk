@@ -25,9 +25,6 @@ from tests.conftest import (
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCrowdfundingOfferingsLatest:
     """Test class for latest crowdfunding offerings functionality."""
 
@@ -172,9 +169,6 @@ class TestCrowdfundingOfferingsLatest:
             assert len(models2) <= 5
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCrowdfundingOfferingsSearch:
     """Test class for crowdfunding offerings search functionality."""
 
@@ -354,9 +348,6 @@ class TestCrowdfundingOfferingsSearch:
         assert len(result_list) == 0
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestCrowdfundingOfferings:
     """Test class for crowdfunding offerings by CIK functionality."""
 
@@ -441,9 +432,6 @@ class TestCrowdfundingOfferings:
         assert len(result_list) == 0
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestFundraisingLatest:
     """Test class for latest fundraising functionality."""
 
@@ -593,9 +581,6 @@ class TestFundraisingLatest:
             assert len(result_list2) <= 5
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestFundraisingSearch:
     """Test class for fundraising search functionality."""
 
@@ -814,9 +799,6 @@ class TestFundraisingSearch:
         assert len(result_list) == 0
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestFundraising:
     """Test class for fundraising by CIK functionality."""
 
@@ -909,9 +891,6 @@ class TestFundraising:
         assert len(result_list) == 0
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestFundraisingDataQuality:
     """Test class for fundraising data quality and consistency."""
 
@@ -1021,9 +1000,6 @@ class TestFundraisingDataQuality:
                             ), f"{financial_field} should be non-negative"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestFundraisingErrorHandling:
     """Test class for fundraising error handling."""
 
@@ -1083,9 +1059,6 @@ class TestFundraisingErrorHandling:
             # May return empty or limited results for invalid search terms
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestFundraisingComprehensive:
     """Test class for comprehensive fundraising coverage."""
 

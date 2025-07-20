@@ -1,6 +1,7 @@
 import pytest
 
 from fmpsdk import form13f
+from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPForm13FDate,
     FMPForm13FExtract,
@@ -9,13 +10,10 @@ from fmpsdk.models import (
 from tests.conftest import (
     get_response_models,
     handle_api_call_with_validation,
-    validate_model_list
+    validate_model_list,
 )
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestForm13FBasic:
     """Basic functionality tests for Form 13F endpoints."""
 
@@ -588,62 +586,59 @@ class TestForm13FBasic:
                 assert extract.date is not None, "Date should not be None"
 
 
-@pytest.mark.integration
-@pytest.mark.requires_api_key
-@pytest.mark.live_data
 class TestForm13FErrorHandling:
     """Test error handling for Form 13F endpoints."""
 
     def test_institutional_ownership_latest_invalid_api_key(self):
         """Test institutional ownership latest with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_latest(apikey="invalid_key", limit=10)
 
     def test_institutional_ownership_extract_invalid_api_key(self):
         """Test institutional ownership extract with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_extract(
                 apikey="invalid_key", cik="0001067983", year=2023, quarter=4
             )
 
     def test_institutional_ownership_dates_invalid_api_key(self):
         """Test institutional ownership dates with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_dates(
                 apikey="invalid_key", cik="0001067983"
             )
 
     def test_institutional_ownership_extract_analytics_by_holder_invalid_api_key(self):
         """Test institutional ownership extract analytics with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_extract_analytics_by_holder(
                 apikey="invalid_key", symbol="AAPL", year=2023, quarter=4
             )
 
     def test_institutional_ownership_holder_performance_summary_invalid_api_key(self):
         """Test institutional ownership holder performance with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_holder_performance_summary(
                 apikey="invalid_key", cik="0001067983"
             )
 
     def test_institutional_ownership_holder_industry_breakdown_invalid_api_key(self):
         """Test institutional ownership holder industry breakdown with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_holder_industry_breakdown(
                 apikey="invalid_key", cik="0001067983", year=2023, quarter=4
             )
 
     def test_institutional_ownership_positions_summary_invalid_api_key(self):
         """Test institutional ownership positions summary with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_positions_summary(
                 apikey="invalid_key", symbol="AAPL", year=2023, quarter=4
             )
 
     def test_institutional_ownership_industry_summary_invalid_api_key(self):
         """Test institutional ownership industry summary with invalid API key."""
-        with pytest.raises(Exception):
+        with pytest.raises(InvalidAPIKeyException):
             form13f.institutional_ownership_industry_summary(
                 apikey="invalid_key", year=2023, quarter=4
             )
