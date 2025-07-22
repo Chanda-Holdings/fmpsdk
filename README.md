@@ -172,9 +172,3 @@ fmpsdk covers all documented FMP endpoints. The following endpoint functions are
 ## Contributing
 See `plan.md` for the current roadmap and coverage checklist.
 
-## Attribution
-Special thanks to the following people who have pitched in on this project!  Open source works thanks to people who 
-jump in and help!  These are this project's stars.  Thank you.
-  - [Ken Caruso](https://github.com/ipl31)
-  - [iforgotmypass](https://github.com/iforgotmypass)
-  - [Ivelin Ivanov](https://github.com/ivelin)
