@@ -1030,7 +1030,7 @@ class FMPCrowdfundingSearch(BaseModel):
 class FMPEquityOffering(BaseModel):
     cik: str
     companyName: str
-    date: str
+    date: Optional[str] = None
     filingDate: str
     acceptedDate: str
     formType: str
@@ -1057,16 +1057,16 @@ class FMPEquityOffering(BaseModel):
     industryGroupType: str
     revenueRange: Optional[str] = None
     federalExemptionsExclusions: str
-    isAmendment: bool
+    isAmendment: Optional[bool] = None
     dateOfFirstSale: str
-    durationOfOfferingIsMoreThanYear: bool
+    durationOfOfferingIsMoreThanYear: Optional[bool] = None
     securitiesOfferedAreOfEquityType: Optional[bool] = None
-    isBusinessCombinationTransaction: bool
+    isBusinessCombinationTransaction: Optional[bool] = None
     minimumInvestmentAccepted: int
     totalOfferingAmount: int
     totalAmountSold: int
     totalAmountRemaining: int
-    hasNonAccreditedInvestors: bool
+    hasNonAccreditedInvestors: Optional[bool] = None
     totalNumberAlreadyInvested: int
     salesCommissions: int
     findersFees: int
