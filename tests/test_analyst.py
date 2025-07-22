@@ -589,14 +589,13 @@ class TestRatingsHistorical:
             assert rating, "Rating should not be empty"
 
     def test_ratings_historical_with_date_range(self, api_key):
-        """Test historical ratings with date range."""
+        """Test historical ratings with limit."""
         result, validation = handle_api_call_with_validation(
             analyst.ratings_historical,
             "ratings_historical",
             apikey=api_key,
             symbol="MSFT",
-            from_date="2024-01-01",
-            to_date="2024-12-31",
+            limit=10,
         )
 
         # Get response models and validate
@@ -604,7 +603,7 @@ class TestRatingsHistorical:
         validate_model_list(
             models,
             FMPHistoricalRating,
-            "ratings historical with date range",
+            "ratings historical with limit",
             min_count=0,
         )
 
@@ -623,7 +622,7 @@ class TestRatingsHistorical:
                 "ratings_historical",
                 apikey=api_key,
                 symbol=symbol,
-                from_date="2024-06-01",
+                limit=5,
             )
 
             # Get response models and validate
@@ -634,6 +633,32 @@ class TestRatingsHistorical:
                 f"ratings historical for {symbol}",
                 min_count=0,
             )
+
+    def test_ratings_historical_obscene_limit(self, api_key):
+        """Test historical ratings with an obscenely high limit."""
+        result, validation = handle_api_call_with_validation(
+            analyst.ratings_historical,
+            "ratings_historical",
+            apikey=api_key,
+            symbol="AAPL",
+            limit=99999,
+        )
+
+        # Get response models and validate
+        models = get_response_models(result, FMPHistoricalRating)
+        validate_model_list(
+            models,
+            FMPHistoricalRating,
+            "ratings historical with obscene limit",
+            min_count=0,
+        )
+
+        # Even with an obscene limit, we shouldn't get more than what's reasonable
+        if len(models) > 0:
+            first_item = models[0]
+            assert first_item.symbol == "AAPL"
+            # API should handle the obscene limit gracefully
+            assert len(models) <= 10000, "Even with obscene limit, should be reasonable"
 
     def test_ratings_historical_v3_valid_symbol(self, api_key):
         """Test historical ratings v3 for valid symbol."""

@@ -4,6 +4,7 @@ from pydantic import RootModel
 
 from .models import (
     FMPAnalystEstimates,
+    FMPHistoricalRating,
     FMPHistoricalRatingV3,
     FMPHistoricalStockGrade,
     FMPPriceTargetConsensus,
@@ -64,25 +65,22 @@ def ratings_snapshot(
 
 @parse_response
 def ratings_historical(
-    apikey: str, symbol: str, from_date: str = None, to_date: str = None
-) -> RootModel[typing.List[FMPRatingSnapshot]]:
+    apikey: str, symbol: str, limit: int = None
+) -> RootModel[typing.List[FMPHistoricalRating]]:
     """
     Get historical ratings using the /stable/ratings-historical endpoint.
 
     Parameters:
         apikey (str): Your API key.
         symbol (str): The symbol to get historical ratings for.
-        from_date (str, optional): Start date (YYYY-MM-DD).
-        to_date (str, optional): End date (YYYY-MM-DD).
+        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with historical ratings.
     """
     path = "ratings-historical"
     query_vars = {"apikey": apikey, "symbol": symbol}
-    if from_date:
-        query_vars["from"] = from_date
-    if to_date:
-        query_vars["to"] = to_date
+    if limit:
+        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
