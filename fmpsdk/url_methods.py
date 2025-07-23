@@ -8,7 +8,6 @@ import typing
 import requests
 
 from .exceptions import (
-    HTTPS_READ_TIMEOUT_CODE,
     RATE_LIMIT_STATUS_CODE,
     PremiumEndpointException,
     RateLimitExceededException,
@@ -64,10 +63,7 @@ def __return_json(
             url, params=query_vars, timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)
         )
 
-        if (
-            response.status_code == RATE_LIMIT_STATUS_CODE
-            or response.status_code == HTTPS_READ_TIMEOUT_CODE
-        ):
+        if response.status_code == RATE_LIMIT_STATUS_CODE:
             logging.warning(
                 f"{'Rate limit' if response.status_code == RATE_LIMIT_STATUS_CODE else 'HTTPS read timeout'} occurred: {response.status_code}. "
                 f"Query variables: {query_vars}"
@@ -107,6 +103,14 @@ def __return_json(
     except requests.Timeout:
         logging.error(f"Connection to {url} timed out.")
         raise
+    except requests.exceptions.ReadTimeout:
+        logging.error(f"Read timeout occurred while connecting to {url}.")
+        if retries > 0:
+            logging.info(
+                f"Retrying in {retry_delay} seconds... ({retries} retries left)"
+            )
+            time.sleep(retry_delay)
+            return __return_json(path, query_vars, version, retries - 1, retry_delay)
     except requests.ConnectionError:
         logging.error(
             f"Connection to {url} failed:  DNS failure, refused connection or some other connection related issues."

@@ -6,7 +6,6 @@ from typing import Any, Callable, TypeVar
 import pandas as pd
 
 from .exceptions import (
-    HTTPS_READ_TIMEOUT_CODE,
     INVALID_API_KEY_STATUS_CODE,
     POSSIBLE_INVALID_EXCHANGE_CODE,
     PREMIUM_STATUS_CODE,
@@ -43,11 +42,6 @@ def raise_for_exception(response):
     if response.status_code == RATE_LIMIT_STATUS_CODE:
         raise RateLimitExceededException(
             f"Rate limit exceeded. Please try again later. Status code: {response.status_code}"
-        )
-
-    if response.status_code == HTTPS_READ_TIMEOUT_CODE:
-        raise Exception(
-            f"HTTPS read timeout occurred. Status code: {response.status_code}"
         )
 
     if response.status_code == 404:
