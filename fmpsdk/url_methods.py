@@ -100,17 +100,19 @@ def __return_json(
             logging.warning("Response appears to have no data.  Returning empty List.")
             return_var = []
 
+    except requests.exceptions.ReadTimeout:
+        logging.error(f"Read timeout occurred while connecting to {url}.")
+        if retries <= 0:
+            raise
+        
+        logging.info(
+            f"Retrying in {retry_delay} seconds... ({retries} retries left)"
+        )
+        time.sleep(retry_delay)
+        return __return_json(path, query_vars, version, retries - 1, retry_delay)
     except requests.Timeout:
         logging.error(f"Connection to {url} timed out.")
         raise
-    except requests.exceptions.ReadTimeout:
-        logging.error(f"Read timeout occurred while connecting to {url}.")
-        if retries > 0:
-            logging.info(
-                f"Retrying in {retry_delay} seconds... ({retries} retries left)"
-            )
-            time.sleep(retry_delay)
-            return __return_json(path, query_vars, version, retries - 1, retry_delay)
     except requests.ConnectionError:
         logging.error(
             f"Connection to {url} failed:  DNS failure, refused connection or some other connection related issues."
