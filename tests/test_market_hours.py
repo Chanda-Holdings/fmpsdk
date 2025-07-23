@@ -92,7 +92,7 @@ class TestMarketHours:
             # Time format validation
             if ":" in first_item.openingHour:
                 # Standard HH:MM format
-                hours, minutes = first_item.openingHour.split(":")[:2]
+                hours, minutes = first_item.openingHour.split(" ")[0].split(":")[:2]
                 assert (
                     hours.isdigit() and 0 <= int(hours) <= 23
                 ), f"Opening hour should be valid for {exchange}"
@@ -102,7 +102,7 @@ class TestMarketHours:
 
             if ":" in first_item.closingHour:
                 # Standard HH:MM format
-                hours, minutes = first_item.closingHour.split(":")[:2]
+                hours, minutes = first_item.closingHour.split(" ")[0].split(":")[:2]
                 assert (
                     hours.isdigit() and 0 <= int(hours) <= 23
                 ), f"Closing hour should be valid for {exchange}"
