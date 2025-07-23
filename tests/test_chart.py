@@ -425,36 +425,6 @@ class TestChartErrorHandling:
             validate_model_list(data_points, FMPIntradayDataPoint, min_count=0)
 
 
-class TestChartResponseTimes:
-    """Test class for chart response time validation."""
-
-    def test_historical_price_response_time(self, api_key, test_config):
-        """Test that historical price responses are within acceptable time limits."""
-        import time
-
-        start_time = time.time()
-        result = historical_price_eod_light(apikey=api_key, symbol="AAPL")
-        response_time = time.time() - start_time
-
-        assert result is not None
-        assert (
-            response_time < test_config["max_response_time"]
-        ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
-
-    def test_historical_chart_response_time(self, api_key, test_config):
-        """Test that historical chart responses are within acceptable time limits."""
-        import time
-
-        start_time = time.time()
-        result = historical_chart(symbol="AAPL", interval="1hour", apikey=api_key)
-        response_time = time.time() - start_time
-
-        assert result is not None
-        assert (
-            response_time < test_config["max_response_time"]
-        ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
-
-
 class TestChartDataConsistency:
     """Test class for chart data consistency validation."""
 

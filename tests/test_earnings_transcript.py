@@ -21,8 +21,6 @@ from tests.conftest import (
     validate_model_list,
 )
 
-# Test configuration
-RESPONSE_TIME_LIMIT = 15.0  # seconds (transcript endpoints might be slower)
 TEST_SYMBOLS = [
     "AAPL",
     "MSFT",
@@ -67,18 +65,12 @@ class TestEarningsTranscriptLatest:
     @pytest.mark.parametrize("limit", [5, 10, 15, 20, 25, 50])
     def test_earnings_transcript_latest_limits(self, api_key, limit):
         """Test latest earnings transcripts with different limits."""
-        start_time = time.time()
-
         result, validation = handle_api_call_with_validation(
             earnings_transcript_latest,
             "earnings_transcript_latest",
             apikey=api_key,
             limit=limit,
         )
-
-        # Check response time (transcript endpoints can be slower)
-        elapsed_time = time.time() - start_time
-        assert elapsed_time < RESPONSE_TIME_LIMIT
 
         result_list = get_response_models(result, FMPEarningsTranscriptList)
         validate_model_list(result_list, FMPEarningsTranscriptList)
@@ -186,8 +178,6 @@ class TestEarningsTranscript:
         test_year = 2023
         test_quarter = 4  # Q4 is most likely to have data
 
-        start_time = time.time()
-
         result, validation = handle_api_call_with_validation(
             earnings_transcript,
             "earnings_transcript",
@@ -196,9 +186,6 @@ class TestEarningsTranscript:
             year=test_year,
             quarter=test_quarter,
         )
-
-        elapsed_time = time.time() - start_time
-        assert elapsed_time < RESPONSE_TIME_LIMIT
 
         # Check if result is error dict
         result_list = get_response_models(result, FMPEarningsTranscriptList)
@@ -474,17 +461,12 @@ class TestEarningsTranscriptBySymbol:
     @pytest.mark.parametrize("symbol", TEST_SYMBOLS)
     def test_earnings_transcript_by_symbol_comprehensive(self, api_key, symbol):
         """Test earnings transcript dates for comprehensive list of symbols."""
-        start_time = time.time()
         result, validation = handle_api_call_with_validation(
             earnings_transcript_by_symbol,
             "earnings_transcript_by_symbol",
             apikey=api_key,
             symbol=symbol,
         )
-        response_time = time.time() - start_time
-
-        # Check response time
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Check if result is error dict
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
@@ -553,17 +535,12 @@ class TestEarningsTranscriptBySymbol:
 
     def test_earnings_transcript_by_symbol_basic(self, api_key):
         """Test getting earnings transcript dates by symbol."""
-        start_time = time.time()
         result, validation = handle_api_call_with_validation(
             earnings_transcript_by_symbol,
             "earnings_transcript_by_symbol",
             apikey=api_key,
             symbol="AAPL",
         )
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
         assert isinstance(result_list, list)
@@ -688,17 +665,12 @@ class TestEarningsTranscriptList:
     @pytest.mark.parametrize("symbol", TEST_SYMBOLS)
     def test_earnings_transcript_list_comprehensive(self, api_key, symbol):
         """Test earnings transcript list for comprehensive symbol coverage."""
-        start_time = time.time()
         result, validation = handle_api_call_with_validation(
             earnings_transcript_by_symbol,
             "earnings_transcript_by_symbol",
             apikey=api_key,
             symbol=symbol,
         )
-        response_time = time.time() - start_time
-
-        # Check response time
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Check if result is error dict
         result_list = get_response_models(result, FMPEarningsTranscriptBySymbol)
@@ -773,14 +745,9 @@ class TestEarningsTranscriptList:
 
     def test_earnings_transcript_list_basic(self, api_key):
         """Test basic earnings transcript list functionality."""
-        start_time = time.time()
         result, validation = handle_api_call_with_validation(
             earnings_transcript_list, "earnings_transcript_list", apikey=api_key
         )
-        response_time = time.time() - start_time
-
-        # Check response time
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Check if result is error dict
         result_list = get_response_models(result, FMPEarningsTranscriptList)

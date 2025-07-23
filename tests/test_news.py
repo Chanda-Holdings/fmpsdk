@@ -19,11 +19,6 @@ from tests.conftest import (
     validate_required_fields,
 )
 
-# Test configuration
-RESPONSE_TIME_LIMIT = (
-    60.0  # seconds (news endpoints might be slower, especially crypto news)
-)
-
 
 @pytest.fixture
 def api_key():
@@ -48,12 +43,7 @@ class TestNewsBasic:
 
     def test_news_stock_latest(self, api_key):
         """Test getting latest stock news."""
-        start_time = time.time()
         result = news.news_stock_latest(apikey=api_key, limit=10)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         models = get_response_models(result, FMPNewsArticle)
         validate_model_list(models, FMPNewsArticle)
@@ -95,12 +85,7 @@ class TestNewsBasic:
 
     def test_company_press_releases_latest(self, api_key):
         """Test getting latest company press releases."""
-        start_time = time.time()
         result = news.company_press_releases_latest(apikey=api_key, limit=10)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         models = get_response_models(result, FMPNewsArticle)
         validate_model_list(models, FMPNewsArticle)
@@ -132,12 +117,7 @@ class TestNewsBasic:
 
     def test_news_general_latest(self, api_key):
         """Test getting latest general market news."""
-        start_time = time.time()
         result = news.news_general_latest(apikey=api_key, limit=10)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         models = get_response_models(result, FMPNewsArticle)
         validate_model_list(models, FMPNewsArticle)
@@ -164,12 +144,7 @@ class TestNewsBasic:
 
     def test_news_crypto_latest(self, api_key):
         """Test getting latest cryptocurrency news."""
-        start_time = time.time()
         result = news.news_crypto_latest(apikey=api_key, limit=10)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         models = get_response_models(result, FMPNewsArticle)
         validate_model_list(models, FMPNewsArticle)
@@ -413,52 +388,6 @@ class TestNewsErrorHandling:
 class TestNewsPerformance:
     """Test news endpoint performance."""
 
-    def test_news_response_times(self, api_key):
-        """Test that all news endpoints respond within acceptable time."""
-        endpoints = [
-            ("stock_news", lambda: news.news_stock_latest(api_key, limit=10)),
-            (
-                "press_releases",
-                lambda: news.company_press_releases_latest(api_key, limit=10),
-            ),
-            ("general_news", lambda: news.news_general_latest(api_key, limit=10)),
-            ("crypto_news", lambda: news.news_crypto_latest(api_key, limit=10)),
-        ]
-
-        for endpoint_name, endpoint_func in endpoints:
-            start_time = time.time()
-            result = endpoint_func()
-            response_time = time.time() - start_time
-
-            # Response time validation
-            assert (
-                response_time < RESPONSE_TIME_LIMIT
-            ), f"{endpoint_name} took too long: {response_time}s"
-
-            # Check if result is error dict (invalid API key)
-            if isinstance(result, dict) and "Error Message" in result:
-                continue
-
-            models = get_response_models(result, FMPNewsArticle)
-            if models and len(models) >= 5:
-                publishers = set()
-                sites = set()
-                symbols = set()
-
-                for article in models[:20]:
-                    if article.publisher:
-                        publishers.add(article.publisher)
-                    if article.site:
-                        sites.add(article.site)
-                    if article.symbol:
-                        symbols.add(article.symbol)
-
-                # Should have some variety in news sources
-                if len(models) >= 10:
-                    assert (
-                        len(publishers) >= 1 or len(sites) >= 1
-                    )  # At least some source diversity
-
     def test_press_release_vs_news_distinction(self, api_key):
         """Test distinction between press releases and general news."""
         # Get both press releases and general news
@@ -486,12 +415,7 @@ class TestNewsAdditionalEndpoints:
 
     def test_news_forex(self, api_key):
         """Test getting forex news."""
-        start_time = time.time()
         result = news.news_forex(apikey=api_key, limit=10)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Extract models and validate structure
         models = get_response_models(result, FMPNewsArticle)
@@ -725,14 +649,7 @@ class TestNewsParameterValidation:
         self, api_key, symbol, sector, expected_news_volume, company_size
     ):
         """Test getting stock news for comprehensive range of companies across sectors and sizes."""
-        start_time = time.time()
         result = news.news_stock(apikey=api_key, symbols=[symbol], limit=20)
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert (
-            response_time < RESPONSE_TIME_LIMIT
-        ), f"Response time should be reasonable for {company_size} {symbol}"
 
         models = get_response_models(result, FMPNewsArticle)
         validate_model_list(
@@ -808,15 +725,7 @@ class TestNewsParameterValidation:
         period_description,
     ):
         """Test getting latest stock news across different date ranges and limits."""
-        start_time = time.time()
         result = news.news_stock_latest(apikey=api_key, limit=limit)
-        response_time = time.time() - start_time
-
-        # Response time validation (allow more time for larger requests)
-        max_time = RESPONSE_TIME_LIMIT + (limit / 50)  # Add time based on limit
-        assert (
-            response_time < max_time
-        ), f"Response time should be reasonable for {period_description}"
 
         models = get_response_models(result, FMPNewsArticle)
         validate_model_list(

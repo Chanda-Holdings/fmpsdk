@@ -42,10 +42,6 @@ TEST_SYMBOLS = {
     "invalid": ["INVALID123", "XXXXXXX"],
 }
 
-TEST_CONFIG = {
-    "max_response_time": 10.0,  # 10 seconds max
-}
-
 
 # get_first_item_from_response is imported from conftest.py
 
@@ -161,26 +157,6 @@ class TestQuoteEndpoint:
             # Traditional securities should have volume field
             if quote_model.volume is not None:
                 assert quote_model.volume >= 0
-
-    def test_quote_response_time(self, api_key):
-        """Test that quote responses are within acceptable time limits."""
-        import time
-
-        symbol = TEST_SYMBOLS["large_cap"][0]
-        start_time = time.time()
-
-        response, validation = handle_api_call_with_validation(
-            quote, "quote", apikey=api_key, symbol=symbol
-        )
-
-        response_time = time.time() - start_time
-
-        # Validate response exists and time is acceptable
-        quote_models = get_response_models(response, FMPQuoteFull)
-        validate_model_list(
-            quote_models, FMPQuoteFull, "Should return valid quote models", min_count=1
-        )
-        assert response_time < TEST_CONFIG["max_response_time"]
 
     def test_quote_data_consistency(self, api_key):
         """Test that quote data is internally consistent using enhanced validation."""

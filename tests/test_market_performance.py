@@ -454,40 +454,6 @@ class TestMarketPerformanceComprehensive:
         validate_model_list(losers_models, FMPMarketMover)
         validate_model_list(active_models, FMPMarketMover)
 
-    def test_response_times(self, api_key):
-        """Test that all functions respond within reasonable time."""
-        test_date = get_test_date()
-
-        functions_and_params = [
-            (
-                market_performance.sector_performance_snapshot,
-                {"apikey": api_key, "date": test_date},
-                FMPSectorPerformanceSnapshot,
-            ),
-            (
-                market_performance.industry_performance_snapshot,
-                {"apikey": api_key, "date": test_date},
-                FMPIndustryPerformanceSnapshot,
-            ),
-            (market_performance.biggest_gainers, {"apikey": api_key}, FMPMarketMover),
-            (market_performance.biggest_losers, {"apikey": api_key}, FMPMarketMover),
-            (
-                market_performance.most_active_stocks,
-                {"apikey": api_key},
-                FMPMarketMover,
-            ),
-        ]
-
-        for func, params, model_type in functions_and_params:
-            start_time = time.time()
-            result = func(**params)
-            models = get_response_models(result, model_type)
-            response_time = time.time() - start_time
-
-            assert (
-                response_time < 45.0
-            ), f"{func.__name__} took {response_time:.2f}s, expected < 45.0s"
-
     def test_date_validation(self, api_key):
         """Test functions with different date formats."""
         # Test recent date

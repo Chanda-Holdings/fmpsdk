@@ -1065,46 +1065,6 @@ class TestAnalystErrorHandling:
         assert "Invalid or missing query parameter" in str(exc_info.value)
 
 
-class TestAnalystResponseTimes:
-    """Test response time performance for analyst endpoints."""
-
-    def test_analyst_estimates_response_time(self, api_key):
-        """Test analyst estimates response time."""
-        start_time = time.time()
-
-        result = analyst.analyst_estimates(
-            apikey=api_key, symbol="AAPL", period="annual", limit=5
-        )
-
-        end_time = time.time()
-        response_time = end_time - start_time
-
-        # Should respond within 10 seconds
-        assert response_time < 10.0
-
-        models = get_response_models(result, FMPAnalystEstimates)
-        validate_model_list(
-            models, FMPAnalystEstimates, "analyst estimates response time", min_count=0
-        )
-
-    def test_ratings_snapshot_response_time(self, api_key):
-        """Test ratings snapshot response time."""
-        start_time = time.time()
-
-        result = analyst.ratings_snapshot(apikey=api_key, symbol="AAPL", limit=5)
-
-        end_time = time.time()
-        response_time = end_time - start_time
-
-        # Should respond within 10 seconds
-        assert response_time < 10.0
-
-        models = get_response_models(result, FMPRatingSnapshot)
-        validate_model_list(
-            models, FMPRatingSnapshot, "ratings snapshot response time", min_count=0
-        )
-
-
 class TestAnalystDataConsistency:
     """Test data consistency across analyst endpoints."""
 

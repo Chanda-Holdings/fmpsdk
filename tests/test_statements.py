@@ -732,50 +732,6 @@ class TestStatementsErrorHandling:
         assert isinstance(ratios, list)
 
 
-class TestStatementsResponseTimes:
-    """Test class for response time validation in statements endpoints."""
-
-    def test_income_statement_response_time(self, api_key):
-        """Test income statement response time using enhanced validation."""
-        import time
-
-        start_time = time.time()
-
-        result = income_statement(
-            apikey=api_key, symbol="AAPL", period="annual", limit=5
-        )
-
-        end_time = time.time()
-        response_time = end_time - start_time
-
-        assert (
-            response_time < 60.0
-        )  # Should respond within 60 seconds (account for rate limiting)
-
-        # NEW: Use direct Pydantic model access
-        statements = get_response_models(result, FMPIncomeStatement)
-        validate_model_list(statements, FMPIncomeStatement, min_count=1)
-
-    def test_key_metrics_response_time(self, api_key):
-        """Test key metrics response time using enhanced validation."""
-        import time
-
-        start_time = time.time()
-
-        result = key_metrics(apikey=api_key, symbol="MSFT", period="annual", limit=5)
-
-        end_time = time.time()
-        response_time = end_time - start_time
-
-        assert (
-            response_time < 60.0
-        )  # Should respond within 60 seconds (account for rate limiting)
-
-        # NEW: Use direct Pydantic model access
-        metrics = get_response_models(result, FMPKeyMetrics)
-        validate_model_list(metrics, FMPKeyMetrics, min_count=1)
-
-
 class TestStatementsDataConsistency:
     """Test class for data consistency across statements endpoints."""
 

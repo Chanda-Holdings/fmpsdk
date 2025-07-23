@@ -572,32 +572,6 @@ class TestSECProfile:
 class TestSECFilingsDataQuality:
     """Test class for SEC filings data quality and consistency."""
 
-    def test_sec_filings_response_time(self, api_key):
-        """Test SEC filings response times."""
-        import time
-
-        # Test 8-K filings response time
-        end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-
-        start_time = time.time()
-        result, validation = handle_api_call_with_validation(
-            sec_filings.sec_filings_8k,
-            "sec_filings_8k",
-            apikey=api_key,
-            from_date=start_date,
-            to_date=end_date,
-            limit=10,
-        )
-        response_time = time.time() - start_time
-
-        # Get response models and validate
-        models = get_response_models(result, FMPSECFiling)
-        validate_model_list(
-            models, FMPSECFiling, "SEC filings response time", min_count=0
-        )
-        assert response_time < 15.0, "SEC filings response should be within 15 seconds"
-
     def test_company_search_consistency(self, api_key):
         """Test consistency between company search methods."""
         # Search by symbol

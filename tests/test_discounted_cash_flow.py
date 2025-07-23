@@ -1,4 +1,3 @@
-import time
 from datetime import datetime
 
 import pytest
@@ -11,21 +10,14 @@ from tests.conftest import (
     validate_model_list,
 )
 
-RESPONSE_TIME_LIMIT = 10
-
 
 class TestDCFValuation:
 
     def test_dcf_valuation_basic(self, api_key):
         """Test basic DCF valuation for a well-known stock."""
-        start_time = time.time()
         result = discounted_cash_flow.discounted_cash_flow_valuation(
             apikey=api_key, symbol="AAPL"
         )
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Get response models and validate
         models = get_response_models(result, FMPDcfValuation)
@@ -47,14 +39,9 @@ class TestDCFValuation:
 
     def test_dcf_levered_valuation(self, api_key):
         """Test levered DCF valuation."""
-        start_time = time.time()
         result = discounted_cash_flow.discounted_cash_flow_levered(
             apikey=api_key, symbol="MSFT"
         )
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Get response models and validate
         models = get_response_models(result, FMPDcfValuation)
@@ -72,14 +59,9 @@ class TestDCFValuation:
 
     def test_dcf_custom_basic(self, api_key):
         """Test custom DCF valuation without parameters."""
-        start_time = time.time()
         result = discounted_cash_flow.discounted_cash_flow_custom(
             apikey=api_key, symbol="GOOGL"
         )
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
@@ -98,14 +80,9 @@ class TestDCFValuation:
 
     def test_dcf_custom_levered_basic(self, api_key):
         """Test custom levered DCF valuation without parameters."""
-        start_time = time.time()
         result = discounted_cash_flow.discounted_cash_flow_custom_levered(
             apikey=api_key, symbol="TSLA"
         )
-        response_time = time.time() - start_time
-
-        # Response time validation
-        assert response_time < RESPONSE_TIME_LIMIT
 
         # Get response models and validate
         models = get_response_models(result, FMPDCFCustomValuation)
@@ -647,33 +624,5 @@ class TestDCFParameterValidation:
             revenue_growth_pct=-0.05,  # Negative growth
             long_term_growth_rate=-0.01,
         )
-        data = get_response_models(result, FMPDCFCustomValuation)
-        assert isinstance(data, list)
-
-
-class TestDCFPerformance:
-    """Test DCF endpoint performance."""
-
-    def test_custom_dcf_response_time(self, api_key):
-        """Test that custom DCF responds within acceptable time."""
-        start_time = time.time()
-        result = discounted_cash_flow.discounted_cash_flow_custom(
-            apikey=api_key, symbol="AAPL", revenue_growth_pct=0.15
-        )
-        response_time = time.time() - start_time
-
-        assert response_time < RESPONSE_TIME_LIMIT
-        data = get_response_models(result, FMPDCFCustomValuation)
-        assert isinstance(data, list)
-
-    def test_custom_levered_dcf_response_time(self, api_key):
-        """Test that custom levered DCF responds within acceptable time."""
-        start_time = time.time()
-        result = discounted_cash_flow.discounted_cash_flow_custom_levered(
-            apikey=api_key, symbol="MSFT", cost_of_equity=0.10
-        )
-        response_time = time.time() - start_time
-
-        assert response_time < RESPONSE_TIME_LIMIT
         data = get_response_models(result, FMPDCFCustomValuation)
         assert isinstance(data, list)

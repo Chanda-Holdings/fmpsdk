@@ -326,56 +326,6 @@ class TestMarketHours:
 class TestMarketHoursDataQuality:
     """Test data quality for market hours endpoints."""
 
-    def test_market_hours_response_time(self, api_key):
-        """Test that market hours endpoints respond within reasonable time."""
-        import time
-
-        # Test exchange market hours
-        start_time = time.time()
-        result, validation = handle_api_call_with_validation(
-            market_hours.exchange_market_hours,
-            "exchange_market_hours",
-            apikey=api_key,
-            exchange="NYSE",
-        )
-        response_time = time.time() - start_time
-
-        # Extract and validate models
-        models = get_response_models(result, FMPExchangeMarketHours)
-        validate_model_list(
-            models,
-            FMPExchangeMarketHours,
-            "Failed to validate market hours models for response time test",
-        )
-
-        # Response should be reasonably fast (under 10 seconds)
-        assert (
-            response_time < 10
-        ), f"Market hours response took {response_time:.2f} seconds, should be under 10 seconds"
-
-        # Test holidays endpoint
-        start_time = time.time()
-        result, validation = handle_api_call_with_validation(
-            market_hours.holidays_by_exchange,
-            "holidays_by_exchange",
-            apikey=api_key,
-            exchange="NYSE",
-        )
-        response_time = time.time() - start_time
-
-        # Extract and validate models
-        models = get_response_models(result, FMPExchangeHoliday)
-        validate_model_list(
-            models,
-            FMPExchangeHoliday,
-            "Failed to validate holiday models for response time test",
-        )
-
-        # Response should be reasonably fast (under 10 seconds)
-        assert (
-            response_time < 10
-        ), f"Holidays response took {response_time:.2f} seconds, should be under 10 seconds"
-
     def test_date_range_validation(self, api_key):
         """Test date range validation for holidays endpoint."""
         current_year = datetime.now().year

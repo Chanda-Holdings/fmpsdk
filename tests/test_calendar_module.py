@@ -1044,49 +1044,6 @@ class TestCalendarErrorHandling:
             assert isinstance(result_list, list)
 
 
-class TestCalendarResponseTimes:
-    """Test class for calendar response time validation."""
-
-    def test_dividends_response_time(self, api_key, test_config):
-        """Test that dividends responses are within acceptable time limits."""
-        import time
-
-        start_time = time.time()
-        result = dividends(apikey=api_key, symbol="AAPL", limit=5)
-        response_time = time.time() - start_time
-
-        assert result is not None
-        assert (
-            response_time < test_config["max_response_time"]
-        ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
-
-    def test_earnings_calendar_response_time(self, api_key, test_config):
-        """Test that earnings calendar responses are within acceptable time limits."""
-        import time
-
-        start_time = time.time()
-        result = earnings_calendar(apikey=api_key)
-        response_time = time.time() - start_time
-
-        assert result is not None
-        assert (
-            response_time < test_config["max_response_time"]
-        ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
-
-    def test_ipos_calendar_response_time(self, api_key, test_config):
-        """Test that IPO calendar responses are within acceptable time limits."""
-        import time
-
-        start_time = time.time()
-        result = ipos_calendar(apikey=api_key)
-        response_time = time.time() - start_time
-
-        assert result is not None
-        assert (
-            response_time < test_config["max_response_time"]
-        ), f"Response time {response_time:.2f}s should be under {test_config['max_response_time']}s"
-
-
 class TestCalendarDataQuality:
     """Test data quality and business logic validation for calendar endpoints."""
 

@@ -104,10 +104,8 @@ def __return_json(
         logging.error(f"Read timeout occurred while connecting to {url}.")
         if retries <= 0:
             raise
-        
-        logging.info(
-            f"Retrying in {retry_delay} seconds... ({retries} retries left)"
-        )
+
+        logging.info(f"Retrying in {retry_delay} seconds... ({retries} retries left)")
         time.sleep(retry_delay)
         return __return_json(path, query_vars, version, retries - 1, retry_delay)
     except requests.Timeout:
