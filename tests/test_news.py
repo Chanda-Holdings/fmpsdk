@@ -858,3 +858,71 @@ class TestNewsParameterValidation:
                 assert (
                     validity_ratio >= 0.7
                 ), f"At least 70% of {news_type} articles should have valid content"
+
+
+class TestNewsParameterCoverage:
+    """Tests to cover optional parameters that weren't being tested (covers missing lines)."""
+
+    def test_news_stock_latest_with_page_parameter(self, api_key):
+        """Test news_stock_latest with page parameter (covers line 41)."""
+        page = 1
+        result = news.news_stock_latest(apikey=api_key, page=page)
+
+        news_models = get_response_models(result, FMPNewsArticle)
+        assert isinstance(news_models, list)
+
+        # If we have results, validate basic structure
+        if news_models:
+            assert hasattr(news_models[0], "title") or hasattr(news_models[0], "url")
+
+    def test_company_press_releases_latest_with_parameters(
+        self, api_key, recent_date, older_date
+    ):
+        """Test company_press_releases_latest with from_date, to_date, page parameters (covers lines 69, 71, 73)."""
+        # Test with from_date parameter (covers line 69)
+        result = news.company_press_releases_latest(
+            apikey=api_key, from_date=older_date
+        )
+        news_models = get_response_models(result, FMPNewsArticle)
+        assert isinstance(news_models, list)
+
+        # Test with to_date parameter (covers line 71)
+        result = news.company_press_releases_latest(apikey=api_key, to_date=recent_date)
+        news_models = get_response_models(result, FMPNewsArticle)
+        assert isinstance(news_models, list)
+
+        # Test with page parameter (covers line 73)
+        page = 1
+        result = news.company_press_releases_latest(apikey=api_key, page=page)
+        news_models = get_response_models(result, FMPNewsArticle)
+        assert isinstance(news_models, list)
+
+        # Test with combined parameters
+        result = news.company_press_releases_latest(
+            apikey=api_key, from_date=older_date, to_date=recent_date, page=page
+        )
+        news_models = get_response_models(result, FMPNewsArticle)
+        assert isinstance(news_models, list)
+
+    def test_news_crypto_latest_with_to_date_parameter(self, api_key, recent_date):
+        """Test news_crypto_latest with to_date parameter (covers line 156)."""
+        result = news.news_crypto_latest(apikey=api_key, to_date=recent_date)
+
+        news_models = get_response_models(result, FMPNewsArticle)
+        assert isinstance(news_models, list)
+
+        # If we have results, validate basic structure
+        if news_models:
+            assert hasattr(news_models[0], "title") or hasattr(news_models[0], "url")
+
+    def test_news_stock_with_page_parameter(self, api_key):
+        """Test news_stock with page parameter (covers line 281)."""
+        page = 1
+        result = news.news_stock(apikey=api_key, symbols=["AAPL"], page=page)
+
+        news_models = get_response_models(result, FMPNewsArticle)
+        assert isinstance(news_models, list)
+
+        # If we have results, validate basic structure
+        if news_models:
+            assert hasattr(news_models[0], "title") or hasattr(news_models[0], "symbol")

@@ -1,3 +1,4 @@
+import json
 import logging
 from unittest.mock import Mock, patch
 
@@ -405,3 +406,116 @@ class TestUrlMethodsIntegration:
         # Verify timeout parameters
         call_args = mock_get.call_args
         assert call_args[1]["timeout"] == (5, 30)  # (CONNECT_TIMEOUT, READ_TIMEOUT)
+
+
+class TestUrlMethodsCoverageCompleteness:
+    """Tests to achieve 100% coverage for remaining uncovered lines in url_methods.py."""
+
+    @patch("fmpsdk.url_methods.requests.get")
+    @patch("fmpsdk.url_methods.time.sleep")
+    def test_rate_limit_retry_with_logging(self, mock_sleep, mock_get):
+        """Test rate limit retry logic with logging (covers lines 67-77)."""
+        # Mock rate limit response on first call, success on second
+        rate_limit_response = Mock()
+        rate_limit_response.status_code = 429  # RATE_LIMIT_STATUS_CODE
+        rate_limit_response.text = "Rate limit exceeded"
+
+        success_response = Mock()
+        success_response.status_code = 200
+        success_response.content = b'{"data": "success"}'
+        success_response.json.return_value = {"data": "success"}
+
+        mock_get.side_effect = [rate_limit_response, success_response]
+
+        # Capture logging output
+        with patch("fmpsdk.url_methods.logging") as mock_logging:
+            result = return_json_func(
+                "test/path", {"apikey": "test"}, retries=1, retry_delay=0.1
+            )
+
+            # Verify logging calls
+            mock_logging.warning.assert_called_once()
+            mock_logging.info.assert_called_once()
+
+            # Verify sleep was called with retry delay
+            mock_sleep.assert_called_once_with(0.1)
+
+            # Verify successful result
+            assert result == {"data": "success"}
+
+    @patch("fmpsdk.url_methods.requests.get")
+    def test_csv_parsing_error_handling(self, mock_get):
+        """Test CSV parsing error handling (covers lines 90-92)."""
+        import csv
+
+        # Mock response with valid content
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"valid csv content"
+
+        mock_get.return_value = mock_response
+
+        # Mock the CSV processing to raise csv.Error
+        with patch("fmpsdk.url_methods.csv.DictReader") as mock_reader:
+            mock_reader.side_effect = csv.Error("Invalid CSV format")
+
+            with patch("fmpsdk.url_methods.logging") as mock_logging:
+                with pytest.raises(csv.Error, match="Invalid CSV format"):
+                    # Use datatype=csv to trigger CSV processing path
+                    return_json_func("test/path", {"apikey": "test", "datatype": "csv"})
+
+                # Verify error logging occurred (might be called multiple times due to error handling)
+                assert mock_logging.error.call_count >= 1
+
+    @patch("fmpsdk.url_methods.requests.get")
+    @patch("fmpsdk.url_methods.time.sleep")
+    def test_read_timeout_retry_logic(self, mock_sleep, mock_get):
+        """Test read timeout retry logic (covers lines 104-110)."""
+        # Mock ReadTimeout on first call, success on second
+        success_response = Mock()
+        success_response.status_code = 200
+        success_response.content = b'{"data": "success"}'
+        success_response.json.return_value = {"data": "success"}
+
+        mock_get.side_effect = [
+            requests.exceptions.ReadTimeout("Read timeout"),
+            success_response,
+        ]
+
+        with patch("fmpsdk.url_methods.logging") as mock_logging:
+            result = return_json_func(
+                "test/path", {"apikey": "test"}, retries=1, retry_delay=0.1
+            )
+
+            # Verify logging calls
+            mock_logging.error.assert_called_once()
+            mock_logging.info.assert_called_once()
+
+            # Verify sleep was called
+            mock_sleep.assert_called_once_with(0.1)
+
+            # Verify successful result
+            assert result == {"data": "success"}
+
+    @patch("fmpsdk.url_methods.requests.get")
+    def test_read_timeout_no_retries_left(self, mock_get):
+        """Test read timeout with no retries raises exception (covers lines 105-106)."""
+        mock_get.side_effect = requests.exceptions.ReadTimeout("Read timeout")
+
+        with pytest.raises(requests.exceptions.ReadTimeout):
+            return_json_func("test/path", {"apikey": "test"}, retries=0)
+
+    @patch("fmpsdk.url_methods.requests.get")
+    def test_json_decode_error_re_raised(self, mock_get):
+        """Test JSON decode error is re-raised (covers line 132)."""
+        # Mock response with invalid JSON
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.content = b"invalid json content"
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "doc", 0)
+
+        mock_get.return_value = mock_response
+
+        with pytest.raises(json.JSONDecodeError):
+            return_json_func("test/path", {"apikey": "test"})

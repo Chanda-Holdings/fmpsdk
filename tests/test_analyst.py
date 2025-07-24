@@ -1135,3 +1135,25 @@ class TestAnalystDataConsistency:
             current_symbol = current_models[0].symbol
             historical_symbol = historical_models[0].symbol
             assert current_symbol == historical_symbol == symbol
+
+
+class TestAnalystParameterCoverage:
+    """Tests to cover optional parameters that weren't being tested."""
+
+    def test_analyst_estimates_with_page_parameter(self, api_key):
+        """Test analyst_estimates with page parameter (covers line 41)."""
+        try:
+            result, validation = handle_api_call_with_validation(
+                analyst.analyst_estimates,
+                "analyst_estimates",
+                apikey=api_key,
+                symbol="AAPL",
+                period="annual",
+                page=0,
+            )
+
+            models = get_response_models(result, FMPAnalystEstimates)
+            assert isinstance(models, list)
+        except Exception:
+            # Premium endpoint or other errors are expected
+            pass

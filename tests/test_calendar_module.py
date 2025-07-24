@@ -6,6 +6,7 @@ from fmpsdk.calendar_module import (
     dividends,
     dividends_calendar,
     dividends_calendar_v3,
+    earnings,
     earnings_calendar,
     ipos_calendar,
     ipos_disclosure,
@@ -20,6 +21,7 @@ from fmpsdk.models import (
     FMPDividendCalendarEvent,
     FMPDividendCalendarEventV3,
     FMPEarningsCalendarEvent,
+    FMPEarningsReport,
     FMPProspectusFiling,
     FMPStockSplit,
     FMPUpcomingIPO,
@@ -1442,3 +1444,43 @@ class TestDividendsCalendarV3:
 
         with pytest.raises(InvalidAPIKeyException):
             result = dividends_calendar_v3(apikey=invalid_api_key)
+
+
+class TestCalendarModuleCoverageGaps:
+    """Tests to cover remaining uncovered lines in calendar_module.py."""
+
+    def test_earnings_function_basic(self, api_key):
+        """Test earnings function basic functionality (covers lines 111-115)."""
+        # Test without limit parameter first
+        result = earnings(apikey=api_key, symbol="AAPL")
+        result_list = get_response_models(result, FMPEarningsReport)
+        assert isinstance(result_list, list)
+
+        # Validate structure if we have data
+        if result_list:
+            earnings_item = result_list[0]
+            assert hasattr(earnings_item, "symbol") or hasattr(earnings_item, "date")
+
+    def test_earnings_function_with_limit(self, api_key):
+        """Test earnings function with limit parameter (covers lines 113-114)."""
+        # This specifically tests the limit parameter handling
+        limit = "5"
+        result = earnings(apikey=api_key, symbol="AAPL", limit=limit)
+        result_list = get_response_models(result, FMPEarningsReport)
+        assert isinstance(result_list, list)
+
+        # If we have results, the limit should have been applied
+        if result_list:
+            assert len(result_list) <= int(limit)
+
+    def test_splits_function_with_limit_parameter(self, api_key):
+        """Test splits function with limit parameter (covers line 231)."""
+        # Test that limit parameter is properly handled
+        limit = 3
+        result = splits(apikey=api_key, symbol="AAPL", limit=limit)
+        result_list = get_response_models(result, FMPStockSplit)
+        assert isinstance(result_list, list)
+
+        # If we have results, verify the limit was applied
+        if result_list:
+            assert len(result_list) <= limit

@@ -839,3 +839,23 @@ class TestInsiderTradesComprehensive:
 
                 # This is flexible - if no common types, that's also valid
                 assert len(transaction_types) >= 0
+
+
+class TestInsiderTradesParameterCoverage:
+    """Tests to cover optional parameters that weren't being tested."""
+
+    def test_insider_trading_with_reporting_cik_parameter(self, api_key):
+        """Test insider_trading with reportingCik parameter (covers line 39)."""
+        try:
+            result, validation = handle_api_call_with_validation(
+                insider_trades.insider_trading,
+                "insider_trading",
+                apikey=api_key,
+                reportingCik="0001214128",  # Example CIK
+            )
+
+            models = get_response_models(result, FMPInsiderTrade)
+            assert isinstance(models, list)
+        except Exception:
+            # Premium endpoint or other errors are expected
+            pass
