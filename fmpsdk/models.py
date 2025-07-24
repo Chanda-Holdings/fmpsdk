@@ -884,7 +884,7 @@ class FMPFundInfo(BaseModel):
     website: str
     etfCompany: Optional[str]
     expenseRatio: float
-    assetsUnderManagement: int
+    assetsUnderManagement: float
     avgVolume: float
     inceptionDate: str
     nav: float
@@ -1529,7 +1529,7 @@ class FMPQuoteFull(BaseModel):
     price: float
     changePercentage: float
     change: float
-    volume: Optional[int] = None
+    volume: Optional[float] = None
     dayLow: float
     dayHigh: float
     yearHigh: float
@@ -1547,7 +1547,7 @@ class FMPQuoteShort(BaseModel):
     symbol: str
     price: float
     change: float
-    volume: int
+    volume: float
 
 
 class FMPAftermarketTrade(BaseModel):
