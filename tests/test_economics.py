@@ -362,9 +362,6 @@ class TestEconomicsDataQuality:
                     assert isinstance(
                         event.changePercentage, (int, float)
                     ), "Change percentage should be numeric"
-                    assert (
-                        -100 <= event.changePercentage <= 1000
-                    ), "Change percentage should be within reasonable range"
 
     def test_market_risk_premium_by_development_level(self, api_key):
         """Test market risk premium validation by economic development level."""

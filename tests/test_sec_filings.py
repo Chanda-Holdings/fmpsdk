@@ -300,6 +300,8 @@ class TestSECFilingsSearch:
                     "10-Q",
                     "8-K",
                     "4",
+                    "3",  # Initial Statement of Beneficial Ownership
+                    "5",  # Annual Statement of Changes in Beneficial Ownership
                     "DEF 14A",
                     "FWP",
                     "S-1",

@@ -65,6 +65,7 @@ def __return_json(
 
         if response.status_code == RATE_LIMIT_STATUS_CODE:
             logging.warning(
+                f"BENIGN: WILL RETRY"
                 f"{'Rate limit' if response.status_code == RATE_LIMIT_STATUS_CODE else 'HTTPS read timeout'} occurred: {response.status_code}. "
                 f"Query variables: {query_vars}"
             )
