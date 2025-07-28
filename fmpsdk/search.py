@@ -186,7 +186,7 @@ def company_screener(
     if dividend_lower_than is not None:
         query_vars["dividendLowerThan"] = str(dividend_lower_than)
     if is_etf is not None:
-        query_vars["isETF"] = str(is_etf).lower()
+        query_vars["isEtf"] = str(is_etf).lower()
     if is_fund is not None:
         query_vars["isFund"] = str(is_fund).lower()
     if is_actively_trading is not None:
