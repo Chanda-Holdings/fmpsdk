@@ -1760,7 +1760,7 @@ class TestStatementsParameterCoverage:
         """Test financial_statements_latest with page parameter (covers line 152)."""
         try:
             result, validation = handle_api_call_with_validation(
-                statements.financial_statements_latest,
+                financial_statements_latest,
                 "financial_statements_latest",
                 apikey=api_key,
                 page=0,
@@ -1776,7 +1776,7 @@ class TestStatementsParameterCoverage:
         """Test revenue_product_segmentation with structure parameter (covers line 684)."""
         try:
             result, validation = handle_api_call_with_validation(
-                statements.revenue_product_segmentation,
+                revenue_product_segmentation,
                 "revenue_product_segmentation",
                 apikey=api_key,
                 symbol="AAPL",
@@ -1793,7 +1793,7 @@ class TestStatementsParameterCoverage:
         """Test revenue_geographic_segmentation with structure parameter (covers line 716)."""
         try:
             result, validation = handle_api_call_with_validation(
-                statements.revenue_geographic_segmentation,
+                revenue_geographic_segmentation,
                 "revenue_geographic_segmentation",
                 apikey=api_key,
                 symbol="AAPL",

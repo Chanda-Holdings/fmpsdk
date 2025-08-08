@@ -64,9 +64,12 @@ def __return_json(
         )
 
         if response.status_code == RATE_LIMIT_STATUS_CODE:
+            processed_query_vars = {
+                i: j for i, j in query_vars.items() if i != "apikey"
+            }
             logging.warning(
                 f"{'Rate limit' if response.status_code == RATE_LIMIT_STATUS_CODE else 'HTTPS read timeout'} occurred: {response.status_code}. "
-                f"Query variables: {query_vars}"
+                f"Query variables: {processed_query_vars}"
             )
             # Once retries are exhausted, raise_for_exception will handle it
             if retries > 0:

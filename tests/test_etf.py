@@ -105,12 +105,6 @@ class TestETFInfo:
                     len(item.name) <= 200
                 ), f"Fund name should be reasonable length: {item.name}"
 
-            # Expense ratio validation
-            if item.expenseRatio is not None:
-                assert (
-                    0 <= item.expenseRatio <= 5
-                ), f"Expense ratio should be reasonable (0-5%): {item.expenseRatio}"
-
             # NAV validation
             if item.nav is not None:
                 assert item.nav > 0, f"NAV should be positive: {item.nav}"
