@@ -61,7 +61,7 @@ class FMPIsinSearch(FMPBaseModel):
 class FMPStockScreenerResult(FMPBaseModel):
     symbol: str
     companyName: str
-    marketCap: Optional[int] = None
+    marketCap: Optional[float] = None
     sector: Optional[str] = None
     industry: Optional[str] = None
     beta: Optional[float] = None
