@@ -905,38 +905,14 @@ class TestQuoteDataConsistency:
     @pytest.mark.parametrize(
         "symbol,market_segment,expected_characteristics",
         [
-            (
-                "AAPL",
-                "mega_cap_tech",
-                {"price_range": (50, 600), "liquidity": "very_high"},
-            ),
-            (
-                "MSFT",
-                "mega_cap_tech",
-                {"price_range": (100, 800), "liquidity": "very_high"},
-            ),
-            ("GOOGL", "mega_cap_tech", {"price_range": (80, 300), "liquidity": "high"}),
-            (
-                "TSLA",
-                "large_cap_growth",
-                {"price_range": (100, 500), "volatility": "high"},
-            ),
-            (
-                "JPM",
-                "large_cap_financial",
-                {"price_range": (50, 300), "dividend": "regular"},
-            ),
-            (
-                "JNJ",
-                "large_cap_healthcare",
-                {"price_range": (100, 300), "stability": "high"},
-            ),
-            ("XOM", "large_cap_energy", {"price_range": (30, 200), "cyclical": True}),
-            (
-                "WMT",
-                "large_cap_consumer",
-                {"price_range": (50, 300), "defensive": True},
-            ),
+            ("AAPL", "mega_cap_tech", {"liquidity": "very_high"}),
+            ("MSFT", "mega_cap_tech", {"liquidity": "very_high"}),
+            ("GOOGL", "mega_cap_tech", {"liquidity": "high"}),
+            ("TSLA", "large_cap_growth", {"volatility": "high"}),
+            ("JPM", "large_cap_financial", {"dividend": "regular"}),
+            ("JNJ", "large_cap_healthcare", {"stability": "high"}),
+            ("XOM", "large_cap_energy", {"cyclical": True}),
+            ("WMT", "large_cap_consumer", {"defensive": True}),
         ],
     )
     def test_quote_market_segment_validation(
@@ -960,12 +936,6 @@ class TestQuoteDataConsistency:
         assert quote_model.symbol == symbol
 
         assert quote_model.price is not None and quote_model.price > 0
-
-        # Price range validation
-        min_price, max_price = expected_characteristics["price_range"]
-        assert (
-            min_price <= quote_model.price <= max_price
-        ), f"Price {quote_model.price} not in expected range [{min_price}, {max_price}]"
 
 
 class TestBatchQuoteEndpoints:

@@ -2,12 +2,24 @@ import os
 import sys
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, Field, RootModel, model_validator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 
-class FMPSymbolSearch(BaseModel):
+class FMPBaseModel(BaseModel):
+    """Base model for all FMP models that handles 'None' string conversion."""
+
+    @model_validator(mode="before")
+    @classmethod
+    def convert_none_strings(cls, values: Any) -> Any:
+        """Convert 'None' strings to actual None values."""
+        if isinstance(values, dict):
+            return {k: None if v == "None" else v for k, v in values.items()}
+        return values
+
+
+class FMPSymbolSearch(FMPBaseModel):
     symbol: str
     name: str
     currency: str
@@ -15,7 +27,7 @@ class FMPSymbolSearch(BaseModel):
     exchange: Optional[str] = None
 
 
-class FMPCompanyNameSearch(BaseModel):
+class FMPCompanyNameSearch(FMPBaseModel):
     symbol: str
     name: str
     currency: str
@@ -23,7 +35,7 @@ class FMPCompanyNameSearch(BaseModel):
     exchange: Optional[str] = None
 
 
-class FMPCompanyCIKSearch(BaseModel):
+class FMPCompanyCIKSearch(FMPBaseModel):
     symbol: str
     companyName: str
     cik: str
@@ -32,24 +44,24 @@ class FMPCompanyCIKSearch(BaseModel):
     currency: str
 
 
-class FMPCusipSearch(BaseModel):
+class FMPCusipSearch(FMPBaseModel):
     symbol: str
     companyName: str
     cusip: str
-    marketCap: int
+    marketCap: float
 
 
-class FMPIsinSearch(BaseModel):
+class FMPIsinSearch(FMPBaseModel):
     symbol: str
     name: str
     isin: str
     marketCap: float
 
 
-class FMPStockScreenerResult(BaseModel):
+class FMPStockScreenerResult(FMPBaseModel):
     symbol: str
     companyName: str
-    marketCap: int
+    marketCap: Optional[int] = None
     sector: Optional[str] = None
     industry: Optional[str] = None
     beta: Optional[float] = None
@@ -61,10 +73,10 @@ class FMPStockScreenerResult(BaseModel):
     country: Optional[str] = None
     isEtf: bool
     isFund: bool
-    isActivelyTrading: bool
+    isActivelyTrading: Optional[bool] = None
 
 
-class FMPCompanyProfile(BaseModel):
+class FMPCompanyProfile(FMPBaseModel):
     symbol: str
     price: Optional[float] = None
     beta: Optional[float] = None
@@ -103,42 +115,42 @@ class FMPCompanyProfile(BaseModel):
     isFund: Optional[bool] = None
 
 
-class FMPSymbolAndCompanyNameList(BaseModel):
+class FMPSymbolAndCompanyNameList(FMPBaseModel):
     symbol: str
     companyName: Optional[str] = None
 
 
-class FMPSymbolAndNameList(BaseModel):
+class FMPSymbolAndNameList(FMPBaseModel):
     symbol: str
     name: Optional[str] = None
 
 
-class FMPFinancialStatementSymbolList(BaseModel):
+class FMPFinancialStatementSymbolList(FMPBaseModel):
     symbol: str
     companyName: str
     tradingCurrency: str
     reportingCurrency: Optional[str] = None
 
 
-class FMPSymbolAndCIKList(BaseModel):
+class FMPSymbolAndCIKList(FMPBaseModel):
     cik: str
     companyName: str
 
 
-class FMPSymbolChange(BaseModel):
+class FMPSymbolChange(FMPBaseModel):
     date: str
     companyName: str
     oldSymbol: str
     newSymbol: str
 
 
-class FMPEarningsTranscriptList(BaseModel):
+class FMPEarningsTranscriptList(FMPBaseModel):
     symbol: str
     companyName: str
     noOfTranscripts: str
 
 
-class FMPExchangeInfo(BaseModel):
+class FMPExchangeInfo(FMPBaseModel):
     exchange: str
     name: str
     countryName: str
@@ -148,15 +160,15 @@ class FMPExchangeInfo(BaseModel):
     delay: Optional[str] = None
 
 
-class FMPSector(BaseModel):
+class FMPSector(FMPBaseModel):
     sector: str
 
 
-class FMPIndustry(BaseModel):
+class FMPIndustry(FMPBaseModel):
     industry: str
 
 
-class FMPCountry(BaseModel):
+class FMPCountry(FMPBaseModel):
     country: str
 
     @property
@@ -165,7 +177,7 @@ class FMPCountry(BaseModel):
         return self.country
 
 
-class FMPAnalystEstimates(BaseModel):
+class FMPAnalystEstimates(FMPBaseModel):
     symbol: str
     date: str
     revenueLow: int
@@ -190,7 +202,7 @@ class FMPAnalystEstimates(BaseModel):
     numAnalystsEps: int
 
 
-class FMPRatingSnapshot(BaseModel):
+class FMPRatingSnapshot(FMPBaseModel):
     symbol: str
     rating: str
     overallScore: int
@@ -202,7 +214,7 @@ class FMPRatingSnapshot(BaseModel):
     priceToBookScore: int
 
 
-class FMPHistoricalRating(BaseModel):
+class FMPHistoricalRating(FMPBaseModel):
     symbol: str
     date: str
     rating: str
@@ -215,7 +227,7 @@ class FMPHistoricalRating(BaseModel):
     priceToBookScore: int
 
 
-class FMPHistoricalRatingV3(BaseModel):
+class FMPHistoricalRatingV3(FMPBaseModel):
     symbol: str
     date: str
     rating: str
@@ -235,7 +247,7 @@ class FMPHistoricalRatingV3(BaseModel):
     ratingDetailsPBRecommendation: str
 
 
-class FMPPriceTargetSummary(BaseModel):
+class FMPPriceTargetSummary(FMPBaseModel):
     symbol: str
     lastMonthCount: int
     lastMonthAvgPriceTarget: float
@@ -248,7 +260,7 @@ class FMPPriceTargetSummary(BaseModel):
     publishers: str
 
 
-class FMPPriceTargetConsensus(BaseModel):
+class FMPPriceTargetConsensus(FMPBaseModel):
     symbol: str
     targetHigh: float
     targetLow: float
@@ -256,7 +268,7 @@ class FMPPriceTargetConsensus(BaseModel):
     targetMedian: float
 
 
-class FMPPriceTargetNews(BaseModel):
+class FMPPriceTargetNews(FMPBaseModel):
     symbol: str
     publishedDate: str
     newsURL: str
@@ -270,7 +282,7 @@ class FMPPriceTargetNews(BaseModel):
     analystCompany: str
 
 
-class FMPStockGrade(BaseModel):
+class FMPStockGrade(FMPBaseModel):
     symbol: str
     date: str
     gradingCompany: str
@@ -279,7 +291,7 @@ class FMPStockGrade(BaseModel):
     action: str
 
 
-class FMPHistoricalStockGrade(BaseModel):
+class FMPHistoricalStockGrade(FMPBaseModel):
     symbol: str
     date: str
     analystRatingsStrongBuy: int
@@ -289,7 +301,7 @@ class FMPHistoricalStockGrade(BaseModel):
     analystRatingsStrongSell: int
 
 
-class FMPStockGradeSummary(BaseModel):
+class FMPStockGradeSummary(FMPBaseModel):
     symbol: str
     strongBuy: int
     buy: int
@@ -299,7 +311,7 @@ class FMPStockGradeSummary(BaseModel):
     consensus: str
 
 
-class FMPStockGradeNews(BaseModel):
+class FMPStockGradeNews(FMPBaseModel):
     symbol: str
     publishedDate: str
     newsURL: str
@@ -313,7 +325,7 @@ class FMPStockGradeNews(BaseModel):
     priceWhenPosted: float
 
 
-class FMPDividend(BaseModel):
+class FMPDividend(FMPBaseModel):
     symbol: str
     date: str
     recordDate: str
@@ -325,7 +337,7 @@ class FMPDividend(BaseModel):
     frequency: str
 
 
-class FMPDividendCalendarEvent(BaseModel):
+class FMPDividendCalendarEvent(FMPBaseModel):
     symbol: str
     date: str
     recordDate: str
@@ -337,7 +349,7 @@ class FMPDividendCalendarEvent(BaseModel):
     frequency: str
 
 
-class FMPDividendCalendarEventV3(BaseModel):
+class FMPDividendCalendarEventV3(FMPBaseModel):
     date: str
     label: str
     adjDividend: float
@@ -348,7 +360,7 @@ class FMPDividendCalendarEventV3(BaseModel):
     declarationDate: Optional[str] = None
 
 
-class FMPEarningsReport(BaseModel):
+class FMPEarningsReport(FMPBaseModel):
     symbol: str
     date: str
     epsActual: Optional[float] = None
@@ -358,7 +370,7 @@ class FMPEarningsReport(BaseModel):
     lastUpdated: str
 
 
-class FMPEarningsCalendarEvent(BaseModel):
+class FMPEarningsCalendarEvent(FMPBaseModel):
     symbol: str
     date: str
     epsActual: Optional[float] = None
@@ -368,7 +380,7 @@ class FMPEarningsCalendarEvent(BaseModel):
     lastUpdated: str
 
 
-class FMPUpcomingIPO(BaseModel):
+class FMPUpcomingIPO(FMPBaseModel):
     symbol: str
     date: str
     daa: str
@@ -380,7 +392,7 @@ class FMPUpcomingIPO(BaseModel):
     marketCap: Optional[int] = None
 
 
-class FMPDisclosureFiling(BaseModel):
+class FMPDisclosureFiling(FMPBaseModel):
     symbol: str
     cik: str
     filingDate: str
@@ -390,7 +402,7 @@ class FMPDisclosureFiling(BaseModel):
     url: str
 
 
-class FMPProspectusFiling(BaseModel):
+class FMPProspectusFiling(FMPBaseModel):
     symbol: str
     acceptedDate: str
     filingDate: str
@@ -406,21 +418,21 @@ class FMPProspectusFiling(BaseModel):
     url: str
 
 
-class FMPStockSplit(BaseModel):
+class FMPStockSplit(FMPBaseModel):
     symbol: str
     date: str
     numerator: float
     denominator: float
 
 
-class FMPHistoricalDataPointLight(BaseModel):
+class FMPHistoricalDataPointLight(FMPBaseModel):
     symbol: str
     date: str
     price: float
     volume: int
 
 
-class FMPHistoricalDataPointFull(BaseModel):
+class FMPHistoricalDataPointFull(FMPBaseModel):
     symbol: str
     date: str
     open: Optional[float] = None
@@ -433,7 +445,7 @@ class FMPHistoricalDataPointFull(BaseModel):
     vwap: Optional[float] = None
 
 
-class FMPIntradayDataPoint(BaseModel):
+class FMPIntradayDataPoint(FMPBaseModel):
     date: str
     open: float
     low: float
@@ -442,21 +454,21 @@ class FMPIntradayDataPoint(BaseModel):
     volume: int
 
 
-class FMPCompanyNote(BaseModel):
+class FMPCompanyNote(FMPBaseModel):
     cik: str
     symbol: str
     title: str
     exchange: str
 
 
-class FMPStockPeer(BaseModel):
+class FMPStockPeer(FMPBaseModel):
     symbol: str
     companyName: str
     price: float
     mktCap: int
 
 
-class FMPDelistedCompany(BaseModel):
+class FMPDelistedCompany(FMPBaseModel):
     symbol: str
     companyName: str
     exchange: str
@@ -464,7 +476,7 @@ class FMPDelistedCompany(BaseModel):
     delistedDate: str
 
 
-class FMPEmployeeCount(BaseModel):
+class FMPEmployeeCount(FMPBaseModel):
     symbol: str
     cik: str
     acceptanceTime: str
@@ -476,7 +488,7 @@ class FMPEmployeeCount(BaseModel):
     source: str
 
 
-class FMPHistoricalEmployeeCount(BaseModel):
+class FMPHistoricalEmployeeCount(FMPBaseModel):
     symbol: str
     cik: str
     acceptanceTime: str
@@ -488,13 +500,13 @@ class FMPHistoricalEmployeeCount(BaseModel):
     source: str
 
 
-class FMPMarketCap(BaseModel):
+class FMPMarketCap(FMPBaseModel):
     symbol: str
     date: str
-    marketCap: int
+    marketCap: float
 
 
-class FMPShareFloat(BaseModel):
+class FMPShareFloat(FMPBaseModel):
     symbol: str
     date: Optional[str] = None
     freeFloat: float
@@ -502,7 +514,7 @@ class FMPShareFloat(BaseModel):
     outstandingShares: int
 
 
-class FMPMergerAcquisition(BaseModel):
+class FMPMergerAcquisition(FMPBaseModel):
     symbol: str
     companyName: str
     cik: str
@@ -514,7 +526,7 @@ class FMPMergerAcquisition(BaseModel):
     link: str
 
 
-class FMPExecutiveProfile(BaseModel):
+class FMPExecutiveProfile(FMPBaseModel):
     title: str
     name: str
     pay: Optional[float] = None
@@ -524,7 +536,7 @@ class FMPExecutiveProfile(BaseModel):
     active: Optional[int] = None
 
 
-class FMPExecutiveCompensation(BaseModel):
+class FMPExecutiveCompensation(FMPBaseModel):
     cik: str
     symbol: str
     companyName: str
@@ -542,13 +554,13 @@ class FMPExecutiveCompensation(BaseModel):
     link: str
 
 
-class FMPExecutiveCompensationBenchmark(BaseModel):
+class FMPExecutiveCompensationBenchmark(FMPBaseModel):
     industryTitle: str
     year: int
     averageCompensation: float
 
 
-class FMPCommitmentOfTradersReport(BaseModel):
+class FMPCommitmentOfTradersReport(FMPBaseModel):
     symbol: str
     date: str
     name: str
@@ -679,7 +691,7 @@ class FMPCommitmentOfTradersReport(BaseModel):
     contractUnits: str
 
 
-class FMPCommitmentOfTradersAnalysis(BaseModel):
+class FMPCommitmentOfTradersAnalysis(FMPBaseModel):
     symbol: str
     date: str
     name: str
@@ -698,14 +710,14 @@ class FMPCommitmentOfTradersAnalysis(BaseModel):
     reversalTrend: bool
 
 
-class FMPDcfValuation(BaseModel):
+class FMPDcfValuation(FMPBaseModel):
     symbol: str
     date: str
     dcf: float
     Stock_Price: float = Field(alias="Stock Price")
 
 
-class FMPDCFCustomValuation(BaseModel):
+class FMPDCFCustomValuation(FMPBaseModel):
     year: str
     symbol: str
     revenue: int
@@ -743,7 +755,7 @@ class FMPDCFCustomValuation(BaseModel):
     wacc: float
     taxRateCash: Optional[int] = None
     ebiat: Optional[float] = None
-    ufcf: Optional[int] = None
+    ufcf: Optional[float] = None
     sumPvUfcf: Optional[int] = None
     longTermGrowthRate: float
     terminalValue: int
@@ -755,7 +767,7 @@ class FMPDCFCustomValuation(BaseModel):
     freeCashFlowT1: int
 
 
-class FMPTreasuryRates(BaseModel):
+class FMPTreasuryRates(FMPBaseModel):
     date: str
     month1: float
     month2: float
@@ -771,13 +783,13 @@ class FMPTreasuryRates(BaseModel):
     year30: float
 
 
-class FMPEconomicIndicator(BaseModel):
+class FMPEconomicIndicator(FMPBaseModel):
     name: str
     date: str
     value: float
 
 
-class FMPEconomicCalendarEvent(BaseModel):
+class FMPEconomicCalendarEvent(FMPBaseModel):
     date: str
     country: str
     event: str
@@ -786,19 +798,19 @@ class FMPEconomicCalendarEvent(BaseModel):
     estimate: Optional[float] = None
     actual: Optional[float] = None
     change: Optional[float] = None
-    impact: str
+    impact: Optional[str] = None
     changePercentage: Optional[float] = None
     unit: Optional[str] = None
 
 
-class FMPMarketRiskPremium(BaseModel):
+class FMPMarketRiskPremium(FMPBaseModel):
     country: str
     continent: str
     countryRiskPremium: float
     totalEquityRiskPremium: float
 
 
-class FMPESGFiling(BaseModel):
+class FMPESGFiling(FMPBaseModel):
     date: str
     acceptedDate: str
     symbol: str
@@ -812,7 +824,7 @@ class FMPESGFiling(BaseModel):
     url: str
 
 
-class FMPESGRating(BaseModel):
+class FMPESGRating(FMPBaseModel):
     symbol: str
     cik: str
     companyName: str
@@ -822,7 +834,7 @@ class FMPESGRating(BaseModel):
     industryRank: str
 
 
-class FMPESGBenchmark(BaseModel):
+class FMPESGBenchmark(FMPBaseModel):
     fiscalYear: int
     sector: str
     environmentalScore: float
@@ -831,7 +843,7 @@ class FMPESGBenchmark(BaseModel):
     ESGScore: float
 
 
-class FMPFundHolding(BaseModel):
+class FMPFundHolding(FMPBaseModel):
     symbol: str
     asset: str
     name: str
@@ -844,12 +856,12 @@ class FMPFundHolding(BaseModel):
     updated: str
 
 
-class FMPFundInfoSectorsListItem(BaseModel):
+class FMPFundInfoSectorsListItem(FMPBaseModel):
     industry: str
     exposure: float
 
 
-class FMPCommodityListItem(BaseModel):
+class FMPCommodityListItem(FMPBaseModel):
     symbol: str
     name: str
     exchange: Optional[str] = None
@@ -857,7 +869,7 @@ class FMPCommodityListItem(BaseModel):
     currency: Optional[str] = None
 
 
-class FMPCryptocurrencyListItem(BaseModel):
+class FMPCryptocurrencyListItem(FMPBaseModel):
     symbol: str
     name: str
     exchange: str
@@ -866,14 +878,14 @@ class FMPCryptocurrencyListItem(BaseModel):
     totalSupply: Optional[float] = None
 
 
-class FMPIndexListItem(BaseModel):
+class FMPIndexListItem(FMPBaseModel):
     symbol: str
     name: str
     exchange: str
     currency: str
 
 
-class FMPFundInfo(BaseModel):
+class FMPFundInfo(FMPBaseModel):
     symbol: str
     name: str
     description: str
@@ -894,12 +906,12 @@ class FMPFundInfo(BaseModel):
     sectorsList: List[FMPFundInfoSectorsListItem]
 
 
-class FMPFundCountryAllocation(BaseModel):
+class FMPFundCountryAllocation(FMPBaseModel):
     country: str
     weightPercentage: str
 
 
-class FMPFundAssetExposure(BaseModel):
+class FMPFundAssetExposure(FMPBaseModel):
     symbol: str
     asset: str
     sharesNumber: int
@@ -907,13 +919,13 @@ class FMPFundAssetExposure(BaseModel):
     marketValue: int
 
 
-class FMPFundSectorWeighting(BaseModel):
+class FMPFundSectorWeighting(FMPBaseModel):
     symbol: str
     sector: str
     weightPercentage: float
 
 
-class FMPFundHolder(BaseModel):
+class FMPFundHolder(FMPBaseModel):
     cik: str
     holder: str
     shares: int
@@ -922,7 +934,7 @@ class FMPFundHolder(BaseModel):
     weightPercent: float
 
 
-class FMPFundDisclosure(BaseModel):
+class FMPFundDisclosure(FMPBaseModel):
     cik: str
     date: str
     acceptedDate: str
@@ -948,7 +960,7 @@ class FMPFundDisclosure(BaseModel):
     isLoanByFund: str
 
 
-class FMPFundDisclosureNameSearch(BaseModel):
+class FMPFundDisclosureNameSearch(FMPBaseModel):
     symbol: str
     cik: str
     classId: str
@@ -964,13 +976,13 @@ class FMPFundDisclosureNameSearch(BaseModel):
     state: str
 
 
-class FMPFundDisclosureDate(BaseModel):
+class FMPFundDisclosureDate(FMPBaseModel):
     date: str
     year: int
     quarter: int
 
 
-class FMPCrowdfundingCampaign(BaseModel):
+class FMPCrowdfundingCampaign(FMPBaseModel):
     cik: str
     companyName: Optional[str] = None
     date: Optional[str] = None
@@ -1021,13 +1033,13 @@ class FMPCrowdfundingCampaign(BaseModel):
     netIncomePriorFiscalYear: float
 
 
-class FMPCrowdfundingSearch(BaseModel):
+class FMPCrowdfundingSearch(FMPBaseModel):
     cik: str
     name: str
     date: Optional[str] = None
 
 
-class FMPEquityOffering(BaseModel):
+class FMPEquityOffering(FMPBaseModel):
     cik: str
     companyName: str
     date: Optional[str] = None
@@ -1073,13 +1085,13 @@ class FMPEquityOffering(BaseModel):
     grossProceedsUsed: int
 
 
-class FMPEquityOfferingSearch(BaseModel):
+class FMPEquityOfferingSearch(FMPBaseModel):
     cik: str
     name: str
     date: str
 
 
-class FMPForexPair(BaseModel):
+class FMPForexPair(FMPBaseModel):
     symbol: str
     fromCurrency: str
     toCurrency: str
@@ -1087,7 +1099,7 @@ class FMPForexPair(BaseModel):
     toName: str
 
 
-class FMPFinancialReportDate(BaseModel):
+class FMPFinancialReportDate(FMPBaseModel):
     symbol: str
     fiscalYear: int
     period: str
@@ -1105,7 +1117,7 @@ class FinancialSection(RootModel[List[FinancialSectionEntry]]):
     pass
 
 
-class FMPFullFinancialReport(BaseModel):
+class FMPFullFinancialReport(FMPBaseModel):
     symbol: str
     period: Optional[str] = None
     year: Optional[str] = None
@@ -1149,7 +1161,7 @@ class FMPFullFinancialReport(BaseModel):
         return instance
 
 
-class FMPRevenueSegmentation(BaseModel):
+class FMPRevenueSegmentation(FMPBaseModel):
     symbol: str
     fiscalYear: int
     period: str
@@ -1158,7 +1170,7 @@ class FMPRevenueSegmentation(BaseModel):
     data: Optional[Dict[str, int]] = None
 
 
-class FMPAsReportedIncomeStatement(BaseModel):
+class FMPAsReportedIncomeStatement(FMPBaseModel):
     symbol: str
     fiscalYear: int
     period: str
@@ -1169,7 +1181,7 @@ class FMPAsReportedIncomeStatement(BaseModel):
     ]  # This can be a complex structure, so using Any for flexibility
 
 
-class FMPAsReportedBalanceSheet(BaseModel):
+class FMPAsReportedBalanceSheet(FMPBaseModel):
     symbol: str
     fiscalYear: int
     period: str
@@ -1180,7 +1192,7 @@ class FMPAsReportedBalanceSheet(BaseModel):
     ]  # This can be a complex structure, so using Any for flexibility
 
 
-class FMPAsReportedCashFlowStatement(BaseModel):
+class FMPAsReportedCashFlowStatement(FMPBaseModel):
     symbol: str
     fiscalYear: int
     period: str
@@ -1191,7 +1203,7 @@ class FMPAsReportedCashFlowStatement(BaseModel):
     ]  # This can be a complex structure, so using Any for flexibility
 
 
-class FMPAsReportedFullStatement(BaseModel):
+class FMPAsReportedFullStatement(FMPBaseModel):
     symbol: str
     fiscalYear: int
     period: str
@@ -1202,7 +1214,7 @@ class FMPAsReportedFullStatement(BaseModel):
     ]  # This can be a complex structure, so using Any for flexibility
 
 
-class FMPForm13FFiling(BaseModel):
+class FMPForm13FFiling(FMPBaseModel):
     cik: str
     name: str
     date: str
@@ -1213,10 +1225,8 @@ class FMPForm13FFiling(BaseModel):
     finalLink: str
 
 
-class FMPSECFiling(BaseModel):
-    """Model for SEC filings search results"""
-
-    symbol: str
+class FMPSECFiling(FMPBaseModel):
+    symbol: Optional[str] = None
     cik: str
     filingDate: str
     acceptedDate: str
@@ -1225,7 +1235,7 @@ class FMPSECFiling(BaseModel):
     finalLink: str
 
 
-class FMPForm13FExtract(BaseModel):
+class FMPForm13FExtract(FMPBaseModel):
     date: str
     filingDate: str
     acceptedDate: str
@@ -1242,13 +1252,13 @@ class FMPForm13FExtract(BaseModel):
     finalLink: str
 
 
-class FMPForm13FDate(BaseModel):
+class FMPForm13FDate(FMPBaseModel):
     date: str
     year: int
     quarter: int
 
 
-class FMPForm13FAnalytics(BaseModel):
+class FMPForm13FAnalytics(FMPBaseModel):
     date: str
     cik: str
     filingDate: str
@@ -1290,7 +1300,7 @@ class FMPForm13FAnalytics(BaseModel):
     isCountedForPerformance: bool
 
 
-class FMPHolderPerformance(BaseModel):
+class FMPHolderPerformance(FMPBaseModel):
     date: str
     cik: str
     investorName: str
@@ -1326,7 +1336,7 @@ class FMPHolderPerformance(BaseModel):
     performanceSinceInceptionRelativeToSP500Percentage: float
 
 
-class FMPHolderIndustryBreakdown(BaseModel):
+class FMPHolderIndustryBreakdown(FMPBaseModel):
     date: str
     cik: str
     investorName: str
@@ -1341,7 +1351,7 @@ class FMPHolderIndustryBreakdown(BaseModel):
     changeInPerformance: int
 
 
-class FMPPositionSummary(BaseModel):
+class FMPPositionSummary(FMPBaseModel):
     symbol: str
     cik: str
     date: str
@@ -1380,20 +1390,20 @@ class FMPPositionSummary(BaseModel):
     putCallRatioChange: float
 
 
-class FMPIndustryPerformanceSummary(BaseModel):
+class FMPIndustryPerformanceSummary(FMPBaseModel):
     industryTitle: str
     industryValue: int
     date: str
 
 
-class FMPIndex(BaseModel):
+class FMPIndex(FMPBaseModel):
     symbol: str
     name: str
     exchange: Optional[str] = None
     currency: Optional[str] = None
 
 
-class FMPIndexConstituent(BaseModel):
+class FMPIndexConstituent(FMPBaseModel):
     symbol: str
     name: str
     sector: str
@@ -1404,7 +1414,7 @@ class FMPIndexConstituent(BaseModel):
     founded: str
 
 
-class FMPHistoricalIndexConstituent(BaseModel):
+class FMPHistoricalIndexConstituent(FMPBaseModel):
     dateAdded: str
     addedSecurity: str
     removedTicker: Optional[str] = None
@@ -1414,7 +1424,7 @@ class FMPHistoricalIndexConstituent(BaseModel):
     reason: Optional[str] = None
 
 
-class FMPInsiderTrade(BaseModel):
+class FMPInsiderTrade(FMPBaseModel):
     symbol: str
     filingDate: str
     transactionDate: str
@@ -1433,11 +1443,11 @@ class FMPInsiderTrade(BaseModel):
     url: str
 
 
-class FMPInsiderTransactionType(BaseModel):
+class FMPInsiderTransactionType(FMPBaseModel):
     transactionType: str
 
 
-class FMPInsiderTradeStatistics(BaseModel):
+class FMPInsiderTradeStatistics(FMPBaseModel):
     symbol: str
     cik: str
     year: int
@@ -1453,7 +1463,7 @@ class FMPInsiderTradeStatistics(BaseModel):
     totalSales: int
 
 
-class FMPAcquisitionOwnership(BaseModel):
+class FMPAcquisitionOwnership(FMPBaseModel):
     cik: str
     symbol: str
     filingDate: str
@@ -1471,7 +1481,7 @@ class FMPAcquisitionOwnership(BaseModel):
     url: str
 
 
-class FMPNewsArticle(BaseModel):
+class FMPNewsArticle(FMPBaseModel):
     symbol: Optional[str] = None
     publishedDate: str
     publisher: Optional[str] = None
@@ -1482,7 +1492,7 @@ class FMPNewsArticle(BaseModel):
     url: Optional[str] = None
 
 
-class FMPTechnicalIndicator(BaseModel):
+class FMPTechnicalIndicator(FMPBaseModel):
     date: str
     open: float
     high: float
@@ -1500,7 +1510,7 @@ class FMPTechnicalIndicator(BaseModel):
     adx: Optional[float] = None
 
 
-class FMPCommodity(BaseModel):
+class FMPCommodity(FMPBaseModel):
     symbol: str
     name: str
     exchange: Optional[str] = None
@@ -1508,7 +1518,7 @@ class FMPCommodity(BaseModel):
     currency: Optional[str] = None
 
 
-class FmpFinancialStatementSymbolsListResponse(BaseModel):
+class FmpFinancialStatementSymbolsListResponse(FMPBaseModel):
     symbol: str
     calendarYear: str
     period: str
@@ -1516,14 +1526,14 @@ class FmpFinancialStatementSymbolsListResponse(BaseModel):
     dateAdded: str
 
 
-class FmpFinancialReportDatesListResponse(BaseModel):
+class FmpFinancialReportDatesListResponse(FMPBaseModel):
     date: str
     period: str
     linkCalendarYear: Optional[str] = None
     filedDate: Optional[str] = None
 
 
-class FMPQuoteFull(BaseModel):
+class FMPQuoteFull(FMPBaseModel):
     symbol: str
     name: str
     price: float
@@ -1534,7 +1544,7 @@ class FMPQuoteFull(BaseModel):
     dayHigh: float
     yearHigh: float
     yearLow: float
-    marketCap: Optional[int] = None
+    marketCap: Optional[float] = None
     priceAvg50: float
     priceAvg200: float
     exchange: str
@@ -1543,21 +1553,21 @@ class FMPQuoteFull(BaseModel):
     timestamp: int
 
 
-class FMPQuoteShort(BaseModel):
+class FMPQuoteShort(FMPBaseModel):
     symbol: str
     price: float
     change: float
     volume: float
 
 
-class FMPAftermarketTrade(BaseModel):
+class FMPAftermarketTrade(FMPBaseModel):
     symbol: str
     price: float
     tradeSize: Optional[int] = None
     timestamp: int
 
 
-class FMPAftermarketQuote(BaseModel):
+class FMPAftermarketQuote(FMPBaseModel):
     symbol: str
     bidSize: int
     bidPrice: float
@@ -1567,7 +1577,7 @@ class FMPAftermarketQuote(BaseModel):
     timestamp: int
 
 
-class FMPStockPriceChange(BaseModel):
+class FMPStockPriceChange(FMPBaseModel):
     symbol: str
     _1D: Optional[float] = None
     _5D: Optional[float] = None
@@ -1582,7 +1592,7 @@ class FMPStockPriceChange(BaseModel):
     max: Optional[float] = None
 
 
-class FMPBulkEOD(BaseModel):
+class FMPBulkEOD(FMPBaseModel):
     symbol: str
     date: str
     open: float
@@ -1593,7 +1603,7 @@ class FMPBulkEOD(BaseModel):
     volume: int
 
 
-class FMPPoliticalTrade(BaseModel):
+class FMPPoliticalTrade(FMPBaseModel):
     symbol: str
     disclosureDate: str
     transactionDate: str
@@ -1611,8 +1621,8 @@ class FMPPoliticalTrade(BaseModel):
     link: str
 
 
-class FMPCompanySECFilings(BaseModel):
-    symbol: str
+class FMPCompanySECFilings(FMPBaseModel):
+    symbol: Optional[str] = None
     name: str
     cik: str
     sicCode: str
@@ -1621,13 +1631,13 @@ class FMPCompanySECFilings(BaseModel):
     phoneNumber: Optional[str] = None
 
 
-class FMPIndustryClassification(BaseModel):
+class FMPIndustryClassification(FMPBaseModel):
     office: Optional[str] = None
     sicCode: str
     industryTitle: str
 
 
-class FMPIndustryClassificationSearch(BaseModel):
+class FMPIndustryClassificationSearch(FMPBaseModel):
     symbol: str
     name: str
     cik: str
@@ -1637,7 +1647,7 @@ class FMPIndustryClassificationSearch(BaseModel):
     phoneNumber: str
 
 
-class FMPEarningsTranscript(BaseModel):
+class FMPEarningsTranscript(FMPBaseModel):
     symbol: str
     period: str
     fiscalYear: int
@@ -1645,13 +1655,13 @@ class FMPEarningsTranscript(BaseModel):
     content: Optional[str] = None
 
 
-class FMPEarningsTranscriptBySymbol(BaseModel):
+class FMPEarningsTranscriptBySymbol(FMPBaseModel):
     quarter: str
     fiscalYear: int
     date: str
 
 
-class FMPBulkRating(BaseModel):
+class FMPBulkRating(FMPBaseModel):
     symbol: str
     date: str
     rating: str
@@ -1664,14 +1674,14 @@ class FMPBulkRating(BaseModel):
     ratingDetailsPBRecommendation: str
 
 
-class FMPBulkDCF(BaseModel):
+class FMPBulkDCF(FMPBaseModel):
     symbol: str
     date: str
     discountedCashFlow: float
     dcfPercentDiff: str
 
 
-class FMPFinancialScores(BaseModel):
+class FMPFinancialScores(FMPBaseModel):
     symbol: str
     reportedCurrency: str
     altmanZScore: float
@@ -1685,7 +1695,7 @@ class FMPFinancialScores(BaseModel):
     revenue: float
 
 
-class FMPBulkPriceTargetSummary(BaseModel):
+class FMPBulkPriceTargetSummary(FMPBaseModel):
     symbol: str
     lastMonth: str
     lastMonthAvgPT: str
@@ -1702,7 +1712,7 @@ class FMPBulkPriceTargetSummary(BaseModel):
     publishers: str
 
 
-class FMPBulkETFHolder(BaseModel):
+class FMPBulkETFHolder(FMPBaseModel):
     symbol: str
     sharesNumber: str
     asset: str
@@ -1714,7 +1724,7 @@ class FMPBulkETFHolder(BaseModel):
     updatedAt: str
 
 
-class FMPBulkUpgradeDowngradeConsensus(BaseModel):
+class FMPBulkUpgradeDowngradeConsensus(FMPBaseModel):
     symbol: str
     strongBuy: str
     buy: str
@@ -1724,12 +1734,12 @@ class FMPBulkUpgradeDowngradeConsensus(BaseModel):
     consensus: str
 
 
-class FMPBulkStockPeers(BaseModel):
+class FMPBulkStockPeers(FMPBaseModel):
     symbol: str
     peers: str
 
 
-class FMPBulkEarningsSurprise(BaseModel):
+class FMPBulkEarningsSurprise(FMPBaseModel):
     symbol: str
     date: str
     epsActual: str
@@ -1737,7 +1747,7 @@ class FMPBulkEarningsSurprise(BaseModel):
     lastUpdated: str
 
 
-class FMPBalanceSheetStatement(BaseModel):
+class FMPBalanceSheetStatement(FMPBaseModel):
     date: str
     symbol: str
     reportedCurrency: str
@@ -1797,7 +1807,7 @@ class FMPBalanceSheetStatement(BaseModel):
     netDebt: float
 
 
-class FMPBalanceSheetGrowth(BaseModel):
+class FMPBalanceSheetGrowth(FMPBaseModel):
     symbol: str
     date: str
     fiscalYear: str
@@ -1855,7 +1865,7 @@ class FMPBalanceSheetGrowth(BaseModel):
     growthTreasuryStock: float
 
 
-class FMPCashFlowStatement(BaseModel):
+class FMPCashFlowStatement(FMPBaseModel):
     date: str
     symbol: str
     reportedCurrency: str
@@ -1905,7 +1915,7 @@ class FMPCashFlowStatement(BaseModel):
     interestPaid: int
 
 
-class FMPCashFlowGrowth(BaseModel):
+class FMPCashFlowGrowth(FMPBaseModel):
     symbol: str
     date: str
     fiscalYear: str
@@ -1949,7 +1959,7 @@ class FMPCashFlowGrowth(BaseModel):
     growthInterestPaid: float
 
 
-class FMPIncomeStatement(BaseModel):
+class FMPIncomeStatement(FMPBaseModel):
     date: str
     symbol: str
     reportedCurrency: str
@@ -1991,7 +2001,7 @@ class FMPIncomeStatement(BaseModel):
     weightedAverageShsOutDil: int
 
 
-class FMPLatestFinancialStatement(BaseModel):
+class FMPLatestFinancialStatement(FMPBaseModel):
     symbol: str
     calendarYear: int
     period: str
@@ -1999,7 +2009,7 @@ class FMPLatestFinancialStatement(BaseModel):
     dateAdded: str
 
 
-class FMPKeyMetrics(BaseModel):
+class FMPKeyMetrics(FMPBaseModel):
     symbol: str
     date: str
     fiscalYear: str
@@ -2049,7 +2059,7 @@ class FMPKeyMetrics(BaseModel):
     netCurrentAssetValue: int
 
 
-class FMPKeyMetricsTTM(BaseModel):
+class FMPKeyMetricsTTM(FMPBaseModel):
     symbol: str
     marketCap: Optional[float] = None
     enterpriseValueTTM: Optional[float] = None
@@ -2095,7 +2105,7 @@ class FMPKeyMetricsTTM(BaseModel):
     netCurrentAssetValueTTM: int
 
 
-class FMPFinancialRatios(BaseModel):
+class FMPFinancialRatios(FMPBaseModel):
     symbol: str
     date: str
     fiscalYear: str
@@ -2162,7 +2172,7 @@ class FMPFinancialRatios(BaseModel):
     dividendPerShare: float
 
 
-class FMPFinancialRatiosTTM(BaseModel):
+class FMPFinancialRatiosTTM(FMPBaseModel):
     symbol: str
     grossProfitMarginTTM: float
     ebitMarginTTM: float
@@ -2223,7 +2233,7 @@ class FMPFinancialRatiosTTM(BaseModel):
     enterpriseValueMultipleTTM: float
 
 
-class FMPIncomeStatementGrowth(BaseModel):
+class FMPIncomeStatementGrowth(FMPBaseModel):
     symbol: str
     date: str
     fiscalYear: str
@@ -2271,14 +2281,14 @@ class FMPIncomeStatementGrowth(BaseModel):
 
 
 # Market Performance Models
-class FMPSectorPerformanceSnapshot(BaseModel):
+class FMPSectorPerformanceSnapshot(FMPBaseModel):
     sector: str
     date: str
     exchange: str
     changesPercentage: float = Field(alias="averageChange")
 
 
-class FMPIndustryPerformanceSnapshot(BaseModel):
+class FMPIndustryPerformanceSnapshot(FMPBaseModel):
     industry: str
     date: str
     exchange: str
@@ -2288,19 +2298,19 @@ class FMPIndustryPerformanceSnapshot(BaseModel):
     numberOfSymbols: Optional[int] = None
 
 
-class FMPHistoricalSectorPerformance(BaseModel):
+class FMPHistoricalSectorPerformance(FMPBaseModel):
     date: str
     sector: str
     changesPercentage: Optional[float] = None
 
 
-class FMPHistoricalIndustryPerformance(BaseModel):
+class FMPHistoricalIndustryPerformance(FMPBaseModel):
     date: str
     industry: str
     changesPercentage: float
 
 
-class FMPSectorPESnapshot(BaseModel):
+class FMPSectorPESnapshot(FMPBaseModel):
     sector: str
     date: str
     exchange: str
@@ -2308,7 +2318,7 @@ class FMPSectorPESnapshot(BaseModel):
     marketCap: Optional[int] = None
 
 
-class FMPIndustryPESnapshot(BaseModel):
+class FMPIndustryPESnapshot(FMPBaseModel):
     date: str
     industry: str
     exchange: str
@@ -2316,21 +2326,21 @@ class FMPIndustryPESnapshot(BaseModel):
     marketCap: Optional[float] = None
 
 
-class FMPHistoricalSectorPE(BaseModel):
+class FMPHistoricalSectorPE(FMPBaseModel):
     date: str
     sector: str
     pe: float
     marketCap: Optional[int] = None
 
 
-class FMPHistoricalIndustryPE(BaseModel):
+class FMPHistoricalIndustryPE(FMPBaseModel):
     date: str
     industry: str
     pe: float
     marketCap: int
 
 
-class FMPMarketMover(BaseModel):
+class FMPMarketMover(FMPBaseModel):
     symbol: str
     name: str
     change: float
@@ -2338,13 +2348,13 @@ class FMPMarketMover(BaseModel):
     changesPercentage: float
 
 
-class Error(BaseModel):
+class Error(FMPBaseModel):
     error: str
     details: str
 
 
 # Market Hours Models
-class FMPExchangeMarketHours(BaseModel):
+class FMPExchangeMarketHours(FMPBaseModel):
     exchange: str
     name: str
     openingHour: str
@@ -2353,13 +2363,13 @@ class FMPExchangeMarketHours(BaseModel):
     isMarketOpen: bool
 
 
-class FMPExchangeHoliday(BaseModel):
+class FMPExchangeHoliday(FMPBaseModel):
     date: str
     name: str
     exchange: Optional[str] = None
 
 
-class FMPOwnerEarnings(BaseModel):
+class FMPOwnerEarnings(FMPBaseModel):
     symbol: str
     reportedCurrency: str
     fiscalYear: str
@@ -2372,7 +2382,7 @@ class FMPOwnerEarnings(BaseModel):
     ownersEarningsPerShare: float
 
 
-class FMPEnterpriseValue(BaseModel):
+class FMPEnterpriseValue(FMPBaseModel):
     symbol: str
     date: str
     stockPrice: float
@@ -2383,7 +2393,7 @@ class FMPEnterpriseValue(BaseModel):
     enterpriseValue: int
 
 
-class FMPTrendingSentiment(BaseModel):
+class FMPTrendingSentiment(FMPBaseModel):
     symbol: str
     name: str
     rank: int
@@ -2391,7 +2401,7 @@ class FMPTrendingSentiment(BaseModel):
     lastSentiment: float
 
 
-class FMPHistoricalSentiment(BaseModel):
+class FMPHistoricalSentiment(FMPBaseModel):
     date: str
     symbol: str
     stocktwitsPosts: int

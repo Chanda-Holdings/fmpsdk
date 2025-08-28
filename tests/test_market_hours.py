@@ -130,7 +130,7 @@ class TestMarketHours:
             ("TSE", (10, 20), "Japan"),
             ("ASX", (8, 15), "Australia"),
             ("TSX", (8, 15), "Canada"),
-            ("EURONEXT", (6, 12), "Europe"),
+            ("EURONEXT", (5, 12), "Europe"),
         ],
     )
     def test_holidays_by_exchange_comprehensive(

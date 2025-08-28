@@ -63,11 +63,8 @@ def get_response_models(data: Union[List, Dict, Any], model_class: type) -> List
             result = []
             for item in root_data:
                 if isinstance(item, dict):
-                    try:
-                        model_instance = model_class(**item)
-                        result.append(model_instance)
-                    except Exception:
-                        result.append(item)
+                    model_instance = model_class(**item)
+                    result.append(model_instance)
                 else:
                     result.append(item)
             return result
@@ -86,13 +83,9 @@ def get_response_models(data: Union[List, Dict, Any], model_class: type) -> List
     result = []
     for item in data:
         if isinstance(item, dict):
-            try:
-                # Try to create model instance from dict
-                model_instance = model_class(**item)
-                result.append(model_instance)
-            except Exception:
-                # If model creation fails, return the dict
-                result.append(item)
+            # Create model instance from dict
+            model_instance = model_class(**item)
+            result.append(model_instance)
         else:
             # Already a model instance or other type
             result.append(item)

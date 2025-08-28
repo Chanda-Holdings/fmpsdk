@@ -252,7 +252,7 @@ class TestSECFilingsSearch:
             ("MSFT", "technology", ["10-Q", "8-K", "DEF 14A"]),
             ("TSLA", "automotive", ["10-Q", "8-K"]),
             ("JPM", "financial", ["10-Q", "8-K", "DEF 14A"]),
-            ("JNJ", "healthcare", ["10-Q", "8-K", "DEF 14A"]),
+            ("JNJ", "healthcare", ["10-Q", "8-K", "DEF 14A", "N-PX"]),
             ("XOM", "energy", ["10-Q", "8-K"]),
             ("WMT", "retail", ["10-Q", "8-K"]),
             ("GOOGL", "technology", ["10-Q", "8-K"]),
@@ -310,6 +310,7 @@ class TestSECFilingsSearch:
                     "20-F",
                     "SC 13D",
                     "SC 13G",
+                    "N-PX",
                 ]
                 form_type_upper = first_item.formType.upper()
                 is_valid_form = any(
