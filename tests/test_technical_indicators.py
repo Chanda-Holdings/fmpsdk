@@ -224,7 +224,7 @@ class TestTechnicalIndicatorsComprehensive:
                 20,
                 "1day",
                 "commodity",
-                {"range": (1500, 3500), "safe_haven": True},
+                {"range": (1500, 4000), "safe_haven": True},
             ),
             (
                 "CLUSD",

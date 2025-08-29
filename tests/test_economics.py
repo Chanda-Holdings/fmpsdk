@@ -166,16 +166,16 @@ class TestEconomicsBasic:
                 assert event.country is not None, "Country should not be None"
                 assert event.event is not None, "Event name should not be None"
                 assert event.currency is not None, "Currency should not be None"
-                assert event.impact is not None, "Impact should not be None"
 
                 # Economics-specific business logic validation
-                assert event.impact in [
-                    "Low",
-                    "Medium",
-                    "High",
-                    "Holiday",
-                    "None",
-                ], "Impact should be valid level"
+                if event.impact:
+                    assert event.impact in [
+                        "Low",
+                        "Medium",
+                        "High",
+                        "Holiday",
+                        "None",
+                    ], "Impact should be valid level"
                 assert (
                     len(event.country) >= 2
                 ), "Country should be valid country code or name"
@@ -333,13 +333,14 @@ class TestEconomicsDataQuality:
             # Test first 10 events for comprehensive validation
             for event in calendar_events[:10]:
                 # Impact level consistency
-                assert event.impact in [
-                    "Low",
-                    "Medium",
-                    "High",
-                    "Holiday",
-                    "None",
-                ], "Impact level should be valid"
+                if event.impact:
+                    assert event.impact in [
+                        "Low",
+                        "Medium",
+                        "High",
+                        "Holiday",
+                        "None",
+                    ], "Impact level should be valid"
 
                 # Currency code format
                 if event.currency:

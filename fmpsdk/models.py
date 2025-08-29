@@ -1058,7 +1058,7 @@ class FMPEquityOffering(FMPBaseModel):
     entityType: str
     incorporatedWithinFiveYears: Optional[bool] = None
     yearOfIncorporation: str
-    relatedPersonFirstName: str
+    relatedPersonFirstName: Optional[str] = None
     relatedPersonLastName: str
     relatedPersonStreet: str
     relatedPersonCity: str
