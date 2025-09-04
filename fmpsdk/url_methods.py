@@ -21,7 +21,7 @@ BASE_URL_V3: str = "https://financialmodelingprep.com/api/v3/"
 CONNECT_TIMEOUT = 5
 READ_TIMEOUT = 30
 RETRIES = 10
-RETRY_DELAY = 10
+RETRY_DELAY = 20
 
 # Disable excessive DEBUG messages.
 logging.getLogger("requests").setLevel(logging.WARNING)
