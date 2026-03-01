@@ -24,7 +24,10 @@ T = TypeVar("T")
 
 def raise_for_exception(response):
     if response.status_code == PREMIUM_STATUS_CODE:
-        if "Premium Endpoint" in response.text:
+        if (
+            "Premium Endpoint" in response.text
+            or "Restricted Endpoint" in response.text
+        ):
             raise PremiumEndpointException(response.text.strip())
 
         if "Premium Query Parameter" in response.text:

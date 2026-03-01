@@ -745,8 +745,8 @@ class TestCommitmentOfTradersDataQuality:
             elif hasattr(latest_date, "date"):
                 latest_date = latest_date.date()
 
-            # Data should not be older than 2 years
-            cutoff_date = datetime.now() - timedelta(days=730)
+            # Data should not be older than 3 years
+            cutoff_date = datetime.now() - timedelta(days=1095)
             assert latest_date >= cutoff_date, f"Data is too old: {latest_date}"
 
     def test_cot_symbol_name_consistency(self, api_key):

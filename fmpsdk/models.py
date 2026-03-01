@@ -411,7 +411,7 @@ class FMPProspectusFiling(FMPBaseModel):
     pricePublicPerShare: float
     pricePublicTotal: float
     discountsAndCommissionsPerShare: float
-    discountsAndCommissionsTotal: float
+    discountsAndCommissionsTotal: Optional[float] = None
     proceedsBeforeExpensesPerShare: float
     proceedsBeforeExpensesTotal: float
     form: str
@@ -509,8 +509,8 @@ class FMPMarketCap(FMPBaseModel):
 class FMPShareFloat(FMPBaseModel):
     symbol: str
     date: Optional[str] = None
-    freeFloat: float
-    floatShares: int
+    freeFloat: Optional[float] = None
+    floatShares: Optional[int] = None
     outstandingShares: int
 
 
@@ -531,7 +531,7 @@ class FMPExecutiveProfile(FMPBaseModel):
     name: str
     pay: Optional[float] = None
     currencyPay: str
-    gender: str
+    gender: Optional[str] = None
     yearBorn: Optional[int] = None
     active: Optional[int] = None
 
@@ -805,7 +805,7 @@ class FMPEconomicCalendarEvent(FMPBaseModel):
 
 class FMPMarketRiskPremium(FMPBaseModel):
     country: str
-    continent: str
+    continent: Optional[str] = None
     countryRiskPremium: float
     totalEquityRiskPremium: float
 
@@ -1416,7 +1416,7 @@ class FMPIndexConstituent(FMPBaseModel):
 
 class FMPHistoricalIndexConstituent(FMPBaseModel):
     dateAdded: str
-    addedSecurity: str
+    addedSecurity: Optional[str] = None
     removedTicker: Optional[str] = None
     removedSecurity: Optional[str] = None
     date: str

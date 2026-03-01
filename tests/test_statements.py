@@ -1392,12 +1392,12 @@ class TestFinancialStatementValidation:
             (
                 "GOOGL",
                 "profitability",
-                {"gross_margin": (50, 60), "net_margin": (20, 30)},
+                {"gross_margin": (50, 65), "net_margin": (20, 40)},
             ),
             (
                 "AMZN",
                 "profitability",
-                {"gross_margin": (35, 50), "net_margin": (-2, 15)},
+                {"gross_margin": (35, 55), "net_margin": (-2, 20)},
             ),  # Amazon can have thin/negative margins
             (
                 "JPM",

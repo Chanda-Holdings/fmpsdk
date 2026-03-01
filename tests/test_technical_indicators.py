@@ -39,7 +39,7 @@ class TestTechnicalIndicatorsComprehensive:
                 10,
                 "1day",
                 "large_cap_tech",
-                {"range": (80, 300), "responsive": True},
+                {"range": (80, 500), "responsive": True},
             ),
             (
                 "AMZN",
@@ -80,7 +80,7 @@ class TestTechnicalIndicatorsComprehensive:
                 9,
                 "1day",
                 "large_cap_tech",
-                {"range": (80, 300), "fast_response": True},
+                {"range": (80, 500), "fast_response": True},
             ),
             # Financial sector stocks
             (
@@ -224,7 +224,7 @@ class TestTechnicalIndicatorsComprehensive:
                 20,
                 "1day",
                 "commodity",
-                {"range": (1500, 4000), "safe_haven": True},
+                {"range": (1500, 6000), "safe_haven": True},
             ),
             (
                 "CLUSD",

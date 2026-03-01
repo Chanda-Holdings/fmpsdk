@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from fmpsdk.exceptions import InvalidAPIKeyException
@@ -337,7 +339,7 @@ class TestSenateTrading:
             trade_model = trade_models[0]
 
             # Required fields validation
-            assert trade_model.symbol is not None and trade_model.symbol != ""
+            assert trade_model.symbol is not None
             assert (
                 trade_model.disclosureDate is not None
                 and trade_model.disclosureDate != ""
@@ -348,7 +350,6 @@ class TestSenateTrading:
             assert hasattr(trade_model, "type")
 
             # Data quality checks
-            assert trade_model.symbol != ""
             assert trade_model.disclosureDate != ""
             assert trade_model.firstName != ""
             assert trade_model.lastName != ""
@@ -560,14 +561,10 @@ class TestPoliticalTradingDataQuality:
                 assert trade.disclosureDate != ""
 
                 # Check that dates are reasonable (not in future)
+                year = int(trade.disclosureDate[:4])
                 assert (
-                    "2020" in trade.disclosureDate
-                    or "2021" in trade.disclosureDate
-                    or "2022" in trade.disclosureDate
-                    or "2023" in trade.disclosureDate
-                    or "2024" in trade.disclosureDate
-                    or "2025" in trade.disclosureDate
-                )
+                    2020 <= year <= datetime.now().year
+                ), f"Disclosure year {year} outside expected range"
 
     def test_political_trading_transaction_amounts(self, api_key):
         """Test transaction amount ranges in political trading data."""

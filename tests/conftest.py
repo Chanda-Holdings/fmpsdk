@@ -2,6 +2,9 @@ import os
 from typing import Any, Dict, List, Union
 
 import pytest
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from fmpsdk.exceptions import PremiumEndpointException
 
