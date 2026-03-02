@@ -67,7 +67,7 @@ class FMPStockScreenerResult(FMPBaseModel):
     beta: Optional[float] = None
     price: float
     lastAnnualDividend: Optional[float] = None
-    volume: int
+    volume: float
     exchange: str
     exchangeShortName: str
     country: Optional[str] = None
