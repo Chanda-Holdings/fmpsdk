@@ -451,7 +451,7 @@ class FMPIntradayDataPoint(FMPBaseModel):
     low: float
     high: float
     close: float
-    volume: int
+    volume: float
 
 
 class FMPCompanyNote(FMPBaseModel):
@@ -1573,7 +1573,7 @@ class FMPAftermarketQuote(FMPBaseModel):
     bidPrice: float
     askSize: int
     askPrice: float
-    volume: int
+    volume: float
     timestamp: int
 
 

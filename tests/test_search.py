@@ -963,9 +963,9 @@ class TestSearchEdgeCases:
 
         if search_results:
             first_result = search_results[0]
-            # Should find Apple
+            # Should find Apple (may return AAPL or AAPL.NE etc.)
             if hasattr(first_result, "symbol"):
-                assert first_result.symbol == "AAPL"
+                assert "AAPL" in first_result.symbol
 
     def test_search_isin_edge_cases(self, api_key):
         """Test ISIN search with edge cases."""
