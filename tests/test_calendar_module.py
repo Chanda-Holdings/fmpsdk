@@ -18,7 +18,6 @@ from fmpsdk.exceptions import InvalidAPIKeyException
 from fmpsdk.models import (
     FMPDisclosureFiling,
     FMPDividend,
-    FMPDividendCalendarEvent,
     FMPDividendCalendarEventV3,
     FMPEarningsCalendarEvent,
     FMPEarningsReport,
@@ -300,7 +299,7 @@ class TestDividendsCalendar:
             apikey=api_key, from_date=from_date, to_date=to_date
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
 
         if result_list:
@@ -318,7 +317,7 @@ class TestDividendsCalendar:
                     assert dividend_amount > 0, "Dividend amount should be positive"
 
                 # Test Pydantic model validation
-                dividend_event = FMPDividendCalendarEvent(**first_event)
+                dividend_event = FMPDividend(**first_event)
                 assert dividend_event.symbol is not None
             else:
                 # Already a Pydantic model
@@ -361,7 +360,7 @@ class TestDividendsCalendar:
             to_date=to_date,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
 
         if result_list:
@@ -398,7 +397,7 @@ class TestDividendsCalendar:
             to_date=to_date,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividend)
         assert isinstance(result_list, list)
 
         if len(result_list) > 0:
@@ -1023,7 +1022,7 @@ class TestCalendarErrorHandling:
         if isinstance(result, dict) and "Error Message" in result:
             assert "Error Message" in result
         else:
-            result_list = get_response_models(result, FMPDividendCalendarEvent)
+            result_list = get_response_models(result, FMPDividend)
             assert isinstance(result_list, list)
 
     def test_ipos_calendar_invalid_api_key(self):
@@ -1095,7 +1094,7 @@ class TestCalendarDataQuality:
         if endpoint_type == "earnings_calendar":
             model_class = FMPEarningsCalendarEvent
         elif endpoint_type == "dividends_calendar":
-            model_class = FMPDividendCalendarEvent
+            model_class = FMPDividend
         elif endpoint_type == "splits_calendar":
             model_class = FMPStockSplit
         elif endpoint_type == "ipos_calendar":
@@ -1148,7 +1147,7 @@ class TestCalendarDataQuality:
             result = dividends_calendar(
                 apikey=api_key, from_date=from_date, to_date=to_date
             )
-            model_class = FMPDividendCalendarEvent
+            model_class = FMPDividend
             field_name = "dividend"
         else:
             result = earnings_calendar(
@@ -1222,7 +1221,7 @@ class TestDividendsCalendarV3:
             apikey=api_key,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividendCalendarEventV3)
 
         if result_list:
             assert isinstance(result_list, list)
@@ -1257,7 +1256,7 @@ class TestDividendsCalendarV3:
             to_date=end_date,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividendCalendarEventV3)
         assert isinstance(result_list, list)
 
         # Validate date filtering if results are returned
@@ -1290,7 +1289,7 @@ class TestDividendsCalendarV3:
             to_date=to_date,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividendCalendarEventV3)
         assert isinstance(result_list, list)
 
         # Basic validation - results may be empty for some date ranges
@@ -1316,7 +1315,7 @@ class TestDividendsCalendarV3:
             to_date=end_date,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividendCalendarEventV3)
         assert isinstance(result_list, list)
 
         if result_list:
@@ -1365,7 +1364,7 @@ class TestDividendsCalendarV3:
             to_date=future_end,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividendCalendarEventV3)
         assert isinstance(result_list, list)
         # Future dates may have some scheduled dividends, so we just check it's a list
 
@@ -1381,7 +1380,7 @@ class TestDividendsCalendarV3:
             from_date=start_date,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividendCalendarEventV3)
         assert isinstance(result_list, list)
 
         # Test with only to_date
@@ -1394,7 +1393,7 @@ class TestDividendsCalendarV3:
             to_date=end_date,
         )
 
-        result_list = get_response_models(result, FMPDividendCalendarEvent)
+        result_list = get_response_models(result, FMPDividendCalendarEventV3)
         assert isinstance(result_list, list)
 
     def test_dividends_calendar_v3_comparison_with_v1(self, api_key):
@@ -1420,8 +1419,8 @@ class TestDividendsCalendarV3:
             to_date=test_date,
         )
 
-        result_list_v3 = get_response_models(result_v3, FMPDividendCalendarEvent)
-        result_list_v1 = get_response_models(result_v1, FMPDividendCalendarEvent)
+        result_list_v3 = get_response_models(result_v3, FMPDividendCalendarEventV3)
+        result_list_v1 = get_response_models(result_v1, FMPDividend)
 
         # Both should return lists
         assert isinstance(result_list_v3, list)

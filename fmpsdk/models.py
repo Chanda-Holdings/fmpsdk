@@ -337,18 +337,6 @@ class FMPDividend(FMPBaseModel):
     frequency: str
 
 
-class FMPDividendCalendarEvent(FMPBaseModel):
-    symbol: str
-    date: str
-    recordDate: str
-    paymentDate: str
-    declarationDate: str
-    adjDividend: float
-    dividend: float
-    yield_: Optional[float] = None
-    frequency: str
-
-
 class FMPDividendCalendarEventV3(FMPBaseModel):
     date: str
     label: str

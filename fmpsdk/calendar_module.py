@@ -5,7 +5,7 @@ from pydantic import RootModel
 from .models import (
     FMPDisclosureFiling,
     FMPDividend,
-    FMPDividendCalendarEvent,
+    FMPDividend,
     FMPDividendCalendarEventV3,
     FMPEarningsCalendarEvent,
     FMPEarningsReport,
@@ -72,7 +72,7 @@ def dividends_calendar_v3(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
-) -> RootModel[typing.List[FMPDividendCalendarEvent]]:
+) -> RootModel[typing.List[FMPDividendCalendarEventV3]]:
     """
     Get dividends calendar using the /v3/stock_dividend_calendat endpoint.
 

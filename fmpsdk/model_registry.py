@@ -41,7 +41,6 @@ from .models import (
     FMPDelistedCompany,
     FMPDisclosureFiling,
     FMPDividend,
-    FMPDividendCalendarEvent,
     FMPDividendCalendarEventV3,
     FMPEarningsCalendarEvent,
     FMPEarningsReport,
@@ -189,7 +188,7 @@ ENDPOINT_MODEL_MAP = {
     "stock_grade_latest_news": RootModel[List[FMPStockGradeNews]],
     # Calendar
     "dividends": RootModel[List[FMPDividend]],
-    "dividends_calendar": RootModel[List[FMPDividendCalendarEvent]],
+    "dividends_calendar": RootModel[List[FMPDividend]],
     "dividends_calendar_v3": RootModel[List[FMPDividendCalendarEventV3]],
     "earnings_calendar": RootModel[List[FMPEarningsCalendarEvent]],
     "earnings": RootModel[List[FMPEarningsReport]],
