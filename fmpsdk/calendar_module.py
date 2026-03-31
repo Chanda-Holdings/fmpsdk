@@ -5,7 +5,6 @@ from pydantic import RootModel
 from .models import (
     FMPDisclosureFiling,
     FMPDividend,
-    FMPDividend,
     FMPDividendCalendarEventV3,
     FMPEarningsCalendarEvent,
     FMPEarningsReport,
