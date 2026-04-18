@@ -221,6 +221,8 @@ def iterate_over_pages(
 def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
     from functools import wraps
 
+    from pydantic import ValidationError
+
     from .model_registry import ENDPOINT_MODEL_MAP
 
     @wraps(func)
@@ -248,6 +250,9 @@ def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
                 else:
                     # Fallback to constructor for RootModel
                     result = model(raw)
+            except ValidationError as ve:
+                _report_validation_error(func.__name__, raw, ve)
+                raise
             except (AttributeError, TypeError):
                 # Final fallback to constructor
                 result = model(raw)
@@ -260,6 +265,46 @@ def parse_response(func: Callable[..., Any]) -> Callable[..., Any]:
             )
 
     return wrapper
+
+
+def _report_validation_error(endpoint: str, raw: Any, err: Any) -> None:
+    """Print offending records and dump raw response when pydantic validation fails.
+
+    Helps debugging schema drift: pytest output shows the actual records (symbol/date/
+    values) that violated the model, and the full raw response is written to
+    ``{endpoint}_response.json`` for manual inspection.
+    """
+    import os
+    import sys
+
+    bad_indices: typing.Set[int] = set()
+    if hasattr(err, "errors"):
+        for e in err.errors():
+            loc = e.get("loc", ())
+            for part in loc:
+                if isinstance(part, int):
+                    bad_indices.add(part)
+                    break
+
+    sys.stderr.write(
+        f"\n[parse_response] Validation failed for endpoint '{endpoint}' "
+        f"({len(bad_indices)} bad record(s) out of "
+        f"{len(raw) if isinstance(raw, list) else 'N/A'}):\n"
+    )
+    if isinstance(raw, list):
+        for idx in sorted(bad_indices)[:10]:
+            if 0 <= idx < len(raw):
+                sys.stderr.write(f"  [{idx}] {json.dumps(raw[idx])}\n")
+        if len(bad_indices) > 10:
+            sys.stderr.write(f"  ... {len(bad_indices) - 10} more\n")
+
+    try:
+        out_path = os.path.join(os.getcwd(), f"{endpoint}_response.json")
+        with open(out_path, "w") as fh:
+            json.dump(raw, fh, indent=2, default=str)
+        sys.stderr.write(f"  Raw response written to: {out_path}\n")
+    except OSError as write_err:
+        sys.stderr.write(f"  Could not write raw response: {write_err}\n")
 
 
 def to_dict_list(response: Any) -> typing.List[typing.Dict[str, Any]]:

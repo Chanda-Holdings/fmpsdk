@@ -340,9 +340,9 @@ class FMPDividend(FMPBaseModel):
 class FMPDividendCalendarEventV3(FMPBaseModel):
     date: str
     label: str
-    adjDividend: float
+    adjDividend: Optional[float]
     symbol: str
-    dividend: float
+    dividend: Optional[float]
     recordDate: Optional[str] = None
     paymentDate: Optional[str] = None
     declarationDate: Optional[str] = None
