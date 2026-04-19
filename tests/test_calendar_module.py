@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+
 import pytest
 
 from fmpsdk.calendar_module import (
