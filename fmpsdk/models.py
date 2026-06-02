@@ -2016,8 +2016,8 @@ class FMPKeyMetrics(FMPBaseModel):
     grahamNetNet: Optional[float] = None
     taxBurden: Optional[float] = None
     interestBurden: Optional[float] = None
-    workingCapital: Optional[int] = None
-    investedCapital: Optional[int] = None
+    workingCapital: Optional[float] = None
+    investedCapital: Optional[float] = None
     returnOnAssets: Optional[float] = None
     operatingReturnOnAssets: Optional[float] = None
     returnOnTangibleAssets: Optional[float] = None
@@ -2035,16 +2035,16 @@ class FMPKeyMetrics(FMPBaseModel):
     intangiblesToTotalAssets: Optional[float] = None
     averageReceivables: Optional[float] = None
     averagePayables: Optional[float] = None
-    averageInventory: Optional[int] = None
+    averageInventory: Optional[float] = None
     daysOfSalesOutstanding: Optional[float] = None
     daysOfPayablesOutstanding: Optional[float] = None
     daysOfInventoryOutstanding: Optional[float] = None
     operatingCycle: Optional[float] = None
     cashConversionCycle: Optional[float] = None
-    freeCashFlowToEquity: Optional[int] = None
+    freeCashFlowToEquity: Optional[float] = None
     freeCashFlowToFirm: Optional[float] = None
-    tangibleAssetValue: Optional[int] = None
-    netCurrentAssetValue: Optional[int] = None
+    tangibleAssetValue: Optional[float] = None
+    netCurrentAssetValue: Optional[float] = None
 
 
 class FMPKeyMetricsTTM(FMPBaseModel):
@@ -2062,8 +2062,8 @@ class FMPKeyMetricsTTM(FMPBaseModel):
     grahamNetNetTTM: Optional[float] = None
     taxBurdenTTM: Optional[float] = None
     interestBurdenTTM: Optional[float] = None
-    workingCapitalTTM: Optional[int] = None
-    investedCapitalTTM: Optional[int] = None
+    workingCapitalTTM: Optional[float] = None
+    investedCapitalTTM: Optional[float] = None
     returnOnAssetsTTM: Optional[float] = None
     operatingReturnOnAssetsTTM: Optional[float] = None
     returnOnTangibleAssetsTTM: Optional[float] = None
@@ -2081,16 +2081,16 @@ class FMPKeyMetricsTTM(FMPBaseModel):
     intangiblesToTotalAssetsTTM: Optional[float] = None
     averageReceivablesTTM: Optional[float] = None
     averagePayablesTTM: Optional[float] = None
-    averageInventoryTTM: Optional[int] = None
+    averageInventoryTTM: Optional[float] = None
     daysOfSalesOutstandingTTM: Optional[float] = None
     daysOfPayablesOutstandingTTM: Optional[float] = None
     daysOfInventoryOutstandingTTM: Optional[float] = None
     operatingCycleTTM: Optional[float] = None
     cashConversionCycleTTM: Optional[float] = None
-    freeCashFlowToEquityTTM: Optional[int] = None
+    freeCashFlowToEquityTTM: Optional[float] = None
     freeCashFlowToFirmTTM: Optional[float] = None
-    tangibleAssetValueTTM: Optional[int] = None
-    netCurrentAssetValueTTM: Optional[int] = None
+    tangibleAssetValueTTM: Optional[float] = None
+    netCurrentAssetValueTTM: Optional[float] = None
 
 
 class FMPFinancialRatios(FMPBaseModel):
