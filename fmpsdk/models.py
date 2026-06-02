@@ -701,15 +701,15 @@ class FMPCommitmentOfTradersAnalysis(FMPBaseModel):
 class FMPDcfValuation(FMPBaseModel):
     symbol: str
     date: str
-    dcf: float
-    Stock_Price: float = Field(alias="Stock Price")
+    dcf: Optional[float] = None
+    Stock_Price: Optional[float] = Field(default=None, alias="Stock Price")
 
 
 class FMPDCFCustomValuation(FMPBaseModel):
     year: str
     symbol: str
-    revenue: int
-    revenuePercentage: float
+    revenue: Optional[int] = None
+    revenuePercentage: Optional[float] = None
     ebitda: Optional[float] = None
     ebitdaPercentage: Optional[float] = None
     ebit: Optional[float] = None
@@ -725,34 +725,34 @@ class FMPDCFCustomValuation(FMPBaseModel):
     payable: Optional[float] = None
     payablePercentage: Optional[float] = None
     capitalExpenditure: Optional[float] = None
-    capitalExpenditurePercentage: float
-    price: float
-    beta: float
-    dilutedSharesOutstanding: int
-    costofDebt: float
-    taxRate: float
-    afterTaxCostOfDebt: float
-    riskFreeRate: float
-    marketRiskPremium: float
-    costOfEquity: float
-    totalDebt: int
-    totalEquity: int
-    totalCapital: int
-    debtWeighting: float
-    equityWeighting: float
-    wacc: float
+    capitalExpenditurePercentage: Optional[float] = None
+    price: Optional[float] = None
+    beta: Optional[float] = None
+    dilutedSharesOutstanding: Optional[int] = None
+    costofDebt: Optional[float] = None
+    taxRate: Optional[float] = None
+    afterTaxCostOfDebt: Optional[float] = None
+    riskFreeRate: Optional[float] = None
+    marketRiskPremium: Optional[float] = None
+    costOfEquity: Optional[float] = None
+    totalDebt: Optional[int] = None
+    totalEquity: Optional[int] = None
+    totalCapital: Optional[int] = None
+    debtWeighting: Optional[float] = None
+    equityWeighting: Optional[float] = None
+    wacc: Optional[float] = None
     taxRateCash: Optional[int] = None
     ebiat: Optional[float] = None
     ufcf: Optional[float] = None
     sumPvUfcf: Optional[int] = None
-    longTermGrowthRate: float
-    terminalValue: int
-    presentTerminalValue: int
-    enterpriseValue: int
-    netDebt: int
-    equityValue: int
-    equityValuePerShare: float
-    freeCashFlowT1: int
+    longTermGrowthRate: Optional[float] = None
+    terminalValue: Optional[int] = None
+    presentTerminalValue: Optional[int] = None
+    enterpriseValue: Optional[int] = None
+    netDebt: Optional[int] = None
+    equityValue: Optional[int] = None
+    equityValuePerShare: Optional[float] = None
+    freeCashFlowT1: Optional[int] = None
 
 
 class FMPTreasuryRates(FMPBaseModel):
@@ -1672,15 +1672,15 @@ class FMPBulkDCF(FMPBaseModel):
 class FMPFinancialScores(FMPBaseModel):
     symbol: str
     reportedCurrency: str
-    altmanZScore: float
-    piotroskiScore: int
-    workingCapital: float
-    totalAssets: float
-    retainedEarnings: float
-    ebit: float
-    marketCap: float
-    totalLiabilities: float
-    revenue: float
+    altmanZScore: Optional[float] = None
+    piotroskiScore: Optional[int] = None
+    workingCapital: Optional[float] = None
+    totalAssets: Optional[float] = None
+    retainedEarnings: Optional[float] = None
+    ebit: Optional[float] = None
+    marketCap: Optional[float] = None
+    totalLiabilities: Optional[float] = None
+    revenue: Optional[float] = None
 
 
 class FMPBulkPriceTargetSummary(FMPBaseModel):
@@ -2005,92 +2005,92 @@ class FMPKeyMetrics(FMPBaseModel):
     reportedCurrency: str
     marketCap: Optional[float] = None
     enterpriseValue: Optional[float] = None
-    evToSales: float
-    evToOperatingCashFlow: float
-    evToFreeCashFlow: float
-    evToEBITDA: float
-    netDebtToEBITDA: float
-    currentRatio: float
-    incomeQuality: float
+    evToSales: Optional[float] = None
+    evToOperatingCashFlow: Optional[float] = None
+    evToFreeCashFlow: Optional[float] = None
+    evToEBITDA: Optional[float] = None
+    netDebtToEBITDA: Optional[float] = None
+    currentRatio: Optional[float] = None
+    incomeQuality: Optional[float] = None
     grahamNumber: Optional[float] = None
-    grahamNetNet: float
-    taxBurden: float
-    interestBurden: float
-    workingCapital: int
-    investedCapital: int
-    returnOnAssets: float
-    operatingReturnOnAssets: float
-    returnOnTangibleAssets: float
-    returnOnEquity: float
-    returnOnInvestedCapital: float
-    returnOnCapitalEmployed: float
-    earningsYield: float
-    freeCashFlowYield: float
-    capexToOperatingCashFlow: float
-    capexToDepreciation: float
-    capexToRevenue: float
+    grahamNetNet: Optional[float] = None
+    taxBurden: Optional[float] = None
+    interestBurden: Optional[float] = None
+    workingCapital: Optional[int] = None
+    investedCapital: Optional[int] = None
+    returnOnAssets: Optional[float] = None
+    operatingReturnOnAssets: Optional[float] = None
+    returnOnTangibleAssets: Optional[float] = None
+    returnOnEquity: Optional[float] = None
+    returnOnInvestedCapital: Optional[float] = None
+    returnOnCapitalEmployed: Optional[float] = None
+    earningsYield: Optional[float] = None
+    freeCashFlowYield: Optional[float] = None
+    capexToOperatingCashFlow: Optional[float] = None
+    capexToDepreciation: Optional[float] = None
+    capexToRevenue: Optional[float] = None
     salesGeneralAndAdministrativeToRevenue: Optional[float] = None
-    researchAndDevelopementToRevenue: float
-    stockBasedCompensationToRevenue: float
+    researchAndDevelopementToRevenue: Optional[float] = None
+    stockBasedCompensationToRevenue: Optional[float] = None
     intangiblesToTotalAssets: Optional[float] = None
-    averageReceivables: float
-    averagePayables: float
-    averageInventory: int
-    daysOfSalesOutstanding: float
-    daysOfPayablesOutstanding: float
-    daysOfInventoryOutstanding: float
-    operatingCycle: float
-    cashConversionCycle: float
-    freeCashFlowToEquity: int
-    freeCashFlowToFirm: float
-    tangibleAssetValue: int
-    netCurrentAssetValue: int
+    averageReceivables: Optional[float] = None
+    averagePayables: Optional[float] = None
+    averageInventory: Optional[int] = None
+    daysOfSalesOutstanding: Optional[float] = None
+    daysOfPayablesOutstanding: Optional[float] = None
+    daysOfInventoryOutstanding: Optional[float] = None
+    operatingCycle: Optional[float] = None
+    cashConversionCycle: Optional[float] = None
+    freeCashFlowToEquity: Optional[int] = None
+    freeCashFlowToFirm: Optional[float] = None
+    tangibleAssetValue: Optional[int] = None
+    netCurrentAssetValue: Optional[int] = None
 
 
 class FMPKeyMetricsTTM(FMPBaseModel):
     symbol: str
     marketCap: Optional[float] = None
     enterpriseValueTTM: Optional[float] = None
-    evToSalesTTM: float
-    evToOperatingCashFlowTTM: float
-    evToFreeCashFlowTTM: float
-    evToEBITDATTM: float
-    netDebtToEBITDATTM: float
-    currentRatioTTM: float
-    incomeQualityTTM: float
-    grahamNumberTTM: float
-    grahamNetNetTTM: float
-    taxBurdenTTM: float
-    interestBurdenTTM: float
-    workingCapitalTTM: int
-    investedCapitalTTM: int
-    returnOnAssetsTTM: float
-    operatingReturnOnAssetsTTM: float
-    returnOnTangibleAssetsTTM: float
-    returnOnEquityTTM: float
-    returnOnInvestedCapitalTTM: float
-    returnOnCapitalEmployedTTM: float
-    earningsYieldTTM: float
-    freeCashFlowYieldTTM: float
-    capexToOperatingCashFlowTTM: float
-    capexToDepreciationTTM: float
-    capexToRevenueTTM: float
+    evToSalesTTM: Optional[float] = None
+    evToOperatingCashFlowTTM: Optional[float] = None
+    evToFreeCashFlowTTM: Optional[float] = None
+    evToEBITDATTM: Optional[float] = None
+    netDebtToEBITDATTM: Optional[float] = None
+    currentRatioTTM: Optional[float] = None
+    incomeQualityTTM: Optional[float] = None
+    grahamNumberTTM: Optional[float] = None
+    grahamNetNetTTM: Optional[float] = None
+    taxBurdenTTM: Optional[float] = None
+    interestBurdenTTM: Optional[float] = None
+    workingCapitalTTM: Optional[int] = None
+    investedCapitalTTM: Optional[int] = None
+    returnOnAssetsTTM: Optional[float] = None
+    operatingReturnOnAssetsTTM: Optional[float] = None
+    returnOnTangibleAssetsTTM: Optional[float] = None
+    returnOnEquityTTM: Optional[float] = None
+    returnOnInvestedCapitalTTM: Optional[float] = None
+    returnOnCapitalEmployedTTM: Optional[float] = None
+    earningsYieldTTM: Optional[float] = None
+    freeCashFlowYieldTTM: Optional[float] = None
+    capexToOperatingCashFlowTTM: Optional[float] = None
+    capexToDepreciationTTM: Optional[float] = None
+    capexToRevenueTTM: Optional[float] = None
     salesGeneralAndAdministrativeToRevenueTTM: Optional[float] = None
-    researchAndDevelopementToRevenueTTM: float
-    stockBasedCompensationToRevenueTTM: float
+    researchAndDevelopementToRevenueTTM: Optional[float] = None
+    stockBasedCompensationToRevenueTTM: Optional[float] = None
     intangiblesToTotalAssetsTTM: Optional[float] = None
-    averageReceivablesTTM: float
-    averagePayablesTTM: float
-    averageInventoryTTM: int
-    daysOfSalesOutstandingTTM: float
-    daysOfPayablesOutstandingTTM: float
-    daysOfInventoryOutstandingTTM: float
-    operatingCycleTTM: float
-    cashConversionCycleTTM: float
-    freeCashFlowToEquityTTM: int
-    freeCashFlowToFirmTTM: float
-    tangibleAssetValueTTM: int
-    netCurrentAssetValueTTM: int
+    averageReceivablesTTM: Optional[float] = None
+    averagePayablesTTM: Optional[float] = None
+    averageInventoryTTM: Optional[int] = None
+    daysOfSalesOutstandingTTM: Optional[float] = None
+    daysOfPayablesOutstandingTTM: Optional[float] = None
+    daysOfInventoryOutstandingTTM: Optional[float] = None
+    operatingCycleTTM: Optional[float] = None
+    cashConversionCycleTTM: Optional[float] = None
+    freeCashFlowToEquityTTM: Optional[int] = None
+    freeCashFlowToFirmTTM: Optional[float] = None
+    tangibleAssetValueTTM: Optional[int] = None
+    netCurrentAssetValueTTM: Optional[int] = None
 
 
 class FMPFinancialRatios(FMPBaseModel):
@@ -2099,126 +2099,126 @@ class FMPFinancialRatios(FMPBaseModel):
     fiscalYear: str
     period: str
     reportedCurrency: str
-    grossProfitMargin: float
-    ebitMargin: float
-    ebitdaMargin: float
-    operatingProfitMargin: float
-    pretaxProfitMargin: float
-    continuousOperationsProfitMargin: float
-    netProfitMargin: float
-    bottomLineProfitMargin: float
-    receivablesTurnover: float
-    payablesTurnover: float
-    inventoryTurnover: float
-    fixedAssetTurnover: float
-    assetTurnover: float
-    currentRatio: float
-    quickRatio: float
-    solvencyRatio: float
-    cashRatio: float
-    priceToEarningsRatio: float
-    priceToEarningsGrowthRatio: float
-    forwardPriceToEarningsGrowthRatio: float
-    priceToBookRatio: float
-    priceToSalesRatio: float
-    priceToFreeCashFlowRatio: float
-    priceToOperatingCashFlowRatio: float
-    debtToAssetsRatio: float
-    debtToEquityRatio: float
-    debtToCapitalRatio: float
-    longTermDebtToCapitalRatio: float
-    financialLeverageRatio: float
-    workingCapitalTurnoverRatio: float
-    operatingCashFlowRatio: float
-    operatingCashFlowSalesRatio: float
-    freeCashFlowOperatingCashFlowRatio: float
-    debtServiceCoverageRatio: float
-    interestCoverageRatio: float
-    shortTermOperatingCashFlowCoverageRatio: float
-    operatingCashFlowCoverageRatio: float
-    capitalExpenditureCoverageRatio: float
-    dividendPaidAndCapexCoverageRatio: float
-    dividendPayoutRatio: float
-    dividendYield: float
-    dividendYieldPercentage: float
-    revenuePerShare: float
-    netIncomePerShare: float
-    interestDebtPerShare: float
-    cashPerShare: float
-    bookValuePerShare: float
-    tangibleBookValuePerShare: float
-    shareholdersEquityPerShare: float
-    operatingCashFlowPerShare: float
-    capexPerShare: float
-    freeCashFlowPerShare: float
-    netIncomePerEBT: float
-    ebtPerEbit: float
-    priceToFairValue: float
-    debtToMarketCap: float
-    effectiveTaxRate: float
-    enterpriseValueMultiple: float
-    dividendPerShare: float
+    grossProfitMargin: Optional[float] = None
+    ebitMargin: Optional[float] = None
+    ebitdaMargin: Optional[float] = None
+    operatingProfitMargin: Optional[float] = None
+    pretaxProfitMargin: Optional[float] = None
+    continuousOperationsProfitMargin: Optional[float] = None
+    netProfitMargin: Optional[float] = None
+    bottomLineProfitMargin: Optional[float] = None
+    receivablesTurnover: Optional[float] = None
+    payablesTurnover: Optional[float] = None
+    inventoryTurnover: Optional[float] = None
+    fixedAssetTurnover: Optional[float] = None
+    assetTurnover: Optional[float] = None
+    currentRatio: Optional[float] = None
+    quickRatio: Optional[float] = None
+    solvencyRatio: Optional[float] = None
+    cashRatio: Optional[float] = None
+    priceToEarningsRatio: Optional[float] = None
+    priceToEarningsGrowthRatio: Optional[float] = None
+    forwardPriceToEarningsGrowthRatio: Optional[float] = None
+    priceToBookRatio: Optional[float] = None
+    priceToSalesRatio: Optional[float] = None
+    priceToFreeCashFlowRatio: Optional[float] = None
+    priceToOperatingCashFlowRatio: Optional[float] = None
+    debtToAssetsRatio: Optional[float] = None
+    debtToEquityRatio: Optional[float] = None
+    debtToCapitalRatio: Optional[float] = None
+    longTermDebtToCapitalRatio: Optional[float] = None
+    financialLeverageRatio: Optional[float] = None
+    workingCapitalTurnoverRatio: Optional[float] = None
+    operatingCashFlowRatio: Optional[float] = None
+    operatingCashFlowSalesRatio: Optional[float] = None
+    freeCashFlowOperatingCashFlowRatio: Optional[float] = None
+    debtServiceCoverageRatio: Optional[float] = None
+    interestCoverageRatio: Optional[float] = None
+    shortTermOperatingCashFlowCoverageRatio: Optional[float] = None
+    operatingCashFlowCoverageRatio: Optional[float] = None
+    capitalExpenditureCoverageRatio: Optional[float] = None
+    dividendPaidAndCapexCoverageRatio: Optional[float] = None
+    dividendPayoutRatio: Optional[float] = None
+    dividendYield: Optional[float] = None
+    dividendYieldPercentage: Optional[float] = None
+    revenuePerShare: Optional[float] = None
+    netIncomePerShare: Optional[float] = None
+    interestDebtPerShare: Optional[float] = None
+    cashPerShare: Optional[float] = None
+    bookValuePerShare: Optional[float] = None
+    tangibleBookValuePerShare: Optional[float] = None
+    shareholdersEquityPerShare: Optional[float] = None
+    operatingCashFlowPerShare: Optional[float] = None
+    capexPerShare: Optional[float] = None
+    freeCashFlowPerShare: Optional[float] = None
+    netIncomePerEBT: Optional[float] = None
+    ebtPerEbit: Optional[float] = None
+    priceToFairValue: Optional[float] = None
+    debtToMarketCap: Optional[float] = None
+    effectiveTaxRate: Optional[float] = None
+    enterpriseValueMultiple: Optional[float] = None
+    dividendPerShare: Optional[float] = None
 
 
 class FMPFinancialRatiosTTM(FMPBaseModel):
     symbol: str
-    grossProfitMarginTTM: float
-    ebitMarginTTM: float
-    ebitdaMarginTTM: float
-    operatingProfitMarginTTM: float
-    pretaxProfitMarginTTM: float
-    continuousOperationsProfitMarginTTM: float
-    netProfitMarginTTM: float
-    bottomLineProfitMarginTTM: float
-    receivablesTurnoverTTM: float
-    payablesTurnoverTTM: float
-    inventoryTurnoverTTM: float
-    fixedAssetTurnoverTTM: float
-    assetTurnoverTTM: float
-    currentRatioTTM: float
-    quickRatioTTM: float
-    solvencyRatioTTM: float
-    cashRatioTTM: float
-    priceToEarningsRatioTTM: float
-    priceToEarningsGrowthRatioTTM: float
-    forwardPriceToEarningsGrowthRatioTTM: float
-    priceToBookRatioTTM: float
-    priceToSalesRatioTTM: float
-    priceToFreeCashFlowRatioTTM: float
-    priceToOperatingCashFlowRatioTTM: float
-    debtToAssetsRatioTTM: float
-    debtToEquityRatioTTM: float
-    debtToCapitalRatioTTM: float
-    longTermDebtToCapitalRatioTTM: float
-    financialLeverageRatioTTM: float
-    workingCapitalTurnoverRatioTTM: float
-    operatingCashFlowRatioTTM: float
-    operatingCashFlowSalesRatioTTM: float
-    freeCashFlowOperatingCashFlowRatioTTM: float
-    debtServiceCoverageRatioTTM: float
-    interestCoverageRatioTTM: float
-    shortTermOperatingCashFlowCoverageRatioTTM: float
-    operatingCashFlowCoverageRatioTTM: float
-    capitalExpenditureCoverageRatioTTM: float
-    dividendPaidAndCapexCoverageRatioTTM: float
-    dividendPayoutRatioTTM: float
-    dividendYieldTTM: float
-    revenuePerShareTTM: float
-    netIncomePerShareTTM: float
-    interestDebtPerShareTTM: float
-    cashPerShareTTM: float
-    bookValuePerShareTTM: float
-    tangibleBookValuePerShareTTM: float
-    shareholdersEquityPerShareTTM: float
-    operatingCashFlowPerShareTTM: float
-    capexPerShareTTM: float
-    freeCashFlowPerShareTTM: float
-    netIncomePerEBTTTM: float
-    ebtPerEbitTTM: float
-    priceToFairValueTTM: float
-    debtToMarketCapTTM: float
-    effectiveTaxRateTTM: float
-    enterpriseValueMultipleTTM: float
+    grossProfitMarginTTM: Optional[float] = None
+    ebitMarginTTM: Optional[float] = None
+    ebitdaMarginTTM: Optional[float] = None
+    operatingProfitMarginTTM: Optional[float] = None
+    pretaxProfitMarginTTM: Optional[float] = None
+    continuousOperationsProfitMarginTTM: Optional[float] = None
+    netProfitMarginTTM: Optional[float] = None
+    bottomLineProfitMarginTTM: Optional[float] = None
+    receivablesTurnoverTTM: Optional[float] = None
+    payablesTurnoverTTM: Optional[float] = None
+    inventoryTurnoverTTM: Optional[float] = None
+    fixedAssetTurnoverTTM: Optional[float] = None
+    assetTurnoverTTM: Optional[float] = None
+    currentRatioTTM: Optional[float] = None
+    quickRatioTTM: Optional[float] = None
+    solvencyRatioTTM: Optional[float] = None
+    cashRatioTTM: Optional[float] = None
+    priceToEarningsRatioTTM: Optional[float] = None
+    priceToEarningsGrowthRatioTTM: Optional[float] = None
+    forwardPriceToEarningsGrowthRatioTTM: Optional[float] = None
+    priceToBookRatioTTM: Optional[float] = None
+    priceToSalesRatioTTM: Optional[float] = None
+    priceToFreeCashFlowRatioTTM: Optional[float] = None
+    priceToOperatingCashFlowRatioTTM: Optional[float] = None
+    debtToAssetsRatioTTM: Optional[float] = None
+    debtToEquityRatioTTM: Optional[float] = None
+    debtToCapitalRatioTTM: Optional[float] = None
+    longTermDebtToCapitalRatioTTM: Optional[float] = None
+    financialLeverageRatioTTM: Optional[float] = None
+    workingCapitalTurnoverRatioTTM: Optional[float] = None
+    operatingCashFlowRatioTTM: Optional[float] = None
+    operatingCashFlowSalesRatioTTM: Optional[float] = None
+    freeCashFlowOperatingCashFlowRatioTTM: Optional[float] = None
+    debtServiceCoverageRatioTTM: Optional[float] = None
+    interestCoverageRatioTTM: Optional[float] = None
+    shortTermOperatingCashFlowCoverageRatioTTM: Optional[float] = None
+    operatingCashFlowCoverageRatioTTM: Optional[float] = None
+    capitalExpenditureCoverageRatioTTM: Optional[float] = None
+    dividendPaidAndCapexCoverageRatioTTM: Optional[float] = None
+    dividendPayoutRatioTTM: Optional[float] = None
+    dividendYieldTTM: Optional[float] = None
+    revenuePerShareTTM: Optional[float] = None
+    netIncomePerShareTTM: Optional[float] = None
+    interestDebtPerShareTTM: Optional[float] = None
+    cashPerShareTTM: Optional[float] = None
+    bookValuePerShareTTM: Optional[float] = None
+    tangibleBookValuePerShareTTM: Optional[float] = None
+    shareholdersEquityPerShareTTM: Optional[float] = None
+    operatingCashFlowPerShareTTM: Optional[float] = None
+    capexPerShareTTM: Optional[float] = None
+    freeCashFlowPerShareTTM: Optional[float] = None
+    netIncomePerEBTTTM: Optional[float] = None
+    ebtPerEbitTTM: Optional[float] = None
+    priceToFairValueTTM: Optional[float] = None
+    debtToMarketCapTTM: Optional[float] = None
+    effectiveTaxRateTTM: Optional[float] = None
+    enterpriseValueMultipleTTM: Optional[float] = None
 
 
 class FMPIncomeStatementGrowth(FMPBaseModel):
