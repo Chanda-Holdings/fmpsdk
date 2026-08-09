@@ -433,6 +433,16 @@ class FMPHistoricalDataPointFull(FMPBaseModel):
     vwap: Optional[float] = None
 
 
+class FMPHistoricalDataPointAdjusted(FMPBaseModel):
+    symbol: str
+    date: str
+    adjOpen: Optional[float] = None
+    adjHigh: Optional[float] = None
+    adjLow: Optional[float] = None
+    adjClose: Optional[float] = None
+    volume: Optional[int] = None
+
+
 class FMPIntradayDataPoint(FMPBaseModel):
     date: str
     open: float

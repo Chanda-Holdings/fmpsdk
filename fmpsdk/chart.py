@@ -3,6 +3,7 @@ import typing
 from pydantic import RootModel
 
 from .models import (
+    FMPHistoricalDataPointAdjusted,
     FMPHistoricalDataPointFull,
     FMPHistoricalDataPointLight,
     FMPIntradayDataPoint,
@@ -57,7 +58,7 @@ def historical_price_eod(
 @parse_response
 def historical_price_eod_non_split_adjusted(
     apikey: str, symbol: str, from_date: str = None, to_date: str = None
-) -> RootModel[typing.List[FMPHistoricalDataPointFull]]:
+) -> RootModel[typing.List[FMPHistoricalDataPointAdjusted]]:
     """
     Query FMP /historical-price-eod/non-split-adjusted endpoint.
     :param apikey: Your API key.
@@ -78,7 +79,7 @@ def historical_price_eod_non_split_adjusted(
 @parse_response
 def historical_price_eod_dividend_adjusted(
     apikey: str, symbol: str, from_date: str = None, to_date: str = None
-) -> RootModel[typing.List[FMPHistoricalDataPointFull]]:
+) -> RootModel[typing.List[FMPHistoricalDataPointAdjusted]]:
     """
     Query FMP /historical-price-eod/dividend-adjusted endpoint.
     :param apikey: Your API key.
