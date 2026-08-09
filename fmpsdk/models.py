@@ -427,7 +427,7 @@ class FMPHistoricalDataPointFull(FMPBaseModel):
     high: float = None
     low: float = None
     close: float = None
-    volume: int = None
+    volume: float = None
     change: float = None
     changePercent: float = None
     vwap: float = None
@@ -440,7 +440,7 @@ class FMPHistoricalDataPointAdjusted(FMPBaseModel):
     adjHigh: float = None
     adjLow: float = None
     adjClose: float = None
-    volume: int = None
+    volume: float = None
 
 
 class FMPIntradayDataPoint(FMPBaseModel):
