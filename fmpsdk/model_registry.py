@@ -81,6 +81,7 @@ from .models import (
     FMPFundHolding,
     FMPFundInfo,
     FMPFundSectorWeighting,
+    FMPHistoricalDataPointAdjusted,
     FMPHistoricalDataPointFull,
     FMPHistoricalDataPointLight,
     FMPHistoricalEmployeeCount,
@@ -201,10 +202,10 @@ ENDPOINT_MODEL_MAP = {
     "historical_price_eod_light": RootModel[List[FMPHistoricalDataPointLight]],
     "historical_price_eod": RootModel[List[FMPHistoricalDataPointFull]],
     "historical_price_eod_non_split_adjusted": RootModel[
-        List[FMPHistoricalDataPointFull]
+        List[FMPHistoricalDataPointAdjusted]
     ],
     "historical_price_eod_dividend_adjusted": RootModel[
-        List[FMPHistoricalDataPointFull]
+        List[FMPHistoricalDataPointAdjusted]
     ],
     "historical_chart": RootModel[List[FMPIntradayDataPoint]],
     # Company

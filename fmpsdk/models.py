@@ -423,24 +423,24 @@ class FMPHistoricalDataPointLight(FMPBaseModel):
 class FMPHistoricalDataPointFull(FMPBaseModel):
     symbol: str
     date: str
-    open: Optional[float] = None
-    high: Optional[float] = None
-    low: Optional[float] = None
-    close: Optional[float] = None
-    volume: Optional[int] = None
-    change: Optional[float] = None
-    changePercent: Optional[float] = None
-    vwap: Optional[float] = None
+    open: float = None
+    high: float = None
+    low: float = None
+    close: float = None
+    volume: int = None
+    change: float = None
+    changePercent: float = None
+    vwap: float = None
 
 
 class FMPHistoricalDataPointAdjusted(FMPBaseModel):
     symbol: str
     date: str
-    adjOpen: Optional[float] = None
-    adjHigh: Optional[float] = None
-    adjLow: Optional[float] = None
-    adjClose: Optional[float] = None
-    volume: Optional[int] = None
+    adjOpen: float = None
+    adjHigh: float = None
+    adjLow: float = None
+    adjClose: float = None
+    volume: int = None
 
 
 class FMPIntradayDataPoint(FMPBaseModel):
