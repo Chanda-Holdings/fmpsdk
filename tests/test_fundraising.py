@@ -1015,8 +1015,9 @@ class TestFundraisingErrorHandling:
     )
     def test_fundraising_invalid_ciks(self, api_key, invalid_cik):
         """Test fundraising with invalid CIKs."""
-        # For obviously invalid CIKs (non-numeric), expect exception
-        if invalid_cik == "abc123def":
+        # cik is a required query parameter, so a non-numeric or empty value is
+        # rejected by the API rather than returning an empty result set.
+        if invalid_cik in ("abc123def", ""):
             with pytest.raises(InvalidQueryParameterException):
                 fundraising(apikey=api_key, cik=invalid_cik)
         else:

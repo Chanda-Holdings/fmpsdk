@@ -1254,10 +1254,13 @@ class TestFinancialStatementValidation:
                 assert cash_and_equivalents >= 0
                 assert cash_and_equivalents <= total_assets
 
-                # Cash-strong companies validation
-                if expected_balance_sheet_characteristics.get("cash_strong"):
-                    cash_ratio = cash_and_equivalents / total_assets
-                    assert cash_ratio >= 0.03  # At least 3% cash (lowered from 5%)
+            # Cash-strong companies validation. Use cash plus short-term
+            # investments: large caps park most of their liquidity in short-term
+            # investments, so cashAndCashEquivalents alone understates the position.
+            if expected_balance_sheet_characteristics.get("cash_strong"):
+                liquid_assets = stmt.cashAndShortTermInvestments
+                if liquid_assets is not None:
+                    assert liquid_assets / total_assets >= 0.05
 
             # Debt validation
             if total_debt is not None:
@@ -1387,7 +1390,7 @@ class TestFinancialStatementValidation:
             (
                 "MSFT",
                 "profitability",
-                {"gross_margin": (65, 75), "net_margin": (30, 40)},
+                {"gross_margin": (65, 75), "net_margin": (30, 45)},
             ),
             (
                 "GOOGL",

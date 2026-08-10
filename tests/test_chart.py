@@ -562,7 +562,10 @@ class TestChartDataConsistency:
         if asset_class == "cryptocurrency":
             min_expected = date_range_days - 5  # Account for potential gaps
         elif asset_class in ["forex", "commodity"]:
-            min_expected = int(date_range_days * 0.8)  # Account for weekends
+            # These trade 24/5, so a calendar window yields at most ~5/7 of its
+            # days. Allow a further 15% for holidays and feed lag (the metals
+            # and oil feeds can trail the forex feeds by a day or two).
+            min_expected = int(date_range_days * (5 / 7) * 0.85)
 
         assert (
             min_expected <= len(data_points) <= max_expected

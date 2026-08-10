@@ -45,25 +45,21 @@ def stock_list(
 @parse_response
 def financial_statement_symbol_list(
     apikey: str,
-    exchange: str = None,
-    limit: int = None,
 ) -> RootModel[typing.List[FMPFinancialStatementSymbolList]]:
     """
     Get a list of symbols with available financial statements using the /stable/financial-statement-symbol-list endpoint.
 
+    This endpoint takes no query parameters other than the API key and always
+    returns the full symbol universe. Slice the result client-side if you only
+    need part of it.
+
     Parameters:
         apikey (str): Your API key.
-        exchange (str, optional): Filter by exchange short name.
-        limit (int, optional): Limit the number of results.
     Returns:
         List of dictionaries with financial statement symbol list results.
     """
     path = "financial-statement-symbol-list"
     query_vars = {"apikey": apikey}
-    if exchange:
-        query_vars["exchange"] = exchange
-    if limit:
-        query_vars["limit"] = str(limit)
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 

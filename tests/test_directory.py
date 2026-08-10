@@ -150,7 +150,6 @@ class TestDirectoryBasic:
             directory.financial_statement_symbol_list,
             "financial_statement_symbol_list",
             apikey=api_key,
-            limit=30,
         )
 
         # Extract and validate models
@@ -566,7 +565,6 @@ class TestDirectoryDataQuality:
             directory.financial_statement_symbol_list,
             "financial_statement_symbol_list",
             apikey=api_key,
-            limit=50,
         )
 
         # Extract and validate models
@@ -578,8 +576,9 @@ class TestDirectoryDataQuality:
         )
 
         if models:
-            # Currency validation
-            for symbol_info in models:
+            # The endpoint always returns the full symbol universe (~32k rows);
+            # sample the first 50 rather than walking all of them.
+            for symbol_info in models[:50]:
                 # Trading currency validation
                 assert (
                     symbol_info.tradingCurrency is not None

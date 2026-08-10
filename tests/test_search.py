@@ -341,22 +341,25 @@ class TestCompanyNameSearch:
             assert name is not None and len(name) > 0
             assert len(symbol) <= 10  # Reasonable symbol length
 
-        # Search quality-specific validation
+        # The API returns global listings in no documented order, so the primary
+        # listing is not guaranteed to rank first. Match on the base symbol with
+        # any exchange suffix (e.g. "GOOGL.SW", "MSF.F") stripped off.
+        base_symbols = {item.symbol.split(".")[0] for item in search_results}
+
         if search_quality == "exact_match":
-            # Should find exact company match in top results
-            found_exact = any(
-                expected_symbol in item.symbol for item in search_results[:3]
-            )
-            assert found_exact, f"Should find {expected_symbol} for {company_name}"
+            # Should find the exact company match somewhere in the results
+            assert (
+                expected_symbol in base_symbols
+            ), f"Should find {expected_symbol} for {company_name}, got {sorted(base_symbols)}"
 
         elif search_quality == "partial_match":
-            # Should find related company somewhere in results
+            # Should find a related listing (e.g. share classes, preferred stock)
             found_related = any(
-                expected_symbol in item.symbol for item in search_results
+                base.startswith(expected_symbol) for base in base_symbols
             )
             assert (
                 found_related
-            ), f"Should find {expected_symbol} related to {company_name}"
+            ), f"Should find {expected_symbol} related to {company_name}, got {sorted(base_symbols)}"
 
         # Validate data quality
         first_result = search_results[0]
@@ -598,10 +601,17 @@ class TestCUSIPSearch:
                 if name:
                     assert len(name) > 0
 
-                    # Check for expected company match
-                    if expected_characteristics.get("company"):
-                        expected_company = expected_characteristics["company"]
-                        assert expected_company.lower() in name.lower()
+            # A CUSIP maps to one issuer, but the API returns every listing it has
+            # tagged with that CUSIP, so the expected company only needs to appear
+            # somewhere in the results rather than in every row.
+            expected_company = expected_characteristics.get("company")
+            if expected_company:
+                names = [
+                    item.companyName for item in search_results if item.companyName
+                ]
+                assert any(
+                    expected_company.lower() in name.lower() for name in names
+                ), f"Should find {expected_company} for CUSIP {cusip_input}, got {names}"
 
     def test_cusip_search_format_validation(self, api_key):
         """Test CUSIP search with format validation."""
@@ -1089,18 +1099,18 @@ class TestSearchDataQuality:
         validate_model_list(search_results, FMPCompanyNameSearch)
 
         if search_results:
-            # Should find Microsoft
-            microsoft_found = False
-            for result in search_results[:5]:
-                if hasattr(result, "name") and result.name:
-                    if "microsoft" in result.name.lower():
-                        microsoft_found = True
-                        if hasattr(result, "symbol"):
-                            # Allow for exchange-specific symbol formats
-                            assert "MSFT" in result.symbol
-                        break
-
-            assert microsoft_found or len(search_results) > 0
+            # Should find Microsoft. Results include foreign listings in no
+            # documented order (MSF.F, 4338.HK, ...), so require the NASDAQ
+            # listing to be present somewhere rather than ranked first.
+            microsoft = [
+                result
+                for result in search_results
+                if result.name and "microsoft" in result.name.lower()
+            ]
+            assert microsoft, "Should find Microsoft listings"
+            assert "MSFT" in {
+                result.symbol.split(".")[0] for result in microsoft
+            }, f"Should find MSFT, got {[result.symbol for result in microsoft]}"
 
     def test_search_cik_data_consistency(self, api_key):
         """Test search CIK data consistency."""
