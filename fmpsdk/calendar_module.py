@@ -236,6 +236,7 @@ def splits_calendar(
     apikey: str,
     from_date: str = None,
     to_date: str = None,
+    page: int = None,
 ) -> RootModel[typing.List[FMPStockSplit]]:
     """
     Get splits calendar using the /stable/splits-calendar endpoint.
@@ -253,4 +254,6 @@ def splits_calendar(
         query_vars["from"] = from_date
     if to_date:
         query_vars["to"] = to_date
+    if page:
+        query_vars["page"] = str(page)
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
