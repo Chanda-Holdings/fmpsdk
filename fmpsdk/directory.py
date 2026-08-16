@@ -87,25 +87,24 @@ def cik_list(
 @parse_response
 def symbol_change(
     apikey: str,
-    date: str = None,
-    symbol: str = None,
+    invalid: str,
+    limit: str = None,
 ) -> RootModel[typing.List[FMPSymbolChange]]:
     """
     Get symbol change history using the /stable/symbol-change endpoint.
 
     Parameters:
-        apikey (str): Your API key.
-        date (str, optional): Filter by date (YYYY-MM-DD).
-        symbol (str, optional): Filter by symbol.
+        invalid (str): The invalid symbol to filter by.
+        limit (str, optional): Limit the number of results.
     Returns:
         List of dictionaries with symbol change results.
     """
     path = "symbol-change"
     query_vars = {"apikey": apikey}
-    if date:
-        query_vars["date"] = date
-    if symbol:
-        query_vars["symbol"] = symbol
+    if invalid:
+        query_vars["invalid"] = invalid
+    if limit:
+        query_vars["limit"] = limit
     return __return_json(path=path, query_vars=query_vars)  # type: ignore[no-any-return]
 
 
