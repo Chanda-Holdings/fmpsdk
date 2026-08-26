@@ -86,76 +86,6 @@ def raise_for_exception(response):
         )
 
 
-def _fetch_page(func, args, page, max_retries, retry_delay):
-    """One page, retrying a throttle and a network blip.
-
-    Shared by iterate_over_pages and stream_pages so the two cannot drift.
-    """
-    for attempt in range(max_retries + 1):
-        try:
-            response = func(**args)
-
-            is_rate_limited = False
-            if (
-                hasattr(response, "status_code")
-                and response.status_code == RATE_LIMIT_STATUS_CODE
-            ):
-                is_rate_limited = True
-            elif isinstance(response, dict) and "Error Message" in response:
-                error_msg = str(response["Error Message"]).lower()
-                rate_limit_patterns = [
-                    "limit reach",
-                    "rate limit",
-                    "too many requests",
-                    "upgrade your plan",
-                ]
-                if any(pattern in error_msg for pattern in rate_limit_patterns):
-                    is_rate_limited = True
-
-            if is_rate_limited:
-                if attempt < max_retries:
-                    print(
-                        f"Rate limiting detected on page {page}, attempt {attempt + 1}. "
-                        f"Waiting {retry_delay}s..."
-                    )
-                    time.sleep(retry_delay)
-                    continue
-                raise RateLimitExceededException(
-                    f"Rate limiting persisted after {max_retries} retries on page {page}"
-                )
-
-            return response
-
-        except Exception as e:
-            if attempt < max_retries and "requests" in str(type(e)):
-                print(
-                    f"Network error on page {page}, attempt {attempt + 1}. "
-                    f"Retrying in {retry_delay // 2}s..."
-                )
-                time.sleep(retry_delay // 2)
-                continue
-            raise e
-
-
-def stream_pages(
-    func, args, page_limit=100, max_retries=3, retry_delay=10
-) -> typing.Iterator:
-    """Yield each page as it arrives, instead of holding every page.
-
-    A caller that consumes as it goes keeps the pages it already took when a
-    later page fails, and never holds the whole result in memory. Stops on
-    the first empty page, like iterate_over_pages.
-    """
-    args = dict(args)
-    for page in range(page_limit + 1):
-        args["page"] = page
-        response = _fetch_page(func, args, page, max_retries, retry_delay)
-        data = response.root if hasattr(response, "root") else response
-        if data is None or (hasattr(data, "__len__") and len(data) == 0):
-            return
-        yield data
-
-
 def iterate_over_pages(
     func, args, page_limit=100, max_retries=3, retry_delay=10
 ) -> typing.Union[typing.List, typing.Dict]:
@@ -212,7 +142,58 @@ def iterate_over_pages(
     for page in range(page_limit + 1):
         args["page"] = page
 
-        response = _fetch_page(func, args, page, max_retries, retry_delay)
+        # Streamlined retry logic
+        response = None
+        for attempt in range(max_retries + 1):
+            try:
+                response = func(**args)
+
+                # Check for rate limiting in different response types
+                is_rate_limited = False
+
+                # Check HTTP response objects with status codes
+                if (
+                    hasattr(response, "status_code")
+                    and response.status_code == RATE_LIMIT_STATUS_CODE
+                ):
+                    is_rate_limited = True
+
+                # Check dictionary responses for rate limit error messages
+                elif isinstance(response, dict) and "Error Message" in response:
+                    error_msg = str(response["Error Message"]).lower()
+                    rate_limit_patterns = [
+                        "limit reach",
+                        "rate limit",
+                        "too many requests",
+                        "upgrade your plan",
+                    ]
+                    if any(pattern in error_msg for pattern in rate_limit_patterns):
+                        is_rate_limited = True
+
+                if is_rate_limited:
+                    if attempt < max_retries:
+                        print(
+                            f"Rate limiting detected on page {page}, attempt {attempt + 1}. "
+                            f"Waiting {retry_delay}s..."
+                        )
+                        time.sleep(retry_delay)
+                        continue
+                    raise RateLimitExceededException(
+                        f"Rate limiting persisted after {max_retries} retries on page {page}"
+                    )
+
+                break  # Successful response
+
+            except Exception as e:
+                # Simplified network error detection
+                if attempt < max_retries and "requests" in str(type(e)):
+                    print(
+                        f"Network error on page {page}, attempt {attempt + 1}. "
+                        f"Retrying in {retry_delay // 2}s..."
+                    )
+                    time.sleep(retry_delay // 2)
+                    continue
+                raise e
 
         # Extract actual data
         actual_data = _extract_data(response)
