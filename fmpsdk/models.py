@@ -273,7 +273,7 @@ class FMPPriceTargetNews(FMPBaseModel):
     publishedDate: str
     newsURL: str
     newsTitle: str
-    analystName: str
+    analystName: Optional[str] = None
     priceTarget: float
     adjPriceTarget: float
     priceWhenPosted: float
