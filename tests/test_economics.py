@@ -91,11 +91,15 @@ class TestEconomicsBasic:
 
     def test_economic_indicators_gdp(self, api_key):
         """Test getting GDP economic indicator with enhanced validation."""
+        # A no-date call only covers the last 90 days, which rarely holds a published
+        # GDP value. This fixed window contains the quarter dated 2025-04-01.
         response, validation = handle_api_call_with_validation(
             economics.economic_indicators,
             "economic_indicators",
             apikey=api_key,
             name="GDP",
+            from_date="2025-03-15",
+            to_date="2025-04-15",
         )
 
         indicators = get_response_models(response, FMPEconomicIndicator)
@@ -294,11 +298,14 @@ class TestEconomicsDataQuality:
 
         for indicator_name in indicators:
             try:
+                # Fixed window containing 2025-04-01, an observation date for both.
                 response, validation = handle_api_call_with_validation(
                     economics.economic_indicators,
                     "economic_indicators",
                     apikey=api_key,
                     name=indicator_name,
+                    from_date="2025-03-15",
+                    to_date="2025-04-15",
                 )
 
                 indicator_data = get_response_models(response, FMPEconomicIndicator)
