@@ -202,12 +202,12 @@ class FMPAnalystEstimates(FMPBaseModel):
     revenueLow: LenientInt
     revenueHigh: LenientInt
     revenueAvg: LenientInt
-    ebitdaLow: LenientInt
-    ebitdaHigh: LenientInt
-    ebitdaAvg: LenientInt
-    ebitLow: LenientInt
-    ebitHigh: LenientInt
-    ebitAvg: LenientInt
+    ebitdaLow: Optional[LenientInt] = None
+    ebitdaHigh: Optional[LenientInt] = None
+    ebitdaAvg: Optional[LenientInt] = None
+    ebitLow: Optional[LenientInt] = None
+    ebitHigh: Optional[LenientInt] = None
+    ebitAvg: Optional[LenientInt] = None
     netIncomeLow: LenientInt
     netIncomeHigh: LenientInt
     netIncomeAvg: float

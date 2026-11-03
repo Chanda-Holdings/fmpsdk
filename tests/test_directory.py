@@ -273,7 +273,7 @@ class TestDirectorySymbolChanges:
     def test_symbol_change_basic(self, api_key):
         """Test basic symbol change functionality."""
         result, validation = handle_api_call_with_validation(
-            directory.symbol_change, "symbol_change", apikey=api_key
+            directory.symbol_change, "symbol_change", apikey=api_key, invalid="false"
         )
 
         # Extract and validate models
@@ -297,10 +297,15 @@ class TestDirectorySymbolChanges:
                     len(change.newSymbol) <= 10
                 ), "New symbol should be reasonable length"
 
-    def test_symbol_change_by_date(self, api_key, recent_date):
-        """Test symbol change with date filter."""
+    def test_symbol_change_with_limit(self, api_key):
+        """Test symbol change with limit parameter."""
+        limit = 5
         result, validation = handle_api_call_with_validation(
-            directory.symbol_change, "symbol_change", apikey=api_key, date=recent_date
+            directory.symbol_change,
+            "symbol_change",
+            apikey=api_key,
+            invalid="false",
+            limit=str(limit),
         )
 
         # Extract and validate models
@@ -308,8 +313,10 @@ class TestDirectorySymbolChanges:
         validate_model_list(
             models,
             FMPSymbolChange,
-            "Failed to validate symbol change models with date filter",
+            "Failed to validate symbol change models with limit",
         )
+
+        assert len(models) <= limit, "Should not return more results than the limit"
 
         if models:
             # Test first 10 items for comprehensive validation

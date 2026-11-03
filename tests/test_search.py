@@ -972,10 +972,12 @@ class TestSearchEdgeCases:
         validate_model_list(search_results, FMPCusipSearch)
 
         if search_results:
-            first_result = search_results[0]
-            # Should find Apple (may return AAPL or AAPL.NE etc.)
-            if hasattr(first_result, "symbol"):
-                assert "AAPL" in first_result.symbol
+            # Should find Apple. Result order is not guaranteed and foreign
+            # listings (e.g. APC.F) may come first, so check all results.
+            assert any(
+                "AAPL" in result.symbol or "Apple" in (result.companyName or "")
+                for result in search_results
+            )
 
     def test_search_isin_edge_cases(self, api_key):
         """Test ISIN search with edge cases."""
