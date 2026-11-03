@@ -1,10 +1,29 @@
+import math
 import os
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Annotated, Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, RootModel, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, RootModel, model_validator
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+
+def _round_float_to_int(value: Any) -> Any:
+    """Round finite floats to the nearest int, halves away from zero.
+
+    FMP returns fractional values for fields that are logically integers, e.g.
+    split-adjusted historical share counts (1756172378.625) or float artifacts
+    (1773627764.9999995). Strict ``int`` rejects these. Non-floats and
+    non-finite floats pass through unchanged so pydantic validates them as usual.
+    """
+    if isinstance(value, float) and math.isfinite(value):
+        return int(math.copysign(math.floor(abs(value) + 0.5), value))
+    return value
+
+
+# int that accepts fractional floats by rounding. Whole-number inputs validate
+# exactly as plain ``int`` does.
+LenientInt = Annotated[int, BeforeValidator(_round_float_to_int)]
 
 
 class FMPBaseModel(BaseModel):
@@ -180,82 +199,82 @@ class FMPCountry(FMPBaseModel):
 class FMPAnalystEstimates(FMPBaseModel):
     symbol: str
     date: str
-    revenueLow: int
-    revenueHigh: int
-    revenueAvg: int
-    ebitdaLow: int
-    ebitdaHigh: int
-    ebitdaAvg: int
-    ebitLow: int
-    ebitHigh: int
-    ebitAvg: int
-    netIncomeLow: int
-    netIncomeHigh: int
+    revenueLow: LenientInt
+    revenueHigh: LenientInt
+    revenueAvg: LenientInt
+    ebitdaLow: LenientInt
+    ebitdaHigh: LenientInt
+    ebitdaAvg: LenientInt
+    ebitLow: LenientInt
+    ebitHigh: LenientInt
+    ebitAvg: LenientInt
+    netIncomeLow: LenientInt
+    netIncomeHigh: LenientInt
     netIncomeAvg: float
-    sgaExpenseLow: int
-    sgaExpenseHigh: int
-    sgaExpenseAvg: int
+    sgaExpenseLow: LenientInt
+    sgaExpenseHigh: LenientInt
+    sgaExpenseAvg: LenientInt
     epsAvg: float
     epsHigh: float
     epsLow: float
-    numAnalystsRevenue: int
-    numAnalystsEps: int
+    numAnalystsRevenue: LenientInt
+    numAnalystsEps: LenientInt
 
 
 class FMPRatingSnapshot(FMPBaseModel):
     symbol: str
     rating: str
-    overallScore: int
-    discountedCashFlowScore: int
-    returnOnEquityScore: int
-    returnOnAssetsScore: int
-    debtToEquityScore: int
-    priceToEarningsScore: int
-    priceToBookScore: int
+    overallScore: LenientInt
+    discountedCashFlowScore: LenientInt
+    returnOnEquityScore: LenientInt
+    returnOnAssetsScore: LenientInt
+    debtToEquityScore: LenientInt
+    priceToEarningsScore: LenientInt
+    priceToBookScore: LenientInt
 
 
 class FMPHistoricalRating(FMPBaseModel):
     symbol: str
     date: str
     rating: str
-    overallScore: int
-    discountedCashFlowScore: int
-    returnOnEquityScore: int
-    returnOnAssetsScore: int
-    debtToEquityScore: int
-    priceToEarningsScore: int
-    priceToBookScore: int
+    overallScore: LenientInt
+    discountedCashFlowScore: LenientInt
+    returnOnEquityScore: LenientInt
+    returnOnAssetsScore: LenientInt
+    debtToEquityScore: LenientInt
+    priceToEarningsScore: LenientInt
+    priceToBookScore: LenientInt
 
 
 class FMPHistoricalRatingV3(FMPBaseModel):
     symbol: str
     date: str
     rating: str
-    ratingScore: int
+    ratingScore: LenientInt
     ratingRecommendation: str
-    ratingDetailsDCFScore: int
+    ratingDetailsDCFScore: LenientInt
     ratingDetailsDCFRecommendation: str
-    ratingDetailsROEScore: int
+    ratingDetailsROEScore: LenientInt
     ratingDetailsROERecommendation: str
-    ratingDetailsROAScore: int
+    ratingDetailsROAScore: LenientInt
     ratingDetailsROARecommendation: str
-    ratingDetailsDEScore: int
+    ratingDetailsDEScore: LenientInt
     ratingDetailsDERecommendation: str
-    ratingDetailsPEScore: int
+    ratingDetailsPEScore: LenientInt
     ratingDetailsPERecommendation: str
-    ratingDetailsPBScore: int
+    ratingDetailsPBScore: LenientInt
     ratingDetailsPBRecommendation: str
 
 
 class FMPPriceTargetSummary(FMPBaseModel):
     symbol: str
-    lastMonthCount: int
+    lastMonthCount: LenientInt
     lastMonthAvgPriceTarget: float
-    lastQuarterCount: int
+    lastQuarterCount: LenientInt
     lastQuarterAvgPriceTarget: float
-    lastYearCount: int
+    lastYearCount: LenientInt
     lastYearAvgPriceTarget: float
-    allTimeCount: int
+    allTimeCount: LenientInt
     allTimeAvgPriceTarget: float
     publishers: str
 
@@ -294,20 +313,20 @@ class FMPStockGrade(FMPBaseModel):
 class FMPHistoricalStockGrade(FMPBaseModel):
     symbol: str
     date: str
-    analystRatingsStrongBuy: int
-    analystRatingsBuy: int
-    analystRatingsHold: int
-    analystRatingsSell: int
-    analystRatingsStrongSell: int
+    analystRatingsStrongBuy: LenientInt
+    analystRatingsBuy: LenientInt
+    analystRatingsHold: LenientInt
+    analystRatingsSell: LenientInt
+    analystRatingsStrongSell: LenientInt
 
 
 class FMPStockGradeSummary(FMPBaseModel):
     symbol: str
-    strongBuy: int
-    buy: int
-    hold: int
-    sell: int
-    strongSell: int
+    strongBuy: LenientInt
+    buy: LenientInt
+    hold: LenientInt
+    sell: LenientInt
+    strongSell: LenientInt
     consensus: str
 
 
@@ -375,9 +394,9 @@ class FMPUpcomingIPO(FMPBaseModel):
     company: str
     exchange: str
     actions: str
-    shares: Optional[int] = None
+    shares: Optional[LenientInt] = None
     priceRange: Optional[str] = None
-    marketCap: Optional[int] = None
+    marketCap: Optional[LenientInt] = None
 
 
 class FMPDisclosureFiling(FMPBaseModel):
@@ -417,7 +436,7 @@ class FMPHistoricalDataPointLight(FMPBaseModel):
     symbol: str
     date: str
     price: float
-    volume: int
+    volume: LenientInt
 
 
 class FMPHistoricalDataPointFull(FMPBaseModel):
@@ -463,7 +482,7 @@ class FMPStockPeer(FMPBaseModel):
     symbol: str
     companyName: str
     price: float
-    mktCap: int
+    mktCap: LenientInt
 
 
 class FMPDelistedCompany(FMPBaseModel):
@@ -482,7 +501,7 @@ class FMPEmployeeCount(FMPBaseModel):
     companyName: str
     formType: str
     filingDate: str
-    employeeCount: int
+    employeeCount: LenientInt
     source: str
 
 
@@ -494,7 +513,7 @@ class FMPHistoricalEmployeeCount(FMPBaseModel):
     companyName: str
     formType: str
     filingDate: str
-    employeeCount: int
+    employeeCount: LenientInt
     source: str
 
 
@@ -508,8 +527,8 @@ class FMPShareFloat(FMPBaseModel):
     symbol: str
     date: Optional[str] = None
     freeFloat: Optional[float] = None
-    floatShares: Optional[int] = None
-    outstandingShares: int
+    floatShares: Optional[LenientInt] = None
+    outstandingShares: LenientInt
 
 
 class FMPMergerAcquisition(FMPBaseModel):
@@ -530,8 +549,8 @@ class FMPExecutiveProfile(FMPBaseModel):
     pay: Optional[float] = None
     currencyPay: str
     gender: Optional[str] = None
-    yearBorn: Optional[int] = None
-    active: Optional[int] = None
+    yearBorn: Optional[LenientInt] = None
+    active: Optional[LenientInt] = None
 
 
 class FMPExecutiveCompensation(FMPBaseModel):
@@ -541,20 +560,20 @@ class FMPExecutiveCompensation(FMPBaseModel):
     filingDate: str
     acceptedDate: str
     nameAndPosition: str
-    year: int
-    salary: Optional[int] = None
-    bonus: Optional[int] = None
-    stockAward: Optional[int] = None
-    optionAward: Optional[int] = None
-    incentivePlanCompensation: Optional[int] = None
-    allOtherCompensation: Optional[int] = None
-    total: Optional[int] = None
+    year: LenientInt
+    salary: Optional[LenientInt] = None
+    bonus: Optional[LenientInt] = None
+    stockAward: Optional[LenientInt] = None
+    optionAward: Optional[LenientInt] = None
+    incentivePlanCompensation: Optional[LenientInt] = None
+    allOtherCompensation: Optional[LenientInt] = None
+    total: Optional[LenientInt] = None
     link: str
 
 
 class FMPExecutiveCompensationBenchmark(FMPBaseModel):
     industryTitle: str
-    year: int
+    year: LenientInt
     averageCompensation: float
 
 
@@ -568,47 +587,47 @@ class FMPCommitmentOfTradersReport(FMPBaseModel):
     cftcMarketCode: str
     cftcRegionCode: str
     cftcCommodityCode: str
-    openInterestAll: int
-    noncommPositionsLongAll: int
-    noncommPositionsShortAll: int
-    noncommPositionsSpreadAll: int
-    commPositionsLongAll: int
-    commPositionsShortAll: int
-    totReptPositionsLongAll: int
-    totReptPositionsShortAll: int
-    nonreptPositionsLongAll: int
-    nonreptPositionsShortAll: int
-    openInterestOld: int
-    noncommPositionsLongOld: int
-    noncommPositionsShortOld: int
-    noncommPositionsSpreadOld: int
-    commPositionsLongOld: int
-    commPositionsShortOld: int
-    totReptPositionsLongOld: int
-    totReptPositionsShortOld: int
-    nonreptPositionsLongOld: int
-    nonreptPositionsShortOld: int
-    openInterestOther: int
-    noncommPositionsLongOther: int
-    noncommPositionsShortOther: int
-    noncommPositionsSpreadOther: int
-    commPositionsLongOther: int
-    commPositionsShortOther: int
-    totReptPositionsLongOther: int
-    totReptPositionsShortOther: int
-    nonreptPositionsLongOther: int
-    nonreptPositionsShortOther: int
-    changeInOpenInterestAll: int
-    changeInNoncommLongAll: int
-    changeInNoncommShortAll: int
-    changeInNoncommSpeadAll: int
-    changeInCommLongAll: int
-    changeInCommShortAll: int
-    changeInTotReptLongAll: int
-    changeInTotReptShortAll: int
-    changeInNonreptLongAll: int
-    changeInNonreptShortAll: int
-    pctOfOpenInterestAll: int
+    openInterestAll: LenientInt
+    noncommPositionsLongAll: LenientInt
+    noncommPositionsShortAll: LenientInt
+    noncommPositionsSpreadAll: LenientInt
+    commPositionsLongAll: LenientInt
+    commPositionsShortAll: LenientInt
+    totReptPositionsLongAll: LenientInt
+    totReptPositionsShortAll: LenientInt
+    nonreptPositionsLongAll: LenientInt
+    nonreptPositionsShortAll: LenientInt
+    openInterestOld: LenientInt
+    noncommPositionsLongOld: LenientInt
+    noncommPositionsShortOld: LenientInt
+    noncommPositionsSpreadOld: LenientInt
+    commPositionsLongOld: LenientInt
+    commPositionsShortOld: LenientInt
+    totReptPositionsLongOld: LenientInt
+    totReptPositionsShortOld: LenientInt
+    nonreptPositionsLongOld: LenientInt
+    nonreptPositionsShortOld: LenientInt
+    openInterestOther: LenientInt
+    noncommPositionsLongOther: LenientInt
+    noncommPositionsShortOther: LenientInt
+    noncommPositionsSpreadOther: LenientInt
+    commPositionsLongOther: LenientInt
+    commPositionsShortOther: LenientInt
+    totReptPositionsLongOther: LenientInt
+    totReptPositionsShortOther: LenientInt
+    nonreptPositionsLongOther: LenientInt
+    nonreptPositionsShortOther: LenientInt
+    changeInOpenInterestAll: LenientInt
+    changeInNoncommLongAll: LenientInt
+    changeInNoncommShortAll: LenientInt
+    changeInNoncommSpeadAll: LenientInt
+    changeInCommLongAll: LenientInt
+    changeInCommShortAll: LenientInt
+    changeInTotReptLongAll: LenientInt
+    changeInTotReptShortAll: LenientInt
+    changeInNonreptLongAll: LenientInt
+    changeInNonreptShortAll: LenientInt
+    pctOfOpenInterestAll: LenientInt
     pctOfOiNoncommLongAll: float
     pctOfOiNoncommShortAll: float
     pctOfOiNoncommSpreadAll: float
@@ -638,30 +657,30 @@ class FMPCommitmentOfTradersReport(FMPBaseModel):
     pctOfOiTotReptShortOther: float
     pctOfOiNonreptLongOther: float
     pctOfOiNonreptShortOther: float
-    tradersTotAll: int
-    tradersNoncommLongAll: int
-    tradersNoncommShortAll: int
-    tradersNoncommSpreadAll: int
-    tradersCommLongAll: int
-    tradersCommShortAll: int
-    tradersTotReptLongAll: int
-    tradersTotReptShortAll: int
-    tradersTotOl: int
-    tradersNoncommLongOl: int
-    tradersNoncommShortOl: int
-    tradersNoncommSpeadOl: int
-    tradersCommLongOl: int
-    tradersCommShortOl: int
-    tradersTotReptLongOl: int
-    tradersTotReptShortOl: int
-    tradersTotOther: int
-    tradersNoncommLongOther: int
-    tradersNoncommShortOther: int
-    tradersNoncommSpreadOther: int
-    tradersCommLongOther: int
-    tradersCommShortOther: int
-    tradersTotReptLongOther: int
-    tradersTotReptShortOther: int
+    tradersTotAll: LenientInt
+    tradersNoncommLongAll: LenientInt
+    tradersNoncommShortAll: LenientInt
+    tradersNoncommSpreadAll: LenientInt
+    tradersCommLongAll: LenientInt
+    tradersCommShortAll: LenientInt
+    tradersTotReptLongAll: LenientInt
+    tradersTotReptShortAll: LenientInt
+    tradersTotOl: LenientInt
+    tradersNoncommLongOl: LenientInt
+    tradersNoncommShortOl: LenientInt
+    tradersNoncommSpeadOl: LenientInt
+    tradersCommLongOl: LenientInt
+    tradersCommShortOl: LenientInt
+    tradersTotReptLongOl: LenientInt
+    tradersTotReptShortOl: LenientInt
+    tradersTotOther: LenientInt
+    tradersNoncommLongOther: LenientInt
+    tradersNoncommShortOther: LenientInt
+    tradersNoncommSpreadOther: LenientInt
+    tradersCommLongOther: LenientInt
+    tradersCommShortOther: LenientInt
+    tradersTotReptLongOther: LenientInt
+    tradersTotReptShortOther: LenientInt
     concGrossLe4TdrLongAll: float
     concGrossLe4TdrShortAll: float
     concGrossLe8TdrLongAll: float
@@ -701,8 +720,8 @@ class FMPCommitmentOfTradersAnalysis(FMPBaseModel):
     previousLongMarketSituation: float
     previousShortMarketSituation: float
     previousMarketSituation: str
-    netPostion: int
-    previousNetPosition: int
+    netPostion: LenientInt
+    previousNetPosition: LenientInt
     changeInNetPosition: float
     marketSentiment: str
     reversalTrend: bool
@@ -718,7 +737,7 @@ class FMPDcfValuation(FMPBaseModel):
 class FMPDCFCustomValuation(FMPBaseModel):
     year: str
     symbol: str
-    revenue: Optional[int] = None
+    revenue: Optional[LenientInt] = None
     revenuePercentage: Optional[float] = None
     ebitda: Optional[float] = None
     ebitdaPercentage: Optional[float] = None
@@ -738,31 +757,31 @@ class FMPDCFCustomValuation(FMPBaseModel):
     capitalExpenditurePercentage: Optional[float] = None
     price: Optional[float] = None
     beta: Optional[float] = None
-    dilutedSharesOutstanding: Optional[int] = None
+    dilutedSharesOutstanding: Optional[LenientInt] = None
     costofDebt: Optional[float] = None
     taxRate: Optional[float] = None
     afterTaxCostOfDebt: Optional[float] = None
     riskFreeRate: Optional[float] = None
     marketRiskPremium: Optional[float] = None
     costOfEquity: Optional[float] = None
-    totalDebt: Optional[int] = None
-    totalEquity: Optional[int] = None
-    totalCapital: Optional[int] = None
+    totalDebt: Optional[LenientInt] = None
+    totalEquity: Optional[LenientInt] = None
+    totalCapital: Optional[LenientInt] = None
     debtWeighting: Optional[float] = None
     equityWeighting: Optional[float] = None
     wacc: Optional[float] = None
-    taxRateCash: Optional[int] = None
+    taxRateCash: Optional[LenientInt] = None
     ebiat: Optional[float] = None
     ufcf: Optional[float] = None
-    sumPvUfcf: Optional[int] = None
+    sumPvUfcf: Optional[LenientInt] = None
     longTermGrowthRate: Optional[float] = None
-    terminalValue: Optional[int] = None
-    presentTerminalValue: Optional[int] = None
-    enterpriseValue: Optional[int] = None
-    netDebt: Optional[int] = None
-    equityValue: Optional[int] = None
+    terminalValue: Optional[LenientInt] = None
+    presentTerminalValue: Optional[LenientInt] = None
+    enterpriseValue: Optional[LenientInt] = None
+    netDebt: Optional[LenientInt] = None
+    equityValue: Optional[LenientInt] = None
     equityValuePerShare: Optional[float] = None
-    freeCashFlowT1: Optional[int] = None
+    freeCashFlowT1: Optional[LenientInt] = None
 
 
 class FMPTreasuryRates(FMPBaseModel):
@@ -827,13 +846,13 @@ class FMPESGRating(FMPBaseModel):
     cik: str
     companyName: str
     industry: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     ESGRiskRating: str
     industryRank: str
 
 
 class FMPESGBenchmark(FMPBaseModel):
-    fiscalYear: int
+    fiscalYear: LenientInt
     sector: str
     environmentalScore: float
     socialScore: float
@@ -847,7 +866,7 @@ class FMPFundHolding(FMPBaseModel):
     name: str
     isin: str
     securityCusip: str
-    sharesNumber: int
+    sharesNumber: LenientInt
     weightPercentage: float
     marketValue: float
     updatedAt: str
@@ -899,7 +918,7 @@ class FMPFundInfo(FMPBaseModel):
     inceptionDate: str
     nav: float
     navCurrency: str
-    holdingsCount: int
+    holdingsCount: LenientInt
     updatedAt: str
     sectorsList: List[FMPFundInfoSectorsListItem]
 
@@ -912,9 +931,9 @@ class FMPFundCountryAllocation(FMPBaseModel):
 class FMPFundAssetExposure(FMPBaseModel):
     symbol: str
     asset: str
-    sharesNumber: int
+    sharesNumber: LenientInt
     weightPercentage: float
-    marketValue: int
+    marketValue: LenientInt
 
 
 class FMPFundSectorWeighting(FMPBaseModel):
@@ -926,9 +945,9 @@ class FMPFundSectorWeighting(FMPBaseModel):
 class FMPFundHolder(FMPBaseModel):
     cik: str
     holder: str
-    shares: int
+    shares: LenientInt
     dateReported: str
-    change: int
+    change: LenientInt
     weightPercent: float
 
 
@@ -942,7 +961,7 @@ class FMPFundDisclosure(FMPBaseModel):
     title: str
     cusip: str
     isin: str
-    balance: int
+    balance: LenientInt
     units: str
     cur_cd: str
     valUsd: float
@@ -976,8 +995,8 @@ class FMPFundDisclosureNameSearch(FMPBaseModel):
 
 class FMPFundDisclosureDate(FMPBaseModel):
     date: str
-    year: int
-    quarter: int
+    year: LenientInt
+    quarter: LenientInt
 
 
 class FMPCrowdfundingCampaign(FMPBaseModel):
@@ -1003,14 +1022,14 @@ class FMPCrowdfundingCampaign(FMPBaseModel):
     financialInterest: Optional[str] = None
     securityOfferedType: Optional[str] = None
     securityOfferedOtherDescription: Optional[str] = None
-    numberOfSecurityOffered: int
+    numberOfSecurityOffered: LenientInt
     offeringPrice: float
     offeringAmount: float
     overSubscriptionAccepted: str
     overSubscriptionAllocationType: Optional[str] = None
     maximumOfferingAmount: Optional[float] = None
     offeringDeadlineDate: Optional[str] = None
-    currentNumberOfEmployees: int
+    currentNumberOfEmployees: LenientInt
     totalAssetMostRecentFiscalYear: float
     totalAssetPriorFiscalYear: float
     cashAndCashEquiValentMostRecentFiscalYear: float
@@ -1072,15 +1091,15 @@ class FMPEquityOffering(FMPBaseModel):
     durationOfOfferingIsMoreThanYear: Optional[bool] = None
     securitiesOfferedAreOfEquityType: Optional[bool] = None
     isBusinessCombinationTransaction: Optional[bool] = None
-    minimumInvestmentAccepted: int
-    totalOfferingAmount: int
-    totalAmountSold: int
-    totalAmountRemaining: int
+    minimumInvestmentAccepted: LenientInt
+    totalOfferingAmount: LenientInt
+    totalAmountSold: LenientInt
+    totalAmountRemaining: LenientInt
     hasNonAccreditedInvestors: Optional[bool] = None
-    totalNumberAlreadyInvested: int
-    salesCommissions: int
-    findersFees: int
-    grossProceedsUsed: int
+    totalNumberAlreadyInvested: LenientInt
+    salesCommissions: LenientInt
+    findersFees: LenientInt
+    grossProceedsUsed: LenientInt
 
 
 class FMPEquityOfferingSearch(FMPBaseModel):
@@ -1099,7 +1118,7 @@ class FMPForexPair(FMPBaseModel):
 
 class FMPFinancialReportDate(FMPBaseModel):
     symbol: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     period: str
     linkJson: str
     linkXlsx: str
@@ -1161,16 +1180,16 @@ class FMPFullFinancialReport(FMPBaseModel):
 
 class FMPRevenueSegmentation(FMPBaseModel):
     symbol: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     period: str
     reportedCurrency: Optional[str] = None
     date: str
-    data: Optional[Dict[str, int]] = None
+    data: Optional[Dict[str, LenientInt]] = None
 
 
 class FMPAsReportedIncomeStatement(FMPBaseModel):
     symbol: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     period: str
     reportedCurrency: Optional[str] = None
     date: str
@@ -1181,7 +1200,7 @@ class FMPAsReportedIncomeStatement(FMPBaseModel):
 
 class FMPAsReportedBalanceSheet(FMPBaseModel):
     symbol: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     period: str
     reportedCurrency: Optional[str] = None
     date: str
@@ -1192,7 +1211,7 @@ class FMPAsReportedBalanceSheet(FMPBaseModel):
 
 class FMPAsReportedCashFlowStatement(FMPBaseModel):
     symbol: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     period: str
     reportedCurrency: Optional[str] = None
     date: str
@@ -1203,7 +1222,7 @@ class FMPAsReportedCashFlowStatement(FMPBaseModel):
 
 class FMPAsReportedFullStatement(FMPBaseModel):
     symbol: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     period: str
     reportedCurrency: Optional[str] = None
     date: str
@@ -1241,19 +1260,19 @@ class FMPForm13FExtract(FMPBaseModel):
     securityCusip: str
     symbol: str
     nameOfIssuer: str
-    shares: int
+    shares: LenientInt
     titleOfClass: str
     sharesType: str
     putCallShare: str
-    value: int
+    value: LenientInt
     link: str
     finalLink: str
 
 
 class FMPForm13FDate(FMPBaseModel):
     date: str
-    year: int
-    quarter: int
+    year: LenientInt
+    quarter: LenientInt
 
 
 class FMPForm13FAnalytics(FMPBaseModel):
@@ -1273,13 +1292,13 @@ class FMPForm13FAnalytics(FMPBaseModel):
     lastWeight: float
     changeInWeight: float
     changeInWeightPercentage: float
-    marketValue: int
-    lastMarketValue: int
-    changeInMarketValue: int
+    marketValue: LenientInt
+    lastMarketValue: LenientInt
+    changeInMarketValue: LenientInt
     changeInMarketValuePercentage: float
-    sharesNumber: int
-    lastSharesNumber: int
-    changeInSharesNumber: int
+    sharesNumber: LenientInt
+    lastSharesNumber: LenientInt
+    changeInSharesNumber: LenientInt
     changeInSharesNumberPercentage: float
     quarterEndPrice: float
     avgPricePaid: float
@@ -1289,12 +1308,12 @@ class FMPForm13FAnalytics(FMPBaseModel):
     lastOwnership: float
     changeInOwnership: float
     changeInOwnershipPercentage: float
-    holdingPeriod: int
+    holdingPeriod: LenientInt
     firstAdded: str
-    performance: int
+    performance: LenientInt
     performancePercentage: float
-    lastPerformance: int
-    changeInPerformance: int
+    lastPerformance: LenientInt
+    changeInPerformance: LenientInt
     isCountedForPerformance: bool
 
 
@@ -1302,30 +1321,30 @@ class FMPHolderPerformance(FMPBaseModel):
     date: str
     cik: str
     investorName: str
-    portfolioSize: int
-    securitiesAdded: int
-    securitiesRemoved: int
-    marketValue: int
-    previousMarketValue: int
-    changeInMarketValue: int
+    portfolioSize: LenientInt
+    securitiesAdded: LenientInt
+    securitiesRemoved: LenientInt
+    marketValue: LenientInt
+    previousMarketValue: LenientInt
+    changeInMarketValue: LenientInt
     changeInMarketValuePercentage: float
-    averageHoldingPeriod: int
-    averageHoldingPeriodTop10: int
-    averageHoldingPeriodTop20: int
+    averageHoldingPeriod: LenientInt
+    averageHoldingPeriodTop10: LenientInt
+    averageHoldingPeriodTop20: LenientInt
     turnover: float
     turnoverAlternateSell: float
     turnoverAlternateBuy: float
-    performance: int
+    performance: LenientInt
     performancePercentage: float
-    lastPerformance: int
-    changeInPerformance: int
-    performance1year: int
+    lastPerformance: LenientInt
+    changeInPerformance: LenientInt
+    performance1year: LenientInt
     performancePercentage1year: float
-    performance3year: int
+    performance3year: LenientInt
     performancePercentage3year: float
-    performance5year: int
+    performance5year: LenientInt
     performancePercentage5year: float
-    performanceSinceInception: int
+    performanceSinceInception: LenientInt
     performanceSinceInceptionPercentage: float
     performanceRelativeToSP500Percentage: float
     performance1yearRelativeToSP500Percentage: float
@@ -1343,46 +1362,46 @@ class FMPHolderIndustryBreakdown(FMPBaseModel):
     lastWeight: float
     changeInWeight: float
     changeInWeightPercentage: float
-    performance: int
+    performance: LenientInt
     performancePercentage: float
-    lastPerformance: int
-    changeInPerformance: int
+    lastPerformance: LenientInt
+    changeInPerformance: LenientInt
 
 
 class FMPPositionSummary(FMPBaseModel):
     symbol: str
     cik: str
     date: str
-    investorsHolding: int
-    lastInvestorsHolding: int
-    investorsHoldingChange: int
-    numberOf13Fshares: int
-    lastNumberOf13Fshares: int
-    numberOf13FsharesChange: int
-    totalInvested: int
-    lastTotalInvested: int
-    totalInvestedChange: int
+    investorsHolding: LenientInt
+    lastInvestorsHolding: LenientInt
+    investorsHoldingChange: LenientInt
+    numberOf13Fshares: LenientInt
+    lastNumberOf13Fshares: LenientInt
+    numberOf13FsharesChange: LenientInt
+    totalInvested: LenientInt
+    lastTotalInvested: LenientInt
+    totalInvestedChange: LenientInt
     ownershipPercent: float
     lastOwnershipPercent: float
     ownershipPercentChange: float
-    newPositions: int
-    lastNewPositions: int
-    newPositionsChange: int
-    increasedPositions: int
-    lastIncreasedPositions: int
-    increasedPositionsChange: int
-    closedPositions: int
-    lastClosedPositions: int
-    closedPositionsChange: int
-    reducedPositions: int
-    lastReducedPositions: int
-    reducedPositionsChange: int
-    totalCalls: int
-    lastTotalCalls: int
-    totalCallsChange: int
-    totalPuts: int
-    lastTotalPuts: int
-    totalPutsChange: int
+    newPositions: LenientInt
+    lastNewPositions: LenientInt
+    newPositionsChange: LenientInt
+    increasedPositions: LenientInt
+    lastIncreasedPositions: LenientInt
+    increasedPositionsChange: LenientInt
+    closedPositions: LenientInt
+    lastClosedPositions: LenientInt
+    closedPositionsChange: LenientInt
+    reducedPositions: LenientInt
+    lastReducedPositions: LenientInt
+    reducedPositionsChange: LenientInt
+    totalCalls: LenientInt
+    lastTotalCalls: LenientInt
+    totalCallsChange: LenientInt
+    totalPuts: LenientInt
+    lastTotalPuts: LenientInt
+    totalPutsChange: LenientInt
     putCallRatio: float
     lastPutCallRatio: float
     putCallRatioChange: float
@@ -1390,7 +1409,7 @@ class FMPPositionSummary(FMPBaseModel):
 
 class FMPIndustryPerformanceSummary(FMPBaseModel):
     industryTitle: str
-    industryValue: int
+    industryValue: LenientInt
     date: str
 
 
@@ -1448,17 +1467,17 @@ class FMPInsiderTransactionType(FMPBaseModel):
 class FMPInsiderTradeStatistics(FMPBaseModel):
     symbol: str
     cik: str
-    year: int
-    quarter: int
-    acquiredTransactions: int
-    disposedTransactions: int
+    year: LenientInt
+    quarter: LenientInt
+    acquiredTransactions: LenientInt
+    disposedTransactions: LenientInt
     acquiredDisposedRatio: float
     totalAcquired: float
     totalDisposed: float
     averageAcquired: float
     averageDisposed: float
-    totalPurchases: int
-    totalSales: int
+    totalPurchases: LenientInt
+    totalSales: LenientInt
 
 
 class FMPAcquisitionOwnership(FMPBaseModel):
@@ -1548,7 +1567,7 @@ class FMPQuoteFull(FMPBaseModel):
     exchange: str
     open: float
     previousClose: float
-    timestamp: int
+    timestamp: LenientInt
 
 
 class FMPQuoteShort(FMPBaseModel):
@@ -1561,18 +1580,18 @@ class FMPQuoteShort(FMPBaseModel):
 class FMPAftermarketTrade(FMPBaseModel):
     symbol: str
     price: float
-    tradeSize: Optional[int] = None
-    timestamp: int
+    tradeSize: Optional[LenientInt] = None
+    timestamp: LenientInt
 
 
 class FMPAftermarketQuote(FMPBaseModel):
     symbol: str
-    bidSize: int
+    bidSize: LenientInt
     bidPrice: float
-    askSize: int
+    askSize: LenientInt
     askPrice: float
     volume: float
-    timestamp: int
+    timestamp: LenientInt
 
 
 class FMPStockPriceChange(FMPBaseModel):
@@ -1598,7 +1617,7 @@ class FMPBulkEOD(FMPBaseModel):
     high: float
     close: float
     adjClose: float
-    volume: int
+    volume: LenientInt
 
 
 class FMPPoliticalTrade(FMPBaseModel):
@@ -1648,14 +1667,14 @@ class FMPIndustryClassificationSearch(FMPBaseModel):
 class FMPEarningsTranscript(FMPBaseModel):
     symbol: str
     period: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     date: str
     content: Optional[str] = None
 
 
 class FMPEarningsTranscriptBySymbol(FMPBaseModel):
     quarter: str
-    fiscalYear: int
+    fiscalYear: LenientInt
     date: str
 
 
@@ -1683,7 +1702,7 @@ class FMPFinancialScores(FMPBaseModel):
     symbol: str
     reportedCurrency: str
     altmanZScore: Optional[float] = None
-    piotroskiScore: Optional[int] = None
+    piotroskiScore: Optional[LenientInt] = None
     workingCapital: Optional[float] = None
     totalAssets: Optional[float] = None
     retainedEarnings: Optional[float] = None
@@ -1872,45 +1891,45 @@ class FMPCashFlowStatement(FMPBaseModel):
     acceptedDate: str
     fiscalYear: str
     period: str
-    netIncome: int
-    depreciationAndAmortization: int
-    deferredIncomeTax: int
-    stockBasedCompensation: int
-    changeInWorkingCapital: int
-    accountsReceivables: int
-    inventory: int
-    accountsPayables: int
-    otherWorkingCapital: int
-    otherNonCashItems: int
-    netCashProvidedByOperatingActivities: int
-    investmentsInPropertyPlantAndEquipment: int
-    acquisitionsNet: int
-    purchasesOfInvestments: int
-    salesMaturitiesOfInvestments: int
-    otherInvestingActivities: int
-    netCashProvidedByInvestingActivities: int
-    netDebtIssuance: int
-    longTermNetDebtIssuance: int
-    shortTermNetDebtIssuance: int
-    netStockIssuance: Optional[int] = None
-    netCommonStockIssuance: int
-    commonStockIssuance: int
-    commonStockRepurchased: int
-    netPreferredStockIssuance: int
-    netDividendsPaid: int
-    commonDividendsPaid: int
-    preferredDividendsPaid: Optional[int] = None
-    otherFinancingActivities: int
-    netCashProvidedByFinancingActivities: int
-    effectOfForexChangesOnCash: int
-    netChangeInCash: int
-    cashAtEndOfPeriod: int
-    cashAtBeginningOfPeriod: int
-    operatingCashFlow: int
-    capitalExpenditure: int
-    freeCashFlow: int
-    incomeTaxesPaid: int
-    interestPaid: int
+    netIncome: LenientInt
+    depreciationAndAmortization: LenientInt
+    deferredIncomeTax: LenientInt
+    stockBasedCompensation: LenientInt
+    changeInWorkingCapital: LenientInt
+    accountsReceivables: LenientInt
+    inventory: LenientInt
+    accountsPayables: LenientInt
+    otherWorkingCapital: LenientInt
+    otherNonCashItems: LenientInt
+    netCashProvidedByOperatingActivities: LenientInt
+    investmentsInPropertyPlantAndEquipment: LenientInt
+    acquisitionsNet: LenientInt
+    purchasesOfInvestments: LenientInt
+    salesMaturitiesOfInvestments: LenientInt
+    otherInvestingActivities: LenientInt
+    netCashProvidedByInvestingActivities: LenientInt
+    netDebtIssuance: LenientInt
+    longTermNetDebtIssuance: LenientInt
+    shortTermNetDebtIssuance: LenientInt
+    netStockIssuance: Optional[LenientInt] = None
+    netCommonStockIssuance: LenientInt
+    commonStockIssuance: LenientInt
+    commonStockRepurchased: LenientInt
+    netPreferredStockIssuance: LenientInt
+    netDividendsPaid: LenientInt
+    commonDividendsPaid: LenientInt
+    preferredDividendsPaid: Optional[LenientInt] = None
+    otherFinancingActivities: LenientInt
+    netCashProvidedByFinancingActivities: LenientInt
+    effectOfForexChangesOnCash: LenientInt
+    netChangeInCash: LenientInt
+    cashAtEndOfPeriod: LenientInt
+    cashAtBeginningOfPeriod: LenientInt
+    operatingCashFlow: LenientInt
+    capitalExpenditure: LenientInt
+    freeCashFlow: LenientInt
+    incomeTaxesPaid: LenientInt
+    interestPaid: LenientInt
 
 
 class FMPCashFlowGrowth(FMPBaseModel):
@@ -1966,42 +1985,42 @@ class FMPIncomeStatement(FMPBaseModel):
     acceptedDate: str
     fiscalYear: str
     period: str
-    revenue: int
-    costOfRevenue: int
-    grossProfit: int
-    researchAndDevelopmentExpenses: int
-    generalAndAdministrativeExpenses: int
-    sellingAndMarketingExpenses: int
-    sellingGeneralAndAdministrativeExpenses: int
-    otherExpenses: int
-    operatingExpenses: int
-    costAndExpenses: int
-    netInterestIncome: int
-    interestIncome: int
-    interestExpense: int
-    depreciationAndAmortization: int
-    ebitda: int
-    ebit: int
-    nonOperatingIncomeExcludingInterest: int
-    operatingIncome: int
-    totalOtherIncomeExpensesNet: int
-    incomeBeforeTax: int
-    incomeTaxExpense: int
-    netIncomeFromContinuingOperations: int
-    netIncomeFromDiscontinuedOperations: int
-    otherAdjustmentsToNetIncome: Optional[int] = None
-    netIncome: int
-    netIncomeDeductions: int
-    bottomLineNetIncome: int
+    revenue: LenientInt
+    costOfRevenue: LenientInt
+    grossProfit: LenientInt
+    researchAndDevelopmentExpenses: LenientInt
+    generalAndAdministrativeExpenses: LenientInt
+    sellingAndMarketingExpenses: LenientInt
+    sellingGeneralAndAdministrativeExpenses: LenientInt
+    otherExpenses: LenientInt
+    operatingExpenses: LenientInt
+    costAndExpenses: LenientInt
+    netInterestIncome: LenientInt
+    interestIncome: LenientInt
+    interestExpense: LenientInt
+    depreciationAndAmortization: LenientInt
+    ebitda: LenientInt
+    ebit: LenientInt
+    nonOperatingIncomeExcludingInterest: LenientInt
+    operatingIncome: LenientInt
+    totalOtherIncomeExpensesNet: LenientInt
+    incomeBeforeTax: LenientInt
+    incomeTaxExpense: LenientInt
+    netIncomeFromContinuingOperations: LenientInt
+    netIncomeFromDiscontinuedOperations: LenientInt
+    otherAdjustmentsToNetIncome: Optional[LenientInt] = None
+    netIncome: LenientInt
+    netIncomeDeductions: LenientInt
+    bottomLineNetIncome: LenientInt
     eps: float
     epsDiluted: float
-    weightedAverageShsOut: int
-    weightedAverageShsOutDil: int
+    weightedAverageShsOut: LenientInt
+    weightedAverageShsOutDil: LenientInt
 
 
 class FMPLatestFinancialStatement(FMPBaseModel):
     symbol: str
-    calendarYear: int
+    calendarYear: LenientInt
     period: str
     date: str
     dateAdded: str
@@ -2293,7 +2312,7 @@ class FMPIndustryPerformanceSnapshot(FMPBaseModel):
     averageChange: float
     changesPercentage: Optional[float] = None
     marketCap: Optional[float] = None
-    numberOfSymbols: Optional[int] = None
+    numberOfSymbols: Optional[LenientInt] = None
 
 
 class FMPHistoricalSectorPerformance(FMPBaseModel):
@@ -2313,7 +2332,7 @@ class FMPSectorPESnapshot(FMPBaseModel):
     date: str
     exchange: str
     pe: float
-    marketCap: Optional[int] = None
+    marketCap: Optional[LenientInt] = None
 
 
 class FMPIndustryPESnapshot(FMPBaseModel):
@@ -2328,14 +2347,14 @@ class FMPHistoricalSectorPE(FMPBaseModel):
     date: str
     sector: str
     pe: float
-    marketCap: Optional[int] = None
+    marketCap: Optional[LenientInt] = None
 
 
 class FMPHistoricalIndustryPE(FMPBaseModel):
     date: str
     industry: str
     pe: float
-    marketCap: int
+    marketCap: LenientInt
 
 
 class FMPMarketMover(FMPBaseModel):
@@ -2384,17 +2403,17 @@ class FMPEnterpriseValue(FMPBaseModel):
     symbol: str
     date: str
     stockPrice: float
-    numberOfShares: int
-    marketCapitalization: int
-    minusCashAndCashEquivalents: int
-    addTotalDebt: int
-    enterpriseValue: int
+    numberOfShares: LenientInt
+    marketCapitalization: LenientInt
+    minusCashAndCashEquivalents: LenientInt
+    addTotalDebt: LenientInt
+    enterpriseValue: LenientInt
 
 
 class FMPTrendingSentiment(FMPBaseModel):
     symbol: str
     name: str
-    rank: int
+    rank: LenientInt
     sentiment: float
     lastSentiment: float
 
@@ -2402,13 +2421,13 @@ class FMPTrendingSentiment(FMPBaseModel):
 class FMPHistoricalSentiment(FMPBaseModel):
     date: str
     symbol: str
-    stocktwitsPosts: int
-    twitterPosts: int
-    stocktwitsComments: int
-    twitterComments: int
-    stocktwitsLikes: int
-    twitterLikes: int
-    stocktwitsImpressions: int
-    twitterImpressions: int
+    stocktwitsPosts: LenientInt
+    twitterPosts: LenientInt
+    stocktwitsComments: LenientInt
+    twitterComments: LenientInt
+    stocktwitsLikes: LenientInt
+    twitterLikes: LenientInt
+    stocktwitsImpressions: LenientInt
+    twitterImpressions: LenientInt
     stocktwitsSentiment: float
     twitterSentiment: float
