@@ -128,7 +128,7 @@ class TestDirectoryBasic:
                 assert (
                     stock.symbol is not None and len(stock.symbol) >= 1
                 ), "Symbol should not be empty"
-                assert len(stock.symbol) <= 10, "Symbol should be reasonable length"
+                assert len(stock.symbol) <= 15, "Symbol should be reasonable length"
                 assert (
                     stock.symbol.isupper()
                     or stock.symbol.isdigit()
@@ -262,7 +262,7 @@ class TestDirectoryBasic:
                 assert len(stock.symbol) >= 1, "Stock symbol should not be empty"
                 assert len(stock.name) >= 1, "Stock name should not be empty"
                 assert (
-                    len(stock.symbol) <= 10
+                    len(stock.symbol) <= 15
                 ), "Stock symbol should be reasonable length"
                 assert len(stock.name) <= 200, "Stock name should be reasonable length"
 

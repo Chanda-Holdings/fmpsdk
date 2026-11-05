@@ -1485,7 +1485,7 @@ class FMPAcquisitionOwnership(FMPBaseModel):
     symbol: str
     filingDate: str
     acceptedDate: str
-    cusip: str
+    cusip: Optional[str] = None
     nameOfReportingPerson: str
     citizenshipOrPlaceOfOrganization: Optional[str] = None
     soleVotingPower: Optional[str] = None
